@@ -2,7 +2,7 @@
 
 # These store all the data used for this test run that can be overwritten by
 # command line options.
-build="`./config.guess`"
+build="`config.guess`"
 target="${build}"
 sysroot="`gcc -print-sysroot`"
 gcc="`which gcc`"
@@ -31,3 +31,7 @@ fi
 if test x"${CBUILD_DBPASSWD}" != x; then
     dbpasswd="${CBUILD_DBPASSWD}"
 fi
+
+clobber=no
+force=no
+
