@@ -2,6 +2,7 @@
 
 # load al the global varibles
 . "$(dirname "$0")/globals.sh" || exit 1
+. "$(dirname "$0")/fetch.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -68,3 +69,17 @@ set_dbpasswd()
     dbpasswd="$1"
 }
 
+error()
+{
+    echo "ERROR: $1"
+}
+
+warning()
+{
+    echo "WARNING: $1"
+}
+
+notice()
+{
+    echo "NOTE: $1"
+}
