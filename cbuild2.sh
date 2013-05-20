@@ -3,6 +3,9 @@
 # load commonly used functions
 . "$(dirname "$0")/common.sh" || exit 1
 
+# load the configure file produced by configure
+. "${PWD}/host.conf" || exit 1
+
 clean_build()
 {
     echo "Cleaning build..."
@@ -11,9 +14,35 @@ clean_build()
 #
 # These functions actually do something
 #
+
+# This gets a list from a remote server of the available tarballs. We use HTTP
+# instead of SSH so it's more accessible to those behind nasty firewalls.
+# base - already checkout out source trees
+# snapshots - tarballs of various source snapshots
+# prebuilt - prebuilt executables
 get_list()
 {
     echo "Get version list for $1..."
+
+    url="http://cbuild.validation.linaro.org/snapshots"
+    # http://cbuild.validation.linaro.org/snapshots
+    case $1 in
+	base|b*)
+	    #base="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/base/*.xz | sed -e 's:^.*/::'`"
+	    base="`lynx -dump ${url}/base | grep "${url}" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
+	    echo "${base}"
+	    ;;
+	snapshots|s*)
+	    #snapshots="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/*.{xz,bz2} | sed -e 's:^.*/::'`"
+	    snapshots="`lynx -dump ${url} | grep "${url}" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    echo "${snapshots}"
+	    ;;
+	prebuilt|p*)
+	    #prebuilt="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/prebuilt/*.{xz,bz2} | sed -e 's:^.*/::'`"
+	    #prebuilt="`lynx -dump ${url}/prebuilt | `"
+	    echo "${prebuilt}"
+	    ;;
+    esac
 }
 
 # Get some info on the build system
@@ -38,36 +67,6 @@ get_build_machine_info()
 	hostname="`ssh $1 uname -n`"
 	distribution="`ssh $1 lsb_release -sc`"	
     fi
-}
-
-# fetch a tarball from the remote snapshot server or local directory
-fetch()
-{
-    echo "Fetching $1..."
-    file="`echo $1 | sed -e 's:^.*//:/:'`"
-    case "$1" in
-	file:*)
-	    echo "Local File URL: $file"
-	    if test ! -f ${file}; then
-		echo "ERROR: ${file} doesn't exist!"
-	    fi
-	    ;;
-	http:*|https:|ftp*)
-	    echo "Remote file"
-	    echo "FIXME: wget -c $1 --directory-prefix=${snapshots}"
-	    ;;
-	*)
-	    if test ! -f ${file}; then
-		if test ! -f ${snapshots}/${file}; then
-		    echo "ERROR: $file doesn't exist!"
-		fi
-		file="${snapshots}/${file}"
-	    else
-		file="${file}"
-	    fi
-	    echo "Local File: $file"
-	    ;;
-    esac
 }
 
 # decompress and untar a fetched tarball
@@ -249,8 +248,34 @@ dump()
     echo "Distribution:      ${distribution}"
 }
 
-get_build_machine_info
-# get_build_machine_info gnashdev.org
+usage()
+{
+    echo "Usage: $0 "
+    echo "  --build (architecture for the build machine, default native)"
+    echo "  --target (architecture for the target machine, default native)"
+    echo "  --snapshots XXX (URL of remote host or local directory)"
+    echo "  --libc {newlib,eglibc,glibc} (C library to use)"
+#        echo "  --list {gcc,binutils,libc} (list possible values for component versions)"
+    echo "  --list {base,prebuilt,snapshots} (list possible values for component versions)"
+    echo "  --set {gcc,binutils,libc,latest}=XXX (change config file setting)"
+    echo "  --binutils (binutils version to use, default $PATH)"
+    echo "  --gcc (gcc version to use, default $PATH)"
+    echo "  --config XXX (alternate config file)"
+    echo "  --clean (clean a previous build, default is to start where it left off)"
+    echo "  --dispatch (run on LAVA build farm, probably remote)"
+    echo "  --sysroot XXX (specify path to alternate sysroot)"
+    echo "  --db-user XXX (specify MySQL user"
+    echo "  --db-passwd XXX (specify MySQL password)"
+    echo "  --dump (dump the values in the config file)"
+    echo "  --fetch (download the source tarball)"
+    echo "  --configure (configure the sources)"
+    echo "  --build (compile the sources)"
+    echo "  --check (run 'make check' on the build)"
+    echo "  --clobber (force files to be downloaded even when they exist)"
+    exit 1
+}
+
+# get_build_machine_info
 
 case "$1" in
     --build)
@@ -298,24 +323,17 @@ case "$1" in
     --dump)
         dump $2
         ;;
+    --fetch)
+        fetch $2
+        ;;
+    --clobber)
+        clobber=yes
+        ;;
+    --help)
+        usage
+        ;;
     *)
-        echo "Usage: $0 "
-        echo "  --build (architecture for the build machine, default native)"
-        echo "  --target (architecture for the target machine, default native)"
-        echo "  --snapshots XXX (URL of remote host or local directory)"
-        echo "  --libc {newlib,eglibc,glibc} (C library to use)"
-        echo "  --list {gcc,binutils,libc} (list possible values for component versions)"
-        echo "  --set {gcc,binutils,libc,latest}=XXX (change config file setting)"
-        echo "  --binutils (binutils version to use, default $PATH)"
-        echo "  --gcc (gcc version to use, default $PATH)"
-        echo "  --config XXX (alternate config file)"
-        echo "  --clean (clean a previous build, default is to start where it left off)"
-        echo "  --dispatch (run on LAVA build farm, probably remote)"
-        echo "  --sysroot XXX (specify path to alternate sysroot)"
-        echo "  --db-user XXX (specify MySQL user"
-        echo "  --db-passwd XXX (specify MySQL password)"
-        echo "  --dump (dump the values in the config file)"
-        exit 1
+	usage
         ;;
 esac
 
