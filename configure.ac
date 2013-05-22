@@ -1,4 +1,7 @@
 dnl  
+dnl This script configures the build machine to have what it needs to
+dnl build and test a GNU toolchain.
+dnl 
 
 AC_PREREQ(2.59c)
 AC_INIT(cbuild, 2.0dev)
@@ -7,16 +10,14 @@ dnl AC_CONFIG_HEADERS([config.h])
 dnl AC_CONFIG_MACRO_DIR([macros])
 
 AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
+dnl AC_CANONICAL_HOST
 
 dnl --------------------------------------------------------
 dnl Figure out development tool stuff
 dnl --------------------------------------------------------
-
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_MAKE_SET
 
 AC_PATH_PROG(WGET, wget)
 AC_SUBST(WGET)
@@ -32,7 +33,7 @@ BUILDDATE="`date +%Y%m%d`"
 AC_SUBST(BUILDDATE)
 
 dnl While it's a bad idea to store the database access information in an unencrypted
-dnl text file, this is useful for cbuild development itself. This option should never
+dnl text file, this is useful for cbuild2 development itself. This option should never
 dnl be used in a production environment. The default is read-only access. You can also
 dnl set DBUSER and DBPASSWD in your environment, but that's also a possible security
 dnl risk.
@@ -95,6 +96,113 @@ dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
 dnl   snapshots=${withval},
 dnl   snapshots='cbuild')
+
+dnl Since the configure script is actually checked in, a developer
+dnl doesn't need to have the GNU Autotools installed. However,
+dnl installing these is a good idea anyway.
+dnl AC_MSG_NOTICE([These are needed by everything to rebuild configure scripts and Makefiles])
+AC_CHECK_PROGS(autoconf_prog,autoconf)
+AC_CHECK_PROGS(automake_prog,automake)
+AC_CHECK_PROGS(libtool_prog,libtool)
+if test x"${autoconf_prog}" = x -o x"${automake_prog}" = x -o x"${libtool_prog}" = x; then
+   AC_MSG_WARN([You should install autoconf, automake, and libtool])
+fi
+
+dnl DejaGnu is used for testing
+AC_PATH_PROG(DEJAGNU,runtest)
+if test x"${DEJAGNU}" = x; then
+   AC_MSG_WARN([You should install dejagnu so you can run tests])
+fi
+
+dnl The GNU toolchain, GCC specifically needs these libraries to build.
+AC_MSG_NOTICE([These are needed by GCC to compile and link])
+AC_CHECK_LIB(isl, isl_version)	dnl at least version 0.11.1
+isl_good=
+if test x"${ac_cv_lib_isl_isl_version}" = xyes; then
+  AC_MSG_CHECKING([if libisl is a high enough version])
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  #include <isl/version.h>
+  #include <stdlib.h>
+  int main() {
+    if (strtof(isl_version()+4, NULL) >= 0.11)
+      { return 0; } else { return 1;}
+  }
+  ])],[isl_good="yes"], [isl_good="no"],[isl_good="cross"])
+  AC_MSG_RESULT(${isl_good})
+  if test x"${isl_good}" == xno; then
+     AC_MSG_WARN([libisl needs to be higher than 0.11])
+  fi
+fi
+
+AC_CHECK_LIB(cloog-isl, cloog_version)	dnl at least version 0.18.0
+cloog_good=
+if test x"${ac_cv_lib_cloog_isl_cloog_version}" = xyes; then
+  AC_MSG_CHECKING([if libcloog is a high enough version])
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  #include <cloog/version.h>
+  #include <stdlib.h>
+  int main() {
+    if (strtof(cloog_version()+6, NULL) >= 0.18)
+      { return 0; } else { return 1;}
+  }
+  ])],[cloog_good="yes"], [cloog_good="no"],[cloog_good="cross"])
+  AC_MSG_RESULT(${cloog_good})
+  if test x"${cloog_good}" == xno; then
+     AC_MSG_WARN([libcloog-isl needs to be higher than 0.18])
+  fi
+fi
+
+AC_CHECK_LIB(gmp, __gmpz_size)	dnl at least version 4.3.2
+gmp_good=
+if test x"${ac_cv_lib_gmp___gmpz_size}" = xyes; then
+  AC_MSG_CHECKING([if libgmp is a high enough version])
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  #include <gmp.h>
+  int main() {
+    if (__GNU_MP_VERSION >= 4)
+      { return 0; } else { return 1;}
+  }
+  ])],[gmp_good="yes"], [gmp_good="no"],[gmp_good="cross"])
+  AC_MSG_RESULT(${gmp_good})
+  if test x"${gmp_good}" == xno; then
+     AC_MSG_WARN([libgmp needs to be higher than 4.3.2])
+  fi
+fi
+
+AC_CHECK_LIB(mpc, mpc_init2)	dnl at least version 0.8.1
+mpc_good=
+if test x"${ac_cv_lib_mpc_mpc_init2}" = xyes; then
+  AC_MSG_CHECKING([if libmpc is a high enough version])
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  #include <mpc.h>
+  #include <stdlib.h>
+  int main() {
+    if (strtof(MPC_VERSION_STRING, NULL) >= 0.8)
+      { return 0; } else { return 1;}
+  }
+  ])],[mpc_good="yes"], [mpc_good="no"],[mpc_good="cross"])
+  AC_MSG_RESULT(${mpc_good})
+  if test x"${mpc_good}" == xno; then
+     AC_MSG_WARN([libmpc needs to be higher than 0.8])
+  fi
+fi
+
+AC_CHECK_LIB(mpfr, mpfr_cmp)	dnl at least version 2.4.2
+mpfr_good=
+if test x"${ac_cv_lib_mpfr_mpfr_cmp}" = xyes; then
+  AC_MSG_CHECKING([if libmpfr is a high enough version])
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  #include <mpfr.h>
+  int main() {
+    if (__GNU_MP_VERSION >= 2)
+      { return 0; } else { return 1;}
+  }
+  ])],[mpfr_good="yes"], [mpfr_good="no"],[mpfr_good="cross"])
+  AC_MSG_RESULT(${mpfr_good})
+  if test x"${mpfr_good}" == xno; then
+     AC_MSG_WARN([libmpfr needs to be higher than 2.4.2])
+  fi
+fi
 
 dnl Get and store often used information on this build machine
 BUILDHOST=${build}
