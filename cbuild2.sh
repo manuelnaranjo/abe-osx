@@ -6,6 +6,9 @@
 # load the configure file produced by configure
 . "${PWD}/host.conf" || exit 1
 
+# this is used to launch builds of dependant components
+command_line_arguments=$*
+
 clean_build()
 {
     echo "Cleaning build..."
@@ -69,128 +72,9 @@ get_build_machine_info()
     fi
 }
 
-# decompress and untar a fetched tarball
-extract()
-{
-    extractor=
-    taropt=
-    echo "Uncompressing and untarring $1 into $2..."
-
-    # Figure out how to decompress a tarball
-    case "$1" in
-	*.xz)
-	    echo "XZ File"
-	    extractor="xz -d "
-	    taropt="J"
-	    ;;
-	*.bz*)
-	    echo "bzip2 file"
-	    extractor="bzip2 -d "
-	    taropt="j"
-	    ;;
-	*.gz)
-	    echo "Gzip file"
-	    extractor="gunzip "
-	    taropt="x"
-	    ;;
-	*) ;;
-    esac
-
-    taropts="${taropt}vf"
-    if test x"$2" != x; then
-       taropts="${taropts} -C$2"
-    fi
-
-    out="`tar ${taropts} $1`"
-}
-
-# $1 - The dccs system to use
-# $2 - The parent directory for the sources
-# $3 - The URL to fetch from
-# $4 - The branch to fetch
-checkout_source()
-{
-    dir="$2"
-    url="$3"
-    
-    if test x"$4" x= x; then
-	branch=""
-    else
-	branch="$4"
-    fi
-
-    case $1 in 
-	git)
-	    dccs="git clone "
-	    ;;
-	svn)
-	    dccs="svn checkout "
-	    ;;
-	bzr)
-	    dccs="bzr branch "
-	    ;;
-	*) ;;
-    esac
-
-    (cd $2 && ${dccs} ${url} ${branch})
-}
-
-# This updates an existing checked out source tree 
-update_source()
-{
-    # Figure out which DCCS it uses
-    dccs=
-    if test -f .git; then
-	dccs="git pull"
-    fi
-    if test -f .bzr; then
-	dccs="bzr pull"
-    fi
-    if test -f .svn; then
-	dccs="svn update"
-    fi
-    if test x"${dccs}" != x; then
-	echo "Update sources with: ${dccs}"
-    else
-	echo "ERROR: can't determine DCCS!"
-	return
-    fi
-
-    # update the source
-    (cd $1 && ${dccs})
-}
-
 dispatch()
 {
     echo "Dispatching LAVA build on $1..."
-}
-
-# Configure a source directory
-# $1 - directory to run configure in
-# $2 - the source directory
-# $3 - configure options
-configure()
-{
-    dir=""
-    opts=""
-    srcdir=""
-    if test x"$1" != x; then
-	echo "ERROR: no directory soecified!"
-    else
-	dir="$1"
-    fi
-    if test x"$2" != x; then
-	echo "WARNING: no srcdir specified!"
-	srcdir="./"
-    else
-	srcdir="$2"
-    fi
-    if test x"$3" != x; then
-	opts="${opts} $3"
-    fi
-    echo "Configuring with $1..."
-
-    (cd ${dir} && ${srcdir}/configure ${opts})
 }
 
 # Build the project
@@ -267,73 +151,107 @@ usage()
     echo "  --db-user XXX (specify MySQL user"
     echo "  --db-passwd XXX (specify MySQL password)"
     echo "  --dump (dump the values in the config file)"
-    echo "  --fetch (download the source tarball)"
-    echo "  --configure (configure the sources)"
-    echo "  --build (compile the sources)"
-    echo "  --check (run 'make check' on the build)"
+    echo "  --dostep XXX (fetch,extract,configure,build,check)"
     echo "  --clobber (force files to be downloaded even when they exist)"
     exit 1
 }
 
 # get_build_machine_info
 
-case "$1" in
-    --build)
-        set_build $2
-        ;;
-    --fetch)
-        fetch $2
-        ;;
-    --target)
-        set_target $2
-        ;;
-    --sysroot)
-        set_sysroot $2
-        ;;
-    --binutils)
-        set_binutils $2
-        ;;
-    --clean)
-        clean_build $2
-        ;;
-    --config)
-        set_config $2
-        ;;
-    --gcc)
-        set_gcc $2
-        ;;
-    --libc)
-        set_libc $2
-        ;;
-    --list)
-        get_list $2
-        ;;
-    --dispatch)
-        dispatch $2
-        ;;
-    --snapshots)
-        set_snapshots $2
-        ;;
-    --db-user)
-        set_dbuser $2
-        ;;
-    --db-passwd)
-        set_dbpasswd $2
-        ;;
-    --dump)
-        dump $2
-        ;;
-    --fetch)
-        fetch $2
-        ;;
-    --clobber)
-        clobber=yes
-        ;;
-    --help)
-        usage
-        ;;
-    *)
-	usage
-        ;;
-esac
-
+# Process the multiple command line arguments
+while test $# -gt 0; do
+    case "$1" in
+	--build)
+            set_build $2
+	    shift
+            ;;
+	--fetch)
+            fetch $2
+	    shift
+            ;;
+	--target)
+            set_target $2
+	    shift
+            ;;
+	--sysroot)
+            set_sysroot $2
+	    shift
+            ;;
+	--binutils)
+            set_binutils $2
+	    shift
+            ;;
+	--clean)
+            clean_build $2
+	    shift
+            ;;
+	--config)
+            set_config $2
+	    shift
+            ;;
+	--gcc)
+            set_gcc $2
+	    shift
+            ;;
+	--libc)
+            set_libc $2
+	    shift
+            ;;
+	--list)
+            get_list $2
+	    shift
+            ;;
+	--dispatch)
+            dispatch $2
+	    shift
+            ;;
+	--snapshots)
+            set_snapshots $2
+	    shift
+            ;;
+	--db-user)
+            set_dbuser $2
+	    shift
+            ;;
+	--db-passwd)
+            set_dbpasswd $2
+	    shift
+            ;;
+	--dump)
+            dump $2
+	    shift
+            ;;
+	--dostep)
+            case $2 in
+		fetch)
+		    fetch $3   
+		    ;;
+		extract)
+		    extract $3
+		    ;;
+		configure)
+		    configure $3
+		    ;;
+		build)
+		    build $3
+		    ;;
+		check)
+		    make_check $3
+		    ;;
+		*)
+		    ;;
+            esac
+	    shift
+            ;;
+	--clobber)
+            clobber=yes
+            ;;
+	--help)
+            usage
+            ;;
+	*)
+	    #usage
+            ;;
+    esac
+    shift
+done
