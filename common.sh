@@ -3,6 +3,7 @@
 # load al the global varibles
 . "$(dirname "$0")/globals.sh" || exit 1
 . "$(dirname "$0")/fetch.sh" || exit 1
+. "$(dirname "$0")/configure.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
