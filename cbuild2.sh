@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # load commonly used functions
-. "$(dirname "$0")/common.sh" || exit 1
+. "$(dirname "$0")/lib/common.sh" || exit 1
 
 # load the configure file produced by configure
 . "${PWD}/host.conf" || exit 1
@@ -32,13 +32,17 @@ get_list()
     case $1 in
 	base|b*)
 	    #base="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/base/*.xz | sed -e 's:^.*/::'`"
-	    base="`lynx -dump ${url}/base | grep "${url}" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
+	    base="`lynx -dump ${url}/base | grep "${url}/base" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
 	    echo "${base}"
 	    ;;
 	snapshots|s*)
 	    #snapshots="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/*.{xz,bz2} | sed -e 's:^.*/::'`"
 	    snapshots="`lynx -dump ${url} | grep "${url}" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
 	    echo "${snapshots}"
+	    ;;
+	infrastructure|i*)
+	    infrastructure="`lynx -dump ${url}/infrastructure | grep "${url}/infrastructure" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    echo "${infrastructure}"
 	    ;;
 	prebuilt|p*)
 	    #prebuilt="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/prebuilt/*.{xz,bz2} | sed -e 's:^.*/::'`"
@@ -115,6 +119,7 @@ dump()
     echo "Build triplet is:  ${build}"
     echo "Target triplet is: ${target}"
     echo "GCC is:            ${gcc}"
+    echo "GCC version:       ${gcc_version}"
     echo "Sysroot is:        ${sysroot}"
 
     # These variables have default values which we don't care about
@@ -152,7 +157,9 @@ usage()
     echo "  --db-passwd XXX (specify MySQL password)"
     echo "  --dump (dump the values in the config file)"
     echo "  --dostep XXX (fetch,extract,configure,build,check)"
+    echo "  --release XXX (make a release tarball)"
     echo "  --clobber (force files to be downloaded even when they exist)"
+    echo "  --force (force make errors to be ignored, answer yes for any prompts)"
     exit 1
 }
 
@@ -209,6 +216,10 @@ while test $# -gt 0; do
             set_snapshots $2
 	    shift
             ;;
+	--release)
+            release $2
+	    shift
+            ;;
 	--db-user)
             set_dbuser $2
 	    shift
@@ -223,19 +234,22 @@ while test $# -gt 0; do
             ;;
 	--dostep)
             case $2 in
-		fetch)
+		fetch|f*)
 		    fetch $3   
 		    ;;
-		extract)
+		extract|e*)
 		    extract $3
 		    ;;
-		configure)
+		configure|co*)
 		    configure $3
 		    ;;
-		build)
+		checkout|ch*)
+		    checkout $3
+		    ;;
+		build|b*)
 		    build $3
 		    ;;
-		check)
+		test|t*)
 		    make_check $3
 		    ;;
 		*)
@@ -253,5 +267,7 @@ while test $# -gt 0; do
 	    #usage
             ;;
     esac
-    shift
+    if test $# -gt 0; then
+	shift
+    fi
 done
