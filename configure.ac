@@ -28,6 +28,13 @@ AC_SUBST(SCP)
 AC_PATH_PROG(RSYNC, rsync)
 AC_SUBST(RSYNC)
 
+dnl FIXME: these need to make sure an executable was found!
+AC_PATH_PROG(LYNX, lynx)
+AC_SUBST(LYNX)
+AC_PATH_PROG(GITBZR, git-bzr)
+
+dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
+
 dnl Get build date for helping us debugging
 BUILDDATE="`date +%Y%m%d`"
 AC_SUBST(BUILDDATE)
@@ -124,13 +131,13 @@ if test x"${ac_cv_lib_isl_isl_version}" = xyes; then
   #include <isl/version.h>
   #include <stdlib.h>
   int main() {
-    if (strtof(isl_version()+4, NULL) >= 0.11)
+    if (strtof(isl_version()+4, NULL) >= 0.10)
       { return 0; } else { return 1;}
   }
   ])],[isl_good="yes"], [isl_good="no"],[isl_good="cross"])
   AC_MSG_RESULT(${isl_good})
   if test x"${isl_good}" == xno; then
-     AC_MSG_WARN([libisl needs to be higher than 0.11])
+     AC_MSG_WARN([libisl needs to be higher than or equal to 0.11.1])
   fi
 fi
 
