@@ -4,6 +4,9 @@
 . "$(dirname "$0")/lib/globals.sh" || exit 1
 . "$(dirname "$0")/lib/fetch.sh" || exit 1
 . "$(dirname "$0")/lib/configure.sh" || exit 1
+. "$(dirname "$0")/lib/release.sh" || exit 1
+. "$(dirname "$0")/lib/checkout.sh" || exit 1
+. "$(dirname "$0")/lib/test.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
