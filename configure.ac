@@ -27,11 +27,29 @@ AC_PATH_PROG(SCP, scp)
 AC_SUBST(SCP)
 AC_PATH_PROG(RSYNC, rsync)
 AC_SUBST(RSYNC)
-
-dnl FIXME: these need to make sure an executable was found!
-AC_PATH_PROG(LYNX, lynx)
-AC_SUBST(LYNX)
 AC_PATH_PROG(GITBZR, git-bzr)
+
+dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
+packages="git-svn  bzr-fastimport svn-all-fast-exp"
+dpkg="`which dpkg`"
+result=`echo ${dpkg} 2>&1 | grep -c found`
+if test ${result} -eq 0; then
+   for i in ${packages}; do
+       exists="`dpkg -l | grep -c $i`"
+       if test ${exists} -eq 0; then
+	   AC_MSG_WARN([$i needs to be installed!])
+       fi
+   done
+else
+    yum="`which yum`"
+    result="`echo ${yum} | grep -c found`"
+    for i in ${packages}; do
+	exists="`rpm -q -a | grep -c $i`"
+	if test ${exists} -eq 0; then
+	    AC_MSG_WARN([$i needs to be installed!])
+	fi
+    done
+fi
 
 dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
 
