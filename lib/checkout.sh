@@ -47,7 +47,10 @@ checkout()
 	return 1
     fi
 
-    dir="`basename $1 |sed -e 's/^.*://'`"
+    # bzr uses slashes in it's path names, so convert them so we
+    # can use the for creating the source directory.
+    url="`echo $1 | sed -e 's:/:_:'`"
+    dir="`basename ${url} |sed -e 's/^.*://'`"
 
     # We use git for our copy by importing from the other systems
     case $1 in
