@@ -30,7 +30,7 @@ AC_SUBST(RSYNC)
 AC_PATH_PROG(GITBZR, git-bzr)
 
 dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
-packages="git-svn  bzr-fastimport svn-all-fast-exp"
+packages="git-svn  bzr-fastimport svn-all-fast-exp wget rsync"
 dpkg="`which dpkg`"
 result=`echo ${dpkg} 2>&1 | grep -c found`
 if test ${result} -eq 0; then
@@ -85,13 +85,25 @@ AC_ARG_WITH(toplevel,
 AC_SUBST(CBUILD_TOP)
 
 if test ! -d ${CBUILD_TOP}; then
-   AC_MSG_WARN(${CBUILD_TOP} doesn't exist so creating directory!)
+   AC_MSG_WARN([${CBUILD_TOP} doesn't exist so creating directory!])
    mkdir -p ${CBUILD_TOP}
+fi
+
+dnl The local directory where sources from a DCCS are stored
+AC_ARG_WITH(sources,
+  AC_HELP_STRING([--with-sources], [where checked out sources are stored]),
+  SOURCES=${withval},
+  SOURCES="${HOME}/cbuild/sources")
+AC_SUBST(SOURCES)
+
+if test ! -d ${LOCAL_SNAPSHOTS}; then
+   AC_MSG_WARN(${LOCAL_SNAPSHOTS} doesn't exist so creating directory!)
+   mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
 dnl The local directory where snapshots are stored
 AC_ARG_WITH(local-snapshots,
-  AC_HELP_STRING([--with-local-snapshots], []),
+  AC_HELP_STRING([--with-local-snapshots], [Where downloaded tarballs are stored]),
   LOCAL_SNAPSHOTS=${withval},
   LOCAL_SNAPSHOTS="${HOME}/cbuild/snapshots")
 AC_SUBST(LOCAL_SNAPSHOTS)

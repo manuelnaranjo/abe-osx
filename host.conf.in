@@ -5,6 +5,7 @@ dbuser=@DBUSER@
 dbpasswd=@DBPASSWD@
 dbhost=@DBPASSWD@
 
+sources=@SOURCES@
 local_snapshots=@LOCAL_SNAPSHOTS@
 remote_snapshots=@REMOTE_SNAPSHOTS@
 cbuild_top=@CBUILD_TOP@
