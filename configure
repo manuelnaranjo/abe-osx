@@ -601,9 +601,10 @@ autoconf_prog
 ENABLE_SSH
 REMOTE_SNAPSHOTS
 LOCAL_SNAPSHOTS
+SOURCES
 CBUILD_TOP
 BUILDDATE
-LYNX
+GITBZR
 RSYNC
 SCP
 CURL
@@ -670,6 +671,7 @@ with_dbuser
 with_dbpasswd
 with_dbhost
 with_toplevel
+with_sources
 with_local_snapshots
 with_remote_snapshots
 enable_ssh
@@ -1306,7 +1308,8 @@ Optional Packages:
   --with-dbpasswd         set the user password for the database
   --with-dbhost           set the database hostname
   --with-toplevel
-  --with-local-snapshots
+  --with-sources          where checked out sources are stored
+  --with-local-snapshots  Where downloaded tarballs are stored
   --with-remote-snapshots
 
 Some influential environment variables:
@@ -3289,16 +3292,16 @@ fi
 
 
 
-# Extract the first word of "lynx", so it can be a program name with args.
-set dummy lynx; ac_word=$2
+# Extract the first word of "git-bzr", so it can be a program name with args.
+set dummy git-bzr; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_LYNX+:} false; then :
+if ${ac_cv_path_GITBZR+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  case $LYNX in
+  case $GITBZR in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_LYNX="$LYNX" # Let the user override the test with a path.
+  ac_cv_path_GITBZR="$GITBZR" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -3308,7 +3311,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_LYNX="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_GITBZR="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -3319,16 +3322,39 @@ IFS=$as_save_IFS
   ;;
 esac
 fi
-LYNX=$ac_cv_path_LYNX
-if test -n "$LYNX"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LYNX" >&5
-$as_echo "$LYNX" >&6; }
+GITBZR=$ac_cv_path_GITBZR
+if test -n "$GITBZR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GITBZR" >&5
+$as_echo "$GITBZR" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
+
+packages="git-svn  bzr-fastimport svn-all-fast-exp wget rsync"
+dpkg="`which dpkg`"
+result=`echo ${dpkg} 2>&1 | grep -c found`
+if test ${result} -eq 0; then
+   for i in ${packages}; do
+       exists="`dpkg -l | grep -c $i`"
+       if test ${exists} -eq 0; then
+	   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $i needs to be installed!" >&5
+$as_echo "$as_me: WARNING: $i needs to be installed!" >&2;}
+       fi
+   done
+else
+    yum="`which yum`"
+    result="`echo ${yum} | grep -c found`"
+    for i in ${packages}; do
+	exists="`rpm -q -a | grep -c $i`"
+	if test ${exists} -eq 0; then
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $i needs to be installed!" >&5
+$as_echo "$as_me: WARNING: $i needs to be installed!" >&2;}
+	fi
+    done
+fi
 
 
 BUILDDATE="`date +%Y%m%d`"
@@ -3378,6 +3404,22 @@ if test ! -d ${CBUILD_TOP}; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${CBUILD_TOP} doesn't exist so creating directory!" >&5
 $as_echo "$as_me: WARNING: ${CBUILD_TOP} doesn't exist so creating directory!" >&2;}
    mkdir -p ${CBUILD_TOP}
+fi
+
+
+# Check whether --with-sources was given.
+if test "${with_sources+set}" = set; then :
+  withval=$with_sources; SOURCES=${withval}
+else
+  SOURCES="${HOME}/cbuild/sources"
+fi
+
+
+
+if test ! -d ${LOCAL_SNAPSHOTS}; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${LOCAL_SNAPSHOTS} doesn't exist so creating directory!" >&5
+$as_echo "$as_me: WARNING: ${LOCAL_SNAPSHOTS} doesn't exist so creating directory!" >&2;}
+   mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
 
