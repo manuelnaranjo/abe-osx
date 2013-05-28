@@ -16,7 +16,20 @@ fetch()
 	protocol=$2
     fi
  
-    getfile=${file}.tar.xz
+    # start by grabbing the md5sum file
+    fetch_http md5sums
+    
+    # We can grab the full file name by searching for it in the md5sums file.
+    # This is better than guessing, which we do anyway if for some reason the
+    # file isn't listed in the md5sums file.
+    md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    if test x"{$file}" != x; then
+	getfile="${md5file}"
+    else
+	getfile=${file}.tar.xz
+    fi
+
+    # download the file
     fetch_${protocol} ${getfile}
     if test $? -gt 0; then
 	warning "couldn't fetch $1, trying xdelta3 instead"
@@ -36,7 +49,7 @@ fetch()
 
     notice "Fetched ${getfile} via ${protocol}"
 
-    check_md5sum ${file}
+    check_md5sum ${getfile}
     if test $? -gt 0; then
 	return 1
     fi
@@ -74,17 +87,19 @@ fetch_rsync()
 
 check_md5sum()
 {
-    fetch_http md5sums
-    if test $? -gt 0; then
-	error "couldn't fetch md5sums"
-	return 1
+    if test ! -e ${local_snapshots}/md5sums; then
+	fetch_http md5sums
+	if test $? -gt 0; then
+	    error "couldn't fetch md5sums"
+	    return 1
+	fi
     fi
 
     # Drop the file name from .tar to the end to keep grep happy
-    getfile=`echo ${1} | sed -e 's:.tar.*::'`
+    getfile=`echo ${1}`
 
-    newsum="`md5sum ${local_snapshots}/$1`"
-    oldsum="`grep ${getfile} ${local_snapshots}/md5sums`"
+    newsum="`md5sum ${local_snapshots}/$1 | cut -d ' ' -f 1`"
+    oldsum="`grep ${getfile} ${local_snapshots}/md5sums | cut -d ' ' -f 1`"
     # if there isn't an entry in the md5sum file, we're probably downloading
     # something else that's less critical.
     if test x"${oldsum}" = x; then
