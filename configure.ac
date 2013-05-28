@@ -29,24 +29,33 @@ AC_PATH_PROG(RSYNC, rsync)
 AC_SUBST(RSYNC)
 AC_PATH_PROG(GITBZR, git-bzr)
 
-dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
-packages="git-svn  bzr-fastimport svn-all-fast-exp wget rsync"
+dnl Look for packages that do not have executables, so we are forced
+dnl to ask the packaging system if they are installed. This is more
+dnl reliable and portble than using pkg-config.
+packages="git-svn  bzr-fastimport svn-all-fast-exp lynx wget rsync flex bison"
 dpkg="`which dpkg`"
 result=`echo ${dpkg} 2>&1 | grep -c found`
 if test ${result} -eq 0; then
-   for i in ${packages}; do
-       exists="`dpkg -l | grep -c $i`"
-       if test ${exists} -eq 0; then
-	   AC_MSG_WARN([$i needs to be installed!])
-       fi
-   done
+    # add Ubuntu specific packages
+    packages="${packages} gcc-multilib lib32gmp-dev"
+    for i in ${packages}; do
+	AC_MSG_CHECKING([if $i is installed])
+	exists="`dpkg -l | grep -c $i`"
+	if test ${exists} -eq 0; then
+	    AC_MSG_RESULT([no, install $i])
+	else
+	    AC_MSG_RESULT([yes])
+	fi
+    done
 else
     yum="`which yum`"
     result="`echo ${yum} | grep -c found`"
     for i in ${packages}; do
-	exists="`rpm -q -a | grep -c $i`"
+	exis    ts="`rpm -q -a | grep -c $i`"
 	if test ${exists} -eq 0; then
-	    AC_MSG_WARN([$i needs to be installed!])
+	    AC_MSG_RESULT([no, install $i])
+	else
+	    AC_MSG_RESULT([yes])
 	fi
     done
 fi
@@ -85,7 +94,7 @@ AC_ARG_WITH(toplevel,
 AC_SUBST(CBUILD_TOP)
 
 if test ! -d ${CBUILD_TOP}; then
-   AC_MSG_WARN([${CBUILD_TOP} doesn't exist so creating directory!])
+   AC_MSG_WARN([${CBUILD_TOP} does not exist so creating directory!])
    mkdir -p ${CBUILD_TOP}
 fi
 
@@ -97,7 +106,7 @@ AC_ARG_WITH(sources,
 AC_SUBST(SOURCES)
 
 if test ! -d ${LOCAL_SNAPSHOTS}; then
-   AC_MSG_WARN(${LOCAL_SNAPSHOTS} doesn't exist so creating directory!)
+   AC_MSG_WARN(${LOCAL_SNAPSHOTS} does not exist so creating directory!)
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
@@ -109,7 +118,7 @@ AC_ARG_WITH(local-snapshots,
 AC_SUBST(LOCAL_SNAPSHOTS)
 
 if test ! -d ${LOCAL_SNAPSHOTS}; then
-   AC_MSG_WARN(${LOCAL_SNAPSHOTS} doesn't exist so creating directory!)
+   AC_MSG_WARN(${LOCAL_SNAPSHOTS} does not exist so creating directory!)
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
@@ -135,7 +144,7 @@ dnl   snapshots=${withval},
 dnl   snapshots='cbuild')
 
 dnl Since the configure script is actually checked in, a developer
-dnl doesn't need to have the GNU Autotools installed. However,
+dnl does not need to have the GNU Autotools installed. However,
 dnl installing these is a good idea anyway.
 dnl AC_MSG_NOTICE([These are needed by everything to rebuild configure scripts and Makefiles])
 AC_CHECK_PROGS(autoconf_prog,autoconf)
@@ -190,8 +199,9 @@ if test x"${ac_cv_lib_cloog_isl_cloog_version}" = xyes; then
 fi
 
 AC_CHECK_LIB(gmp, __gmpz_size)	dnl at least version 4.3.2
+AC_CHECK_HEADER(gmp.h, has_gmp_h=yes, has_gmp_h=no, )	dnl at least version 4.3.2
 gmp_good=
-if test x"${ac_cv_lib_gmp___gmpz_size}" = xyes; then
+if test x"${ac_cv_header_gmp_h}" = xyes; then
   AC_MSG_CHECKING([if libgmp is a high enough version])
   AC_RUN_IFELSE([AC_LANG_SOURCE([
   #include <gmp.h>
@@ -201,14 +211,15 @@ if test x"${ac_cv_lib_gmp___gmpz_size}" = xyes; then
   }
   ])],[gmp_good="yes"], [gmp_good="no"],[gmp_good="cross"])
   AC_MSG_RESULT(${gmp_good})
-  if test x"${gmp_good}" == xno; then
+  if test x"${gmp_good}" = xno; then
      AC_MSG_WARN([libgmp needs to be higher than 4.3.2])
   fi
 fi
 
+AC_CHECK_HEADER(mpc.h)	dnl at least version 0.8.1
 AC_CHECK_LIB(mpc, mpc_init2)	dnl at least version 0.8.1
 mpc_good=
-if test x"${ac_cv_lib_mpc_mpc_init2}" = xyes; then
+if test x"${ac_cv_header_mpc_h}" = xyes; then
   AC_MSG_CHECKING([if libmpc is a high enough version])
   AC_RUN_IFELSE([AC_LANG_SOURCE([
   #include <mpc.h>
@@ -219,14 +230,15 @@ if test x"${ac_cv_lib_mpc_mpc_init2}" = xyes; then
   }
   ])],[mpc_good="yes"], [mpc_good="no"],[mpc_good="cross"])
   AC_MSG_RESULT(${mpc_good})
-  if test x"${mpc_good}" == xno; then
+  if test x"${mpc_good}" = xno; then
      AC_MSG_WARN([libmpc needs to be higher than 0.8])
   fi
 fi
 
-AC_CHECK_LIB(mpfr, mpfr_cmp)	dnl at least version 2.4.2
+AC_CHECK_HEADER(mpfr.h)	dnl at least version 2.4.2
+AC_CHECK_LIB(mpfr, mpfr_cmp)   dnl at least version 2.4.2
 mpfr_good=
-if test x"${ac_cv_lib_mpfr_mpfr_cmp}" = xyes; then
+if test x"${ac_cv_header_mpfr_h}" = xyes; then
   AC_MSG_CHECKING([if libmpfr is a high enough version])
   AC_RUN_IFELSE([AC_LANG_SOURCE([
   #include <mpfr.h>
@@ -236,7 +248,7 @@ if test x"${ac_cv_lib_mpfr_mpfr_cmp}" = xyes; then
   }
   ])],[mpfr_good="yes"], [mpfr_good="no"],[mpfr_good="cross"])
   AC_MSG_RESULT(${mpfr_good})
-  if test x"${mpfr_good}" == xno; then
+  if test x"${mpfr_good}" = xno; then
      AC_MSG_WARN([libmpfr needs to be higher than 2.4.2])
   fi
 fi
