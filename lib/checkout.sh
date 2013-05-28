@@ -61,7 +61,7 @@ checkout()
 	    trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
 		dir="`dirname $1`"
-		dir="`basename ${dir}`"
+		dir="`basename ${dir}`/trunk"
 	    fi
 	    out="`git svn clone $1 ${local_snapshots}/${dir}`"
 	    ;;
