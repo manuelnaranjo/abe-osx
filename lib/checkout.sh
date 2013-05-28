@@ -23,7 +23,7 @@
 # branch glibc git://sourceware.org/git/glibc.git glibc
 # branch libav git://git.libav.org/libav.git libav
 # branch libffi git://github.com/atgreen/libffi.git libffi
-# branch llvm http://llvm.org/svn/llvm-project/llvm/trunk llvm
+# branch llvm svn://llvm.org/svn/llvm-project/llvm/trunk llvm
 # branch meta-linaro git://git.linaro.org/openembedded/meta-linaro.git meta-linaro
 # branch newlib git://sourceware.org/git/newlib.git newlib
 # branch openembedded-core git://git.openembedded.org/openembedded-core openembedded-core
@@ -58,6 +58,11 @@ checkout()
 	    out="`git-bzr clone $1 ${local_snapshots}/${dir}`"
 	    ;;
 	svn*)
+	    trunk="`echo $1 |grep -c trunk`"
+	    if test ${trunk} -gt 0; then
+		dir="`dirname $1`"
+		dir="`basename ${dir}`"
+	    fi
 	    out="`git svn clone $1 ${local_snapshots}/${dir}`"
 	    ;;
 	git*)
