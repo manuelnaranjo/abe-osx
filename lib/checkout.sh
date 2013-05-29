@@ -39,6 +39,9 @@
 # branch gcc-google-4.6 svn://gcc.gnu.org/svn/gcc/branches/google/gcc-4_6 gcc-google-4.6
 # branch gcc-trunk svn://gcc.gnu.org/svn/gcc/trunk gcc
  
+# It's optional to use git-bzr-ng or git-svn to work on the remote sources,
+# but we also want to work with the native surce code control system.
+usegit=no
 
 checkout()
 {
@@ -55,7 +58,15 @@ checkout()
     # We use git for our copy by importing from the other systems
     case $1 in
 	bzr*|lp*)
-	    out="`git-bzr clone $1 ${local_snapshots}/${dir}`"
+	    if test x"${usegit}" =  xyes; then
+		out="`git-bzr clone $1 ${local_snapshots}/${dir}`"
+	    else
+		if test -e ${local_snapshots}/${dir}/.bzr; then
+		    out="`bzr pull ${local_snapshots}/${dir}`"
+		else
+		    out="`bzr branch $1 ${local_snapshots}/${dir}`"
+		fi
+	    fi
 	    ;;
 	svn*)
 	    trunk="`echo $1 |grep -c trunk`"
@@ -63,10 +74,24 @@ checkout()
 		dir="`dirname $1`"
 		dir="`basename ${dir}`/trunk"
 	    fi
-	    out="`git svn clone $1 ${local_snapshots}/${dir}`"
+	    if test x"${usegit}" =  xyes; then
+		out="`git svn clone $1 ${local_snapshots}/${dir}`"
+	    else
+		if test -e ${local_snapshots}/${dir}/.svn; then
+		    out="`svn update ${local_snapshots}/${dir}`"
+		    # Extract the revision number from the update message
+		    revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
+		else
+		    out="`svn checkout $1 ${local_snapshots}/${dir}`"
+		fi
+	    fi
 	    ;;
 	git*)
-	    out="`git clone $1 ${local_snapshots}/${dir}`"
+	    if test -e ${local_snapshots}/${dir}/.git; then
+		out="`(cd ${local_snapshots}/${dir} && git pull)`"
+	    else
+		out="`git clone $1 ${local_snapshots}/${dir}`"
+	    fi
 	    ;;
 	*)
 	    ;;
