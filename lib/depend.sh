@@ -18,6 +18,7 @@ depend()
 infrastructure()
 {
     fetch_http infrastructure/md5sums
+    fetch_http infrastructure/ChangeLog
 
     # Get the list of files from the md5sums list
     files="`cat ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f 3`"
@@ -26,17 +27,22 @@ infrastructure()
     fi
 
     if test x"${depends}" = x; then
-	error "No dependencies listed for inrastructure libraries!"
+	error "No dependencies listed for infrastructure libraries!"
 	return 1
     fi
     
-    greparg="`echo ${depends} | tr ' ' '|'`"
-    files="`egrep " (ppl|isl|mpc|gmp|mpfr)" /linaro/src/linaro/cbuild/snapshots/infrastructure/md5sums | cut -d ' ' -f3`"
-
+    # We have to grep each dependency separetly to preserve the order, as
+    # some libraries depend on other libraries being bult first. Egrep
+    # unfortunately sorts the files, which screws up the order.
+    files=
+    for i in ${depends}; do
+     	files="${files} `grep $i ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f3`"
+    done
+    
     # first fetch and extract all the tarballs listed in the md5sums file
     for i in ${files}; do
 	fetch_http infrastructure/$i
-	extract infrastructure/$ig
+	extract infrastructure/$i
 	name="`echo $i | sed -e 's:\.tar\..*::'`"
 	# get any configure flags specific to this program, which are
 	# usually dependant libaries we've already built.
@@ -44,12 +50,21 @@ infrastructure()
 	if test -e "$(dirname "$0")/config/${tool}.conf"; then
 	    . "$(dirname "$0")/config/${tool}.conf"
 	fi
+	notice "Configuring infrastructure/${name}..."
 	configure infrastructure/${name} --disable-shared --enable-static --prefix=${PWD}/${hostname}/${build}/depends ${default_configure_flags}
+	if test $? != "0"; then
+	    warning "Configure of ${name} failed!"
+	fi
 	# unset these two variables to avoid problems later
 	default_configure_flags=
 	depends=
 	make_all infrastructure/${name}
-	make_install infrastructure/${name}
+	if test $? = "0"; then
+	    make_install infrastructure/${name}
+	    if test $? != "0"; then
+		warning "Make install of ${name} failed!"
+	    fi
+	fi
     done
 }
 
