@@ -6,6 +6,8 @@
 . "$(dirname "$0")/lib/configure.sh" || exit 1
 . "$(dirname "$0")/lib/release.sh" || exit 1
 . "$(dirname "$0")/lib/checkout.sh" || exit 1
+. "$(dirname "$0")/lib/depend.sh" || exit 1
+. "$(dirname "$0")/lib/make.sh" || exit 1
 . "$(dirname "$0")/lib/test.sh" || exit 1
 
 #
