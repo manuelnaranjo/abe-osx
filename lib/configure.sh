@@ -1,6 +1,8 @@
 #!/bin/sh
 
 # Configure a source directory
+# $1 - the directory to configure
+# $2 - Other configure options
 configure()
 {
     # If a target architecture isn't specified, then it's a native build
@@ -12,12 +14,18 @@ configure()
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
     fi
+    
     srcdir="${local_snapshots}/$1"
     if test ! -f ${srcdir}/configure; then
-	error "No configure script in ${srcdir}!"
-	return 1
+	warning "No configure script in ${srcdir}!"
+	return 0
     fi
-    opts=""
+
+    if test $# -gt 1; then
+	opts="`echo $* | cut -d ' ' -f2-10`"
+    else
+	opts=""
+    fi
 
     tool="`echo $1 | sed -e 's:-[0-9].*::'`"
     case ${tool} in
@@ -61,7 +69,7 @@ configure()
 	    tool=libffi
 	    ;;
 	*)
-	    tool=gcc
+	    tool=
 	    ;;
     esac
 
@@ -88,15 +96,16 @@ configure()
 	for i in "${depends}"; do
 	    # remove the current build component from the command line arguments
 	    # so we can replace it with the dependent component name.
-	    args="`echo ${command_line_arguments} | sed -e "s/$1//"`"
-	    echo "FIXME: $0 ${args} $i"
+	    args="`echo ${command_line_arguments} | sed -e "s:$1::"`"
 	done
     fi
 
     # when configuring a cross compiler, add these flags
-    if test x"${build}" != x"${target}"; then
-	opts="--build=${build} --host=${build} --target=${target}"
+    opts="--build=${build} --host=${build} --target=${target} ${opts}"
+    if test -e ${builddir}/Makefile; then
+	warning "${buildir} already configured!"
+    else
+	(cd ${builddir} && ${srcdir}/configure ${default_configure_flags} ${opts})
     fi
-    (cd ${builddir} && ${srcdir}/configure ${default_configure_flags} ${opts})
 }
 
