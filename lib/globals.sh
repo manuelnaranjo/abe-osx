@@ -22,6 +22,9 @@ build_arch=
 hostname=
 distribution=
 
+# These are options flags to pass to make, usually just -j N as set by --parallel
+make_flags=
+
 # These can be changed by environment variables
 if test x"${SNAPSHOTS_URL}" != x -o x"${CBUILD_SNAPSHOTS}" != x; then
     snapshots="${SNAPSHOTS_URL}"
