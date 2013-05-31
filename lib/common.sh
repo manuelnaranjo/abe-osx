@@ -78,6 +78,7 @@ set_dbpasswd()
 error()
 {
     echo "ERROR: $1"
+    exit 1
 }
 
 warning()
