@@ -16,7 +16,10 @@ fetch()
 	protocol=$2
     fi
  
-    # start by grabbing the md5sum file
+    # start by grabbing the md5sum file. We delete the current one as we
+    # always want a fresh md5sums file, as it changes every day, so older
+    # versions go out of doubt.
+    rm -f ${local_snapshots}/md5sums
     fetch_http md5sums
     
     # We can grab the full file name by searching for it in the md5sums file.
@@ -59,10 +62,18 @@ fetch()
 fetch_http()
 {
     getfile=$1
+    dir="`dirname $1`"
+    if test x"${dir}" = x"."; then
+	dir=""
+    else
+	if test ! -d ${local_snapshots}/${dir}; then
+	    mkdir -p ${local_snapshots}/${dir}
+	fi
+    fi
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${clobber}" = xyes; then
 	if test x"${wget_bin}" != x; then
-	    ${wget_bin} --continue --progress=bar --directory-prefix=${local_snapshots} \
+	    ${wget_bin} --continue --progress=bar --directory-prefix=${local_snapshots}/${dir} \
 		${remote_snapshots}/${getfile} 2> /dev/null
 	    if test ! -e ${local_snapshots}/${getfile}; then
 		# warning "${getfile} didn't download via http!"
@@ -123,6 +134,11 @@ extract()
     taropt=
     echo "Uncompressing and untarring $1 into $2..."
 
+    dir="`dirname $1`"
+    if test x"${dir}" = x"."; then
+	dir=""
+    fi
+
     # Figure out how to decompress a tarball
     case "$1" in
 	*.xz)
@@ -148,7 +164,7 @@ extract()
 	return 0
     fi
     taropts="${taropt}xvf"
-    out="`tar ${taropts} ${local_snapshots}/$1 -C ${local_snapshots}`"
+    out="`tar ${taropts} ${local_snapshots}/$1 -C ${local_snapshots}/${dir}`"
 }
 
 # $1 - The dccs system to use
