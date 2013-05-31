@@ -81,37 +81,6 @@ dispatch()
     echo "Dispatching LAVA build on $1..."
 }
 
-# Build the project
-build()
-{
-    echo "Building $1..."
-}
-
-# Run 'make check'
-check()
-{
-    echo "Checking $1..."
-}
-
-# $1 - the parent directory to run make in
-# $2 - the target to make, all is the default
-make()
-{
-    dir=
-    target=
-    if test x"$1" != x; then
-	dir="-C $1"
-    fi
-
-    target=
-    if test x"$2" != x; then
-	target="$2"
-    fi
-
-    echo "make ${MAKEFLAGS} ${dir} ${target}"
-    make ${MAKEFLAGS} ${dir} ${target}
-}
-
 # Takes no arguments. Dumps all the important config data
 dump()
 {
@@ -156,7 +125,7 @@ usage()
     echo "  --db-user XXX (specify MySQL user"
     echo "  --db-passwd XXX (specify MySQL password)"
     echo "  --dump (dump the values in the config file)"
-    echo "  --dostep XXX (fetch,extract,configure,build,check)"
+    echo "  --dostep XXX (fetch,extract,configure,build,checkout,push)"
     echo "  --release XXX (make a release tarball)"
     echo "  --clobber (force files to be downloaded even when they exist)"
     echo "  --force (force make errors to be ignored, answer yes for any prompts)"
@@ -240,14 +209,31 @@ while test $# -gt 0; do
 		extract|e*)
 		    extract $3
 		    ;;
-		configure|co*)
+		build|b*)
+		    build $3
+		    ;;
+		commit|com*)
+		    commit $3 $4
+		    shift
+		    ;;
+		configure|con*)
 		    configure $3
 		    ;;
 		checkout|ch*)
 		    checkout $3
 		    ;;
-		build|b*)
-		    build $3
+		depend|d*)
+		    infrastructure $3
+		    ;;
+		push|p*)
+		    push $3
+		    ;;
+		release|r*)
+		    release $3
+		    ;;
+		tag|ta**)
+		    tag $3 $4
+		    shift
 		    ;;
 		test|t*)
 		    make_check $3
