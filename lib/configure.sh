@@ -106,6 +106,12 @@ configure()
 	warning "${buildir} already configured!"
     else
 	(cd ${builddir} && ${srcdir}/configure ${default_configure_flags} ${opts})
+	return $?
+	# unset these two variables to avoid problems later
+	default_configure_flags=
+	depends=	
     fi
+
+    return 0
 }
 
