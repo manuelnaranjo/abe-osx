@@ -28,6 +28,12 @@ AC_SUBST(SCP)
 AC_PATH_PROG(RSYNC, rsync)
 AC_SUBST(RSYNC)
 AC_PATH_PROG(GITBZR, git-bzr)
+AC_PATH_PROG(BASH, bash)
+AC_SUBST(BASH)
+
+if test x"${BASH}" = x; then
+   AC_MSG_ERROR([You need Bash to run configure properly!])
+fi
 
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
@@ -160,98 +166,98 @@ if test x"${DEJAGNU}" = x; then
    AC_MSG_WARN([You should install dejagnu so you can run tests])
 fi
 
-dnl The GNU toolchain, GCC specifically needs these libraries to build.
-AC_MSG_NOTICE([These are needed by GCC to compile and link])
-AC_CHECK_LIB(isl, isl_version)	dnl at least version 0.11.1
-isl_good=
-if test x"${ac_cv_lib_isl_isl_version}" = xyes; then
-  AC_MSG_CHECKING([if libisl is a high enough version])
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
-  #include <isl/version.h>
-  #include <stdlib.h>
-  int main() {
-    if (strtof(isl_version()+4, NULL) >= 0.10)
-      { return 0; } else { return 1;}
-  }
-  ])],[isl_good="yes"], [isl_good="no"],[isl_good="cross"])
-  AC_MSG_RESULT(${isl_good})
-  if test x"${isl_good}" == xno; then
-     AC_MSG_WARN([libisl needs to be higher than or equal to 0.11.1])
-  fi
-fi
+dnl dnl The GNU toolchain, GCC specifically needs these libraries to build.
+dnl AC_MSG_NOTICE([These are needed by GCC to compile and link])
+dnl AC_CHECK_LIB(isl, isl_version)	dnl at least version 0.11.1
+dnl isl_good=
+dnl if test x"${ac_cv_lib_isl_isl_version}" = xyes; then
+dnl   AC_MSG_CHECKING([if libisl is a high enough version])
+dnl   AC_RUN_IFELSE([AC_LANG_SOURCE([
+dnl   #include <isl/version.h>
+dnl   #include <stdlib.h>
+dnl   int main() {
+dnl     if (strtof(isl_version()+4, NULL) >= 0.10)
+dnl       { return 0; } else { return 1;}
+dnl   }
+dnl   ])],[isl_good="yes"], [isl_good="no"],[isl_good="cross"])
+dnl   AC_MSG_RESULT(${isl_good})
+dnl   if test x"${isl_good}" == xno; then
+dnl      AC_MSG_WARN([libisl needs to be higher than or equal to 0.11.1])
+dnl   fi
+dnl fi
 
-AC_CHECK_LIB(cloog-isl, cloog_version)	dnl at least version 0.18.0
-cloog_good=
-if test x"${ac_cv_lib_cloog_isl_cloog_version}" = xyes; then
-  AC_MSG_CHECKING([if libcloog is a high enough version])
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
-  #include <cloog/version.h>
-  #include <stdlib.h>
-  int main() {
-    if (strtof(cloog_version()+6, NULL) >= 0.18)
-      { return 0; } else { return 1;}
-  }
-  ])],[cloog_good="yes"], [cloog_good="no"],[cloog_good="cross"])
-  AC_MSG_RESULT(${cloog_good})
-  if test x"${cloog_good}" == xno; then
-     AC_MSG_WARN([libcloog-isl needs to be higher than 0.18])
-  fi
-fi
+dnl AC_CHECK_LIB(cloog-isl, cloog_version)	dnl at least version 0.18.0
+dnl cloog_good=
+dnl if test x"${ac_cv_lib_cloog_isl_cloog_version}" = xyes; then
+dnl   AC_MSG_CHECKING([if libcloog is a high enough version])
+dnl   AC_RUN_IFELSE([AC_LANG_SOURCE([
+dnl   #include <cloog/version.h>
+dnl   #include <stdlib.h>
+dnl   int main() {
+dnl     if (strtof(cloog_version()+6, NULL) >= 0.18)
+dnl       { return 0; } else { return 1;}
+dnl   }
+dnl   ])],[cloog_good="yes"], [cloog_good="no"],[cloog_good="cross"])
+dnl   AC_MSG_RESULT(${cloog_good})
+dnl   if test x"${cloog_good}" == xno; then
+dnl      AC_MSG_WARN([libcloog-isl needs to be higher than 0.18])
+dnl   fi
+dnl fi
 
-AC_CHECK_LIB(gmp, __gmpz_size)	dnl at least version 4.3.2
-AC_CHECK_HEADER(gmp.h, has_gmp_h=yes, has_gmp_h=no, )	dnl at least version 4.3.2
-gmp_good=
-if test x"${ac_cv_header_gmp_h}" = xyes; then
-  AC_MSG_CHECKING([if libgmp is a high enough version])
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
-  #include <gmp.h>
-  int main() {
-    if (__GNU_MP_VERSION >= 4)
-      { return 0; } else { return 1;}
-  }
-  ])],[gmp_good="yes"], [gmp_good="no"],[gmp_good="cross"])
-  AC_MSG_RESULT(${gmp_good})
-  if test x"${gmp_good}" = xno; then
-     AC_MSG_WARN([libgmp needs to be higher than 4.3.2])
-  fi
-fi
+dnl AC_CHECK_LIB(gmp, __gmpz_size)	dnl at least version 4.3.2
+dnl AC_CHECK_HEADER(gmp.h, has_gmp_h=yes, has_gmp_h=no, )	dnl at least version 4.3.2
+dnl gmp_good=
+dnl if test x"${ac_cv_header_gmp_h}" = xyes; then
+dnl   AC_MSG_CHECKING([if libgmp is a high enough version])
+dnl   AC_RUN_IFELSE([AC_LANG_SOURCE([
+dnl   #include <gmp.h>
+dnl   int main() {
+dnl     if (__GNU_MP_VERSION >= 4)
+dnl       { return 0; } else { return 1;}
+dnl   }
+dnl   ])],[gmp_good="yes"], [gmp_good="no"],[gmp_good="cross"])
+dnl   AC_MSG_RESULT(${gmp_good})
+dnl   if test x"${gmp_good}" = xno; then
+dnl      AC_MSG_WARN([libgmp needs to be higher than 4.3.2])
+dnl   fi
+dnl fi
 
-AC_CHECK_HEADER(mpc.h)	dnl at least version 0.8.1
-AC_CHECK_LIB(mpc, mpc_init2)	dnl at least version 0.8.1
-mpc_good=
-if test x"${ac_cv_header_mpc_h}" = xyes; then
-  AC_MSG_CHECKING([if libmpc is a high enough version])
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
-  #include <mpc.h>
-  #include <stdlib.h>
-  int main() {
-    if (strtof(MPC_VERSION_STRING, NULL) >= 0.8)
-      { return 0; } else { return 1;}
-  }
-  ])],[mpc_good="yes"], [mpc_good="no"],[mpc_good="cross"])
-  AC_MSG_RESULT(${mpc_good})
-  if test x"${mpc_good}" = xno; then
-     AC_MSG_WARN([libmpc needs to be higher than 0.8])
-  fi
-fi
+dnl AC_CHECK_HEADER(mpc.h)	dnl at least version 0.8.1
+dnl AC_CHECK_LIB(mpc, mpc_init2)	dnl at least version 0.8.1
+dnl mpc_good=
+dnl if test x"${ac_cv_header_mpc_h}" = xyes; then
+dnl   AC_MSG_CHECKING([if libmpc is a high enough version])
+dnl   AC_RUN_IFELSE([AC_LANG_SOURCE([
+dnl   #include <mpc.h>
+dnl   #include <stdlib.h>
+dnl   int main() {
+dnl     if (strtof(MPC_VERSION_STRING, NULL) >= 0.8)
+dnl       { return 0; } else { return 1;}
+dnl   }
+dnl   ])],[mpc_good="yes"], [mpc_good="no"],[mpc_good="cross"])
+dnl   AC_MSG_RESULT(${mpc_good})
+dnl   if test x"${mpc_good}" = xno; then
+dnl      AC_MSG_WARN([libmpc needs to be higher than 0.8])
+dnl   fi
+dnl fi
 
-AC_CHECK_HEADER(mpfr.h)	dnl at least version 2.4.2
-AC_CHECK_LIB(mpfr, mpfr_cmp)   dnl at least version 2.4.2
-mpfr_good=
-if test x"${ac_cv_header_mpfr_h}" = xyes; then
-  AC_MSG_CHECKING([if libmpfr is a high enough version])
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
-  #include <mpfr.h>
-  int main() {
-    if (__GNU_MP_VERSION >= 2)
-      { return 0; } else { return 1;}
-  }
-  ])],[mpfr_good="yes"], [mpfr_good="no"],[mpfr_good="cross"])
-  AC_MSG_RESULT(${mpfr_good})
-  if test x"${mpfr_good}" = xno; then
-     AC_MSG_WARN([libmpfr needs to be higher than 2.4.2])
-  fi
-fi
+dnl AC_CHECK_HEADER(mpfr.h)	dnl at least version 2.4.2
+dnl AC_CHECK_LIB(mpfr, mpfr_cmp)   dnl at least version 2.4.2
+dnl mpfr_good=
+dnl if test x"${ac_cv_header_mpfr_h}" = xyes; then
+dnl   AC_MSG_CHECKING([if libmpfr is a high enough version])
+dnl   AC_RUN_IFELSE([AC_LANG_SOURCE([
+dnl   #include <mpfr.h>
+dnl   int main() {
+dnl     if (__GNU_MP_VERSION >= 2)
+dnl       { return 0; } else { return 1;}
+dnl   }
+dnl   ])],[mpfr_good="yes"], [mpfr_good="no"],[mpfr_good="cross"])
+dnl   AC_MSG_RESULT(${mpfr_good})
+dnl   if test x"${mpfr_good}" = xno; then
+dnl      AC_MSG_WARN([libmpfr needs to be higher than 2.4.2])
+dnl   fi
+dnl fi
 
 dnl Get and store often used information on this build machine
 BUILDHOST=${build}
