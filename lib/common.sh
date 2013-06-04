@@ -8,7 +8,6 @@
 . "$(dirname "$0")/lib/checkout.sh" || exit 1
 . "$(dirname "$0")/lib/depend.sh" || exit 1
 . "$(dirname "$0")/lib/make.sh" || exit 1
-. "$(dirname "$0")/lib/test.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -89,4 +88,38 @@ warning()
 notice()
 {
     echo "NOTE: $1"
+}
+
+# This takes a URL and turns it into a name suitable for the build
+# directory name.
+# $1 - the path to fixup
+normalize_path()
+{
+    case $1 in
+	lp*)
+	    node="`echo $1 | sed -e 's@lp:@@' -e 's:/:_:'`"
+	    ;;
+	bzr*)
+	    node="`echo $1 | sed -e 's:^.*branch/::'`"
+	    node="`echo ${node} | sed -e 's:/:_:'`"
+	    ;;
+	git*)
+	    node="`echo $1 | sed -e 's@^.*/git/@@'`"
+		node="`basename ${node}`"
+	    ;;
+	svn*)
+	    if test `echo $1 | grep -c eglibc.org` -gt 0; then
+		node="eglibc.svn"
+	    else
+		node="`echo $1 | sed -e 's@^.*/svn/@@'`"
+		node="`basename ${node}`"
+	    fi
+	    ;;
+	*)
+	    node="`echo $1 | sed -e 's:\.tar\..*::'`"
+	    ;;
+    esac
+
+    echo ${node}
+    return 0
 }
