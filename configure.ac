@@ -38,7 +38,7 @@ fi
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
-packages="git-svn  bzr-fastimport svn-all-fast-exp lynx wget rsync flex bison"
+packages="git-svn  bzr-fastimport svn-all-fast-exp lynx wget rsync flex bison autogen gcc g++ libncurses5-dev texinfo"
 dpkg="`which dpkg`"
 result=`echo ${dpkg} 2>&1 | grep -c found`
 if test ${result} -eq 0; then
@@ -104,6 +104,13 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
+dnl The top of the cbuild tree
+AC_ARG_WITH(sysroot,
+  AC_HELP_STRING([--with-sysroot], []),
+  SYSROOT=${withval},
+  SYSROOT="${PWD}")
+AC_SUBST(SYSROOT)
+
 dnl The local directory where sources from a DCCS are stored
 AC_ARG_WITH(sources,
   AC_HELP_STRING([--with-sources], [where checked out sources are stored]),
@@ -127,6 +134,13 @@ if test ! -d ${LOCAL_SNAPSHOTS}; then
    AC_MSG_WARN(${LOCAL_SNAPSHOTS} does not exist so creating directory!)
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
+
+dnl The top directory for make install, also where all the components we build live
+AC_ARG_WITH(local-builds,
+  AC_HELP_STRING([--with-local-builds], []),
+  LOCAL_BUILDS=${withval},
+  LOCAL_BUILDS="${PWD}/`hostnme`/${target}/depends")
+AC_SUBST(LOCAL_BUILDS)
 
 dnl A URL to the remote directory where snapshots are stored
 AC_ARG_WITH(remote-snapshots,
