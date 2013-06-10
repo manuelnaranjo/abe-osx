@@ -129,6 +129,7 @@ usage()
     echo "  --release XXX (make a release tarball)"
     echo "  --clobber (force files to be downloaded even when they exist)"
     echo "  --force (force make errors to be ignored, answer yes for any prompts)"
+    echo "  --parallel (do parallel builds, one per cpu core)"
     exit 1
 }
 
@@ -168,6 +169,9 @@ while test $# -gt 0; do
 	--gcc)
             set_gcc $2
 	    shift
+            ;;
+	--parallel|p*)
+            make_flags="-j ${cpus}"
             ;;
 	--libc)
             set_libc $2
@@ -217,13 +221,19 @@ while test $# -gt 0; do
 		    shift
 		    ;;
 		configure|con*)
-		    configure $3
+		    configure_build $3
 		    ;;
 		checkout|ch*)
 		    checkout $3
 		    ;;
 		depend|d*)
 		    infrastructure $3
+		    ;;
+		install|i*)
+		    make_install $3
+		    ;;
+		make|m*)
+		    make_all $3
 		    ;;
 		push|p*)
 		    push $3
