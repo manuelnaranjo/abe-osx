@@ -19,7 +19,7 @@ fetch()
     # start by grabbing the md5sum file. We delete the current one as we
     # always want a fresh md5sums file, as it changes every day, so older
     # versions go out of doubt.
-    rm -f ${local_snapshots}/md5sums
+    # rm -f ${local_snapshots}/md5sums
     fetch_http md5sums
     
     # We can grab the full file name by searching for it in the md5sums file.
@@ -73,7 +73,7 @@ fetch_http()
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${clobber}" = xyes; then
 	if test x"${wget_bin}" != x; then
-	    ${wget_bin} --continue --progress=bar --directory-prefix=${local_snapshots}/${dir} \
+	    ${wget_bin} --continue --progress=dot --directory-prefix=${local_snapshots}/${dir} \
 		${remote_snapshots}/${getfile} 2> /dev/null
 	    if test ! -e ${local_snapshots}/${getfile}; then
 		# warning "${getfile} didn't download via http!"
@@ -160,42 +160,13 @@ extract()
     esac
 
     if test -d `echo ${local_snapshots}/$1 | sed -e 's:.tar.*::'` -a x"${clobber}" != xyes; then
-	notice "$1 already is extracted!"
+	notice "${dir}/$1 already is extracted!"
 	return 0
-    fi
-    taropts="${taropt}xvf"
-    out="`tar ${taropts} ${local_snapshots}/$1 -C ${local_snapshots}/${dir}`"
-}
-
-# $1 - The dccs system to use
-# $2 - The parent directory for the sources
-# $3 - The URL to fetch from
-# $4 - The branch to fetch
-checkout_source()
-{
-    dir="$2"
-    url="$3"
-    
-    if test x"$4" x= x; then
-	branch=""
     else
-	branch="$4"
+	taropts="${taropt}xvf"
+	tar ${taropts} ${local_snapshots}/$1 -C ${local_snapshots}/${dir}
     fi
-
-    case $1 in 
-	git)
-	    dccs="git clone "
-	    ;;
-	svn)
-	    dccs="svn checkout "
-	    ;;
-	bzr)
-	    dccs="bzr branch "
-	    ;;
-	*) ;;
-    esac
-
-    (cd $2 && ${dccs} ${url} ${branch})
+    return 0
 }
 
 # This updates an existing checked out source tree 
