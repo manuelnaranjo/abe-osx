@@ -10,6 +10,12 @@ local_snapshots=@LOCAL_SNAPSHOTS@
 remote_snapshots=@REMOTE_SNAPSHOTS@
 cbuild_top=@CBUILD_TOP@
 
+# This is where the components we build go, ie... make install
+local_builds=@LOCAL_BUILDS@
+
+# This is a sysroot to a pre-compiled C library
+sysroot=@SYSROOT@
+
 # config values for the build machine
 cpus=@CPUS@
 kernel=@KERNEL@
@@ -24,3 +30,5 @@ curl_bin=@CURL@
 wget_bin=@WGET@
 scp_bin=@SCP@
 rsync_bin=@RSYNC@
+
+bash_shell=@BASH@
