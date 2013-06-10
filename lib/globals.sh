@@ -2,7 +2,7 @@
 
 # These store all the data used for this test run that can be overwritten by
 # command line options.
-build="`$(dirname $0)/config.guess`"
+build="`gcc -v 2>&1 | grep Target: | cut -d ' ' -f 2`"
 target=
 sysroot="`gcc -print-sysroot`"
 gcc="`which gcc`"
