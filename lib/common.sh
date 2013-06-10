@@ -108,12 +108,8 @@ normalize_path()
 		node="`basename ${node}`"
 	    ;;
 	svn*)
-	    if test `echo $1 | grep -c eglibc.org` -gt 0; then
-		node="eglibc.svn"
-	    else
-		node="`echo $1 | sed -e 's@^.*/svn/@@'`"
-		node="`basename ${node}`"
-	    fi
+	    node="`echo $1 | sed -e 's@^.*/svn/@@'`"
+	    node="`basename ${node}`"
 	    ;;
 	*)
 	    node="`echo $1 | sed -e 's:\.tar\..*::'`"
