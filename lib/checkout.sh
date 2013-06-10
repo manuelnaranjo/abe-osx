@@ -4,32 +4,6 @@
 # This does a checkout from a source code repository
 #
 
-# 
-# branch gcc-linaro/4.7 lp:gcc-linaro/4.7 gcc-linaro-4.7
-# branch gcc-linaro/4.6 lp:gcc-linaro/4.6 gcc-linaro-4.6
-
-# branch gdb-linaro/7.6 lp:gdb-linaro/7.6 gdb-linaro-7.6
-# branch gdb-linaro/7.5 lp:gdb-linaro/7.5 gdb-linaro 7.5
-
-# branch crosstool-ng/linaro lp:~linaro-toolchain-dev/crosstool-ng/linaro crosstool-ng-linaro
-
-# branch cortex-strings lp:cortex-strings cortex-strings
-# branch boot-wrapper git://git.linaro.org/arm/models/boot-wrapper.git boot-wrapper
-
-# branch binutils git://sourceware.org/git/binutils.git binutils
-# branch bitbake git://git.openembedded.org/bitbake bitbake
-# branch eglibc http://www.eglibc.org/svn/trunk eglibc
-# branch gdb git://sourceware.org/git/gdb.git gdb
-# branch glibc git://sourceware.org/git/glibc.git glibc
-# branch libav git://git.libav.org/libav.git libav
-# branch libffi git://github.com/atgreen/libffi.git libffi
-# branch llvm svn://llvm.org/svn/llvm-project/llvm/trunk llvm
-# branch meta-linaro git://git.linaro.org/openembedded/meta-linaro.git meta-linaro
-# branch newlib git://sourceware.org/git/newlib.git newlib
-# branch openembedded-core git://git.openembedded.org/openembedded-core openembedded-core
-# branch qemu-git git://git.qemu.org/qemu.git qemu
-# branch qemu-linaro git://git.linaro.org/qemu/qemu-linaro.git qemu-linaro
-# branch valgrind svn://svn.valgrind.org/valgrind/trunk valgrind
 
 # branch gcc-4.6 svn://gcc.gnu.org/svn/gcc/branches/gcc-4_6-branch gcc-4.6
 # branch gcc-4.7 svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch gcc-4.7
@@ -38,7 +12,39 @@
 # branch gcc-arm-embedded-4.6 svn://gcc.gnu.org/svn/gcc/branches/ARM/embedded-4_6-branch gccarm-embedded-4.6
 # branch gcc-google-4.6 svn://gcc.gnu.org/svn/gcc/branches/google/gcc-4_6 gcc-google-4.6
 # branch gcc-trunk svn://gcc.gnu.org/svn/gcc/trunk gcc
- 
+# 
+# svn+ssh://rsavoye@gcc.gnu.org/svn/gcc/branches/linaro/gcc-4_8-branch
+# branch gcc-linaro/4.7 lp:gcc-linaro/4.8 gcc-linaro-4.8
+# branch gcc-linaro/4.7 lp:gcc-linaro/4.7 gcc-linaro-4.7
+# branch gcc-linaro/4.6 lp:gcc-linaro/4.6 gcc-linaro-4.6
+
+# branch gdb-linaro/7.6 lp:gdb-linaro/7.6 gdb-linaro-7.6
+# branch gdb-linaro/7.5 lp:gdb-linaro/7.5 gdb-linaro 7.5
+
+# git://git.linaro.org/toolchain/binutils.git
+# git://git.linaro.org/toolchain/glibc.git
+# git://git.linaro.org/toolchain/gdb.git
+# git://git.linaro.org/toolchain/newlib.git
+# ssh://robert.savoye@git.linaro.org/srv/git.linaro.org/git/toolchain/eglibc.git
+# ssh://robert.savoye@git.linaro.org/srv/git.linaro.org/git/toolchain/newlib.git newlib-linaro
+
+# branch crosstool-ng/linaro lp:~linaro-toolchain-dev/crosstool-ng/linaro crosstool-ng-linaro
+
+# branch cortex-strings lp:cortex-strings cortex-strings
+# branch boot-wrapper git://git.linaro.org/arm/models/boot-wrapper.git boot-wrapper
+
+# branch bitbake git://git.openembedded.org/bitbake bitbake
+# branch libav git://git.libav.org/libav.git libav
+# branch libffi git://github.com/atgreen/libffi.git libffi
+# branch llvm svn://llvm.org/svn/llvm-project/llvm/trunk llvm
+# branch meta-linaro git://git.linaro.org/openembedded/meta-linaro.git meta-linaro
+# branch openembedded-core git://git.openembedded.org/openembedded-core openembedded-core
+# branch valgrind svn://svn.valgrind.org/valgrind/trunk valgrind
+# branch qemu-git git://git.qemu.org/qemu.git qemu
+# branch qemu-linaro git://git.linaro.org/qemu/qemu-linaro.git qemu-linaro
+# ssh://git.linaro.org/srv/git.linaro.org/git/qemu/qemu-linaro.git qemu-linaro
+# git submodule update --init roms
+
 # It's optional to use git-bzr-ng or git-svn to work on the remote sources,
 # but we also want to work with the native surce code control system.
 usegit=no
@@ -54,8 +60,7 @@ checkout()
 
     # bzr uses slashes in it's path names, so convert them so we
     # can use the for creating the source directory.
-    url="`echo $1 | sed -e 's:/:_:'`"
-    dir="`basename ${url} |sed -e 's/^.*://'`"
+    dir="`normalize_path $1`"
 
     # We use git for our copy by importing from the other systems
     case $1 in
@@ -88,11 +93,11 @@ checkout()
 		out="`git svn clone $1 ${local_snapshots}/${dir}`"
 	    else
 		if test -e ${local_snapshots}/${dir}/.svn; then
-		    out="`svn update ${local_snapshots}/${dir}`"
+		    (cd ${local_snapshots}/${dir} && svn update)
 		    # Extract the revision number from the update message
 		    revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
 		else
-		    out="`svn checkout $1 ${local_snapshots}/${dir}`"
+		    svn checkout $1 ${local_snapshots}/${dir}
 		fi
 	    fi
 	    ;;
@@ -283,3 +288,13 @@ commit ()
 
     return 0
 }
+
+# Create a new tag in a repository
+# $1 - The URL used for checkout()
+# $2 - the tag name
+tag()
+{
+    error "unimplemented"
+}
+
+
