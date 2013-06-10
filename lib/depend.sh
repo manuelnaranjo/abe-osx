@@ -43,6 +43,9 @@ infrastructure()
     for i in ${files}; do
 	fetch_http infrastructure/$i
 	extract infrastructure/$i
+    done
+
+    for i in ${files}; do
 	name="`echo $i | sed -e 's:\.tar\..*::'`"
 	# get any configure flags specific to this program, which are
 	# usually dependant libaries we've already built.
@@ -51,13 +54,12 @@ infrastructure()
 	    . "$(dirname "$0")/config/${tool}.conf"
 	fi
 	notice "Configuring infrastructure/${name}..."
-	configure infrastructure/${name} --disable-shared --enable-static --prefix=${PWD}/${hostname}/${build}/depends ${default_configure_flags}
+	configure_build infrastructure/${name} --disable-shared --enable-static --prefix=${PWD}/${hostname}/${build}/depends ${default_configure_flags}
 	if test $? != "0"; then
 	    warning "Configure of ${name} failed!"
 	fi
 	# unset these two variables to avoid problems later
 	default_configure_flags=
-	depends=
 	make_all infrastructure/${name}
 	if test $? = "0"; then
 	    make_install infrastructure/${name}
