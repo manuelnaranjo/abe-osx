@@ -29,15 +29,20 @@ CREATE TABLE `benchrun` (
   `status` enum('IDLE','RUNNING','DONE') NOT NULL,
   `target_arch` varchar(72) NOT NULL,
   `build_arch` varchar(72) NOT NULL,
+  `build_machine` varchar(72) NOT NULL,
+  `build_os` varchar(72) NOT NULL,
+  `codename` varchar(72) NOT NULL,
   `enabled_cores` int(3) NOT NULL,
   `enabled_chips` int(3) NOT NULL,
   `cores_per_chip` int(3) NOT NULL,
   `threads_per_core` int(3) NOT NULL,
-  `gcc_version` varchar(72) NOT NULL,
+  `build_gcc` varchar(72) NOT NULL,
+  `target_gcc` varchar(72) NOT NULL,
   `binutils_version` varchar(72) NOT NULL,
   `libc_version` varchar(72) NOT NULL,
   `peak_result` int(6) NOT NULL,
-  `ram` int(11) NOT NULL
+  `ram` int(11) NOT NULL,
+  `benchrun` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -145,6 +150,23 @@ CREATE TABLE `spec_2006` (
 --
 -- Dumping data for table `spec_2006`
 --
+CREATE TABLE `tabulate` (
+  `testname` varchar(72) NOT NULL,
+  `version` varchar(72) NOT NULL,
+  `klass` varchar(6) NOT NULL,
+  `variant` varchar(72) NOT NULL,
+  `subname` varchar(72) NOT NULL,
+  `nsamples` int(11) NOT NULL,
+  `min` float NOT NULL,
+  `max` float NOT NULL,
+  `best` float NOT NULL,
+  `span` float NOT NULL,
+  `mean` float NOT NULL,
+  `std` float NOT NULL,
+  `median` float NOT NULL,
+  `benchrun` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 LOCK TABLES `spec_2006` WRITE;
 /*!40000 ALTER TABLE `spec_2006` DISABLE KEYS */;
@@ -161,16 +183,3 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2013-05-17 13:33:36
-
-
-EEMBC:
-testname version klass variant subname nsamples min max best span mean std median
-eembc   armv7l-quantal-cbuild452-calxeda01-07-00-cortexa9hfr1           o3-neon 
-        5       8.389479        8.394847        8.389479        0.00536862      8.391657        0.00202532      8.391392
-eembc_office    armv7l-quantal-cbuild452-calxeda01-07-00-cortexa9hfr1           o3-neon         5       93.16028        93.686  93.16028        0.525722        93.48647
-        0.176632        93.53736
-
-Run 1::
-171	OF2	 ditherv2 DragonFly.pgm Floyd-Stein Grayscale Dithering Algorithm V2.0B16 9fa4 9fa4 6502 106124181 1000000 61.267846204 106.124181000 0.016321775
-CON 	rgbyiq01 RGBYIQ01 (Consumer RGB to YIQ) 0x7974 0x7974 4250 6259677 678.949000 6.260000 0.001473
-CON 	huffde 	 huffde Huffman Decoder Benchmark V2.0R2 0x7776 0x7776 6135 8458247 1000000 725.327600388 8.4582
