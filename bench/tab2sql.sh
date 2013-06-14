@@ -6,7 +6,7 @@
 #
 
 if test x"$1" != x; then
-  infile="$1"
+  infile="$1/benchmarks.txt"
 else
   infile="./benchmarks.txt"
 fi
