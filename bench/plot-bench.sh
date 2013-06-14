@@ -3,7 +3,7 @@
 
 if test "$#" -eq 0; then
    echo "Need to supply a graph name!"
-   name="Benchmarks"
+   name="EEMBC Benchmark"
 else
     name=$1
 fi
@@ -31,7 +31,7 @@ set output "benchrun.png"
 set xlabel "${name}"
 
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
-set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
+#set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 EOF
 
@@ -50,7 +50,11 @@ type=""
 type="with lines"
 
 #echo "plot "\'eembc.data\'" using (\$7) title "\'Min\'" lt rgb "\'green\'" ${type},  '' using (\$8) title "\'Max\'" lt rgb "\'red\'" ${type},  '' using (\$11) title "\'Best\'" lt rgb "\'cyan\'" ${type}" >> gnuplot.cmd
-echo "plot "\'eembc.data\'"  using (\$5) title "\'Min\'" lt rgb "\'green\'" ${type}, '' using (\$6) title "\'Max\'" lt rgb "\'red\'" ${type}" >> gnuplot.cmd
+#echo "plot "\'eembc.data\'"  using (\$4) title "\'Min\'" lt rgb "\'red\'" ${type}, '' using (\$5) title "\'Max\'" lt rgb "\'green\'" ${type}" >> gnuplot.cmd
+
+echo "plot "\'eembc.data\'" using (\$6):xtic(2) title "\'Best\'" lt rgb "\'green\'" ${type}" >> gnuplot.cmd
+
+#echo "plot "\'eembc.data\'" using (\$5):xtic(int(\$0)%3==0?stringcolumn(1):\"\") t column(2) title "\'Min\'" lt rgb "\'red\'" ${type}" >> gnuplot.cmd
 
 cat <<EOF >> gnuplot.cmd
 set term x11 persist
