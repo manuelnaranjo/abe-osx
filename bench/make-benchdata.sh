@@ -6,8 +6,8 @@
 #
 
 # These are required to access the database
-user="root"
-passwd="fu=br"
+user="USER"
+passwd="PASSWD"
 tmpdir="/tmp"
 outfile="benchrun.data"
 
