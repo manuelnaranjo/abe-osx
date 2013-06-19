@@ -14,6 +14,10 @@ configfile="default"
 dbuser="default"
 dbpasswd="default"
 
+#
+launchpad_id=
+svn_id=
+
 # config values for the build machine
 cpus=
 libc_version=
@@ -39,3 +43,8 @@ fi
 clobber=no
 force=no
 
+# source a user specific config file for commonly used configure options.
+# These overide any of the above values.
+if test -e ~/.cbuildrc; then
+    . ~/.cbuildrc
+fi
