@@ -4,7 +4,11 @@
 . "$(dirname "$0")/lib/common.sh" || exit 1
 
 # load the configure file produced by configure
-. "${PWD}/host.conf" || exit 1
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    warning "no host.conf file!"
+fi
 
 # this is used to launch builds of dependant components
 command_line_arguments=$*
@@ -130,6 +134,7 @@ usage()
     echo "  --clobber (force files to be downloaded even when they exist)"
     echo "  --force (force make errors to be ignored, answer yes for any prompts)"
     echo "  --parallel (do parallel builds, one per cpu core)"
+    echo "  --merge XXX (merge a commit from trunk)"
     exit 1
 }
 
@@ -232,7 +237,7 @@ while test $# -gt 0; do
 		install|i*)
 		    make_install $3
 		    ;;
-		make|m*)
+		make|ma*)
 		    make_all $3
 		    ;;
 		push|p*)
@@ -253,6 +258,10 @@ while test $# -gt 0; do
             esac
 	    shift
             ;;
+	--merge)
+	    merge_branch $2
+	    shift
+	    ;;
 	--clobber)
             clobber=yes
             ;;
