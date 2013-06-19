@@ -1,14 +1,41 @@
-#!/bin/sh
-
+#!/bin/bash
 
 if test "$#" -eq 0; then
    echo "Need to supply a graph name!"
-   name="EEMBC Benchmark"
+   name="eembc"
 else
     name=$1
 fi
 
-cat <<EOF >gnuplot.cmd
+# lines        dots       steps     errorbars     xerrorbar    xyerrorlines
+# points       impulses   fsteps    errorlines    xerrorlines  yerrorbars
+# linespoints  labels     histeps   financebars   xyerrorbars  yerrorlines
+# vectors
+#	or
+# boxes            candlesticks   image      circles
+# boxerrorbars     filledcurves   rgbimage   ellipses
+# boxxyerrorbars   histograms     rgbalpha   pm3d
+# boxplot
+
+# specify a different line style
+itype=""
+type="with lines"
+
+#echo "plot "\'eembc.data\'" using (\$7) title "\'Min\'" lt rgb "\'green\'" ${type},  '' using (\$8) title "\'Max\'" lt rgb "\'red\'"  ${type},  '' using (\$11) title "\'Best\'" lt rgb "\'cyan\'" ${type}" >> gnuplot.cmd
+#plot "\'eembc.data\'"  using (\$4) title "\' Min\'" lt rgb "\'red\'" ${type}, '' using (\$5) title "\'Max\'" lt rgb "\'green\'" ${type}"
+
+# setup aarray of colors, since the number of data files varies
+declare -a colors=('red' 'green' 'cyan' 'blue' 'purple' 'brown' 'coral' 'aqua')
+benchmarks="eembc coremark denbench embc_office spec2000"
+variants="o3-neon o3-arm o3-armv6 o3-vfpv3"
+
+for i in ${benchmarks}; do
+    cindex=0
+    rm -f gnuplot-$i.cmd
+    for j in ${variants}; do
+	if test -f $i.$j.data; then
+	    if test ${cindex} -eq 0; then
+		cat <<EOF >gnuplot-$i.cmd
 set boxwidth 0.9 relative 
 set style data histograms 
 set style histogram cluster 
@@ -28,42 +55,22 @@ set key left top
 set term png
 set output "benchrun.png"
 
-set xlabel "${name}"
+set xlabel "$i Benchmarks"
 
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
 #set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 
 EOF
+		echo -n "plot \"$i.$j.data\" using (\$6):xtic(2) title \"$j\" lt rgb \"${colors[$cindex]}\"  ${type}" >> gnuplot-$i.cmd
 
-# lines        dots       steps     errorbars     xerrorbar    xyerrorlines
-# points       impulses   fsteps    errorlines    xerrorlines  yerrorbars
-# linespoints  labels     histeps   financebars   xyerrorbars  yerrorlines
-# vectors
-#	or
-# boxes            candlesticks   image      circles
-# boxerrorbars     filledcurves   rgbimage   ellipses
-# boxxyerrorbars   histograms     rgbalpha   pm3d
-# boxplot
-
-# specify a different line style
-type=""
-type="with lines"
-
-#echo "plot "\'eembc.data\'" using (\$7) title "\'Min\'" lt rgb "\'green\'" ${type},  '' using (\$8) title "\'Max\'" lt rgb "\'red\'" ${type},  '' using (\$11) title "\'Best\'" lt rgb "\'cyan\'" ${type}" >> gnuplot.cmd
-#echo "plot "\'eembc.data\'"  using (\$4) title "\'Min\'" lt rgb "\'red\'" ${type}, '' using (\$5) title "\'Max\'" lt rgb "\'green\'" ${type}" >> gnuplot.cmd
-
-echo "plot "\'eembc.data\'" using (\$6):xtic(2) title "\'Best\'" lt rgb "\'green\'" ${type}" >> gnuplot.cmd
-
-#echo "plot "\'eembc.data\'" using (\$5):xtic(int(\$0)%3==0?stringcolumn(1):\"\") t column(2) title "\'Min\'" lt rgb "\'red\'" ${type}" >> gnuplot.cmd
-
-cat <<EOF >> gnuplot.cmd
-set term x11 persist
-replot
-
-# Line graph
-# set style data linespoints
-# replot
-
-EOF
-
-gnuplot gnuplot.cmd
+	    else
+		echo -n ", \"$i.$j.data\" using (\$6):xtic(1) title \"$j\" lt rgb \"${colors[$cindex]}\" ${type}" >> gnuplot-$i.cmd
+	    fi
+# 	    gnuplot gnuplot-$i.cmd &
+	    cindex=`expr $cindex + 1`
+	fi
+    done
+    echo "" >> gnuplot-$i.cmd
+    echo "set term x11 persist" >> gnuplot-$i.cmd
+    echo "replot" >> gnuplot-$i.cmd
+done
