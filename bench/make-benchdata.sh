@@ -21,16 +21,15 @@ fi
 # Create the output file
 rm -f ${outfile}
 
-# Extract the list of architectures supported for these results
-benchmarks=`mysql -u${user} -p${passwd} --local -e "SELECT DISTINCT(testname) FROM benchmark.tabulate" | sed -e 's/testname//'`
+# Extract the list of arc supported for these results
+benchmarks=`mysql -u${user} -p${passwd} --local -e "SELECT DISTINCT(testname) FROM benchmark.tabulate" | sed -e 's/testname//' | tr '[:upper:]' '[:lower:]'`
 
 # Get rid of the embedded newlines
 benchmarks=`echo ${benchmarks} | tr -d '\n'`
 
 echo -n "Processing data "
 for i in ${benchmarks}; do
-    rm -f  $i.data
-    touch  $i.data
+    rm -f  $i.*.data
     echo -n " $i..."
     runs=`mysql -u${user} -p${passwd} --local -e "SELECT DISTINCT(benchrun) FROM benchmark.tabulate WHERE testname='$i'" | sed -e 's/benchrun//'`
     for j in ${runs}; do
@@ -65,15 +64,40 @@ for i in ${benchmarks}; do
 	benchrun=`echo ${bdata} | cut -d ' ' -f 10`
 
 	# Do some filtering as some of the data is way out of range from a bad
-	# run
+	# benchmark run. This screws up accurate graphing.
 	if test x"$i" = x"eembc"; then
-	    if test `echo ${best} | sed -e 's:\.[0-9]*::'` -gt 20; then
-		echo "WARNING: ${best} is out of range!"
+	    # test runs that had problems produce bad data, so here we filter out
+	    # anything wildly out of range
+	    value="`echo ${best} | sed -e 's:\.[0-9]*::'`"
+	    if test ${value} -gt 20 -o ${value} -lt 0; then
+		echo "WARNING: ${best} is out of range for EEMBC!"
+		continue;
+	    fi
+	    # here we filter out other bad parsing data. sometimes if a field is
+	    # missing, things get out of order, and the target_gcc being wrong is
+	    # a good clue this data is bogus
+	    if test `echo ${target_gcc} | grep -c gcc` -eq 0; then
+		echo "WARNING: ${target_gcc} is invalid!"
+		continue;
+	    fi
+	fi
+	if test x"$i" = x"denbench"; then	
+	    value="`echo ${best} | sed -e 's:\.[0-9]*::'`"
+	    echo "FIXME: ${value}"
+	    if test ${value} -gt 20 -o ${value} -lt 9; then
+		echo "WARNING: ${best} is out of range for Denbench!"
 		continue;
 	    fi
 	fi
 	# Write the data line
-	echo "${date} ${target_gcc}-${build_machine} ${variant} ${min} ${max} ${best} ${span} ${mean} ${std} ${median}" >> $i.data
+	touch $i.${variant}.data
+	echo "${date} ${target_gcc} ${variant} ${min} ${max} ${best} ${span} ${mean} ${std} ${median}" >> $i.${variant}.data
     done
 done
 
+# Sort the data by version number
+for k in $i.*.data; do
+    mv -f $k /tmp/tmp.data
+    sort -V -k 2 /tmp/tmp.data > $k
+    rm /tmp/tmp.data
+done
