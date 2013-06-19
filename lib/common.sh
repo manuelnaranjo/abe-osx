@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# load al the global varibles
+# load all the global varibles
 . "$(dirname "$0")/lib/globals.sh" || exit 1
 . "$(dirname "$0")/lib/fetch.sh" || exit 1
 . "$(dirname "$0")/lib/configure.sh" || exit 1
@@ -8,6 +8,7 @@
 . "$(dirname "$0")/lib/checkout.sh" || exit 1
 . "$(dirname "$0")/lib/depend.sh" || exit 1
 . "$(dirname "$0")/lib/make.sh" || exit 1
+. "$(dirname "$0")/lib/merge.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
