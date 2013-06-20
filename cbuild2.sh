@@ -262,6 +262,10 @@ while test $# -gt 0; do
 	    merge_branch $2
 	    shift
 	    ;;
+	--merge-diff)
+	    merge_diff $2
+	    shift
+	    ;;
 	--clobber)
             clobber=yes
             ;;
