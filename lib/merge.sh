@@ -1,21 +1,6 @@
 #!/bin/sh
 
-error()
-{
-    echo "ERROR: $1"
-}
-
-warning()
-{
-    echo "WARNING: $1"
-}
-
-notice()
-{
-    echo "NOTE: $1"
-}
-
-# FIXME: this is a hack while in development
+# FIXME: this is a hack while in development. These need to be configurable
 trunk_top=/linaro/src/gnu/gcc/trunk
 merge_top=/linaro/src/linaro/gcc
 bzr_top=/linaro/src/linaro/gcc/gcc-linaro-merges
@@ -24,33 +9,37 @@ bzr_top=/linaro/src/linaro/gcc/gcc-linaro-merges
 merge_diff()
 {
     # cleanup leftover files
+    notice "Making a diff from merge-r$1"
     rm -f ${bzr_top}/merge-$1.diff.txt
-    # find  -name \*.merge-right.\* -o -name \*.merge-left.\* -o -name \*.working -o -name \*.rej -exec rm -f {} \;
     diff -ruNp -x '*.patch' -x '*.svn' -x '*~' -x '*.bzr' -x '*.rej' -x '*.orig' -x '*.edited' -x '*diff.txt' -x '*.log' -x 'x' -x '*merge-left*' -x '*merge-right*' -x "*.working" -x '*/.gitignore' 4.8-branch ${merge_top}/merge-r$1 > ${bzr_top}/merge-r$1.diff.txt
     
     # revert the bzr irce tree so we get a clean patch
-    bzr revert ${merge_top}/merge-r$1
+    notice "Reverting previous changes"
+    (cd ${bzr_top}/merge-r$1 && bzr revert)
 
-    patch --directory ${bzr_top}/merge-r$1 -p1 < ${bzr_top}/merge-r$1.diff.txt
+    notice "Patching ${bzr_top}/merge-r$1"
+    patch --force --directory ${bzr_top}/merge-r$1 -p1 < ${bzr_top}/merge-r$1.diff.txt
 
-    add="`grep '^A' ${merge_top}/merge-$1/merge.log | cut -d ' ' -f 5`"
+    add="`grep '^A' ${merge_top}/merge-r$1/merge.log | cut -d ' ' -f 5`"
     for i in ${add}; do
 	notice "Adding $i to ${merge_top}/merge-r$1"
-	cp ${merge_top}/merge-r$1/$i ${merge_top}/merge-r$1/$i
-	bzr add ${merge_top}/merge-r$1/$i
+	cp ${merge_top}/merge-r$1/$i ${bzr_top}/merge-r$1/$i
+	bzr add ${bzr_top}/merge-r$1/$i
     done
 }
 
 # $1 - The version number to merge
 merge_prep()
 {
-    if test ! -e $i-branch; then
-	svn checkout svn+ssh://${svn_id}@gcc.gnu.org/svn/gcc/branches/linaro/gcc-$i-branch $1-branch
-    fi
+    if test ! -e ${merge_top}/merge-r$1; then
+#	svn checkout svn+ssh://${svn_id}@gcc.gnu.org/svn/gcc/branches/linaro/gcc-$i-branch $1-branch
+#    fi
 
     #  svn checkout svn+ssh://${gccsvn_id}@gcc.gnu.org/svn/gcc/branches/gcc-$1-branch $1-branch
-
-    cp -r 4.8-branch merge-r$i
+	notice "Cloning source tree into branch merge-r$1"
+	cp -r ${merge_top}/4.8-branch ${merge_top}/merge-r$1
+    fi
+   
 #    bzr branch lp:gcc-linaro/4.8 merge-$1
 }
 
@@ -59,15 +48,10 @@ merge_prep()
 #
 merge_branch()
 {
-    notice "Merging revision from trunk: $1"
+    # make sure the branch exists
+    merge_prep $1
 
-#    if test `basename merge-r$1` != "merge-r$1"; then	
-    # 	if test ! -e merge-$1; then
-    # 	    notice "Cloning source tree for merge-$1"
-    # 	    cp -r 4.8-branch merge-$1
-     	cd merge-r$1
-    # 	fi
-#    fi
+    notice "Merging revision from trunk: $1"
 
     if test ! -e ${merge_top}/merge-r$1/merge.log; then
 	#conflicts="`svn merge --accept postpone -c $1 /linaro/src/gnu/gcc/trunk`"
@@ -93,30 +77,33 @@ merge_branch()
         # reset the list
 	problems=""
 	
-        # Delete the old 
+        # Delete the old files
+	rm -f ${merge_top}/merge-r$1/problems.txt
 	rm -f ${merge_top}/merge-r$1/merge.patch
-	touch ${merge_top}/merge-r$1/merge.patch
-	    # We don't want to edit the ChangeLog, merges go in ChangeLog.linaro.
-	    # Start by making a new ChangeLog entry for this merge, and append
-	    # the entry from trunk for the commit, followed by the rest of the
-	    # ChangeLog.linaro file.
+	# We don't want to edit the ChangeLog, merges go in ChangeLog.linaro.
+	# Start by making a new ChangeLog entry for this merge, and append
+	# the entry from trunk for the commit, followed by the rest of the
+	 # ChangeLog.linaro file.
 	if test `echo $i | grep -c ChangeLog` -eq 1; then
-	    echo "${year}-${month}-${day}  ${fullname}  <${email}>" > ${merge_top}/merge-$1/header.patch
+	    echo "${year}-${month}-${day}  ${fullname}  <${email}>" > ${merge_top}/merge-r$1/header.patch
 	    echo "" >> ${merge_top}/merge-r$1/header.patch
 	    # some of these echoes have embedded TABs
-	    echo "	Backport from trunk r$1" >> ${merge_top}/merge-r$1/header.patch
+	    echo "	Backport from trunk $1" >> ${merge_top}/merge-r$1/header.patch
 	    
 	    # We can't do a normal patch operation, as it always has problems. So
 	    # munge the raw patch to the text equivalent, where we manually add
 	    # it to the top of the ChangeLog.linaro file.
 	    if test ! -e ${merge_top}/merge-r$1/diff.txt; then
-		svn diff -c $1 ${trunk_top}/trunk/$i 2>&1 > ${merge_top}/merge-r$1/diff.txt
+		svn diff -c $1 ${trunk_top}/$i 2>&1 > ${merge_top}/merge-r$1/diff.txt
 	    fi
-	    grep "^\+" ${merge_top}/merge-$1/diff.txt | sed -e 's:^\+::' | grep -v "revision" 2>&1 > ${merge_top}/merge-$1/body.patch
+	    grep "^\+" ${merge_top}/merge-r$1/diff.txt | sed -e 's:^\+::' | grep -v "revision" 2>&1 > ${merge_top}/merge-r$1/body.patch
 	    # So this mess is because if the last commit is by he same person as
 	    # the previous one, it puts it at the end of the mergke patch, instead
 	    # of under the backport
 	    author="`grep -n ".*<.*@.*>" ${merge_top}/merge-r$1/body.patch | cut -d ':' -f 1 | tail -1`"
+	    if test x"${author}" = x; then
+		author=0
+	    fi
 	    if test ${author} -gt 1; then
 		author="`tail -2 ${merge_top}/merge-r$1/body.patch`"
 		lines="`wc -l ${merge_top}/merge-r$1/body.patch | cut -d ' ' -f 1`"
@@ -133,13 +120,15 @@ merge_branch()
 	    mv ${merge_top}/merge-r$1/$i.linaro ${merge_top}/merge-r$1/$i.linaro.orig
 	    cat ${merge_top}/merge-r$1/merge.patch > ${merge_top}/merge-r$1/$i.linaro
 	    cat ${merge_top}/merge-r$1/$i.linaro.orig >> ${merge_top}/merge-r$1/$i.linaro
-	    find ${merge_top}/merge-r$1 -name \*.merge-right.\* -o -name \*.merge-left.\* -o -name \*.working -o -name \*.rej -o -name \*.orig -exec rm -f {} \;
+	    # cleanup generated files
+	    rm -f `find ${merge_top}/merge-r$1 -name \*.merge-right.\* -o -name \*.merge-left.\* -o -name \*.working -o -name \*.rej -o -name \*.orig`
 	    rm -f ${merge_top}/merge-r$1/*.patch ${merge_top}/merge-r$1/diff.txt
 	    # We can now revert the ChangeLog that was conflicted, as the entry
 	    # is in the proper ChangeLong.linaro file.
 	    (cd  ${merge_top}/merge-r$1 && svn revert $i)
 	else
 	    problems=" ${problems} $i"
+	    echo "${merge_top}/merge-r$1/$i" >> ${merge_top}/merge-r$1/problems.txt
 	fi
     done
     
@@ -147,13 +136,19 @@ merge_branch()
 	error "Unresolved conflicts: ${problems}"
     else
 	notice "No conflicts left to resolve"
-    fi
-    
-#    if test `basename merge-$1` = "merge-$1"; then
-#	cd ..
-#    fi
+    fi    
 }
 
+# $1 - the revision to commit
+merge_bzr_commit()
+{
+    notice "Commiting changes for revision $1"
+    (cd ${bzr_top}/merge-r$1 && bzr commit -m "Backport from trunk r$1")
+
+    notice "Pushing changes for revision $1 to lunchpad"
+    (cd ${bzr_top}/merge-r$1 && bzr push lp:~${launchpad_id}/gcc-linaro/4.8-merge-$1)
+}
+    
 # $1 - revision in trunk
 merge_patch()
 {
