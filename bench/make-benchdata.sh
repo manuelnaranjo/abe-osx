@@ -83,15 +83,33 @@ for i in ${benchmarks}; do
 	fi
 	if test x"$i" = x"denbench"; then	
 	    value="`echo ${best} | sed -e 's:\.[0-9]*::'`"
-	    echo "FIXME: ${value}"
+	    #echo "FIXME: Denbench ${value}"
 	    if test ${value} -gt 20 -o ${value} -lt 9; then
-		echo "WARNING: ${best} is out of range for Denbench!"
+		echo "WARNING: ${value} is out of range for Denbench!"
+		continue;
+	    fi
+	fi
+	if test x"$i" = x"spec2000"; then	
+	    value="`echo ${best} | sed -e 's:\.[0-9]*::'`"
+	    if test ${value} -lt 300; then
+		echo "WARNING: ${value} is out of range for Spec2000!"
+		continue;
+	    fi
+	fi
+	if test x"$i" = x"coremark"; then	
+	    value="`echo ${best} | sed -e 's:\.[0-9]*::'`"
+	    if test ${value} -gt 2800; then
+		echo "WARNING: ${value} is out of range for Coremark!"
 		continue;
 	    fi
 	fi
 	# Write the data line
-	touch $i.${variant}.data
-	echo "${date} ${target_gcc} ${variant} ${min} ${max} ${best} ${span} ${mean} ${std} ${median}" >> $i.${variant}.data
+	touch $i.${build_machine}.data
+	# Don't add any gcc-binary results
+	if test `echo ${target_gcc} | grep -c 'gcc-binary'` -eq 0; then
+	    gcc_version="`echo ${target_gcc} | sed -e 's:gcc-linaro-::'`"
+	    echo "${date} ${gcc_version} ${variant} ${min} ${max} ${best} ${span} ${mean} ${std} ${median} ${build_machine}" >> $i.${build_machine}.data
+	fi
     done
 done
 
