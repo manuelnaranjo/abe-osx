@@ -14,11 +14,20 @@ configure_build()
 	builddir="${cbuild_top}/${hostname}/${target}/${node}"
 	srcdir="${local_snapshots}/${node}/libc"
     else
-	builddir="${cbuild_top}/${hostname}/${target}/${node}"
-	srcdir="${local_snapshots}/${node}"
+	if test `echo $1 | grep -c trunk` -gt 0; then
+	    builddir="${cbuild_top}/${hostname}/${target}/${node}/trunk"
+	    srcdir="${local_snapshots}/${node}/trunk"
+	else
+	    builddir="${cbuild_top}/${hostname}/${target}/${node}"
+	    srcdir="${local_snapshots}/${node}"
+	fi
     fi
     tool="`echo $1 | sed -e 's:-[0-9].*::'`"
     tool="`basename ${tool}`"
+    if test x"${tool}" = x"trunk"; then
+	tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
+	tool="`basename ${tool}`"
+    fi
 
     if test ! -d ${builddir}; then
 	notice "${builddir} doesn't exist, so creating it"
@@ -27,6 +36,9 @@ configure_build()
 
     if test ! -f ${srcdir}/configure; then
 	warning "No configure script in ${srcdir}!"
+	if test -f ${srcdir}/autogen.sh; then
+	    (cd ${srcdir} && ./autogen.sh)
+	fi
 	return 0
     fi
 
@@ -75,6 +87,9 @@ configure_build()
 	    ;;
 	isl*)
 	    tool=isl
+	    ;;
+	llvm*)
+	    tool=llvm
 	    ;;
 	ppl*)
 	    tool=ppl
