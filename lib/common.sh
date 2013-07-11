@@ -134,16 +134,19 @@ get_URL()
 {
     srcs="`dirname "$0"`/config/sources.conf"
     if test -e ${srcs}; then
-	if test "`grep -c $1 ${srcs}`" -gt 1; then
-	    error "Need unique component and version to get URL!"
+	if test "`grep -c "^$1" ${srcs}`" -gt 1; then
+	    echo "ERROR: Need unique component and version to get URL!"
+	    echo ""
+	    echo "Choose one from this list"
+	    list_URL $1
 	    return 1
 	fi
-	out="`grep $1 ${srcs}`"
+	out="`grep "^$1" ${srcs}`"
 	out="`echo ${out} | cut -d ' ' -f 2`"
 	echo ${out}
 	return 0
     else
-	error "No config file for sources!"
+	error "No config file for sources! Choose one from this list"
 	return 1
     fi
 
@@ -156,7 +159,6 @@ list_URL()
 {
     srcs="`dirname "$0"`/config/sources.conf"
     if test -e ${srcs}; then
-	echo ""
 	notice "Supported sources for $1 are:"
 	cat ${srcs} | sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' | grep $1
 	return 0
