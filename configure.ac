@@ -15,8 +15,11 @@ dnl AC_CANONICAL_HOST
 dnl --------------------------------------------------------
 dnl Figure out development tool stuff
 dnl --------------------------------------------------------
-AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_CXX
+if test x"${CC}" = x -a x"${CXX}" = x; then
+   AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run cbuild!])
+fi
 AC_PROG_INSTALL
 
 AC_PATH_PROG(WGET, wget)
@@ -27,7 +30,11 @@ AC_PATH_PROG(SCP, scp)
 AC_SUBST(SCP)
 AC_PATH_PROG(RSYNC, rsync)
 AC_SUBST(RSYNC)
-AC_PATH_PROG(GITBZR, git-bzr)
+if test x"${RSYNC}" = x; then
+   AC_MSG_ERROR([You need 'rsync' to fully run cbuild!])
+fi
+
+dnl AC_PATH_PROG(GITBZR, git-bzr)
 AC_PATH_PROG(BASH, bash)
 AC_SUBST(BASH)
 
@@ -35,15 +42,43 @@ if test x"${BASH}" = x; then
    AC_MSG_ERROR([You need Bash to run configure properly!])
 fi
 
+AC_PATH_PROG(FLEX, flex)
+if test x"${FLEX}" = x; then
+   AC_MSG_ERROR([You need 'flex' to run configure properly!])
+fi
+
+AC_PATH_PROG(BISON, bison)
+if test x"${BISON}" = x; then
+   AC_MSG_ERROR([You need 'bison' to run configure properly!])
+fi
+
+AC_PATH_PROG(AUTOGEN, autogen)
+if test x"${AUTOGEN}" = x; then
+   AC_MSG_ERROR([You need 'autogen' to run configure properly!])
+fi
+
+AC_PATH_PROG(LYNX, lynx)
+if test x"${LYNX}" = x; then
+   AC_MSG_WARN([You need 'lsync' to fully run cbuild!])
+fi
+
+AC_PATH_PROG(WGET, wget)
+if test x"${WGET}" = x; then
+   AC_MSG_ERROR([You need 'wget' to run configure properly!])
+fi
+
+AC_CHECK_LIB(libcurses, beep)
+
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
-packages="git-svn  bzr-fastimport svn-all-fast-exp lynx wget rsync flex bison autogen gcc g++ libncurses5-dev texinfo"
+#packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
+packages="svn-all-fast-exp texinfo"
 dpkg="`which dpkg`"
 result=`echo ${dpkg} 2>&1 | grep -c found`
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib lib32gmp-dev"
+    packages="${packages} gcc-multilib g++-multilib lib32gmp-dev"
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
 	exists="`dpkg -l | grep -c $i`"
