@@ -8,25 +8,15 @@ configure_build()
     # If a target architecture isn't specified, then it's a native build
     if test x"${target}" = x; then
 	target=${build}
+	host=${build}
     fi
-    node="`normalize_path $1`"
-    if test `echo ${node} | grep -c eglibc` -gt 0; then
-	builddir="${cbuild_top}/${hostname}/${target}/${node}"
-	srcdir="${local_snapshots}/${node}/libc"
+
+    builddir=`get_builddir $1`    
+    dir="`normalize_path $1`"
+    if test `echo $1 | grep -c trunk` -gt 0; then
+	srcdir="${local_snapshots}/${dir}/trunk"
     else
-	if test `echo $1 | grep -c trunk` -gt 0; then
-	    builddir="${cbuild_top}/${hostname}/${target}/${node}/trunk"
-	    srcdir="${local_snapshots}/${node}/trunk"
-	else
-	    builddir="${cbuild_top}/${hostname}/${target}/${node}"
-	    srcdir="${local_snapshots}/${node}"
-	fi
-    fi
-    tool="`echo $1 | sed -e 's:-[0-9].*::'`"
-    tool="`basename ${tool}`"
-    if test x"${tool}" = x"trunk"; then
-	tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
-	tool="`basename ${tool}`"
+	srcdir="${local_snapshots}/${dir}"
     fi
 
     if test ! -d ${builddir}; then
@@ -34,6 +24,8 @@ configure_build()
 	mkdir -p ${builddir}
     fi
 
+    # not all packages commit their configure script, so if it has autogen,
+    # then run that to create the configure script.
     if test ! -f ${srcdir}/configure; then
 	warning "No configure script in ${srcdir}!"
 	if test -f ${srcdir}/autogen.sh; then
@@ -42,71 +34,9 @@ configure_build()
 	return 0
     fi
 
-    case ${tool} in
-	cortex-strings*)
-	    tool=cortex
-	    ;;
-	eglibc*)
-	    tool=eglibc
-	    ;;
-	eglibc-ports)
-	    tool=eglibc
-	    ;;
-	binutils*)
-	    tool=binutils
-	    ;;
-	newlib*)
-	    tool=newlib
-	    ;;
-	gdb-linaro*)
-	    tool=gdb
-	    ;;
-	gdb*)
-	    tool=gdb
-	    ;;
-	gcc*)
-	    tool=gcc
-	    ;;
-	gcc-linaro*)
-	    tool=gcc
-	    ;;
-	qemu*)
-	    tool=qemu
-	    ;;
-	qemu-linaro*)
-	    tool=qemu
-	    ;;
-	meta-linaro*)
-	    tool=meta
-	    ;;
-	libffi*)
-	    tool=libffi
-	    ;;
-	gmp*)
-	    tool=gmp
-	    ;;
-	isl*)
-	    tool=isl
-	    ;;
-	llvm*)
-	    tool=llvm
-	    ;;
-	ppl*)
-	    tool=ppl
-	    ;;
-	cloog*)
-	    tool=cloog
-	    ;;
-	mpfr*)
-	    tool=mpfr
-	    ;;
-	mpc*)
-	    tool=mpc
-	    ;;
-	*)
-	    warning "Coudn't parse the toolchain component!"
-	    ;;
-    esac
+    # Extract the toolchain component name, stripping off the linaro
+    # part if it exists as it's not used for the config file name.
+    tool="`get_toolname $1 | sed -e 's:-linaro::'`"
 
     # Load the default config file for this component if it exists.
     if test -e "$(dirname "$0")/config/${tool}.conf"; then
@@ -142,8 +72,12 @@ configure_build()
 	opts="${opts} `echo $* | cut -d ' ' -f2-10`"
     fi
  
-    if test x"${tool}" != x"qemu"; then
+    if test x"${tool}" = x"gcc"; then
 	opts="${opts} --build=${build} --host=${build} --target=${target} ${opts} --disable-shared --enable-static"
+    else
+	if test x"${tool}" != x"glibc"; then
+	    opts="${opts} --build=${build} --host=${target} ${opts}"
+	fi
     fi
     if test -e ${builddir}/Makefile; then
 	warning "${buildir} already configured!"
