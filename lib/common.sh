@@ -4,19 +4,23 @@
 # library directory. If running the cbuild2.sh testsuite, we assume we're
 # running in the top level source directory.
 if test `dirname "$0"` != "testsuite"; then
-    libdir=`dirname "$0"`
+    topdir=`dirname "$0"`
+    if test "${libdir}" = "."; then
+	cbuild="`which cbuild2.sh`"
+	topdir="`dirname ${cbuild}`"
+    fi
 else
     libdir=.
 fi
 # source all the library functions
-. "${libdir}/lib/globals.sh" || exit 1
-. "${libdir}/lib/fetch.sh" || exit 1
-. "${libdir}/lib/configure.sh" || exit 1
-. "${libdir}/lib/release.sh" || exit 1
-. "${libdir}/lib/checkout.sh" || exit 1
-. "${libdir}/lib/depend.sh" || exit 1
-. "${libdir}/lib/make.sh" || exit 1
-. "${libdir}/lib/merge.sh" || exit 1
+. "${topdir}/lib/globals.sh" || exit 1
+. "${topdir}/lib/fetch.sh" || exit 1
+. "${topdir}/lib/configure.sh" || exit 1
+. "${topdir}/lib/release.sh" || exit 1
+. "${topdir}/lib/checkout.sh" || exit 1
+. "${topdir}/lib/depend.sh" || exit 1
+. "${topdir}/lib/make.sh" || exit 1
+. "${topdir}/lib/merge.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -104,18 +108,18 @@ notice()
 # unique in the source.conf file.
 get_URL()
 {
-    srcs="`dirname "$0"`/config/sources.conf"
+    srcs="${topdir}/config/sources.conf"
     if test -e ${srcs}; then
 	if test "`grep -c "^$1" ${srcs}`" -gt 1; then
 	    echo "ERROR: Need unique component and version to get URL!"
 	    echo ""
 	    echo "Choose one from this list"
-	    list_URL $1
+#	    list_URL $1
 	    return 1
 	fi
-	out="`grep "^$1" ${srcs}`"
-	out="`echo ${out} | cut -d ' ' -f 2`"
-	echo ${out}
+	url="`grep "^$1" ${srcs}`"
+	url="`echo ${out} | cut -d ' ' -f 2`"
+	echo ${url}
 	return 0
     else
 	error "No config file for sources! Choose one from this list"
@@ -229,20 +233,106 @@ get_toolname()
 
 # This look at a remote repository for  source tarball
 #
-# $1 - The file to look for, which needs to be unique
+# $1 - The file to look for, which should be unique or we get too many results
 find_snapshot()
 {
-    snapshots="`lynx -dump ${remote_snapshots} | egrep -v "\.asc" | cut -d ']' -f 2 | grep "$1" | sed -e 's@.*$1@@' -e 's: .*::'`"
-    if test x"${snapshots}" = x; then
+
+    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    if test x"${snapshot}" != x; then
+	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
+	    error "Too many results for $1!"
+	    return 1
+	fi
+	echo "${snapshot}"
+	return 0
+    fi
+
+    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+#    snapshot="`lynx -dump ${remote_snapshots} | egrep -v "\.asc" | cut -d ']' -f 2 | grep "$1" | sed -e 's@.*$1@@' -e 's: .*::'`"
+    if test x"${snapshot}" = x; then
 	error "No results for $1!"
 	return 1
     fi
-    if test `echo "${snapshots}" | grep -c $1` -gt 1; then
+    if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	error "Too many results for $1!"
 	return 1
     fi
 
-    echo ${snapshots}
+    echo ${snapshot}
+    return 0
+}
+
+# Get the full path or URL to checkout or download sources of a toolchain
+# component.
+#
+# $1 - A toolchain component to search for, which should be something like
+#      binutils, gcc, glibc, newlib, etc...
+get_source()
+{
+    # If a full URL isn't passed as an argment, assume we want a
+    # tarball snapshot
+    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr"` -eq 0; then
+	find_snapshot $1
+	# got an error
+	if test $? -gt 0; then
+	    if test x"${interactive}" = x"yes"; then
+	     	notice "Pick a unique snapshot name from this list: "
+		for i in ${snapshot}; do
+		    echo "	$i"
+		done
+	     	read answer
+	     	url="`find_snapshot ${answer}`"
+		return $?
+	    else
+		if test x"${snapshot}" != x; then
+		    # If there is a config file for this toolchain component,
+		    # see if it has a latest version set. If so, we use that.
+		    if test -e ${topdir}/config/$1.conf; then
+			. ${topdir}/config/$1.conf
+			if test x"${latest}"  != x; then
+			    find_snapshot ${latest}
+			    return $?
+			fi
+		    fi
+		    notice "Pick a unique snapshot name from this list and try again: "
+		    for i in ${snapshot}; do
+			echo "	$i"
+		    done
+		    return 1
+		fi
+	    fi
+	fi
+	url=${snapshot}
+	return 0
+    else
+	url=$1
+	return 0
+    fi
+    
+    # If a full URL isn't passed as an argment, get one for the
+    # toolchain component from the sources.conf file.
+    # If passed a full URL, use that to checkout the sources
+    if test x"${url}" = x; then
+	url="`get_URL $1`"
+	if test $? -gt 0; then
+	    if test x"${interactive}" = x"yes"; then
+	     	notice "Pick a unique URL from this list: "
+		list_URL $3
+		for i in ${url}; do
+		    echo "\t$i"
+		done
+	     	read answer
+		url="`get_URL ${answer}`"
+	    fi
+	else
+	    notice "Pick a unique URL from this list: "
+	    for i in ${url}; do
+		echo "\t$i"
+	    done
+	fi
+    fi
+
+    echo ${url}
     return 0
 }
 
