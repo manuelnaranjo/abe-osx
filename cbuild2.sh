@@ -1,7 +1,10 @@
 #!/bin/sh
 
 # load commonly used functions
-. "$(dirname "$0")/lib/common.sh" || exit 1
+cbuild="`which $0`"
+topdir="`dirname ${cbuild}`"
+
+. "${topdir}/lib/common.sh" || exit 1
 
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
@@ -31,26 +34,25 @@ get_list()
 {
     echo "Get version list for $1..."
 
-    url="http://cbuild.validation.linaro.org/snapshots"
     # http://cbuild.validation.linaro.org/snapshots
     case $1 in
 	base|b*)
 	    #base="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/base/*.xz | sed -e 's:^.*/::'`"
-	    base="`lynx -dump ${url}/base | grep "${url}/base" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
+	    base="`lynx -dump ${remote_snapshots}/base | grep "${remote_snapshots}/base" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
 	    echo "${base}"
 	    ;;
 	snapshots|s*)
 	    #snapshots="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/*.{xz,bz2} | sed -e 's:^.*/::'`"
-	    snapshots="`lynx -dump ${url} | grep "${url}" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    snapshots="`lynx -dump ${remote_snapshots} | grep "${remote_snapshots}" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
 	    echo "${snapshots}"
 	    ;;
 	infrastructure|i*)
-	    infrastructure="`lynx -dump ${url}/infrastructure | grep "${url}/infrastructure" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    infrastructure="`lynx -dump ${remote_snapshots}/infrastructure | grep "${remote_snapshots}/infrastructure" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
 	    echo "${infrastructure}"
 	    ;;
 	prebuilt|p*)
 	    #prebuilt="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/prebuilt/*.{xz,bz2} | sed -e 's:^.*/::'`"
-	    #prebuilt="`lynx -dump ${url}/prebuilt | `"
+	    #prebuilt="`lynx -dump ${remote_snapshots}/prebuilt | `"
 	    echo "${prebuilt}"
 	    ;;
     esac
@@ -117,7 +119,6 @@ usage()
     echo "  --target (architecture for the target machine, default native)"
     echo "  --snapshots XXX (URL of remote host or local directory)"
     echo "  --libc {newlib,eglibc,glibc} (C library to use)"
-#        echo "  --list {gcc,binutils,libc} (list possible values for component versions)"
     echo "  --list {base,prebuilt,snapshots} (list possible values for component versions)"
     echo "  --set {gcc,binutils,libc,latest}=XXX (change config file setting)"
     echo "  --binutils (binutils version to use, default $PATH)"
@@ -138,7 +139,8 @@ usage()
     exit 1
 }
 
-# get_build_machine_info
+export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
+#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/${hostname}/${build}/depends/lib"
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
@@ -175,6 +177,12 @@ while test $# -gt 0; do
             set_gcc $2
 	    shift
             ;;
+	--interactive|-i*)
+	    interactive=yes
+	    ;;
+	--force|-f*)
+	    force=yes
+	    ;;
 	--parallel|p*)
             make_flags="-j ${cpus}"
             ;;
@@ -210,48 +218,63 @@ while test $# -gt 0; do
             dump $2
 	    shift
             ;;
+	# Execute only one step of the entire process. This is primarily
+	# used for debugging.
 	--dostep)
+	    # Get a URL for the source code for this toolchain component. The
+	    # URL can be either for a source tarball, or a checkout via svn, bzr,
+	    # or git
+	    get_source $3
             case $2 in
-		fetch|f*)
-		    fetch $3   
-		    ;;
-		extract|e*)
-		    extract $3
-		    ;;
+		# this executes the entire process, but ignores any of
+		# the dependencies in the config file
 		build|b*)
-		    build $3
+		    build ${url}
 		    ;;
+		# Download a tarball from a remote host
+		fetch|f*)
+		    fetch ${url} 
+		    ;;
+		# Extract the tarball
+		extract|e*)
+		    extract ${url}
+		    ;;
+		# Commit changes
 		commit|com*)
-		    commit $3 $4
+		    commit ${url} $4
 		    shift
 		    ;;
+		# Configure the extracted source tree
 		configure|con*)
-		    configure_build $3
+		    configure_build ${url}
 		    ;;
+		# Checkout sources from a repository
 		checkout|ch*)
-		    checkout $3
+		    checkout ${url}
 		    ;;
 		depend|d*)
-		    infrastructure $3
+		    infrastructure ${url}
 		    ;;
 		install|i*)
-		    make_install $3
+		    make_install ${url}
 		    ;;
 		make|ma*)
-		    make_all $3
+		    make_all ${url}
 		    ;;
+		# Push commits up to the repository, not used for svn as
+		# svn pushes changes when commiting
 		push|p*)
-		    push $3
+		    push ${url}
 		    ;;
 		release|r*)
-		    release $3
+		    release ${url}
 		    ;;
 		tag|ta**)
-		    tag $3 $4
+		    tag ${url} $4
 		    shift
 		    ;;
 		test|t*)
-		    make_check $3
+		    make_check ${url}
 		    ;;
 		*)
 		    ;;
