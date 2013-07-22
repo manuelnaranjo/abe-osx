@@ -4,11 +4,64 @@
 # Build the dependencies needed to build the toolchain
 #
 
-depend()
+# This takes a toolchain component and returns the fuly qualified package names to
+# this toolchain component requires to configure and build. These other components
+# are limited to packages built by Linaro.
+#
+# $1 - find the toolchain components to build to satisfiy necessary dependencies.
+dependencies()
 {
-    warning "unimplemented"
+    if test -e ${topdir}/config/$1.conf; then
+	. ${topdir}/config/$1.conf
+	if test x"${depends}"  != x; then
+	    for i in ${depends}; do
+		get_source $i
+		#  didn't find component
+		if test $? -gt 1; then
+		    warning "Couldn't find $1"
+		else
+		    components="${components} ${snapshot}"
+		fi
+	    done
+	    return $?
+	fi
+    fi
 
-    echo "FIXME depend(): ${depends}"
+    notice "${components}"
+    return 1
+}
+
+# $1 - the toolchain component to see if it's already installed
+installed()
+{
+    if test -e ${topdir}/config/$1.conf; then
+	. ${topdir}/config/$1.conf
+	if test x"${installs}" != x; then
+	    # It the installed file is a library, then we have to look for both
+	    # static and shared versions.
+	    if test "`echo ${installs} | grep -c '^lib'`" -gt 0; then
+		if test -e ${local_builds}/lib/${installs}so -o -e ${local_builds}/lib/${installs}a; then
+		    notice "$1 already installed"
+		    return 0
+		fi
+	    else
+		if test -e ${local_builds}/bin/${installs}; then
+		    notice "$1 already installed"
+		    return 0
+		else
+		    warning "$1 not installed."
+		    return 1
+		fi
+	    fi
+	else
+	    warning "No install dependency specified"
+	    return 1
+	fi
+	return 0
+    fi
+    
+    error "Couldn't find config file for $1!"
+    return 1
 }
 
 # These are the latest copies of the infrastructure files required to
