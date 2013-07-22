@@ -1,1 +1,203 @@
 This is a bourne shell rewrite of the existing cbuild system as used by Linaro.
+
+Specifying the source works like this:
+-------------------------------------
+It's possible to specify a full tarball name, minus the compression
+part, which will be found dynamically. If the word 'tar' appears in
+the suppplied name, it's only looked for on the remote directory. If
+the name is a URL for bzr, sv, http, or git, the the source are
+instead checked out from a remote repository instead with the
+appropriate source code control system.
+
+It's also possible to specify an 'alias', ie ... 'gcc-4.8' instead. In
+this case, the remote snapshot directory is checked first. If the name
+is not unique, but matches are found, and error is generated. If the
+name isn't found at all, then a URL for the source repository is
+extracted from the sources.conf file, and the code is checkout out.
+
+
+Triplet	Further Config TSC Publish Native/Cross Benchmark
+-----------------------------  Y N Native Y
+x86_64-none-linux-gnu  	  As Ubuntu    Y N Native Y
+arm-none-linux-gnueabi 	  As Ubuntu    N Y Native Y
+arm-none-linux-gnueabihf  As Ubuntu    Y Y Native Y
+aarch64-none-linux-gnu 	  As Ubuntu    Y Y Both*  Y
+aarch64-none-elf 	  With newlib  Y Y Both*  Y
+arm-none-linux-gnueabi 	  ARMv5        N Y Native N
+arm-none-linux-gnueabihf  ARMv6+VFPv2  N Y Native N
+arm-none-linux-gnueabihf  Cortex-A15   N Y Cross  Y
+armeb-none-linux-gnueabihf As Ubuntu   N Y Cross  Y
+aarch64_be-none-elf 	  With newlib  N Y Cross   Y
+aarch64_be-none-linux-gnu As Ubuntu    N Y Cross   Y
+
+Toolchain Components
+ * gcc (gcc, g++, objc, fortran)
+ * gas
+ * ld (gold)
+ * libc (newlib,eglibc,glibc)
+ * dependant libs (gmp, mpc, mpfr)
+
+Build with stock Ubuntu toolchains
+ * Linaro GCC Maintenance (currently Linaro GCC 4.7)
+ * FSF GCC Previous (currently FSF GCC 4.7)
+ * FSF GCC Current (currently FSF GCC 4.8)
+
+Build with trunk/master
+ * Linaro GCC Development (currently Linaro GCC 4.8)
+ * FSF GCC Trunk (currently FSF GCC 4.9)
+
+Variables
+ * build machine toolchain versions of all components (gcc, gas, ld, libc)
+ * configure options
+
+Features:
+---------
+ * Build with downloaded binaries or build them all locally
+ * Has default configuration for all components
+ * All info recorded into an SQL database
+ * Ability to mix & match all toolchain components
+ * Test locally or remotely
+ * Queue jobs for LAVA
+ * Lists possible versions and components for build
+
+CREATE TABLE `testruns` (
+  `testrun` int(20) NOT NULL,
+  `date` datetime NOT NULL,
+  `tool` varchar(72) NOT NULL,
+  `version` varchar(72) NOT NULL,
+  `branch` varchar(72) NOT NULL,
+  `status` enum('IDLE','RUNNING','DONE') NOT NULL,
+  `target_arch` varchar(72) NOT NULL,
+  `build_arch` varchar(72) NOT NULL,
+  `gcc_version` varchar(72) NOT NULL,
+  `binutils_version` varchar(72) NOT NULL,
+  `libc_version` varchar(72) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+So each testrun needs an input file of some kind that specifies which
+components to use, the target, and the host. 'host' and 'target' could
+both be 'local'.
+
+
+cbuild2 command line arguments:
+-------------------------------
+ * --build (architecture for the build machine, default native)
+ * --target (architecture for the target machine, default native)
+ * --snapshots XXX (URL of remote host or local directory)
+ * --libc {newlib,eglibc,glibc} (C library to use)
+ * --list {gcc,binutils,libc} (list possible values for component versions)
+ * --set {gcc,binutils,libc,latest}=XXX (change config file setting)
+ * --binutils (binutils version to use, default $PATH)
+ * --gcc (gcc version to use, default $PATH)
+ * --config XXX (alternate config file)
+ * --clean (clean a previous build, default is to start where it left off)
+ * --dispatch (run on LAVA build farm, probably remote)
+ * --sysroot XXX (specify path to alternate sysroot)
+
+
+General ideas
+-------------
+Use a shell script as config file, ala *.conf and set global
+variables or custom functions. A good naming convention to avoid
+collisions is important. It should be able to be download from a
+remote host. 
+
+Rather than Makefiles, it should use bourne shell scripts for more
+functionality. Both Android and Chromium use this technique.
+
+Each project that needs to be built should have a file that lists it's
+major build time dependancies. There should be defaults for all
+targets, but values can be overridden with local config files. The
+config data could also potentially live in a database. The config data
+is recorded into the database for each build and test run.
+ 
+Analysis
+--------
+
+The main goal is to have the appropriate data accessible to support
+charting it in various ways to assist in better understanding of the
+quality of each toolchain component. This will assist developers in
+determining if their changes improve or degrade the component's
+quality. This will also allow others to get an overview of each
+component's quality, which will support product releases and
+management planning.
+
+ * Plot a test run of a specific version of a component across all
+   supported platforms
+ * Plot a test case of a component across all supported platforms
+ * Plot a test case of a component across a list of versions
+ * Plot a component's PASS percentage across all supported platforms
+ * Plot a component's PASS percentage across all supported platforms
+   and several versions.
+ * Plot a component's FAIL percentage across all supported platforms
+ * Plot a component's FAIL percentage across all supported platforms
+   and several versions.
+ * Plot all test states as a percentage of total test results
+ * Plot all test states of the actual totals for each
+ * 
+
+
+CREATE TABLE `benchmarks` (
+  `date` datetime NOT NULL,
+  `benchmark` varchar(72) NOT NULL,
+  `result` time NOT NULL,
+  `version` varchar(72) NOT NULL,
+  `status` enum('IDLE','RUNNING','DONE') NOT NULL,
+  `target_arch` varchar(72) NOT NULL,
+  `build_arch` varchar(72) NOT NULL,
+  `gcc_version` varchar(72) NOT NULL,
+  `binutils_version` varchar(72) NOT NULL,
+  `libc_version` varchar(72) NOT NULL,
+  `enabled_cores` INT(20) NOT NULL,
+  `enabled_chips` INT(20) NOT NULL,
+  `cores_per_chip` INT(20) NOT NULL,
+  `threads_per_core` INT(20) NOT NULL,
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CoreMark
+ * Compiler and version
+ * Operating Speed in Mhz
+ * CoreMark/Mhz
+ * CoreMark
+ * CoreMark/Core
+ * Parallel Execution
+ * EEMBC
+
+EEMBC
+ * TODO
+
+Spec CPU 2000
+ * CINT
+  * Benchmark
+  * Reference Time
+  * Base Runtime
+  * Base Ratio
+  * Runtime
+  * Ratio
+ * CFP
+  * Benchmark
+  * Reference Time
+  * Base Runtime
+  * Base Ratio
+  * Runtime
+  * Ratio
+
+Spec CPU 2006
+ * Benchmark
+ * Base Seconds
+ * Base Ratio
+ * Peak Seconds
+ * Peak Ratio
+
+
+
+--without-ppl
+--without-cloog
+--disable-libssp
+--disable-libmudflap
+--disable-libgomp
+--disable-tls
+--disable-libitm
+--disable-nls
+--disable-libquadmath
+--disable-plugin
