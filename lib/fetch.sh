@@ -26,7 +26,11 @@ fetch()
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
     md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
-    if test x"{$file}" != x; then
+    if test x"${md5file}" = x; then
+	error "${file} not in md5sum!"
+	return 1
+    fi
+    if test x"${file}" != x; then
 	getfile="${md5file}"
     else
 	getfile=${file}.tar.xz
@@ -139,8 +143,10 @@ extract()
 	dir=""
     fi
 
+    file="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    
     # Figure out how to decompress a tarball
-    case "$1" in
+    case "${file}" in
 	*.xz)
 	    echo "XZ File"
 	    extractor="xz -d "
@@ -159,12 +165,12 @@ extract()
 	*) ;;
     esac
 
-    if test -d `echo ${local_snapshots}/$1 | sed -e 's:.tar.*::'` -a x"${clobber}" != xyes; then
-	notice "${dir}/$1 already is extracted!"
+    if test -d `echo ${local_snapshots}/${file} | sed -e 's:.tar.*::'` -a x"${clobber}" != xyes; then
+	notice "${dir}/${file} already is extracted!"
 	return 0
     else
 	taropts="${taropt}xvf"
-	tar ${taropts} ${local_snapshots}/$1 -C ${local_snapshots}/${dir}
+	tar ${taropts} ${local_snapshots}/${file} -C ${local_snapshots}/${dir}
     fi
     return 0
 }
