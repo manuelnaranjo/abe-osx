@@ -1,7 +1,15 @@
 #!/bin/sh
 
 # common.sh loads all the files of library functions.
-. "$(dirname "$0")/../lib/common.sh" || exit 1
+if test `dirname "$0"` != "testsuite"; then
+    cbuild="`which $0`"
+    topdir="`dirname ${cbuild}`"
+else
+    topdir=$PWD
+fi
+
+. "${topdir}/lib/common.sh" || exit 1
+. "${topdir}/host.conf" || exit 1
 
 # Since we're testing, we don't load the host.conf file, instead
 # we create false values that stay consistent.
@@ -38,8 +46,8 @@ totals()
 {
     echo ""
     echo "Total test results:"
-    echo "\tPasses: ${passes}"
-    echo "\tFailures: ${failures}"
+    echo "	Passes: ${passes}"
+    echo "	Failures: ${failures}"
 }
 
 #
@@ -182,7 +190,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 out="`find_snapshot gcc`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "find_snapshot: not unique tarball name"
 else
     fail "find_snapshot: not unique tarball name"
@@ -190,7 +198,7 @@ else
 fi
 
 out="`find_snapshot gcc-linaro-4.8-2013.06`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "find_snapshot: unique tarball name"
 else
     fail "find_snapshot: unique tarball name"
@@ -198,7 +206,7 @@ else
 fi
 
 out="`find_snapshot gcc-linaro-4.8-2013.06XXX`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "find_snapshot: unknown tarball name"
 else
     fail "find_snapshot: unknown tarball name"
@@ -207,7 +215,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 out="`get_URL gcc`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "get_URL: not unique in repository"
 else
     fail "get_URL: not unique in repository"
@@ -215,7 +223,7 @@ else
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "get_URL: unique name in repository"
 else
     fail "get_URL: unique name in repository"
@@ -223,11 +231,23 @@ else
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $# -gt 0; then
+if test $# -eq 0; then
     pass "get_URL: unknown repository"
 else
     fail "get_URL: unknown repository"
     verbose "get_URL returned ${out}"
+fi
+
+
+# ----------------------------------------------------------------------------------
+
+# list of dependencies for a toolchain component
+out="`dependencies gcc`"
+if test `echo $out |grep -c "gmp.*mpc.*mpfr.*binutils"` -eq 1; then
+    pass "dependencies"
+else
+    fail "dependencies"
+    verbose "dependencies returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
