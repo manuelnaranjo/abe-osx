@@ -189,15 +189,26 @@ Spec CPU 2006
  * Peak Seconds
  * Peak Ratio
 
+Notes on Bourne Shell Scripting
+-------------------------------
 
+  These scripts use a few techniques in many places that relate to
+shell functions. One is heavy use of bourne shell functions to reduce
+duplication, and make the code better organized. Any string echo'd by
+a function becomes it's return value. Bourne shell supports 2 types of
+return values though. One is the string returned by the function. This
+is used whenever the called function returns data. This is captured by
+the normal shell commands like this: values="`call_function $1`". The
+other type of return value is a single integer. Much like system
+calls, these scripts all return 0 for success, and 1 for errors. This
+enables the calling function to trap errors, and handle them in a
+clean fashion.
 
---without-ppl
---without-cloog
---disable-libssp
---disable-libmudflap
---disable-libgomp
---disable-tls
---disable-libitm
---disable-nls
---disable-libquadmath
---disable-plugin
+  A few good habits to mention, always enclose a sub shell execution
+in double quotes. If the returned string contains spaces, this
+preserves the data, otherwise it'll get truncated.
+
+  Another good habit is to alwayys prepend a character when doing
+string comparisons. If one of the two strings is undefined, the script
+will abort. So always using "test x${foo} = xbar" is the safest.
+
