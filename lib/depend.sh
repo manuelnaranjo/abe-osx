@@ -11,22 +11,32 @@
 # $1 - find the toolchain components to build to satisfiy necessary dependencies.
 dependencies()
 {
-    if test -e ${topdir}/config/$1.conf; then
-	. ${topdir}/config/$1.conf
-	if test x"${depends}"  != x; then
-	    for i in ${depends}; do
-		get_source $i
-		#  didn't find component
-		if test $? -gt 1; then
-		    warning "Couldn't find $1"
-		else
-		    components="${components} ${snapshot}"
-		fi
-	    done
-	    return $?
-	fi
+    # Don't process any dependencies in the conf file.
+    if test x"${nodepends}" = xno; then
+	warning "Dependencies for $1 disabled!"
+	return 0
     fi
 
+    if test x"${depends}"  = x; then
+	tool=`get_toolname $1`
+	source_config ${tool}
+    fi
+
+    if test x"${depends}"  != x; then
+	for i in ${depends}; do
+	    latest_version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
+
+	    #  didn't find component
+	    if test $? -gt 1; then
+		warning "Couldn't find $1"
+	    else
+		notice "Need component ${latest_version}"
+		components="${components} ${latest_version}"
+	    fi
+	done
+	return $?
+    fi
+    
     notice "${components}"
     return 1
 }
@@ -34,33 +44,31 @@ dependencies()
 # $1 - the toolchain component to see if it's already installed
 installed()
 {
-    if test -e ${topdir}/config/$1.conf; then
-	. ${topdir}/config/$1.conf
-	if test x"${installs}" != x; then
-	    # It the installed file is a library, then we have to look for both
-	    # static and shared versions.
-	    if test "`echo ${installs} | grep -c '^lib'`" -gt 0; then
-		if test -e ${local_builds}/lib/${installs}so -o -e ${local_builds}/lib/${installs}a; then
-		    notice "$1 already installed"
-		    return 0
-		fi
-	    else
-		if test -e ${local_builds}/bin/${installs}; then
-		    notice "$1 already installed"
-		    return 0
-		else
-		    warning "$1 not installed."
-		    return 1
-		fi
+    tool=`get_toolname $1`
+    source_config ${tool}
+
+    if test x"${installs}" != x; then
+	# It the installed file is a library, then we have to look for both
+	# static and shared versions.
+	if test "`echo ${installs} | grep -c '^lib'`" -gt 0; then
+	    if test -e ${local_builds}/lib/${installs}so -o -e ${local_builds}/lib/${installs}a; then
+		notice "${tool} already installed"
+		return 0
 	    fi
 	else
-	    warning "No install dependency specified"
-	    return 1
+	    if test -e ${local_builds}/bin/${installs}; then
+		notice "${tool} already installed"
+		return 0
+	    else
+		warning "${tool} not installed."
+		return 1
+	    fi
 	fi
-	return 0
+    else
+	warning "No install dependency specified"
+	return 1
     fi
     
-    error "Couldn't find config file for $1!"
     return 1
 }
 
@@ -75,8 +83,8 @@ infrastructure()
 
     # Get the list of files from the md5sums list
     files="`cat ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f 3`"
-    if test -e "$(dirname "$0")/config/infrastructure.conf"; then
-	. "$(dirname "$0")/config/infrastructure.conf"
+    if test -e "${topdir}/config/infrastructure.conf"; then
+	. "${topdir}/config/infrastructure.conf"
     fi
 
     if test x"${depends}" = x; then
@@ -103,8 +111,8 @@ infrastructure()
 	# get any configure flags specific to this program, which are
 	# usually dependant libaries we've already built.
 	tool="`echo $i | sed -e 's:-[0-9].*::'`"
-	if test -e "$(dirname "$0")/config/${tool}.conf"; then
-	    . "$(dirname "$0")/config/${tool}.conf"
+	if test -e "${topdir}/config/${tool}.conf"; then
+	    . "${topdir}/config/${tool}.conf"
 	fi
 	notice "Configuring infrastructure/${name}..."
 	configure_build infrastructure/${name} --disable-shared --enable-static --prefix=${PWD}/${hostname}/${build}/depends ${default_configure_flags}
