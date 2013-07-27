@@ -140,52 +140,68 @@ usage()
 }
 
 export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
-#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/${hostname}/${build}/depends/lib"
+#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
+    # Get a URL for the source code for this toolchain component. The
+    # URL can be either for a source tarball, or a checkout via svn, bzr,
+    # or git
     case "$1" in
-	--build)
-            set_build $2
+	--bu*)			# build
+	    get_source $2
+	    if test $? -gt 0; then
+		error "Couldn't find the source for $2"
+	    fi
+	    build ${url}
 	    shift
             ;;
-	--fetch)
-            fetch $2
+	--sy*)			# sysroot
+            set_sysroot ${url}
 	    shift
             ;;
-	--target)
-            set_target $2
-	    shift
-            ;;
-	--sysroot)
-            set_sysroot $2
-	    shift
-            ;;
-	--binutils)
-            set_binutils $2
+	--bin*)			# binutils
+            set_binutils ${url}
 	    shift
             ;;
 	--clean)
-            clean_build $2
+            clean_build ${url}
 	    shift
             ;;
 	--config)
-            set_config $2
+            set_config ${url}
 	    shift
             ;;
+	--db-user)
+            set_dbuser ${url}
+	    shift
+            ;;
+	--db-passwd)
+            set_dbpasswd ${url}
+	    shift
+            ;;
+	--dispatch)
+            dispatch ${url}
+	    shift
+            ;;
+	--dump)
+            dump ${url}
+	    shift
+            ;;
+	--fetch)
+            fetch ${url}
+	    shift
+            ;;
+	--force|-f*)
+	    force=yes
+	    ;;
 	--gcc)
-            set_gcc $2
+            set_gcc ${url}
 	    shift
             ;;
 	--interactive|-i*)
 	    interactive=yes
 	    ;;
-	--force|-f*)
-	    force=yes
-	    ;;
-	--parallel|p*)
-            make_flags="-j ${cpus}"
-            ;;
 	--libc)
             set_libc $2
 	    shift
@@ -194,28 +210,22 @@ while test $# -gt 0; do
             get_list $2
 	    shift
             ;;
-	--dispatch)
-            dispatch $2
+	--nodep*|-n*)		# nodepends
+	    nodepends=yes
+	    ;;
+	--p*)			# parallel
+            make_flags="-j ${cpus}"
+            ;;
+	--release)
+            release ${url}
 	    shift
             ;;
 	--snapshots)
-            set_snapshots $2
+            set_snapshots ${url}
 	    shift
             ;;
-	--release)
-            release $2
-	    shift
-            ;;
-	--db-user)
-            set_dbuser $2
-	    shift
-            ;;
-	--db-passwd)
-            set_dbpasswd $2
-	    shift
-            ;;
-	--dump)
-            dump $2
+	--t*)			# target
+            target=$2
 	    shift
             ;;
 	# Execute only one step of the entire process. This is primarily
@@ -225,11 +235,19 @@ while test $# -gt 0; do
 	    # URL can be either for a source tarball, or a checkout via svn, bzr,
 	    # or git
 	    get_source $3
+	    if test $? -gt 0; then
+		error "Couldn't find the source for $3"
+	    fi
+
             case $2 in
 		# this executes the entire process, but ignores any of
 		# the dependencies in the config file
 		build|b*)
+		    nodepends=yes
 		    build ${url}
+		    ;;
+		clean|cl*)
+		    make_clean ${url}
 		    ;;
 		# Download a tarball from a remote host
 		fetch|f*)
