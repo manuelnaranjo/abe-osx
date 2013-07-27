@@ -1,17 +1,8 @@
 #!/bin/sh
 
-# load all the global varibles. By default we look in the path to find the
-# library directory. If running the cbuild2.sh testsuite, we assume we're
-# running in the top level source directory.
-if test `dirname "$0"` != "testsuite"; then
-    topdir=`dirname "$0"`
-    if test "${libdir}" = "."; then
-	cbuild="`which cbuild2.sh`"
-	topdir="`dirname ${cbuild}`"
-    fi
-else
-    libdir=.
-fi
+cbuild="`which $0`"
+topdir="`dirname ${cbuild}`"
+
 # source all the library functions
 . "${topdir}/lib/globals.sh" || exit 1
 . "${topdir}/lib/fetch.sh" || exit 1
@@ -26,18 +17,6 @@ fi
 # All the set* functions set global variables used by the other functions.
 # This way there can be some error recovery and handing.
 #
-
-set_build()
-{
-    echo "Set build architecture $1..."
-    build="$1"
-}
-
-set_target()
-{
-    echo "Set target architecture $1..."
-    target="$1"
-}
 
 set_snapshots()
 {
@@ -135,10 +114,15 @@ get_URL()
 # $1 - The name of the toolchain component, partial strings ok
 list_URL()
 {
-    srcs="`dirname "$0"`/config/sources.conf"
+    srcs="${topdir}/config/sources.conf"
+    
     if test -e ${srcs}; then
-	notice "Supported sources for $1 are:"
-	cat ${srcs} | sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' | grep $1
+	notice "Supported source repositories for $1 are:"
+#	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
+	url="`grep $1 ${srcs} | tr -s ' ' | cut -d ' ' -f 2`"
+	for i in ${url}; do
+	    echo "	$i"
+	done
 	return 0
     else
 	error "No config file for sources!"
@@ -194,6 +178,9 @@ normalize_path()
 # $1 - The full URL to the source tree as returned by get_URL()
 get_builddir()
 {
+    if test x"${target}" = x; then
+	target=${build}
+    fi
     dir="`normalize_path $1`"
     if test `echo $1 | grep -c eglibc` -gt 0; then
 	dir="${cbuild_top}/${hostname}/${target}/${dir}"
@@ -208,6 +195,35 @@ get_builddir()
     echo ${dir}
 
     return 0
+}
+
+# Source a bourne shell config file so we can access it's variables.
+#
+# $1 - the tool component that the config file needs to be sourced
+source_config()
+{
+    # clear the existing values so we can avoid inheriting config setting
+    # from previously sourced config files.
+    depends=""
+    installs=""
+    latest=""
+    latest_version=""
+    default_configure_flags=""
+    runtest_flags=""
+
+    conf="`get_toolname $1`.conf"
+    if test -e ${topdir}/config/${conf}; then
+	. ${topdir}/config/${conf}
+	return 0
+    else
+	tool="`echo ${tool} | sed -e 's:-linaro::'`"
+	if test -e ${topdir}/config/${conf}; then
+	    . ${topdir}/config/${conf}
+	    return 0
+	fi
+    fi
+    
+    return 1
 }
 
 # Extract the name of the toolchain component being built
@@ -226,7 +242,7 @@ get_toolname()
 	tool="`basename ${tool}`"
     fi
 
-    echo ${tool}
+    echo ${tool} | sed 's:-linaro::'
 
     return 0
 }
@@ -234,10 +250,17 @@ get_toolname()
 # This look at a remote repository for  source tarball
 #
 # $1 - The file to look for, which should be unique or we get too many results
+#
+# returns ${snapshot}
 find_snapshot()
 {
+    if test x"$1" = x; then
+	error "find_snapshot() called without an argument!"
+	return 1
+   fi
 
-    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    # Search for the snapshot in the md5sum file, and filter out anything we don't want.
+    snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	    error "Too many results for $1!"
@@ -247,7 +270,7 @@ find_snapshot()
 	return 0
     fi
 
-    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+#    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
 #    snapshot="`lynx -dump ${remote_snapshots} | egrep -v "\.asc" | cut -d ']' -f 2 | grep "$1" | sed -e 's@.*$1@@' -e 's: .*::'`"
     if test x"${snapshot}" = x; then
 	error "No results for $1!"
@@ -267,11 +290,13 @@ find_snapshot()
 #
 # $1 - A toolchain component to search for, which should be something like
 #      binutils, gcc, glibc, newlib, etc...
+#
+# returns ${url}
 get_source()
 {
-    # If a full URL isn't passed as an argment, assume we want a
+    # If a full URL isn't passed as an argument, assume we want a
     # tarball snapshot
-    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr"` -eq 0; then
+    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp"` -eq 0; then
 	find_snapshot $1
 	# got an error
 	if test $? -gt 0; then
@@ -287,18 +312,17 @@ get_source()
 		if test x"${snapshot}" != x; then
 		    # If there is a config file for this toolchain component,
 		    # see if it has a latest version set. If so, we use that.
-		    if test -e ${topdir}/config/$1.conf; then
-			. ${topdir}/config/$1.conf
-			if test x"${latest}"  != x; then
-			    find_snapshot ${latest}
-			    return $?
-			fi
+#		    source_config $1
+		    if test x"${latest}"  != x; then
+			url=`find_snapshot ${latest}`
+			return $?
 		    fi
 		    notice "Pick a unique snapshot name from this list and try again: "
 		    for i in ${snapshot}; do
 			echo "	$i"
 		    done
-		    return 1
+		    list_URL $1
+		    return 0
 		fi
 	    fi
 	fi
