@@ -19,12 +19,14 @@ fetch()
     # start by grabbing the md5sum file. We delete the current one as we
     # always want a fresh md5sums file, as it changes every day, so older
     # versions go out of doubt.
-    # rm -f ${local_snapshots}/md5sums
+    rm -f ${local_snapshots}/md5sums
     fetch_http md5sums
     
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
+    
+    #get_source $1
     md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
@@ -35,6 +37,10 @@ fetch()
     else
 	getfile=${file}.tar.xz
     fi
+
+    # FIXME: Stash the md5sum for this tarball in the build directory. Compare
+    # the current one we just got with the stored one to determine if we should
+    # download it.
 
     # download the file
     fetch_${protocol} ${getfile}
@@ -124,10 +130,17 @@ check_md5sum()
 
     if test x"${oldsum}" = x"${newsum}"; then
 	notice "md5sums matched"
+	builddir="`get_builddir $1`"
+	rm -f ${builddir}/md5sum
+	echo "${newsum} > ${builddir}/md5sum"
 	return 0
     else
 	error "md5sums don't match!"
-	return 1
+	if test x"${force}" = x"yes"; then
+	    return 0
+	else
+	    return 1
+	fi
     fi
 }
 
@@ -143,7 +156,7 @@ extract()
 	dir=""
     fi
 
-    file="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3`"
     
     # Figure out how to decompress a tarball
     case "${file}" in
@@ -166,12 +179,27 @@ extract()
     esac
 
     if test -d `echo ${local_snapshots}/${file} | sed -e 's:.tar.*::'` -a x"${clobber}" != xyes; then
-	notice "${dir}/${file} already is extracted!"
+	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
 	taropts="${taropt}xvf"
 	tar ${taropts} ${local_snapshots}/${file} -C ${local_snapshots}/${dir}
     fi
+
+    # FIXME: this is hopefully is temporary hack for tarballs where the directory
+    # name versions doesn't match the tarball version. This means it's missing the
+    # -linaro-VERSION.YYYY.MM part.
+    dir="`echo ${file} | sed -e 's:.tar\..*::'`"
+    if test ! -d ${local_snapshots}/${dir}; then
+	dir2="`echo ${dir} | sed -e 's:-linaro::' -e 's:-20[0-9][0-9].*::'`"
+	if test -d ${local_snapshots}/${dir2}; then
+	    warning "Making a symbolic link for nonstandard directory name!"
+	    ln -s ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
+	else
+	    error "${dir} doesn't seem to exist!"
+	fi
+    fi
+
     return 0
 }
 
