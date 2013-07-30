@@ -3582,7 +3582,7 @@ fi
 
 
 #packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
-packages="svn-all-fast-exp libncurses5-dev texinfo"
+packages="svn-all-fast-exp texinfo"
 dpkg="`which dpkg`"
 result=`echo ${dpkg} 2>&1 | grep -c found`
 if test ${result} -eq 0; then
@@ -3712,7 +3712,7 @@ fi
 if test "${with_local_builds+set}" = set; then :
   withval=$with_local_builds; LOCAL_BUILDS=${withval}
 else
-  LOCAL_BUILDS="${PWD}/`hostnme`/${target}/depends"
+  LOCAL_BUILDS="${PWD}/`hostname`/${target}/depends"
 fi
 
 
