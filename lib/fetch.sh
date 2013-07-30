@@ -9,13 +9,7 @@ fetch()
     else
 	file=$1
     fi
-    if test x"$2" = x; then
-	notice "Using default fetching protocol 'http'"
-	protocol=http
-    else
-	protocol=$2
-    fi
- 
+
     # start by grabbing the md5sum file. We delete the current one as we
     # always want a fresh md5sums file, as it changes every day, so older
     # versions go out of doubt.
@@ -41,6 +35,12 @@ fetch()
     # FIXME: Stash the md5sum for this tarball in the build directory. Compare
     # the current one we just got with the stored one to determine if we should
     # download it.
+    if test x"$2" = x; then
+#	notice "Using default fetching protocol 'http'"
+	protocol=http
+    else
+	protocol=$2
+    fi 
 
     # download the file
     fetch_${protocol} ${getfile}
@@ -82,9 +82,10 @@ fetch_http()
     fi
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${clobber}" = xyes; then
+	notice "Downloading ${getfile} to ${local_snapshots}"
 	if test x"${wget_bin}" != x; then
-	    ${wget_bin} --continue --progress=dot --directory-prefix=${local_snapshots}/${dir} \
-		${remote_snapshots}/${getfile} 2> /dev/null
+	    ${wget_bin} --continue --directory-prefix=${local_snapshots}/${dir} \
+		${remote_snapshots}/${getfile}
 	    if test ! -e ${local_snapshots}/${getfile}; then
 		# warning "${getfile} didn't download via http!"
 		return 1
