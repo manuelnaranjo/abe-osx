@@ -174,7 +174,7 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
-  LOCAL_BUILDS="${PWD}/`hostnme`/${target}/depends")
+  LOCAL_BUILDS="${PWD}/`hostname`/${target}/depends")
 AC_SUBST(LOCAL_BUILDS)
 
 dnl A URL to the remote directory where snapshots are stored
