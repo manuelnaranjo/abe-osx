@@ -210,8 +210,13 @@ source_config()
     latest_version=""
     default_configure_flags=""
     runtest_flags=""
+    stage1_flags=""
+    stage2_flags=""
 
     conf="`get_toolname $1`.conf"
+    if test $? -gt 0; then
+	return 1
+    fi
     if test -e ${topdir}/config/${conf}; then
 	. ${topdir}/config/${conf}
 	return 0
@@ -231,6 +236,10 @@ source_config()
 #      tarball name.
 get_toolname()
 {
+    if test x"$1" = x; then
+	error "No toolchain component name argument!"
+	return 1
+    fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
 	tool="`echo $1 | sed -e 's:-[0-9].*::'`"
 	tool="`basename ${tool}`"
@@ -294,6 +303,10 @@ find_snapshot()
 # returns ${url}
 get_source()
 {
+    if test x"$1" = x; then
+	error "get_source() called without an argument!"
+	return 1
+    fi
     # If a full URL isn't passed as an argument, assume we want a
     # tarball snapshot
     if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp"` -eq 0; then
@@ -312,7 +325,6 @@ get_source()
 		if test x"${snapshot}" != x; then
 		    # If there is a config file for this toolchain component,
 		    # see if it has a latest version set. If so, we use that.
-#		    source_config $1
 		    if test x"${latest}"  != x; then
 			url=`find_snapshot ${latest}`
 			return $?
