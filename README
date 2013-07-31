@@ -16,26 +16,23 @@ name isn't found at all, then a URL for the source repository is
 extracted from the sources.conf file, and the code is checkout out.
 
 
-Triplet	Further Config TSC Publish Native/Cross Benchmark
------------------------------  Y N Native Y
-x86_64-none-linux-gnu  	  As Ubuntu    Y N Native Y
-arm-none-linux-gnueabi 	  As Ubuntu    N Y Native Y
-arm-none-linux-gnueabihf  As Ubuntu    Y Y Native Y
-aarch64-none-linux-gnu 	  As Ubuntu    Y Y Both*  Y
-aarch64-none-elf 	  With newlib  Y Y Both*  Y
-arm-none-linux-gnueabi 	  ARMv5        N Y Native N
-arm-none-linux-gnueabihf  ARMv6+VFPv2  N Y Native N
-arm-none-linux-gnueabihf  Cortex-A15   N Y Cross  Y
-armeb-none-linux-gnueabihf As Ubuntu   N Y Cross  Y
-aarch64_be-none-elf 	  With newlib  N Y Cross   Y
-aarch64_be-none-linux-gnu As Ubuntu    N Y Cross   Y
+x86_64-none-linux-gnu
+arm-none-linux-gnueabi
+arm-none-linux-gnueabihf
+aarch64-none-linux-gnu
+aarch64-none-elf
+arm-none-linux-gnueabi
+arm-none-linux-gnueabihf
+armeb-none-linux-gnueabihf
+aarch64_be-none-elf
+aarch64_be-none-linux-gnu
 
 Toolchain Components
  * gcc (gcc, g++, objc, fortran)
  * gas
  * ld (gold)
  * libc (newlib,eglibc,glibc)
- * dependant libs (gmp, mpc, mpfr)
+ * dependant libs (gmp, mpc, mpfr, libelf)
 
 Build with stock Ubuntu toolchains
  * Linaro GCC Maintenance (currently Linaro GCC 4.7)
@@ -74,7 +71,7 @@ CREATE TABLE `testruns` (
   `libc_version` varchar(72) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-So each testrun needs an input file of some kind that specifies which
+Each testrun needs an input file of some kind that specifies which
 components to use, the target, and the host. 'host' and 'target' could
 both be 'local'.
 
@@ -208,7 +205,7 @@ clean fashion.
 in double quotes. If the returned string contains spaces, this
 preserves the data, otherwise it'll get truncated.
 
-  Another good habit is to alwayys prepend a character when doing
+  Another good habit is to always prepend a character when doing
 string comparisons. If one of the two strings is undefined, the script
-will abort. So always using "test x${foo} = xbar" is the safest.
+will abort. So always using "test x${foo} = xbar" prevents that.
 
