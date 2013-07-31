@@ -25,9 +25,15 @@ build()
     # 	fi
     # fi
 
+    # If the sources can't be found, there is no reason to continue.
     source_config ${tool}
+    # if test $? -gt 0; then
+    # 	return 1
+    # fi
     get_source $1
-
+    # if test $? -gt 0; then
+    # 	return 1
+    # fi
     # Get the list of other components that need to be built first.
     if test x"${nodepends}" = xno; then
 	dependencies ${tool}
@@ -58,8 +64,7 @@ build()
 	extract ${url}
     fi
 
-# make headers_install ARCH=arm INSTALL_HDR_PATH=/usr/include
-make headers_install INSTALL_HDR_PATH=/linaro/build/x86_64-linux-gnu/cbuild2/linaro.welcomehome.org/x86_64-unknown-linux-gnu/depends/sysroot/
+#make headers_install INSTALL_HDR_PATH=/linaro/build/x86_64-linux-gnu/cbuild2/linaro.welcomehome.org/x86_64-unknown-linux-gnu/depends/sysroot/
 
     # Then configure as a separate step, so if something goes wrong, we
     # at least have the sources
