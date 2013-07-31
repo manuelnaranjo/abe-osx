@@ -268,6 +268,8 @@ find_snapshot()
 	return 1
    fi
 
+    fetch_http md5sums
+
     # Search for the snapshot in the md5sum file, and filter out anything we don't want.
     snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
     if test x"${snapshot}" != x; then
