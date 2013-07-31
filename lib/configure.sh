@@ -38,9 +38,13 @@ configure_build()
     # part if it exists as it's not used for the config file name.
     tool="`get_toolname $1 | sed -e 's:-linaro::'`"
 
+
     # Load the default config file for this component if it exists.
+    default_configure_flags=""
+    stage1_flags=""
+    stage2_flags=""
+    opts=""
     if test -e "${topdir}/config/${tool}.conf"; then
-	default_configure_flags=
 	. "${topdir}/config/${tool}.conf"
 	# if there is a local config file in the build directory, allow
 	# it to override the default settings
@@ -79,17 +83,21 @@ configure_build()
     fi
     # If set, add the flags for stage 1 of GCC.
     # FIXME: this needs to support stage2 still!
-    if test x"${stage1_flags}" != x; then
+    if test x"${stage1_flags}" != x -a x"${host}" != x"{$target}"; then
 	opts="${opts} ${stage1_flags}"
-    fi 
+    fi
 
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
 	*libc|newlib)
-	    opts="${opts} --build=${build} --host=${target} --prefix=${local_builds}/sysroot/usr ${opts}"
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${local_builds}/sysroot/usr ${opts}"
 	    ;;
-	gcc|binutils)
+	gcc)
+	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds} ${opts}"
+	    ;;
+	binutils)
 	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds} ${opts}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog)
