@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # load commonly used functions
 cbuild="`which $0`"
@@ -152,6 +152,7 @@ while test $# -gt 0; do
 	    get_source $2
 	    if test $? -gt 0; then
 		error "Couldn't find the source for $2"
+		exit 1
 	    fi
 	    build ${url}
 	    shift
@@ -237,6 +238,7 @@ while test $# -gt 0; do
 	    get_source $3
 	    if test $? -gt 0; then
 		error "Couldn't find the source for $3"
+		exit 1
 	    fi
 
             case $2 in
