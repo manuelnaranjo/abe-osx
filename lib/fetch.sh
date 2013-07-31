@@ -84,7 +84,8 @@ fetch_http()
     if test ! -e ${local_snapshots}/${getfile} -o x"${clobber}" = xyes; then
 	notice "Downloading ${getfile} to ${local_snapshots}"
 	if test x"${wget_bin}" != x; then
-	    ${wget_bin} --continue --directory-prefix=${local_snapshots}/${dir} \
+	    # --continue --progress=bar
+	    ${wget_bin} --directory-prefix=${local_snapshots}/${dir} \
 		${remote_snapshots}/${getfile}
 	    if test ! -e ${local_snapshots}/${getfile}; then
 		# warning "${getfile} didn't download via http!"
