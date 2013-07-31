@@ -12,7 +12,7 @@
 dependencies()
 {
     # Don't process any dependencies in the conf file.
-    if test x"${nodepends}" = xno; then
+    if test x"${nodepends}" = xyes; then
 	warning "Dependencies for $1 disabled!"
 	return 0
     fi
@@ -56,7 +56,7 @@ installed()
 		return 0
 	    fi
 	else
-	    if test -e ${local_builds}/bin/${installs}; then
+	    if test -e ${local_builds}/bin/${installs} -o -e ${local_builds}/bin/${target}-${installs}; then
 		notice "${tool} already installed"
 		return 0
 	    else
