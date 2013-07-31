@@ -9,7 +9,7 @@
 # newlib-linaro ssh://robert.savoye@git.linaro.org/srv/git.linaro.org/git/toolchain/newlib.git
 
 # It's optional to use git-bzr-ng or git-svn to work on the remote sources,
-# but we also want to work with the native surce code control system.
+# but we also want to work with the native source code control system.
 usegit=no
 
 # This gets the source tree from a remote host
