@@ -83,7 +83,7 @@ configure_build()
     fi
     # If set, add the flags for stage 1 of GCC.
     # FIXME: this needs to support stage2 still!
-    if test x"${stage1_flags}" != x -a x"${host}" != x"{$target}"; then
+    if test x"${stage1_flags}" != x -a x"${host}" = x"{$target}"; then
 	opts="${opts} ${stage1_flags}"
     fi
 
