@@ -207,7 +207,6 @@ source_config()
     depends=""
     installs=""
     latest=""
-    latest_version=""
     default_configure_flags=""
     runtest_flags=""
     stage1_flags=""
