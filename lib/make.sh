@@ -64,6 +64,9 @@ build()
 	extract ${url}
     fi
 
+    # This command is only used to install the Linux kernel headers, which are
+    # later used to compile eglibc.
+    tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
 	( cd ${local_snapshots}/${srcdir} && make headers_install ARCH=arm INSTALL_HDR_PATH=${local_builds}/sysroot/usr)
