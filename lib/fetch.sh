@@ -13,14 +13,14 @@ fetch()
     # start by grabbing the md5sum file. We delete the current one as we
     # always want a fresh md5sums file, as it changes every day, so older
     # versions go out of doubt.
-    rm -f ${local_snapshots}/md5sums
-    fetch_http md5sums
+    #rm -f ${local_snapshots}/md5sums
+    #fetch_http md5sums
+    #fetch_rsync ${remote_snapshots}/md5sums
     
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
     
-    #get_source $1
     md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
@@ -105,7 +105,15 @@ fetch_scp()
 
 fetch_rsync()
 {
-    error "unimplemented"
+    getfile="`basename $1`"
+
+    ${rsync_bin} $1 ${local_snapshots}
+    if test ! -e ${local_snapshots}/${getfile}; then
+	warning "${getfile} didn't download via rsync!"
+	return 1
+    fi
+    
+    return 0
 }
 
 check_md5sum()
@@ -113,7 +121,7 @@ check_md5sum()
     if test ! -e ${local_snapshots}/md5sums; then
 	fetch_http md5sums
 	if test $? -gt 0; then
-	    error "couldn't fetch md5sums"
+	    error g"couldn't fetch md5sums"
 	    return 1
 	fi
     fi
