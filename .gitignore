@@ -5,3 +5,6 @@ x
 xx
 *.data
 *.cmd
+NOTES
+TAGS
+*.org
