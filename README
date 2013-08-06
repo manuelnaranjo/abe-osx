@@ -1,5 +1,18 @@
 This is a bourne shell rewrite of the existing cbuild system as used by Linaro.
 
+Configuring Cbuildv2:
+---------------------
+  WHile it is possible to run cbuildv2 from it's source tree, this
+isn't recommended. The best practice is to create a new build
+directory, and configure cbuildv2 in that directory. That makes it
+wasy to change branches, or even delete subdirectories easily. There
+are defaults for all 
+
+$CBUILD-PATH/configure
+--with-local-snapshots=$CBUILD_PATH/snapshots 
+--with-local-builds=$CBUILD-PATH/depends 
+--with-remote-snapshots=cbuild@toolchain64.lab:/home/cbuild/var/snapshots/
+
 Specifying the source works like this:
 -------------------------------------
 It's possible to specify a full tarball name, minus the compression
@@ -15,7 +28,38 @@ is not unique, but matches are found, and error is generated. If the
 name isn't found at all, then a URL for the source repository is
 extracted from the sources.conf file, and the code is checkout out.
 
+There are a few ways if listing the files to see what is
+available. There ar two primary remote directories where files that
+can be downloaded are stored. These are 'snapshots' or
+'infrastructure'. Infrastructure is usualy only installed once per
+host, and contains the other packages needed to build GCC, like
+gmp. Snapshots is the primary location of all source tarballs. To list
+all the available snapshots, you can do this
 
+    "cbuild2.sh --list snapshots".
+
+You can also run cbuildv2 with the --interactive options, which will
+display a subset of all the packages that matches the supplied
+string. To build a specific component, use the --build option to
+cbuildv2. the --target option is also used for cross builds. For
+example:
+
+"cbuild2.sh --target arm-none-linux-gnueabihf gcc-linaro-4.8.2013.07-1"
+
+This would fetch the source tarball for this release, build anything
+it needs to compile, the binutils for example, and then build these
+sources. You can also specify a URL to a source repository
+instead. For example:
+
+"cbuild2.sh --target arm-none-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
+
+To build and entire cross toolchain, the simplest way is to let
+cbuildv2 control allthe steps, although it is also possible to do each
+step separately. To build the full toolchain, do this:
+
+"cbuild2.sh --target arm-none-linux-gnueabihf --build all"
+
+---------------------------------------------------------------------
 x86_64-none-linux-gnu
 arm-none-linux-gnueabi
 arm-none-linux-gnueabihf
