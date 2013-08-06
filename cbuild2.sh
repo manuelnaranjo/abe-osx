@@ -138,7 +138,8 @@ export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
 #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
 
 # Process the multiple command line arguments
-fetch_rsync ${remote_snapshots}/md5sums
+fetch_http md5sums
+#fetch_rsync ${remote_snapshots}/md5sums
 while test $# -gt 0; do
     # Get a URL for the source code for this toolchain component. The
     # URL can be either for a source tarball, or a checkout via svn, bzr,
