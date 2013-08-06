@@ -16,11 +16,6 @@ fi
 # this is used to launch builds of dependant components
 command_line_arguments=$*
 
-clean_build()
-{
-    echo "Cleaning build..."
-}
-
 #
 # These functions actually do something
 #
@@ -143,20 +138,30 @@ export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
 #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
 
 # Process the multiple command line arguments
+fetch_rsync ${remote_snapshots}/md5sums
 while test $# -gt 0; do
     # Get a URL for the source code for this toolchain component. The
     # URL can be either for a source tarball, or a checkout via svn, bzr,
     # or git
     case "$1" in
 	--bu*)			# build
-	    get_source $2
-	    if test $? -gt 0; then
-		error "Couldn't find the source for $2"
-		exit 1
-	    fi
-	    build ${url}
+	    if test x"$2" != x"all" -a ${build} = ${target}; then
+		get_source $2
+		if test $? -gt 0; then
+		    error "Couldn't find the source for $2"
+		    exit 1
+		else
+		    build ${url}
+		fi
+	    else
+		build_cross
+	    fi	    
 	    shift
-            ;;
+	    ;;
+       # download and install the infrastructure libraries GCC depends on
+	--inf*|infrastructure)
+	    infrastructure
+	    ;;
 	--sy*)			# sysroot
             set_sysroot ${url}
 	    shift
@@ -271,9 +276,6 @@ while test $# -gt 0; do
 		# Checkout sources from a repository
 		checkout|ch*)
 		    checkout ${url}
-		    ;;
-		depend|d*)
-		    infrastructure ${url}
 		    ;;
 		install|i*)
 		    make_install ${url}
