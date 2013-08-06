@@ -74,12 +74,16 @@ error()
 
 warning()
 {
-    echo "WARNING: $1"
+    if test "${verbose}" -gt 0; then
+	echo "WARNING: $1"
+    fi
 }
 
 notice()
 {
-    echo "NOTE: $1"
+    if test "${verbose}" -gt 0; then
+	echo "NOTE: $1"
+    fi
 }
 
 # Get the URL to checkout out development sources.
@@ -267,7 +271,9 @@ find_snapshot()
 	return 1
    fi
 
-    fetch_http md5sums
+    #rm -f ${local_snapshots}/md5sums
+    #fetch_http md5sums
+    #fetch_rsync ${remote_snapshots}/md5sums
 
     # Search for the snapshot in the md5sum file, and filter out anything we don't want.
     snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
