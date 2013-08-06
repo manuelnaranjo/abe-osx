@@ -25,15 +25,13 @@ dependencies()
     if test x"${depends}"  != x; then
 	for i in ${depends}; do
 	    latest_version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
-
-	    #  didn't find component
-	    if test $? -gt 1; then
-		warning "Couldn't find $1"
-	    else
-		notice "Need component ${latest_version}"
+	    installed $i
+	    if test $? -gt 0; then
+		notice "Need component ${latest}"
 		components="${components} ${latest_version}"
 	    fi
 	done
+	depends=""
 	return $?
     fi
     
@@ -46,6 +44,11 @@ installed()
 {
     tool=`get_toolname $1`
     source_config ${tool}
+
+    if test ! -d ${local_builds}/lib -a ! ${local_builds}/bin; then
+	error "no existing installation in ${local_builds}!"
+	return 1
+    fi
 
     if test x"${installs}" != x; then
 	# It the installed file is a library, then we have to look for both
@@ -78,14 +81,10 @@ installed()
 # good reason, so we download, build and install them.
 infrastructure()
 {
-    fetch_http infrastructure/md5sums
-    fetch_http infrastructure/ChangeLog
+    #fetch_rsync infrastructure/md5sums
+    #fetch_rsync infrastructure/ChangeLog
 
-    # Get the list of files from the md5sums list
-    files="`cat ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f 3`"
-    if test -e "${topdir}/config/infrastructure.conf"; then
-	. "${topdir}/config/infrastructure.conf"
-    fi
+    source_config infrastructure
 
     if test x"${depends}" = x; then
 	error "No dependencies listed for infrastructure libraries!"
@@ -97,37 +96,18 @@ infrastructure()
     # unfortunately sorts the files, which screws up the order.
     files=
     for i in ${depends}; do
-     	files="${files} `grep $i ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f3`"
+     	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3`"
     done
     
     # first fetch and extract all the tarballs listed in the md5sums file
     for i in ${files}; do
-	fetch_http infrastructure/$i
-	extract infrastructure/$i
+	fetch_http $i
+	extract $i
     done
 
     for i in ${files}; do
-	name="`echo $i | sed -e 's:\.tar\..*::'`"
-	# get any configure flags specific to this program, which are
-	# usually dependant libaries we've already built.
-	tool="`echo $i | sed -e 's:-[0-9].*::'`"
-	if test -e "${topdir}/config/${tool}.conf"; then
-	    . "${topdir}/config/${tool}.conf"
-	fi
-	notice "Configuring infrastructure/${name}..."
-	configure_build infrastructure/${name} --disable-shared --enable-static --prefix=${PWD}/${hostname}/${build}/depends ${default_configure_flags}
-	if test $? != "0"; then
-	    warning "Configure of ${name} failed!"
-	fi
-	# unset these two variables to avoid problems later
-	default_configure_flags=
-	make_all infrastructure/${name}
-	if test $? = "0"; then
-	    make_install infrastructure/${name}
-	    if test $? != "0"; then
-		warning "Make install of ${name} failed!"
-	    fi
-	fi
+	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'`"
+	build ${name}
     done
 }
 
