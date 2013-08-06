@@ -155,7 +155,7 @@ while test $# -gt 0; do
 		    build ${url}
 		fi
 	    else
-		build_cross
+		build_all
 	    fi	    
 	    shift
 	    ;;
