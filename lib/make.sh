@@ -4,6 +4,42 @@
 #
 #
 
+# This performs all the steps to build a full cross toolchain
+build_cross()
+{
+    
+    builds="infrastructure stage1 eglibc stage2" # libstdc
+    for i in ${builds}; do
+	case $i in
+	    infrastructure)
+		infrastructure
+		;;
+	    # Build stage 1 of GCC, which is a limited C compiler used to compile
+	    # the C library.
+	    stage1)
+		latest_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+		build ${latest_version} stage1
+		;; 
+	    # Build stage 2 of GCC, which is the actual and fully functional compiler
+	    stage2)
+		latest_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+		build ${latest_version} stage2
+		;;
+	    # Build anything not GCC or infrastructure
+	    *)
+		latest_version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
+		build ${latest_version}
+		;;
+	esac
+	if test $? -gt 0; then
+	    error "Couldn't build $i"
+	    return 1
+	fi
+    done
+
+    return 0
+}
+
 build()
 {
     # Start by fetching the tarball to build, and extract it, or it a URL is
@@ -31,6 +67,8 @@ build()
     # 	return 1
     # fi
     get_source $1
+    notice "Building ${url}"
+
     # if test $? -gt 0; then
     # 	return 1
     # fi
@@ -40,18 +78,13 @@ build()
 	if test $? -eq 0; then
 	    for i in ${components}; do
 		installed $i
-	    # Build and install the component if it's not installed already
-		if test $? -gt 0; then
-		    echo "BUILD: $i"
-		# preserve the current shell environment to avoid contamination
+	        # Build and install the component if it's not installed already
+		if test $? -gt 0 -o x"${force}" = xyes; then
+		    # preserve the current shell environment to avoid contamination
 		    rm -f $1.env
 		    set 2>&1 | grep "^[a-z_A-Z-]*=" > $1.env
 		    build $i
-		#${topdir}/cbuild2.sh --dostep build $i
-		# restore the current shell environment that was saved.
 		    . $1.env
-		# if test $? -gt 0; then
-		# fi
 		fi
 	    done
 	fi
@@ -81,12 +114,17 @@ build()
     #export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
     #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib:${local_builds}/depends/sysroot/usr/lib"
     notice "Configuring ${url}..."
-    configure_build ${url}
+    if test x"$2" != x; then
+	configure_build ${url} $2
+    else
+	configure_build ${url}
+    fi
+
     if test $? -gt 0; then
 	error "Configure of ${url} failed!"
 	return $?
     fi
-
+    
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
 	make_clean ${url}
@@ -94,18 +132,19 @@ build()
 	    return 1
 	fi
     fi
-
+    
     # Finally compile and install the libaries
     make_all ${url}
     if test $? -gt 0; then
 	return 1
     fi
-
+    
     make_install ${url}
     if test $? -gt 0; then
 	return 1
     fi
-
+    notice "Done building ${url} $1..."
+    
 # For cross testing, we need to build a C library with our freshly built
 # compiler, so any tests that get executed on the target can be fully linked.
 #    make_check ${name}
@@ -136,7 +175,8 @@ make_install()
     builddir="`get_builddir $1`"
     notice "Making install in ${builddir}"
 
-    make install  ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log
+    export CONFIG_SHELL=${bash_shell}
+    make install SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log
     if test $? != "0"; then
 	warning "Make failed!"
 	return 1
