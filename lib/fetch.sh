@@ -192,7 +192,7 @@ extract()
 	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
-	taropts="${taropt}xvf"
+	taropts="${taropt}xf"
 	tar ${taropts} ${local_snapshots}/${file} -C ${local_snapshots}/${dir}
     fi
 
