@@ -5,10 +5,16 @@
 #
 
 # This performs all the steps to build a full cross toolchain
-build_cross()
+build_all()
 {
-    
-    builds="infrastructure stage1 eglibc stage2" # libstdc
+
+    # cross builds need to build a minimal C compiler, which after compiling
+    # the C library, can then be reconfigured to be fully functional.
+    if test x"${build}" != x"${target}"; then
+	builds="infrastructure stage1 eglibc stage2"
+    else
+	builds="infrastructure stage2 eglibc" # native build
+    fi
     for i in ${builds}; do
 	case $i in
 	    infrastructure)
