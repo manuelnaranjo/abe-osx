@@ -57,25 +57,6 @@ Features:
  * Queue jobs for LAVA
  * Lists possible versions and components for build
 
-CREATE TABLE `testruns` (
-  `testrun` int(20) NOT NULL,
-  `date` datetime NOT NULL,
-  `tool` varchar(72) NOT NULL,
-  `version` varchar(72) NOT NULL,
-  `branch` varchar(72) NOT NULL,
-  `status` enum('IDLE','RUNNING','DONE') NOT NULL,
-  `target_arch` varchar(72) NOT NULL,
-  `build_arch` varchar(72) NOT NULL,
-  `gcc_version` varchar(72) NOT NULL,
-  `binutils_version` varchar(72) NOT NULL,
-  `libc_version` varchar(72) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
-Each testrun needs an input file of some kind that specifies which
-components to use, the target, and the host. 'host' and 'target' could
-both be 'local'.
-
-
 cbuild2 command line arguments:
 -------------------------------
  * --build (architecture for the build machine, default native)
@@ -107,6 +88,10 @@ major build time dependancies. There should be defaults for all
 targets, but values can be overridden with local config files. The
 config data could also potentially live in a database. The config data
 is recorded into the database for each build and test run.
+
+Cross building G++ is complex, there is a stage 1 build of the
+compiler, which is only used to build the C library. Then the C
+library is compiled. After that G++ can be built.
  
 Analysis
 --------
