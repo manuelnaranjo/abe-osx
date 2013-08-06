@@ -2,7 +2,7 @@
 
 # Configure a source directory
 # $1 - the directory to configure
-# $2 - Other configure options
+# $2 - which gcc stage to build
 configure_build()
 {
     builddir=`get_builddir $1`    
@@ -12,7 +12,7 @@ configure_build()
     else
 	srcdir="${local_snapshots}/${dir}"
     fi
-
+    
     if test ! -d ${builddir}; then
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
@@ -50,6 +50,8 @@ configure_build()
 	# it to override the default settings
 	# unset these two variables to avoid problems later
 	if test -e "${builddir}/${tool}.conf"; then
+#	    if test ${builddir}/${tool}.conf -nt ${topdir}/config/${tool}.conf; then
+#	    fi
 	    . "${builddir}/${tool}.conf"
 	    notice "Local ${tool}.conf overiding defaults"
 	else
@@ -77,15 +79,11 @@ configure_build()
     if test x"${tool}" != x"eglibc"; then
 	opts="--disable-shared --enable-static"
     fi
+
     # Add all the rest of the arguments to the options used when configuring.
-    if test $# -gt 1; then
-	opts="${opts} `echo $* | cut -d ' ' -f2-10`"
-    fi
-    # If set, add the flags for stage 1 of GCC.
-    # FIXME: this needs to support stage2 still!
-    if test x"${stage1_flags}" != x -a x"${host}" = x"{$target}"; then
-	opts="${opts} ${stage1_flags}"
-    fi
+#    if test $# -gt 1; then
+#	opts="${opts} `echo $* | cut -d ' ' -f2-10`"
+#    fi
 
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
@@ -94,14 +92,29 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${local_builds}/sysroot/usr ${opts}"
 	    ;;
 	gcc)
+	    make -C ${builddir} distclean
+	    if test x"$2" != x; then
+		case $2 in
+		    stage1*)
+			notice "Building stage 1 of GCC"
+			opts="${opts} ${stage1_flags}"
+			;;
+		    stage2*)
+			notice "Building stage 2 of GCC"
+			opts="${opts} ${stage2_flags}"
+			;;
+		    *)
+			;;
+		esac
+	    fi
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds} ${opts}"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
 	    ;;
 	binutils)
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds} ${opts}"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog)
-	    opts="${opts} --build=${build} --build=${build} --host=${build} --prefix=${local_builds} ${opts}"
+	    opts="${opts} --build=${build} --prefix=${local_builds} ${opts}"
 	    ;;
 	*)
     esac
