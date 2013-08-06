@@ -44,6 +44,7 @@ clobber=no
 force=no
 interactive=no
 nodepends=no
+verbose=1
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
