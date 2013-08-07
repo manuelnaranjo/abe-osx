@@ -7,6 +7,8 @@
 # This performs all the steps to build a full cross toolchain
 build_all()
 {
+    # Force dependency checking and building, as this function handles everything
+    nodepends=yes
 
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
@@ -108,7 +110,7 @@ build()
     tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
-	make -C ${local_snapshots}/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
+	make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
 	return 0
     fi
 
