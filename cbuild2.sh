@@ -133,7 +133,7 @@ usage()
     exit 1
 }
 
-export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
+export PATH="${local_builds}/bin:$PATH"
 #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
 
 # Process the multiple command line arguments
@@ -145,7 +145,7 @@ while test $# -gt 0; do
     # or git
     case "$1" in
 	--bu*)			# build
-	    if test x"$2" != x"all" -a ${build} = ${target}; then
+	    if test x"$2" != x"all"; then
 		get_source $2
 		if test $? -gt 0; then
 		    error "Couldn't find the source for $2"
