@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Test the config parameters from the Jenkins Build Now page
+changes=""
 if test x"${gmp_snapshot}" != x"latest"; then
     change="${change} ${gmp_snapshot}"
 fi
@@ -29,4 +30,4 @@ cd _build
 rm -f localhost/${target}/*/*.conf
 ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 export CONFIG_SHELL="/bin/bash"
-$CONFIG_SHELL ../cbuild2.sh --force --parallel ${changes} --target $target --build all
+$CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target $target --build all
