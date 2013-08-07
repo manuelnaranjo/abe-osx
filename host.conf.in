@@ -14,7 +14,7 @@ cbuild_top=@CBUILD_TOP@
 local_builds=@LOCAL_BUILDS@
 
 # This is a sysroot to a pre-compiled C library
-sysroot=@SYSROOT@
+sysroots=@SYSROOTS@
 
 # config values for the build machine
 cpus=@CPUS@
