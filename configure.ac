@@ -18,6 +18,9 @@ if test x"${CC}" = x -a x"${CXX}" = x; then
    AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run cbuild!])
 fi
 AC_PROG_INSTALL
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 
 AC_PATH_PROG(WGET, wget)
 AC_SUBST(WGET)
