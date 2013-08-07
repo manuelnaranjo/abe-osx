@@ -39,7 +39,7 @@ set_binutils()
 set_sysroot()
 {
     echo "Set sysroot to $1..."
-    sysroot="$1"
+    sysroots="$1"
 }
 
 set_libc()
