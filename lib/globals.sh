@@ -4,7 +4,6 @@
 # command line options.
 build="`gcc -v 2>&1 | grep Target: | cut -d ' ' -f 2`"
 target=
-sysroot="`gcc -print-sysroot`"
 gcc="`which gcc`"
 gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
