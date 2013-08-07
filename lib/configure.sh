@@ -92,24 +92,43 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	gcc)
-	    make -C ${builddir} -i -k distclean
-	    if test x"$2" != x; then
-		case $2 in
-		    stage1*)
-			notice "Building stage 1 of GCC"
-			opts="${opts} ${stage1_flags}"
-			;;
-		    stage2*)
-			notice "Building stage 2 of GCC"
+	    if test x"${build}" != x"${target}"; then
+		# make -C ${builddir} -i -k distclean
+		if test x"$2" != x; then
+		    case $2 in
+			stage1*)
+			    notice "Building stage 1 of GCC"
+			    opts="${opts} ${stage1_flags}"
+			    ;;
+			stage2*)
+			    notice "Building stage 2 of GCC"
+			    opts="${opts} ${stage2_flags}"
+			    ;;
+			bootstrap*)
+			    notice "Building bootstrapped GCC"
+			    opts="${opts} --enable-bootstrap"
+			    ;;
+			*)
+			    if test -e ${sysroots}/usr/include/stdio.h; then
+				notice "Building with stage 2 flags, sysroot found!"
+				opts="${opts} ${stage2_flags}"
+			    else
+				warning "Building with stage 1 flags, no sysroot found"
+				opts="${opts} ${stage2_flags}"
+			    fi
+			    ;;
+		    esac
+		else
+		    if test -e ${sysroots}/usr/include/stdio.h; then
+			notice "Building with stage 2 flags, sysroot found!"
 			opts="${opts} ${stage2_flags}"
-			;;
-		    bootstrap*)
-			notice "Building bootstrapped GCC"
-			opts="${opts} --enable-bootstrap"
-			;;
-		    *)
-			;;
-		esac
+		    else
+			warning "Building with stage 1 flags, no sysroot found"
+			opts="${opts} ${stage2_flags}"
+		    fi
+		fi
+	    else
+		opts="${opts} ${stage2_flags}"
 	    fi
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
@@ -118,7 +137,7 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog)
-	    opts="${opts} --build=${build} --prefix=${local_builds} ${opts}"
+	    opts="${opts} --prefix=${local_builds} ${opts}"
 	    ;;
 	*)
     esac
