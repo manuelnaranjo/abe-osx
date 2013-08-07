@@ -204,7 +204,7 @@ extract()
 	dir2="`echo ${dir} | sed -e 's:-linaro::' -e 's:-20[0-9][0-9].*::'`"
 	if test -d ${local_snapshots}/${dir2}; then
 	    warning "Making a symbolic link for nonstandard directory name!"
-	    ln -s ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
+	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
 	else
 	    error "${dir} doesn't seem to exist!"
 	fi
