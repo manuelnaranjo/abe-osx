@@ -88,7 +88,7 @@ configure_build()
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
-	*libc|newlib)
+	*libc|newlib|libelf*)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	gcc)
