@@ -602,8 +602,7 @@ ENABLE_SSH
 REMOTE_SNAPSHOTS
 LOCAL_BUILDS
 LOCAL_SNAPSHOTS
-SOURCES
-SYSROOT
+SYSROOTS
 CBUILD_TOP
 BUILDDATE
 LYNX
@@ -674,7 +673,6 @@ with_dbpasswd
 with_dbhost
 with_toplevel
 with_sysroot
-with_sources
 with_local_snapshots
 with_local_builds
 with_remote_snapshots
@@ -1310,7 +1308,6 @@ Optional Packages:
   --with-dbhost           set the database hostname
   --with-toplevel
   --with-sysroot
-  --with-sources          where checked out sources are stored
   --with-local-snapshots  Where downloaded tarballs are stored
   --with-local-builds
   --with-remote-snapshots
@@ -3538,14 +3535,14 @@ fi
 #packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="svn-all-fast-exp texinfo"
 dpkg="`which dpkg`"
-result=`echo ${dpkg} 2>&1 | grep -c found`
+result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     packages="${packages} gcc-multilib g++-multilib lib32gmp-dev"
     for i in ${packages}; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
 $as_echo_n "checking if $i is installed... " >&6; }
-	exists="`dpkg -l | grep -c $i`"
+	exists="`dpkg --get-selections | grep -c '^$i\[:space:]\*install'`"
 	if test ${exists} -eq 0; then
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
@@ -3556,9 +3553,9 @@ $as_echo "yes" >&6; }
     done
 else
     yum="`which yum`"
-    result="`echo ${yum} | grep -c found`"
+    result=$?
     for i in ${packages}; do
-	exis    ts="`rpm -q -a | grep -c $i`"
+	exists="`rpm -q -a $i| grep -c $i`"
 	if test ${exists} -eq 0; then
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
@@ -3622,27 +3619,17 @@ fi
 
 # Check whether --with-sysroot was given.
 if test "${with_sysroot+set}" = set; then :
-  withval=$with_sysroot; SYSROOT=${withval}
+  withval=$with_sysroot; SYSROOTS=${withval}
 else
-  SYSROOT="${PWD}"/sysroots
+  SYSROOTS="${PWD}"/`hostname`/destdir/sysroots
 fi
 
 
 
-
-# Check whether --with-sources was given.
-if test "${with_sources+set}" = set; then :
-  withval=$with_sources; SOURCES=${withval}
-else
-  SOURCES="${PWD}/sources"
-fi
-
-
-
-if test ! -d ${SOURCES}; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${SOURCES} does not exist so creating directory!" >&5
-$as_echo "$as_me: WARNING: ${SOURCES} does not exist so creating directory!" >&2;}
-   mkdir -p ${SOURCES}
+if test ! -d ${SYSROOTS}; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${SYSROOTS} does not exist so creating directory!" >&5
+$as_echo "$as_me: WARNING: ${SYSROOTS} does not exist so creating directory!" >&2;}
+   mkdir -p ${SYSROOTS}
 fi
 
 
@@ -3666,7 +3653,7 @@ fi
 if test "${with_local_builds+set}" = set; then :
   withval=$with_local_builds; LOCAL_BUILDS=${withval}
 else
-  LOCAL_BUILDS="${PWD}/`hostname`/depends"
+  LOCAL_BUILDS="${PWD}/`hostname`/destdir"
 fi
 
 
@@ -3686,6 +3673,8 @@ echo ""
 $as_echo "$as_me: Downloaded snapshots will be stored in: ${LOCAL_SNAPSHOTS}" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: My builds will be installed in: ${LOCAL_BUILDS}" >&5
 $as_echo "$as_me: My builds will be installed in: ${LOCAL_BUILDS}" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Sysroots will be installed in: ${SYSROOTS}" >&5
+$as_echo "$as_me: Sysroots will be installed in: ${SYSROOTS}" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&5
 $as_echo "$as_me: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&6;}
 echo ""
