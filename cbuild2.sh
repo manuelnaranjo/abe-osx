@@ -86,17 +86,16 @@ dispatch()
 dump()
 {
     # These variables are always determined dynamically at run time
-    echo "Build triplet is:  ${build}"
-    echo "Target triplet is: ${target}"
+    echo "Target is:         ${target}"
     echo "GCC is:            ${gcc}"
     echo "GCC version:       ${gcc_version}"
-    echo "Sysroot is:        ${sysroot}"
+    echo "Sysroot is:        ${sysroots}"
 
     # These variables have default values which we don't care about
     echo "Binutils is:       ${binutils}"
     echo "Libc is:           ${libc}"
     echo "Config file is:    ${configfile}"
-    echo "Snapshot URL is:   ${snapshots}"
+    echo "Snapshot URL is:   ${local_snapshots}"
     echo "DB User name is:   ${dbuser}"
     echo "DB Password is:    ${dbpasswd}"
 
@@ -233,6 +232,7 @@ while test $# -gt 0; do
             ;;
 	--t*)			# target
             target=$2
+	    sysroots=${sysroots}/${target}
 	    shift
             ;;
 	# Execute only one step of the entire process. This is primarily
