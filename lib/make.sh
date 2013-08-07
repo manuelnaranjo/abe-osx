@@ -108,12 +108,11 @@ build()
     tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
-	( cd ${local_snapshots}/${srcdir} && make headers_install ARCH=arm INSTALL_HDR_PATH=${local_builds}/sysroot/usr)
+	make -C ${local_snapshots}/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
 	return 0
     fi
-#make headers_install INSTALL_HDR_PATH=/linaro/build/x86_64-linux-gnu/cbuild2/linaro.welcomehome.org/x86_64-unknown-linux-gnu/depends/sysroot/
 
-    # Then configure as a separate step, so if something goes wrong, we
+    # Then configure as a seperate step, so if something goes wrong, we
     # at least have the sources
     # unset these two variables to avoid problems later
     # default_configure_flags=
