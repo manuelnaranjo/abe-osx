@@ -72,13 +72,13 @@ dnl reliable and portble than using pkg-config.
 #packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="svn-all-fast-exp texinfo"
 dpkg="`which dpkg`"
-result=`echo ${dpkg} 2>&1 | grep -c found`
+result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     packages="${packages} gcc-multilib g++-multilib lib32gmp-dev"
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
-	exists="`dpkg -l | grep -c $i`"
+	exists="`dpkg --get-selections | grep -c '^$i\[[:space:]\]*install'`"
 	if test ${exists} -eq 0; then
 	    AC_MSG_RESULT([no, install $i])
 	else
@@ -87,9 +87,9 @@ if test ${result} -eq 0; then
     done
 else
     yum="`which yum`"
-    result="`echo ${yum} | grep -c found`"
+    result=$?
     for i in ${packages}; do
-	exis    ts="`rpm -q -a | grep -c $i`"
+	exists="`rpm -q -a $i| grep -c $i`"
 	if test ${exists} -eq 0; then
 	    AC_MSG_RESULT([no, install $i])
 	else
@@ -139,20 +139,13 @@ fi
 dnl The top of the cbuild tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),
-  SYSROOT=${withval},
-  SYSROOT="${PWD}"/sysroots)
-AC_SUBST(SYSROOT)
+  SYSROOTS=${withval},
+  SYSROOTS="${PWD}"/`hostname`/destdir/sysroots)
+AC_SUBST(SYSROOTS)
 
-dnl The local directory where sources from a DCCS are stored
-AC_ARG_WITH(sources,
-  AC_HELP_STRING([--with-sources], [where checked out sources are stored]),
-  SOURCES=${withval},
-  SOURCES="${PWD}/sources")
-AC_SUBST(SOURCES)
-
-if test ! -d ${SOURCES}; then
-   AC_MSG_WARN(${SOURCES} does not exist so creating directory!)
-   mkdir -p ${SOURCES}
+if test ! -d ${SYSROOTS}; then
+   AC_MSG_WARN(${SYSROOTS} does not exist so creating directory!)
+   mkdir -p ${SYSROOTS}
 fi
 
 dnl The local directory where snapshots are stored
@@ -171,7 +164,7 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
-  LOCAL_BUILDS="${PWD}/`hostname`/depends")
+  LOCAL_BUILDS="${PWD}/`hostname`/destdir")
 AC_SUBST(LOCAL_BUILDS)
 
 dnl A URL to the remote directory where snapshots are stored
@@ -181,10 +174,11 @@ AC_ARG_WITH(remote-snapshots,
   REMOTE_SNAPSHOTS='http://cbuild.validation.linaro.org/snapshots')
 AC_SUBST(REMOTE_SNAPSHOTS)
 
-dnl Display the default paths so the user doesn't need to look in the host.conf file.
+dnl Display the default paths so the user does not need to look in the host.conf file.
 echo ""
 AC_MSG_NOTICE([Downloaded snapshots will be stored in: ${LOCAL_SNAPSHOTS}])
 AC_MSG_NOTICE([My builds will be installed in: ${LOCAL_BUILDS}])
+AC_MSG_NOTICE([Sysroots will be installed in: ${SYSROOTS}])
 AC_MSG_NOTICE([Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}])
 echo ""
 
