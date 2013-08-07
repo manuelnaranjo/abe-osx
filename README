@@ -1,17 +1,76 @@
-This is a bourne shell rewrite of the existing cbuild system as used by Linaro.
+
+Cbuildv2 is a bourne shell rewrite of the existing cbuild system as
+used by Linaro. While being oriented to the Linaro way of doing
+things, Cbuildv2 should be usable by others by just reconfiguring.
 
 Configuring Cbuildv2:
 ---------------------
-  WHile it is possible to run cbuildv2 from it's source tree, this
+  While it is possible to run Cbuildv2 from it's source tree, this
 isn't recommended. The best practice is to create a new build
-directory, and configure cbuildv2 in that directory. That makes it
-wasy to change branches, or even delete subdirectories easily. There
-are defaults for all 
+directory, and configure Cbuildv2 in that directory. That makes it
+easy to change branches, or even delete subdirectories. There
+are defaults for all paths, which is to create them under the same
+directory configure is run in.
+
+  There are several directories that Cbuildv2 needs. These are the
+following:
+
+  * local snapshots - This is where all the downloaded sources get
+    stored. The default is the current directory under snapshots.
+  * local build - This is where all the executables get built. The
+    default is to have builds go in a top level directory which is the
+    full hostname of the build machine. Under this a directory is
+    created for the target architecture.
+  * remote snapshots - This is where remote tarballs are stored. This
+    currently defaults to cbuild.validation.linaro.org, which is
+    accessible via HTTP to the general public.
+
+  If configure is executed without any parameters. the defaults are
+used. It is also possible to change those values at configure
+time. For example:
 
 $CBUILD-PATH/configure
 --with-local-snapshots=$CBUILD_PATH/snapshots 
---with-local-builds=$CBUILD-PATH/depends 
+--with-local-builds=$CBUILD-PATH/destdir
 --with-remote-snapshots=cbuild@toolchain64.lab:/home/cbuild/var/snapshots/
+
+  This changes the 3 primary paths, including changing the remote host
+to use rsync or ssh to download tarballs instead of HTTP. You can
+execute ./configure --help to get the full list of configure time
+parameters.
+
+  The configure process produces a host.conf file, with the default
+settings. This file is read by cbuildv2 at runtime, so it's possible to
+change the values and rerun cbuild2.sh to use the new values. Each
+toolchain component also has a config file. The default version is
+copied at build time to the build tree. It is also possible to edit
+this file, usually called something like gcc.conf, to change the
+toolchain component specific valus used when configuring the
+component.
+
+  You can see what values were used to configure each component by
+looking in the top of the config.log file, which is produced at
+configure time. For example:
+
+	  head ${hostname}/${target}/${component}/config.log
+
+Default Behaviours:
+------------------
+  There are several behaviours that may not be obvious, so they're
+documented here. One relates to GCC builds. When built natively, GCC
+only builds itself once, and is fully functional. When cross
+compiling, this works differently. A fully functional GCC can't be
+built without a sysroot, so a minimum compiler is built to build the C
+library. This is called stage1. This is then used to compiler the C
+library. One this library is installed, then stage2 of GCC can be
+built.
+
+  When building an entire toolchain using the 'all' option to --build,
+all components are built in the correct order, including both GCC
+stages. It is possible to specify building only GCC, in this case the
+stage1 configure flags are used if the C library isn't installed. If
+the C library is installed, then the stage2 flags are used. A message
+is displayed to document the automatic configure decision.
 
 Specifying the source works like this:
 -------------------------------------
@@ -53,16 +112,16 @@ instead. For example:
 
 "cbuild2.sh --target arm-none-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
 
-To build and entire cross toolchain, the simplest way is to let
-cbuildv2 control allthe steps, although it is also possible to do each
+To build an entire cross toolchain, the simplest way is to let
+cbuildv2 control all the steps. Although it is also possible to do each
 step separately. To build the full toolchain, do this:
 
 "cbuild2.sh --target arm-none-linux-gnueabihf --build all"
 
 ---------------------------------------------------------------------
+Older NOTES
+
 x86_64-none-linux-gnu
-arm-none-linux-gnueabi
-arm-none-linux-gnueabihf
 aarch64-none-linux-gnu
 aarch64-none-elf
 arm-none-linux-gnueabi
@@ -161,25 +220,6 @@ management planning.
  * Plot all test states as a percentage of total test results
  * Plot all test states of the actual totals for each
  * 
-
-
-CREATE TABLE `benchmarks` (
-  `date` datetime NOT NULL,
-  `benchmark` varchar(72) NOT NULL,
-  `result` time NOT NULL,
-  `version` varchar(72) NOT NULL,
-  `status` enum('IDLE','RUNNING','DONE') NOT NULL,
-  `target_arch` varchar(72) NOT NULL,
-  `build_arch` varchar(72) NOT NULL,
-  `gcc_version` varchar(72) NOT NULL,
-  `binutils_version` varchar(72) NOT NULL,
-  `libc_version` varchar(72) NOT NULL,
-  `enabled_cores` INT(20) NOT NULL,
-  `enabled_chips` INT(20) NOT NULL,
-  `cores_per_chip` INT(20) NOT NULL,
-  `threads_per_core` INT(20) NOT NULL,
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
 CoreMark
  * Compiler and version
  * Operating Speed in Mhz
