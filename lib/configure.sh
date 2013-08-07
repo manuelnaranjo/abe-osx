@@ -89,10 +89,10 @@ configure_build()
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
 	*libc|newlib)
-	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${local_builds}/sysroot/usr ${opts}"
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	gcc)
-	    make -C ${builddir} distclean
+	    make -C ${builddir} -i -k distclean
 	    if test x"$2" != x; then
 		case $2 in
 		    stage1*)
@@ -102,6 +102,10 @@ configure_build()
 		    stage2*)
 			notice "Building stage 2 of GCC"
 			opts="${opts} ${stage2_flags}"
+			;;
+		    bootstrap*)
+			notice "Building bootstrapped GCC"
+			opts="${opts} --enable-bootstrap"
 			;;
 		    *)
 			;;
