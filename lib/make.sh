@@ -182,6 +182,10 @@ make_install()
     builddir="`get_builddir $1`"
     notice "Making install in ${builddir}"
 
+    if test x"${tool}" != x"eglibc"; then
+	make_flags="${make_flags} install_root=${sysroots}/usr"
+    fi
+
     export CONFIG_SHELL=${bash_shell}
     make install SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log
     if test $? != "0"; then
