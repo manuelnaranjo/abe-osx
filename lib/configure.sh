@@ -88,12 +88,18 @@ configure_build()
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
-	*libc|newlib|libelf*)
+	newlib|libelf*)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
+	*libc)
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    ;;
 	gcc)
+	    # Force a complete reconfigure, as we changed the flags. We could do a
+	    # make distclean, but this builds faster, as not all files have to be
+	    # recompiled.
+	    find ${builddir} -name Makefile -o -name config.cache -exec rm {} \;
 	    if test x"${build}" != x"${target}"; then
-		# make -C ${builddir} -i -k distclean
 		if test x"$2" != x; then
 		    case $2 in
 			stage1*)
