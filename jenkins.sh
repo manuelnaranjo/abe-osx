@@ -24,53 +24,31 @@ if test x"${linux_snapshot}" != x"latest"; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-# # Get the build machine architecture
-# case ${build_machine} in 
-#     toolchain_cloud)
-# 	;;
-#     all_native)
-# 	;;
-#     all_cross)
-# 	;;
-#     a9-builder)
-# 	;;
-#     a9-daily)
-# 	;;
-#     a9-ref)
-# 	;;
-#     a9hf-builder)
-# 	;;
-#     a9hf-daily)
-# 	;;
-#     a9hf-ref)
-# 	;;
-#     armv5-builder)
-# 	;;
-#     armv6-ref)
-# 	;;
-#     i686)
-# 	;;
-#     i686-lucid)
-# 	;;
-#     lava-calxeda)
-# 	;;
-#     lava-panda-mock)
-# 	;;
-#     lava-panda-usbdrive)
-# 	;;
-#     lava-pandaes)
-# 	;;
-#     x86_64)
-# 	;;
-#     xaarch64)
-# 	;;
-#     xaarch64_bare)
-# 	;;
-#     xcortexa15hf)
-# 	;;
-#     *)
-# 	;;
-#  esac
+# Get the build machine architecture
+if test ${build_type} -eq 1; then
+    case ${target} in
+	arm-none-linux-gnueabihf)
+	    ;;
+	arm-none-linux-gnueabi)
+	    ;;
+	armeb-none-linux-gnueabihf)
+	    ;;
+	aarch64-none-linux-gnu)
+	    ;;
+	aarch64_be-none-linux-gnu)
+	    ;;
+	aarch64-none-elf)
+	    ;;
+	aarch64_be-none-elf)
+	    ;;
+	x86_64-none-linux-gnu)
+	    ;;
+	i686-none-linux-gnu)
+	    ;;
+	*)
+	    ;;
+    esac
+fi
 
 # if test x"${runtests}" != x"latest"; then
 # fi
