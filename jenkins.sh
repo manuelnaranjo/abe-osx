@@ -24,64 +24,61 @@ if test x"${linux_snapshot}" != x"latest"; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-# Get the build machine architecture
-case ${build_machine} in 
-    toolchain_cloud)
-	;;
-    all_native)
-	;;
-    all_cross)
-	a9-builder)
-	;;
-    a9-daily)
-	;;
-    a9-ref)
-	;;
-    a9hf-builder)
-	;;
-    a9hf-daily)
-	;;
-    a9hf-ref)
-	;;
-    armv5-builder)
-	;;
-    armv6-ref)
-	;;
-    i686)
-	;;
-    i686-lucid)
-	;;
-    lava-calxeda)
-	;;
-    lava-panda-mock)
-	;;
-    lava-panda-usbdrive)
-	;;
-    lava-pandaes)
-	;;
-    lava-pandaes-usbdrive) 
-	;;
-    lava-qemu-minimal)
-	;;
-    x86_64)
-	;;
-    x86_64-heavy)
-	;;
-    xaarch64)
-	;;
-    xaarch64_bare)
-	;;
-    xcortexa15hf)
-	;;
-    *)
-	;;
- esac
+# # Get the build machine architecture
+# case ${build_machine} in 
+#     toolchain_cloud)
+# 	;;
+#     all_native)
+# 	;;
+#     all_cross)
+# 	;;
+#     a9-builder)
+# 	;;
+#     a9-daily)
+# 	;;
+#     a9-ref)
+# 	;;
+#     a9hf-builder)
+# 	;;
+#     a9hf-daily)
+# 	;;
+#     a9hf-ref)
+# 	;;
+#     armv5-builder)
+# 	;;
+#     armv6-ref)
+# 	;;
+#     i686)
+# 	;;
+#     i686-lucid)
+# 	;;
+#     lava-calxeda)
+# 	;;
+#     lava-panda-mock)
+# 	;;
+#     lava-panda-usbdrive)
+# 	;;
+#     lava-pandaes)
+# 	;;
+#     x86_64)
+# 	;;
+#     xaarch64)
+# 	;;
+#     xaarch64_bare)
+# 	;;
+#     xcortexa15hf)
+# 	;;
+#     *)
+# 	;;
+#  esac
 
 # if test x"${runtests}" != x"latest"; then
 # fi
 
+# Create a build directory
 mkdir -p _build
 cd _build
+
 # Delete all local config files, so any rebuilds use the currently
 # committed versions.
 rm -f localhost/${target}/*/*.conf
@@ -93,4 +90,5 @@ export CONFIG_SHELL="/bin/bash"
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
-$CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target $target --build all
+$CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
+
