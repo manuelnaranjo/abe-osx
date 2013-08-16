@@ -5,7 +5,7 @@
 build="`${topdir}/config.guess`"
 target=
 gcc="`which gcc`"
-gcc_version="`${gcc} -v 2>&1 | tail -1`"
+host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
 libc="default"
 snapshots="default"
@@ -44,6 +44,7 @@ force=no
 interactive=no
 nodepends=no
 verbose=1
+network=""
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
