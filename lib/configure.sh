@@ -32,12 +32,14 @@ configure_build()
     if test x"${target}" = x; then
 	target=${build}
 	host=${build}
+    else
+	# FIXME: this won't work yet when doing a Canadian Cross.
+	host=${build}
     fi
 
     # Extract the toolchain component name, stripping off the linaro
     # part if it exists as it's not used for the config file name.
     tool="`get_toolname $1 | sed -e 's:-linaro::'`"
-
 
     # Load the default config file for this component if it exists.
     default_configure_flags=""
@@ -50,8 +52,6 @@ configure_build()
 	# it to override the default settings
 	# unset these two variables to avoid problems later
 	if test -e "${builddir}/${tool}.conf"; then
-#	    if test ${builddir}/${tool}.conf -nt ${topdir}/config/${tool}.conf; then
-#	    fi
 	    . "${builddir}/${tool}.conf"
 	    notice "Local ${tool}.conf overiding defaults"
 	else
@@ -73,10 +73,8 @@ configure_build()
 	done
     fi
 
-    # eglibc won't produce a static library if GCC is configured to be statically.
-    # A static iconv_prog wants libgcc_eh, which is only created wth a dynamically
-    # build GCC.
-    if test x"${tool}" != x"eglibc"; then
+    # Force static linking unless dynamic linking is specified
+    if test x"${static_link}" != x"no"; then
 	opts="--disable-shared --enable-static"
     fi
 
@@ -120,7 +118,7 @@ configure_build()
 				opts="${opts} ${stage2_flags}"
 			    else
 				warning "Building with stage 1 flags, no sysroot found"
-				opts="${opts} ${stage2_flags}"
+				opts="${opts} ${stage1_flags}"
 			    fi
 			    ;;
 		    esac
@@ -130,20 +128,20 @@ configure_build()
 			opts="${opts} ${stage2_flags}"
 		    else
 			warning "Building with stage 1 flags, no sysroot found"
-			opts="${opts} ${stage2_flags}"
+			opts="${opts} ${stage1_flags}"
 		    fi
 		fi
 	    else
 		opts="${opts} ${stage2_flags}"
 	    fi
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}/${host}"
 	    ;;
 	binutils)
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}/${host}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog)
-	    opts="${opts} --prefix=${local_builds} ${opts}"
+	    opts="${opts} --prefix=${local_builds}/${host} ${opts}"
 	    ;;
 	*)
     esac
