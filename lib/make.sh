@@ -7,30 +7,39 @@
 # This performs all the steps to build a full cross toolchain
 build_all()
 {
-    # Force dependency checking and building, as this function handles everything
+    # Turn off dependency checking, as everything is handled here
     nodepends=yes
 
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
     if test x"${build}" != x"${target}"; then
-	builds="infrastructure binutils stage1 eglibc stage2"
+	builds="infrastructure binutils stage1 libc stage2"
     else
-	builds="infrastructure binutils stage2 eglibc" # native build
+	builds="infrastructure binutils stage2 libc" # native build
+    fi
+    if test x"${gcc_version}" = x; then
+	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
     for i in ${builds}; do
+	notice "Building all, current component $i"
 	case $i in
 	    infrastructure)
 		infrastructure
 		;;
 	    # Build stage 1 of GCC, which is a limited C compiler used to compile
 	    # the C library.
+	    libc)
+		libc="`grep ^clibrary= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+		latest_version="`grep ^latest= ${topdir}/config/${libc}.conf | cut -d '\"' -f 2`"
+		build ${latest_version}
+		;;
 	    stage1)
-		latest_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+		latest_version="${gcc_version}"
 		build ${latest_version} stage1
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
-		latest_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+		latest_version="${gcc_version}"
 		build ${latest_version} stage2
 		;;
 	    # Build anything not GCC or infrastructure
@@ -182,7 +191,7 @@ make_install()
     builddir="`get_builddir $1`"
     notice "Making install in ${builddir}"
 
-    if test x"${tool}" != x"eglibc"; then
+    if test x"${tool}" = x"eglibc"; then
 	make_flags="${make_flags} install_root=${sysroots}/usr"
     fi
 
@@ -226,4 +235,24 @@ make_clean()
     fi
 
     return 0
+}
+
+# See if we can link a simple executable
+hello_world()
+{
+
+    # Create the usual Hello World! test case
+    cat <<EOF >hello.c
+#include <stdio.h>
+int
+main(int argc, char *argv[])
+{
+    printf("Hello World!\n");
+}
+
+EOF
+
+    # See if it compiles to a fully linked executable
+    ${target}-gcc -static -o hi hello.c
+
 }
