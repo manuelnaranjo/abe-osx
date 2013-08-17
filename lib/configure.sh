@@ -90,13 +90,16 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	*libc)
-	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    opts="${opts} --build=${build} --host=${target} --prefix=/usr"
 	    ;;
 	gcc)
 	    # Force a complete reconfigure, as we changed the flags. We could do a
 	    # make distclean, but this builds faster, as not all files have to be
 	    # recompiled.
-	    find ${builddir} -name Makefile -o -name config.cache -exec rm {} \;
+	    find ${builddir} -name Makefile -o -name config.status -o -name config.cache -exec rm {} \;
+#	    if test -e ${builddir}/Makefile; then
+#		make ${make_flags} -C ${builddir} distclean -i -k
+#	    fi
 	    if test x"${build}" != x"${target}"; then
 		if test x"$2" != x; then
 		    case $2 in
@@ -107,6 +110,7 @@ configure_build()
 			stage2*)
 			    notice "Building stage 2 of GCC"
 			    opts="${opts} ${stage2_flags}"
+#			    make ${make_flags} -C ${builddir} distclean -i -k
 			    ;;
 			bootstrap*)
 			    notice "Building bootstrapped GCC"
@@ -149,6 +153,7 @@ configure_build()
     if test -e ${builddir}/config.status -a x"${force}" = x"no"; then
 	warning "${buildir} already configured!"
     else
+	export PATH="${local_builds}/${host}/bin:$PATH"
 	export CONFIG_SHELL=${bash_shell}
 	(cd ${builddir} && ${bash_shell} ${srcdir}/configure ${default_configure_flags} ${opts})
 	return $?
