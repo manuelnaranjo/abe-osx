@@ -10,16 +10,28 @@ build_all()
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
 
-    # cross builds need to build a minimal C compiler, which after compiling
-    # the C library, can then be reconfigured to be fully functional.
+    # Specify the components, in order to get a full toolchain build
     if test x"${build}" != x"${target}"; then
 	builds="infrastructure binutils stage1 libc stage2"
     else
 	builds="infrastructure binutils stage2 libc" # native build
     fi
+
+    # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
 	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
+    if test x"${binutils_version}" = x; then
+	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${eglibc_version}" = x; then
+	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+    fi
+
+    # cross builds need to build a minimal C compiler, which after compiling
+    # the C library, can then be reconfigured to be fully functional.
+
+    # build each component
     for i in ${builds}; do
 	notice "Building all, current component $i"
 	case $i in
@@ -29,23 +41,22 @@ build_all()
 	    # Build stage 1 of GCC, which is a limited C compiler used to compile
 	    # the C library.
 	    libc)
-		libc="`grep ^clibrary= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-		latest_version="`grep ^latest= ${topdir}/config/${libc}.conf | cut -d '\"' -f 2`"
-		build ${latest_version}
+		build eglibc-${eglibc_version}
+		if test $? -gt 0; then
+		    error "Couldn't build eglibc!"
+		    return 1
+		fi
 		;;
 	    stage1)
-		latest_version="${gcc_version}"
-		build ${latest_version} stage1
+		build gcc-${gcc_version} stage1
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
-		latest_version="${gcc_version}"
-		build ${latest_version} stage2
+		build ${gcc_version} stage2
 		;;
 	    # Build anything not GCC or infrastructure
 	    *)
-		latest_version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
-		build ${latest_version}
+		build binutils-${binutils_version}
 		;;
 	esac
 	if test $? -gt 0; then
@@ -242,15 +253,15 @@ hello_world()
 {
 
     # Create the usual Hello World! test case
-    cat <<EOF >hello.c
-#include <stdio.h>
+    cat <<EOF >hello.cpp
+#include <iostream>
 int
 main(int argc, char *argv[])
 {
-    printf("Hello World!\n");
+    std::cout << "Hello World!" << std::endl; 
 }
-
 EOF
+
 
     # See if it compiles to a fully linked executable
     ${target}-gcc -static -o hi hello.c
