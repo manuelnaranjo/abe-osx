@@ -203,7 +203,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test x"${tool}" = x"eglibc"; then
-	make_flags="${make_flags} install_root=${sysroots}/usr"
+	make_flags=" install_root=${sysroots} ${make_flags}"
     fi
 
     export CONFIG_SHELL=${bash_shell}
