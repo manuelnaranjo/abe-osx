@@ -10,13 +10,27 @@ fetch()
 	file=$1
     fi
 
-    # start by grabbing the md5sum file. We delete the current one as we
-    # always want a fresh md5sums file, as it changes every day, so older
-    # versions go out of doubt.
-    #rm -f ${local_snapshots}/md5sums
-    #fetch_http md5sums
-    #fetch_rsync ${remote_snapshots}/md5sums
-    
+    # first, see if there is a working network connection, because
+    # without one, downloading files won't work.
+    ping -c 1 cbuild.validation.linaro.org
+    if test $? -eq 0; then
+	network=yes
+    else
+	warning "No network connection! Downloading files disabled."
+	network=no
+	return 1
+    fi
+
+    # The md5sums file is handled differently, as it's used to find all
+    # the other names of the tarballs for remote downloading.
+    if test x"$1" = x"md5sums"; then
+	# Move the existing file to force a fresh copy to be downloaded.
+	# Otherwise this file can get stale, and new tarballs not found.
+	mv -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak	
+	fetch_http md5sums
+	return $?
+    fi
+
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
