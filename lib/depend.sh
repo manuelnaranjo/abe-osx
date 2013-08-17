@@ -24,14 +24,46 @@ dependencies()
 
     if test x"${depends}"  != x; then
 	for i in ${depends}; do
-	    latest_version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
+	    version=""
+	    case $i in
+		b*|binutils)
+		    version="${binutils_version}"
+		    ;;
+		gm*|gmp)
+		    version="${gmp_version}"
+		    ;;
+		gc*|gcc)
+		    version="${gcc_version}"
+		    ;;
+		mpf*|mpfr)
+		    version="${mpfr_version}"
+		    ;;
+		mpc)
+		    version="${mpc_version}"
+		    ;;
+		eglibc)
+		    version="${eglibc_version}"
+		    ;;
+		glibc)
+		    version="${glibc_version}"
+		    ;;
+		n*|newlib)
+		    version="${newlib_version}"
+		    ;;
+		*)
+		    ;;
+	    esac
+	    if test x"${version}" = x; then
+		version="`grep ^latest= ${topdir}/config/$i.conf | cut -d '\"' -f 2`"
+	    fi
 	    installed $i
 	    if test $? -gt 0; then
-		notice "Need component ${latest}"
-		components="${components} ${latest_version}"
+		notice "Need component ${tool}-${version}"
+		components="${components} ${tool}-${version}"
 	    fi
 	done
 	depends=""
+	version=""
 	return $?
     fi
     
