@@ -24,32 +24,6 @@ if test x"${linux_snapshot}" != x"latest"; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-# Get the build machine architecture
-if test ${build_type} -eq 1; then
-    case ${target} in
-	arm-none-linux-gnueabihf)
-	    ;;
-	arm-none-linux-gnueabi)
-	    ;;
-	armeb-none-linux-gnueabihf)
-	    ;;
-	aarch64-none-linux-gnu)
-	    ;;
-	aarch64_be-none-linux-gnu)
-	    ;;
-	aarch64-none-elf)
-	    ;;
-	aarch64_be-none-elf)
-	    ;;
-	x86_64-none-linux-gnu)
-	    ;;
-	i686-none-linux-gnu)
-	    ;;
-	*)
-	    ;;
-    esac
-fi
-
 # if test x"${runtests}" != x"latest"; then
 # fi
 
@@ -68,5 +42,8 @@ export CONFIG_SHELL="/bin/bash"
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
-$CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
-
+if test x"${build_type} = x"true"; then
+    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
+else
+    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
+fi
