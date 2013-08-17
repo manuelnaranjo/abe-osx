@@ -112,11 +112,8 @@ usage()
     echo "  --build (architecture for the build machine, default native)"
     echo "  --target (architecture for the target machine, default native)"
     echo "  --snapshots XXX (URL of remote host or local directory)"
-    echo "  --libc {newlib,eglibc,glibc} (C library to use)"
     echo "  --list {base,prebuilt,snapshots} (list possible values for component versions)"
     echo "  --set {gcc,binutils,libc,latest}=XXX (change config file setting)"
-    echo "  --binutils (binutils version to use, default $PATH)"
-    echo "  --gcc (gcc version to use, default $PATH)"
     echo "  --config XXX (alternate config file)"
     echo "  --clean (clean a previous build, default is to start where it left off)"
     echo "  --dispatch (run on LAVA build farm, probably remote)"
@@ -133,12 +130,14 @@ usage()
     exit 1
 }
 
-export PATH="${local_builds}/bin:$PATH"
+export PATH="${local_builds}/${build}/bin:$PATH"
 #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
 
-# Process the multiple command line arguments
-fetch_http md5sums
+# Get the md5sums file, which is used later to get the URL for remote files
+fetch md5sums
 #fetch_rsync ${remote_snapshots}/md5sums
+
+# Process the multiple command line arguments
 while test $# -gt 0; do
     # Get a URL for the source code for this toolchain component. The
     # URL can be either for a source tarball, or a checkout via svn, bzr,
@@ -146,6 +145,8 @@ while test $# -gt 0; do
     case "$1" in
 	--bu*)			# build
 	    if test x"$2" != x"all"; then
+		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
+		tool=`get_toolname $2`
 		get_source $2
 		if test $? -gt 0; then
 		    error "Couldn't find the source for $2"
@@ -164,10 +165,6 @@ while test $# -gt 0; do
 	    ;;
 	--sy*)			# sysroot
             set_sysroot ${url}
-	    shift
-            ;;
-	--bin*)			# binutils
-            set_binutils ${url}
 	    shift
             ;;
 	--clean)
@@ -201,17 +198,9 @@ while test $# -gt 0; do
 	--force|-f*)
 	    force=yes
 	    ;;
-	--gcc)
-            set_gcc ${url}
-	    shift
-            ;;
 	--interactive|-i*)
 	    interactive=yes
 	    ;;
-	--libc)
-            set_libc $2
-	    shift
-            ;;
 	--list)
             get_list $2
 	    shift
@@ -233,6 +222,7 @@ while test $# -gt 0; do
 	--t*)			# target
             target=$2
 	    sysroots=${sysroots}/${target}
+	    host=${build}
 	    shift
             ;;
 	# Execute only one step of the entire process. This is primarily
@@ -250,6 +240,9 @@ while test $# -gt 0; do
             case $2 in
 		# this executes the entire process, but ignores any of
 		# the dependencies in the config file
+		depends)
+		    dependencies ${url}
+		    ;;
 		build|b*)
 		    nodepends=yes
 		    build ${url}
@@ -319,7 +312,38 @@ while test $# -gt 0; do
             usage
             ;;
 	*)
-	    #usage
+	    if test `echo $1 | grep -c =` -gt 0; then
+		name="`echo $1 | cut -d '=' -f 1`"
+		value="`echo $1 | cut -d '=' -f 2`"
+		case ${name} in
+		    b*|binutils)
+			binutils_version="${value}"
+			;;
+		    gc*|gcc)
+			gcc_version="${value}"
+			;;
+		    gm*|gmp)
+			gmp_version="${value}"
+			;;
+		    mpf*|mpfr)
+			mpfr_version="${value}"
+			;;
+		    mpc)
+			mpc_version="${value}"
+			;;
+		    eglibc)
+			eglibc_version="${value}"
+			;;
+		    glibc)
+			glibc_version="${value}"
+			;;
+		    n*|newlib)
+			newlib_version="${value}"
+			;;
+		    *)
+			;;
+		esac
+	    fi
             ;;
     esac
     if test $# -gt 0; then
