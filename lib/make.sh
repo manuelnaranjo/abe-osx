@@ -34,6 +34,12 @@ build_all()
     # build each component
     for i in ${builds}; do
 	notice "Building all, current component $i"
+	# If an interactive build, stop betweeen each step so we can
+	# check the build and config options.
+	if test x"${interactive}" = x"yes"; then
+	    echo "Hit any key to continue..."
+	    read answer		
+	fi
 	case $i in
 	    infrastructure)
 		infrastructure
