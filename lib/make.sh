@@ -11,7 +11,7 @@ build_all()
     nodepends=yes
 
     # Specify the components, in order to get a full toolchain build
-    if test x"${build}" != x"${target}"; then
+    if test x"${target}" != x; then
 	builds="infrastructure binutils stage1 libc stage2"
     else
 	builds="infrastructure binutils stage2 libc" # native build
