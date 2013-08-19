@@ -2,8 +2,12 @@
 
 # These store all the data used for this test run that can be overwritten by
 # command line options.
+
+# Start by assuming it's a native build
 build="`${topdir}/config.guess`"
-target=
+target=${build}
+host=${target}
+
 gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
