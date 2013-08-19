@@ -182,9 +182,6 @@ normalize_path()
 # $1 - The full URL to the source tree as returned by get_URL()
 get_builddir()
 {
-    if test x"${target}" = x; then
-	target=${build}
-    fi
     dir="`normalize_path $1`"
     if test `echo $1 | grep -c eglibc` -gt 0; then
 	dir="${cbuild_top}/${hostname}/${target}/${dir}"
