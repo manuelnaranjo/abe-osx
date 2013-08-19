@@ -29,13 +29,13 @@ configure_build()
     fi
 
     # If a target architecture isn't specified, then it's a native build
-    if test x"${target}" = x; then
-	target=${build}
-	host=${build}
-    else
+#    if test x"${target}" = x; then
+#	target=${build}
+#	host=${build}
+#    else
 	# FIXME: this won't work yet when doing a Canadian Cross.
-	host=${build}
-    fi
+#	host=${build}
+#    fi
 
     # Extract the toolchain component name, stripping off the linaro
     # part if it exists as it's not used for the config file name.
