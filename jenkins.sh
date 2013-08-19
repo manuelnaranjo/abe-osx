@@ -42,7 +42,7 @@ export CONFIG_SHELL="/bin/bash"
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
-if test x"${build_type} = x"true"; then
+if test x"${build_type}" = x"true"; then
     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
 else
     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
