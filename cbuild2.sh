@@ -231,6 +231,13 @@ while test $# -gt 0; do
 	    # Get a URL for the source code for this toolchain component. The
 	    # URL can be either for a source tarball, or a checkout via svn, bzr,
 	    # or git
+	    case $2 in
+		package|pac*)
+		    binary_tarball $3
+		    exit 1
+		    ;;
+	    esac
+
 	    get_source $3
 	    if test $? -gt 0; then
 		error "Couldn't find the source for $3"
