@@ -42,8 +42,19 @@ export CONFIG_SHELL="/bin/bash"
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
-if test x"${build_type}" = x"true"; then
-    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
+# if test x"${build_type}" = x"true"; then
+#     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
+# else
+#     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
+# fi
+
+# If 'ALL' is selected as the target, build all cross compilers
+if test x"${target}" = x"all"; then
+    arches="arm-none-linux-gnueabihf arm-none-linux-gnueabi armeb-none-linux-gnueabihf aarch64-none-linux-gnu aarch64_be-none-linux-gnu aarch64-none-elf aarch64_be-none-elf"
 else
-    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
+    arches="${target}"
+fi
+
+for i in ${arches}; do
+    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target $i --build all
 fi
