@@ -205,7 +205,9 @@ make_all()
 
 make_install()
 {
-    builddir="`get_builddir $1`"
+    if test x"${builddir}" = x; then
+	builddir="`get_builddir $1`"
+    fi
     notice "Making install in ${builddir}"
 
     if test x"${tool}" = x"eglibc"; then
@@ -213,7 +215,12 @@ make_install()
     fi
 
     export CONFIG_SHELL=${bash_shell}
-    make install SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log
+    if test x"$2" != x; then
+	make install SHELL=${bash_shell} ${make_flags} $2 -w -C ${builddir}
+    else
+	make install SHELL=${bash_shell} ${make_flags} -w -C ${builddir}
+    fi
+
     if test $? != "0"; then
 	warning "Make failed!"
 	return 1
