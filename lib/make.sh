@@ -136,7 +136,11 @@ build()
     tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
-	make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
+	if test `echo ${target} | grep -c aarch64` -gt 0; then
+	    make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr
+	else
+	    make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
+	fi
 	return 0
     fi
 
