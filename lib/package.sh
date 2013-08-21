@@ -117,31 +117,31 @@ manifest()
 
     outfile=/tmp/manifest.txt
     cat <<EOF > ${outfile}
-gmp = ${gmp_version}
-mpc = ${mpc_version}
-mpfr = ${mpfr_version}
-gcc = ${gcc_version}
-binutils = ${binutils_version}
+gmp_version=${gmp_version}
+mpc_version=${mpc_version}
+mpfr_version=${mpfr_version}
+gcc_version=${gcc_version}
+binutils_version=${binutils_version}
 EOF
     
     if test x"${clibrary}" = x; then
-	echo "eglibc = ${eglibc_version}" >> ${outfile}
+	echo "eglibc_version=${eglibc_version}" >> ${outfile}
     else
 	case ${clibrary} in
 	    eglibc)
 		eglibc = ${eglibc_version}
-		echo "eglibc = ${eglibc_version}" >> ${outfile}
+		echo "eglibc_version=${eglibc_version}" >> ${outfile}
 		;;
 	    glibc)
 		glibc = ${glibc_version}
-		echo "glibc = ${glibc_version}" >> ${outfile}
+		echo "glibc_version=${glibc_version}" >> ${outfile}
 		;;
 	    newlib)
 		newlib = ${newlib_version}
-		echo "newlib = ${newlib_version}" >> ${outfile}
+		echo "newlib_version=${newlib_version}" >> ${outfile}
 		;;
 	    *)
-		echo "eglibc = ${eglibc_version}" >> ${outfile}
+		echo "eglibc_version=${eglibc_version}" >> ${outfile}
 		;;
 	esac
     fi

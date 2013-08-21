@@ -159,6 +159,13 @@ while test $# -gt 0; do
 	    fi	    
 	    shift
 	    ;;
+	--manifest|-m*)
+	    # source a manifest file if there is one
+	    if test -f $2 ; then
+		. $2
+	    fi
+	    echo $gcc_version
+	    ;;
        # download and install the infrastructure libraries GCC depends on
 	--inf*|infrastructure)
 	    infrastructure
@@ -186,6 +193,9 @@ while test $# -gt 0; do
 	--dispatch)
             dispatch ${url}
 	    shift
+            ;;
+	--dryrun*)
+            dryrun=yes
             ;;
 	--dump)
             dump ${url}
