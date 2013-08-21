@@ -8,16 +8,12 @@ binary_tarball()
 	error "Need to supply a release version!!"
 	return 1
     else
-	if test `echo $1 | grep -c -- "linaro"` -eq 0; then
-	    release="linaro-$1"
-	else
-	    release="$1"
-	fi
+	release="$1"
     fi
 
     if test x"$2" = x; then
 #	packages="toolchain sysroot"
-	packages="toolchain"
+	packages="sysroot"
     else
 	packages="$2"
     fi
@@ -40,21 +36,37 @@ binary_tarball()
 # Produce a binary toolchain tarball
 binary_toolchain()
 {
-    release="$1-${target}"
+    release="gcc-linaro-${target}-$1"
 
-    destdir=/tmp/gcc-${release}
+    # See if specific component versions were specified at runtime
+    if test x"${gcc_version}" = x; then
+	gcc_version="gcc-linaro-`${target}-gcc -v 2>&1 | grep "gcc version " | cut -d ' ' -f 3 | cut -d '.' -f 1-2`-$1"
+    fi
+#	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+#    else
+
+    builddir="`get_builddir ${gcc_version}`"
+    destdir=/tmp/linaro/${release}
 
     # install in alternate directory so it's easier to build the tarball
-    make_install gcc-$1 DESTDIR=${destdir}
+    dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
 
-    cd /tmp && tar Jcvf ${local_snapshots}/gcc-${release}.tar.xz gcc-${release}
+    # make the tarball from the tree we just created.
+    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${release}.tar.xz linaro/${release}"
 
     return 0
 }
 
 binary_sysroot()
 {
-    cd ${local_builds}/sysroots/${host} && tar Jcvf --exclude-vcs --exclude-backups ${local_snapshots}/sysroot-$1.tar.xz 
+    if test x"${eglibc_version}" = x; then
+	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+    fi
+    release="sysroot-${eglibc_version}-${target}"
+
+    cp -fr ${local_builds}/sysroots/${target} /tmp/linaro/${release}
+
+    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${release}.tar.xz linaro/${release}"
 
     return 0
 }
@@ -68,3 +80,70 @@ build_rpm()
 {
     echo "unimplemented"
 }
+
+manifest()
+{
+    if test x"${gcc_version}" = x; then
+	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    fi
+    
+    if test x"${gmp_version}" = x; then
+	gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
+    fi
+    
+    if test x"${mpc_version}" = x; then
+	mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
+    fi
+    
+    if test x"${mpfr_version}" = x; then
+	mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
+    fi
+    
+    if test x"${binutils_version}" = x; then
+	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
+    fi
+
+    if test x"${eglibc_version}" = x; then
+	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+    fi
+        
+    if test x"${newlib_version}" = x; then
+	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+    fi
+        
+    if test x"${glibc_version}" = x; then
+	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
+    fi        
+
+    outfile=/tmp/manifest.txt
+    cat <<EOF > ${outfile}
+gmp = ${gmp_version}
+mpc = ${mpc_version}
+mpfr = ${mpfr_version}
+gcc = ${gcc_version}
+binutils = ${binutils_version}
+EOF
+    
+    if test x"${clibrary}" = x; then
+	echo "eglibc = ${eglibc_version}" >> ${outfile}
+    else
+	case ${clibrary} in
+	    eglibc)
+		eglibc = ${eglibc_version}
+		echo "eglibc = ${eglibc_version}" >> ${outfile}
+		;;
+	    glibc)
+		glibc = ${glibc_version}
+		echo "glibc = ${glibc_version}" >> ${outfile}
+		;;
+	    newlib)
+		newlib = ${newlib_version}
+		echo "newlib = ${newlib_version}" >> ${outfile}
+		;;
+	    *)
+		echo "eglibc = ${eglibc_version}" >> ${outfile}
+		;;
+	esac
+    fi
+}
+
