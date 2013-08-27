@@ -57,4 +57,4 @@ fi
 
 for i in ${arches}; do
     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target $i --build all
-fi
+done
