@@ -121,12 +121,13 @@ usage()
     echo "  --db-user XXX (specify MySQL user"
     echo "  --db-passwd XXX (specify MySQL password)"
     echo "  --dump (dump the values in the config file)"
-    echo "  --dostep XXX (fetch,extract,configure,build,checkout,push)"
+    echo "  --dostep XXX (fetch,extract,configure,build,checkout,package)"
     echo "  --release XXX (make a release tarball)"
     echo "  --clobber (force files to be downloaded even when they exist)"
     echo "  --force (force make errors to be ignored, answer yes for any prompts)"
     echo "  --parallel (do parallel builds, one per cpu core)"
     echo "  --merge XXX (merge a commit from trunk)"
+    echo "  --check (run make check after the build completes)"
     exit 1
 }
 
@@ -159,6 +160,12 @@ while test $# -gt 0; do
 	    fi	    
 	    shift
 	    ;;
+	--check|-ch*)
+	    runtests=yes
+	    ;;
+	--srcdir|-sr*)
+	    notice "fixme:"
+	    ;;
 	--manifest|-m*)
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
@@ -174,7 +181,7 @@ while test $# -gt 0; do
             set_sysroot ${url}
 	    shift
             ;;
-	--clean)
+	--clean|-cl*)
             clean_build ${url}
 	    shift
             ;;
@@ -194,47 +201,50 @@ while test $# -gt 0; do
             dispatch ${url}
 	    shift
             ;;
-	--dryrun*)
+	--dryrun)
             dryrun=yes
             ;;
 	--dump)
             dump ${url}
 	    shift
             ;;
-	--fetch)
+	--fetch|-d)
             fetch ${url}
 	    shift
             ;;
-	--force|-f*)
+	--force|-f)
 	    force=yes
 	    ;;
-	--interactive|-i*)
+	--interactive|-i)
 	    interactive=yes
 	    ;;
-	--list)
+	--list|-l)
             get_list $2
 	    shift
             ;;
-	--nodep*|-n*)		# nodepends
+	--nodep*|-n)		# nodepends
 	    nodepends=yes
 	    ;;
-	--p*)			# parallel
+	--parallel|-p*)			# parallel
             make_flags="-j ${cpus}"
             ;;
-	--release)
+	--release|-r)
             release ${url}
 	    shift
             ;;
-	--snapshots)
+	--snapshots|-s)
             set_snapshots ${url}
 	    shift
             ;;
-	--t*)			# target
+	--target|-ta*)			# target
             target=$2
 	    sysroots=${sysroots}/${target}
 	    host=${build}
 	    shift
             ;;
+	--testcode|te*)
+	    testcode
+	    ;;
 	# Execute only one step of the entire process. This is primarily
 	# used for debugging.
 	--dostep)
