@@ -99,8 +99,7 @@ fetch_http()
 	notice "Downloading ${getfile} to ${local_snapshots}"
 	if test x"${wget_bin}" != x; then
 	    # --continue --progress=bar
-	    ${wget_bin} --directory-prefix=${local_snapshots}/${dir} \
-		${remote_snapshots}/${getfile}
+	    dryrun "${wget_bin} --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
 	    if test ! -e ${local_snapshots}/${getfile}; then
 		# warning "${getfile} didn't download via http!"
 		return 1
@@ -121,7 +120,7 @@ fetch_rsync()
 {
     getfile="`basename $1`"
 
-    ${rsync_bin} $1 ${local_snapshots}
+    dryrun "${rsync_bin} $1 ${local_snapshots}"
     if test ! -e ${local_snapshots}/${getfile}; then
 	warning "${getfile} didn't download via rsync!"
 	return 1
