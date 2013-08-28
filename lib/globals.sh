@@ -17,6 +17,11 @@ configfile="default"
 dbuser="default"
 dbpasswd="default"
 
+manifest=
+
+# This doesn't do any real work, just prints the configure options and make commands
+dryrun=no
+
 #
 launchpad_id=
 svn_id=
@@ -49,6 +54,7 @@ interactive=no
 nodepends=no
 verbose=1
 network=""
+runtests=no
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
