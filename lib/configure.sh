@@ -146,10 +146,12 @@ configure_build()
 	binutils*)
 	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${prefix}"
 	    ;;
-	gmp|mpc|mpfr|isl|ppl|cloog)
+	gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
 	    opts="${opts} --prefix=${prefix}"
 	    ;;
 	*)
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
+	    ;;
     esac
 
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc"; then
