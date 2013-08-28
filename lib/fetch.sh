@@ -7,7 +7,12 @@ fetch()
 	error "No file name specified to fetch!"
 	return 1
     else
-	file=$1
+	file="`basename $1`"
+    fi
+
+    dir="`dirname $1`/"
+    if test x"${dir}" = x"."; then
+	dir=""
     fi
 
     # first, see if there is a working network connection, because
@@ -26,8 +31,8 @@ fetch()
     if test x"$1" = x"md5sums"; then
 	# Move the existing file to force a fresh copy to be downloaded.
 	# Otherwise this file can get stale, and new tarballs not found.
-	mv -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak	
-	fetch_http md5sums
+	mv -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak	
+	fetch_http ${dir}md5sums
 	return $?
     fi
 
@@ -35,15 +40,15 @@ fetch()
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
     
-    md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+    md5file="`grep ${file} ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
 	return 1
     fi
     if test x"${file}" != x; then
-	getfile="${md5file}"
+	getfile="${dir}${md5file}"
     else
-	getfile=${file}.tar.xz
+	getfile=${dir}${file}.tar.xz
     fi
 
     # FIXME: Stash the md5sum for this tarball in the build directory. Compare
@@ -179,7 +184,11 @@ extract()
 	dir=""
     fi
 
-    file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3`"
+    if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
+	file="`grep $1 ${local_snapshots}/${dir}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3`"
+    else
+	file=$1
+    fi
     
     # Figure out how to decompress a tarball
     case "${file}" in
