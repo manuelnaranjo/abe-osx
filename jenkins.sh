@@ -24,9 +24,6 @@ if test x"${linux_snapshot}" != x"latest"; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-# if test x"${runtests}" != x"latest"; then
-# fi
-
 # Create a build directory
 mkdir -p _build
 cd _build
@@ -48,13 +45,24 @@ $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 #     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
 # fi
 
-# If 'ALL' is selected as the target, build all cross compilers
-if test x"${target}" = x"all"; then
-    arches="arm-none-linux-gnueabihf arm-none-linux-gnueabi armeb-none-linux-gnueabihf aarch64-none-linux-gnu aarch64_be-none-linux-gnu aarch64-none-elf aarch64_be-none-elf"
-else
-    arches="${target}"
+# if runtests is true, then run mke check after the build completes
+if test x"${runtests}" = xyes; then
+    runtest=--check
 fi
 
-for i in ${arches}; do
-    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target $i --build all
-done
+# if build_type is true, then this is a cross build
+if test x"${build_type}" = xyes; then
+    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} ${runtest} --target ${target} --build all
+else    
+    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} ${runtest} --build all
+fi
+
+if test x"${runtests}" = xyes; then
+    sums="`find -name \*.sum`"
+    for i in ${sums}; do
+	name="`echo $i | cut -d '.' -f 1`"
+	../sum2junit.sh $i ${name}.junit
+    done
+    cat *.junit
+    rm *.junit
+fi
