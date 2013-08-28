@@ -45,7 +45,7 @@ change the values and rerun cbuild2.sh to use the new values. Each
 toolchain component also has a config file. The default version is
 copied at build time to the build tree. It is also possible to edit
 this file, usually called something like gcc.conf, to change the
-toolchain component specific valus used when configuring the
+toolchain component specific values used when configuring the
 component.
 
   You can see what values were used to configure each component by
@@ -93,7 +93,7 @@ can be downloaded are stored. These are 'snapshots' or
 'infrastructure'. Infrastructure is usualy only installed once per
 host, and contains the other packages needed to build GCC, like
 gmp. Snapshots is the primary location of all source tarballs. To list
-all the available snapshots, you can do this
+all the available snapshots, you can do this"
 
     "cbuild2.sh --list snapshots".
 
