@@ -83,16 +83,19 @@ configure_build()
 #	opts="${opts} `echo $* | cut -d ' ' -f2-10`"
 #    fi
 
+    # prefix is the root everything gets installed under.
+    prefix="${local_builds}/${host}"
+#    prefix="/opt/linaro/${build}"
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
-	newlib|libelf*)
+	newlib*|libelf*)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	*libc)
 	    opts="${opts} --build=${build} --host=${target} --prefix=/usr"
 	    ;;
-	gcc)
+	gcc*)
 	    # Force a complete reconfigure, as we changed the flags. We could do a
 	    # make distclean, but this builds faster, as not all files have to be
 	    # recompiled.
@@ -110,7 +113,6 @@ configure_build()
 			stage2*)
 			    notice "Building stage 2 of GCC"
 			    opts="${opts} ${stage2_flags}"
-#			    make ${make_flags} -C ${builddir} distclean -i -k
 			    ;;
 			bootstrap*)
 			    notice "Building bootstrapped GCC"
@@ -139,13 +141,13 @@ configure_build()
 		opts="${opts} ${stage2_flags}"
 	    fi
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}/${host}"
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${prefix}"
 	    ;;
-	binutils)
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${local_builds}/${host}"
+	binutils*)
+	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${prefix}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog)
-	    opts="${opts} --prefix=${local_builds}/${host} ${opts}"
+	    opts="${opts} --prefix=${prefix}"
 	    ;;
 	*)
     esac
@@ -155,8 +157,9 @@ configure_build()
     else
 	export PATH="${local_builds}/${host}/bin:$PATH"
 	export CONFIG_SHELL=${bash_shell}
-	(cd ${builddir} && ${bash_shell} ${srcdir}/configure ${default_configure_flags} ${opts})
+	dryrun "(cd ${builddir} && ${bash_shell} ${srcdir}/configure ${default_configure_flags} ${opts})"
 	return $?
+
 	# unset this to avoid problems later
 	default_configure_flags=
     fi
