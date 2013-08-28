@@ -14,7 +14,7 @@ build_all()
     if test x"${target}" != x"${build}"; then
 	builds="infrastructure binutils stage1 libc stage2"
     else
-	builds="infrastructure binutils stage2 libc" # native build
+	builds="infrastructure binutils stage2" # native build
     fi
 
     # See if specific component versions were specified at runtime
@@ -95,12 +95,15 @@ build()
     # 	fi
     # fi
 
-    # If the sources can't be found, there is no reason to continue.
     source_config ${tool}
     # if test $? -gt 0; then
     # 	return 1
     # fi
-    get_source $1
+    if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -gt 0; then	
+	url=$1
+    else
+	get_source $1
+    fi
     notice "Building ${url}"
 
     # if test $? -gt 0; then
@@ -137,9 +140,9 @@ build()
     if test x"${tool}" = x"linux"; then
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
-	    make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr
+	    dryrun "make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
-	    make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr
+	    dryrun "make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
 	fi
 	return 0
     fi
@@ -151,12 +154,7 @@ build()
     #export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
     #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib:${local_builds}/depends/sysroot/usr/lib"
     notice "Configuring ${url}..."
-    if test x"$2" != x; then
-	configure_build ${url} $2
-    else
-	configure_build ${url}
-    fi
-
+    configure_build ${url} $2
     if test $? -gt 0; then
 	error "Configure of ${url} failed!"
 	return $?
@@ -180,15 +178,28 @@ build()
     if test $? -gt 0; then
 	return 1
     fi
+
+    # See of we can compile and link a simple test case.
+    hello_world
+    if test $? -gt 0; then
+	error "Hello World test failed for ${url}..."
+	#return 1
+    fi
+
     notice "Done building ${url} $1..."
     
-# For cross testing, we need to build a C library with our freshly built
-# compiler, so any tests that get executed on the target can be fully linked.
-#    make_check ${name}
-#    if test $? -gt 0; then
-#	return 1
-#    fi
-
+    # For cross testing, we need to build a C library with our freshly built
+    # compiler, so any tests that get executed on the target can be fully linked.
+    if test x"${runtests}" = xyes; then
+	if test x"$2" != x"stage1" ; then
+	    notice "Starting test run for ${url}"
+	    make_check ${url}
+	    if test $? -gt 0; then
+		return 1
+	    fi
+	fi
+    fi
+    
     return 0
 }
 
@@ -198,7 +209,7 @@ make_all()
     notice "Making all in ${builddir}"
 
     export CONFIG_SHELL=${bash_shell}
-    make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log
+    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
     if test $? -gt 0; then
 	warning "Make had failures!"
 	return 1
@@ -219,11 +230,7 @@ make_install()
     fi
 
     export CONFIG_SHELL=${bash_shell}
-    if test x"$2" != x; then
-	make install SHELL=${bash_shell} ${make_flags} $2 -w -C ${builddir}
-    else
-	make install SHELL=${bash_shell} ${make_flags} -w -C ${builddir}
-    fi
+    dryrun "make install SHELL=${bash_shell} ${make_flags} $2 -w -C ${builddir}"
 
     if test $? != "0"; then
 	warning "Make failed!"
@@ -235,10 +242,13 @@ make_install()
 
 make_check()
 {
-    builddir="`get_builddir $1`"
+    if test x"${builddir}" = x; then
+	builddir="`get_builddir $1`"
+    fi
     notice "Making check in ${builddir}"
 
-    make check RUNTESTFLAGS="${runtest_flags} -a" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log
+#    dryrun "make check RUNTESTFLAGS="${runtest_flags} -a" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    dryrun "make check ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     if test $? -gt 0; then
 	warning "Make check had failures!"
 	return 1
@@ -270,7 +280,7 @@ hello_world()
 {
 
     # Create the usual Hello World! test case
-    cat <<EOF >hello.cpp
+    cat <<EOF > hello.cpp
 #include <iostream>
 int
 main(int argc, char *argv[])
@@ -281,6 +291,6 @@ EOF
 
 
     # See if it compiles to a fully linked executable
-    ${target}-gcc -static -o hi hello.c
+    ${target}-g++ -static -o hi hello.cpp
 
 }
