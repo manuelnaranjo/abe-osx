@@ -67,6 +67,20 @@ set_dbpasswd()
     dbpasswd="$1"
 }
 
+# if --dryrun is passed to cbuild2.sh, then commands are echoed instead of
+# of executed.
+dryrun()
+{
+    if test x"${dryrun}" = xyes; then
+	echo "DRYRUN: $1"
+    else
+	eval $1
+	return $?
+    fi
+
+    return 0
+}
+
 error()
 {
     echo "ERROR: $1"
