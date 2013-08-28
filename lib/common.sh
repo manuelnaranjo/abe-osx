@@ -13,6 +13,7 @@ topdir="`dirname ${cbuild}`"
 . "${topdir}/lib/make.sh" || exit 1
 . "${topdir}/lib/merge.sh" || exit 1
 . "${topdir}/lib/package.sh" || exit 1
+. "${topdir}/lib/testcode.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
