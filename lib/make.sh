@@ -183,7 +183,9 @@ build()
     hello_world
     if test $? -gt 0; then
 	error "Hello World test failed for ${url}..."
-	#return 1
+	return 1
+    else
+	notice "Hello World test succeeded for ${url}..."
     fi
 
     notice "Done building ${url} $1..."
@@ -191,7 +193,7 @@ build()
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes; then
-	if test x"$2" != x"stage1" ; then
+	if test x"$2" != x"stage1"; then
 	    notice "Starting test run for ${url}"
 	    make_check ${url}
 	    if test $? -gt 0; then
