@@ -51,9 +51,9 @@ $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 # fi
 
 # if runtests is true, then run mke check after the build completes
-if test x"${runtests}" = xyes; then
+#if test x"${runtests}" = xyes; then
     runtest=--check
-fi
+#fi
 
 # if build_type is true, then this is a cross build
 if test x"${build_type}" = xyes; then
