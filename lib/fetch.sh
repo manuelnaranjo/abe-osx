@@ -144,11 +144,16 @@ check_md5sum()
 	fi
     fi
 
+    dir="`dirname $1`/"
+    if test x"${dir}" = x"."; then
+	dir=""
+    fi
+
     # Drop the file name from .tar to the end to keep grep happy
     getfile=`echo ${1}`
 
     newsum="`md5sum ${local_snapshots}/$1 | cut -d ' ' -f 1`"
-    oldsum="`grep ${getfile} ${local_snapshots}/md5sums | cut -d ' ' -f 1`"
+    oldsum="`grep ${getfile} ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 1`"
     # if there isn't an entry in the md5sum file, we're probably downloading
     # something else that's less critical.
     if test x"${oldsum}" = x; then
