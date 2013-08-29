@@ -8,6 +8,9 @@ testcode()
     rm -f ${local_snapshots}/testcode/md5sums
     fetch_http testcode/md5sums
 
+    rm -f ${local_snapshots}/testcode/ChangeLog
+    fetch_http testcode/ChangeLog
+
     if test -f ${local_snapshots}/testcode/md5sums; then
      	files="`cat ${local_snapshots}/testcode/md5sums | cut -d ' ' -f3`"
      	for i in ${files}; do
