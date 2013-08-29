@@ -40,7 +40,7 @@ rm -f localhost/${target}/*/*.conf
 # Configure Cbuildv2 itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
-export CONFIG_SHELL="/bin/bash"
+export CONFIG_SHELL="/bin/bash -x"
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
