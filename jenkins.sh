@@ -24,8 +24,13 @@ if test x"${linux_snapshot}" != x"latest"; then
     change="${change} linux-${linux_snapshot}"
 fi
 
+# Delete the previous build directory
+rm -fr _build
+
 # Create a build directory
 mkdir -p _build
+
+# Use the newly created build directory
 cd _build
 
 # Delete all local config files, so any rebuilds use the currently
@@ -52,9 +57,9 @@ fi
 
 # if build_type is true, then this is a cross build
 if test x"${build_type}" = xyes; then
-    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} ${runtest} --target ${target} --build all
+    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --target ${target} --build all
 else    
-    $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} ${runtest} --build all
+    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --build all
 fi
 
 if test x"${runtests}" = xyes; then
