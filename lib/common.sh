@@ -284,12 +284,17 @@ find_snapshot()
 	return 1
    fi
 
+    dir="`dirname $1`/"
+    if test x"${dir}" = x"."; then
+	dir=""
+    fi
+
     #rm -f ${local_snapshots}/md5sums
     #fetch_http md5sums
     #fetch_rsync ${remote_snapshots}/md5sums
 
     # Search for the snapshot in the md5sum file, and filter out anything we don't want.
-    snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
+    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	    error "Too many results for $1!"
@@ -299,7 +304,7 @@ find_snapshot()
 	return 0
     fi
 
-#    snapshot="`grep $1 ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+#    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
 #    snapshot="`lynx -dump ${remote_snapshots} | egrep -v "\.asc" | cut -d ']' -f 2 | grep "$1" | sed -e 's@.*$1@@' -e 's: .*::'`"
     if test x"${snapshot}" = x; then
 	error "No results for $1!"
