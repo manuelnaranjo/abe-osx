@@ -113,8 +113,10 @@ installed()
 # good reason, so we download, build and install them.
 infrastructure()
 {
-    #fetch_rsync infrastructure/md5sums
-    #fetch_rsync infrastructure/ChangeLog
+    rm -f ${local_snapshots}/infrastructure/md5sums
+    fetch_http infrastructure/md5sums
+    rm -f ${local_snapshots}/infrastructure/ChangeLog
+    fetch_http infrastructure/ChangeLog
 
     source_config infrastructure
 
@@ -128,7 +130,7 @@ infrastructure()
     # unfortunately sorts the files, which screws up the order.
     files=
     for i in ${depends}; do
-     	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3`"
+     	files="${files} `grep /$i ${local_snapshots}/md5sums ${local_snapshots}/*/md5sums| cut -d ' ' -f3`"
     done
     
     # first fetch and extract all the tarballs listed in the md5sums file
@@ -138,7 +140,7 @@ infrastructure()
     done
 
     for i in ${files}; do
-	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'`"
+	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
 	build ${name}
     done
 }
