@@ -46,7 +46,7 @@ fetch()
 	return 1
     fi
     if test x"${file}" != x; then
-	getfile="${dir}${md5file}"
+	getfile="${md5file}"
     else
 	getfile=${dir}${file}.tar.xz
     fi
