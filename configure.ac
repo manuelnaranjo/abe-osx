@@ -33,6 +33,7 @@ AC_SUBST(RSYNC)
 if test x"${RSYNC}" = x; then
    AC_MSG_ERROR([You need 'rsync' to fully run cbuild!])
 fi
+AC_PATH_PROG(CCACHE, ccache)
 
 dnl AC_PATH_PROG(GITBZR, git-bzr)
 AC_PATH_PROG(BASH, bash)
@@ -73,17 +74,20 @@ dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
 #packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
-packages="svn-all-fast-exp texinfo"
+packages="texinfo"
 dpkg="`which dpkg`"
 result=$?
+missing=""
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib lib32gmp-dev"
+    packages="${packages} gcc-multilib g++-multilib"
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
-	exists="`dpkg --get-selections | grep -c '^$i\[[:space:]\]*install'`"
-	if test ${exists} -eq 0; then
+#	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
+	exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
+	if test x"${exists}" != x'ii'; then
 	    AC_MSG_RESULT([no, install $i])
+	    missing="${missing} $i"
 	else
 	    AC_MSG_RESULT([yes])
 	fi
@@ -95,6 +99,7 @@ else
 	exists="`rpm -q -a $i| grep -c $i`"
 	if test ${exists} -eq 0; then
 	    AC_MSG_RESULT([no, install $i])
+	    missing="${missing} $i"
 	else
 	    AC_MSG_RESULT([yes])
 	fi
@@ -333,6 +338,10 @@ DISTRIBUTION="`lsb_release -sc`"
 AC_SUBST(DISTRIBUTION)
 
 AC_OUTPUT(host.conf)
+
+if test x"${missing}" != x; then
+    AC_MSG_ERROR([You need to install these packages: ${missing}])
+fi
 
 # Local Variables:
 # c-basic-offset: 2
