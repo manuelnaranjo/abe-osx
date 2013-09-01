@@ -135,15 +135,22 @@ infrastructure()
     
     # first fetch and extract all the tarballs listed in the md5sums file
     for i in ${files}; do
-	fetch_http $i
-	extract $i
-    done
-
-    for i in ${files}; do
-	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
 	if test x"${build}" = x"${target}" -a x"$i" != x"linux"; then
-	    build ${name}
+	    fetch_http $i
+	    extract $i
 	fi
     done
+
+    # Store the current value so we can reset it ater we're done.
+    nodep=${nodepends}
+    # Turn off dependency checking, as everything is handled here
+    nodepends=yes
+    for i in ${files}; do
+	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
+w	    build ${name}
+	fi
+    done
+    # Reset to the stored value
+    nodepends=${nodep}
 }
 
