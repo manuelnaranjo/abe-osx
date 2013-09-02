@@ -51,18 +51,19 @@ $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 # fi
 
 # if runtests is true, then run mke check after the build completes
-#if test x"${runtests}" = xyes; then
+if test x"${runtests}" = xyes; then
     runtest=--check
-#fi
-
-# if build_type is true, then this is a cross build
-if test x"${build_type}" = xyes; then
-    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --target ${target} --build all
-else    
-    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --build all
 fi
 
-if test x"${runtests}" = xyes; then
+# if build_type is true, then this is a cross build. For cross builds we build a
+# native GCC, and then use that to compile the cross compiler to bootstrap.
+if test x"${build_type}" = xtrue; then
+    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} --build all
+fi
+
+$CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --target ${target} --build all
+
+if test x"${runtests}" = xtrue; then
     sums="`find -name \*.sum`"
     for i in ${sums}; do
 	name="`echo $i | cut -d '.' -f 1`"
