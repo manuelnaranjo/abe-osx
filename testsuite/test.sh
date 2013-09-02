@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 # common.sh loads all the files of library functions.
 if test `dirname "$0"` != "testsuite"; then
-    cbuild="`which $0`"
+    cbuild="`which cbuild2.sh`"
     topdir="`dirname ${cbuild}`"
 else
     topdir=$PWD
@@ -100,7 +100,7 @@ else
 fi
 
 out="`get_toolname ${in}`"
-if test ${out} = "gcc-linaro"; then
+if test ${out} = "gcc"; then
     pass "get_toolname: tarball compressed"
 else
     fail "get_toolname: tarball compressed"
@@ -154,7 +154,7 @@ else
 fi
 
 out="`get_toolname ${in}`"
-if test ${out} = "gdb-linaro"; then
+if test ${out} = "gdb"; then
     pass "get_toolname: bzr branch"
 else
     fail "get_toolname: bzr branch"
@@ -181,7 +181,7 @@ else
 fi
 
 out="`get_toolname ${in}`"
-if test ${out} = "binutils.git"; then
+if test ${out} = "binutils"; then
     pass "get_toolname: git branch"
 else
     fail "get_toolname: git branch"
@@ -190,15 +190,15 @@ fi
 
 # ----------------------------------------------------------------------------------
 out="`find_snapshot gcc`"
-if test $# -eq 0; then
+if test $# -eq 1; then
     pass "find_snapshot: not unique tarball name"
 else
     fail "find_snapshot: not unique tarball name"
     verbose "find_snapshot returned ${out}"
 fi
 
-out="`find_snapshot gcc-linaro-4.8-2013.06`"
-if test $# -eq 0; then
+out="`find_snapshot gcc-linaro-4.8-2013.08`"
+if test $? -eq 0; then
     pass "find_snapshot: unique tarball name"
 else
     fail "find_snapshot: unique tarball name"
@@ -206,7 +206,7 @@ else
 fi
 
 out="`find_snapshot gcc-linaro-4.8-2013.06XXX`"
-if test $# -eq 0; then
+if test $? -eq 1; then
     pass "find_snapshot: unknown tarball name"
 else
     fail "find_snapshot: unknown tarball name"
@@ -215,7 +215,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 out="`get_URL gcc`"
-if test $# -eq 0; then
+if test $? -eq 1; then
     pass "get_URL: not unique in repository"
 else
     fail "get_URL: not unique in repository"
@@ -223,7 +223,7 @@ else
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $# -eq 0; then
+if test $? -eq 0; then
     pass "get_URL: unique name in repository"
 else
     fail "get_URL: unique name in repository"
@@ -231,7 +231,7 @@ else
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $# -eq 0; then
+if test $? -eq 0; then
     pass "get_URL: unknown repository"
 else
     fail "get_URL: unknown repository"
@@ -242,13 +242,13 @@ fi
 # ----------------------------------------------------------------------------------
 
 # list of dependencies for a toolchain component
-out="`dependencies gcc`"
-if test `echo $out |grep -c "gmp.*mpc.*mpfr.*binutils"` -eq 1; then
-    pass "dependencies"
-else
-    fail "dependencies"
-    verbose "dependencies returned ${out}"
-fi
+# out="`dependencies gcc`"
+# if test `echo $out |grep -c "gmp.*mpc.*mpfr.*binutils"` -eq 1; then
+#     pass "dependencies"
+# else
+#     fail "dependencies"
+#     verbose "dependencies returned ${out}"
+# fi
 
 # ----------------------------------------------------------------------------------
 # print the total of test results
