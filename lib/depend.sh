@@ -135,7 +135,7 @@ infrastructure()
     
     # first fetch and extract all the tarballs listed in the md5sums file
     for i in ${files}; do
-	if test x"${build}" = x"${target}" -a x"$i" != x"linux"; then
+	if test x"${build}" = x"${target}" -a `echo $i | grep -c /linux` -eq 0; then
 	    fetch_http $i
 	    extract $i
 	fi
@@ -147,6 +147,7 @@ infrastructure()
     nodepends=yes
     for i in ${files}; do
 	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
+	if test x"${build}" = x"${target}" -a `echo $i | grep -c /linux` -eq 0; then
 	    build ${name}
 	fi
     done
