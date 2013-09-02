@@ -147,7 +147,7 @@ infrastructure()
     nodepends=yes
     for i in ${files}; do
 	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-w	    build ${name}
+	    build ${name}
 	fi
     done
     # Reset to the stored value
