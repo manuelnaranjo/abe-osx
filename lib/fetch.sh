@@ -100,7 +100,7 @@ fetch_http()
 	fi
     fi
 
-    if test ! -e ${local_snapshots}/${getfile} -o x"${clobber}" = xyes; then
+    if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
 	notice "Downloading ${getfile} to ${local_snapshots}"
 	if test x"${wget_bin}" != x; then
 	    # --continue --progress=bar
@@ -215,7 +215,7 @@ extract()
 	*) ;;
     esac
 
-    if test -d `echo ${local_snapshots}/${file} | sed -e 's:.tar.*::'` -a x"${clobber}" != xyes; then
+    if test -d `echo ${local_snapshots}/${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
 	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
