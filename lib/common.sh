@@ -1,7 +1,7 @@
 #!/bin/sh
 
-cbuild="`which cbuild2.sh`"
-topdir="`dirname ${cbuild}`"
+#cbuild="`which cbuild2.sh`"
+#topdir="`dirname ${cbuild}`"
 
 # source all the library functions
 . "${topdir}/lib/globals.sh" || exit 1
