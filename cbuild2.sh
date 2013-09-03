@@ -181,6 +181,9 @@ while test $# -gt 0; do
             set_sysroot ${url}
 	    shift
             ;;
+	--ccache|-cc*)
+            use_ccache=yes
+            ;;
 	--clean|-cl*)
             clean_build ${url}
 	    shift
@@ -344,28 +347,28 @@ while test $# -gt 0; do
 		value="`echo $1 | cut -d '=' -f 2`"
 		case ${name} in
 		    b*|binutils)
-			binutils_version="${value}"
+			binutils_version="`echo ${value} | sed -e 's:binutils-::'`"
 			;;
 		    gc*|gcc)
-			gcc_version="${value}"
+			gcc_version="`echo ${value} | sed -e 's:gcc-::'`"
 			;;
 		    gm*|gmp)
-			gmp_version="${value}"
+			gmp_version="`echo ${value} | sed -e 's:gmp-::'`"
 			;;
 		    mpf*|mpfr)
-			mpfr_version="${value}"
+			mpfr_version="`echo ${value} | sed -e 's:mpfr-::'`"
 			;;
 		    mpc)
-			mpc_version="${value}"
+			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
 			;;
 		    eglibc)
-			eglibc_version="${value}"
+			eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
 			;;
 		    glibc)
-			glibc_version="${value}"
+			glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
 			;;
 		    n*|newlib)
-			newlib_version="${value}"
+			newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
 			;;
 		    *)
 			;;
