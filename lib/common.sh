@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cbuild="`which $0`"
+cbuild="`which cbuild2.sh`"
 topdir="`dirname ${cbuild}`"
 
 # source all the library functions
@@ -166,7 +166,7 @@ normalize_path()
 	    node="`echo ${node} | sed -e 's:/:_:'`"
 	    ;;
 	git*)
-	    node="`echo $1 | sed -e 's@^.*/git/@@'`"
+	    node="`echo $1 | sed -e 's@^.*/git/@@' -e 's:\.git.*:.git:'`"
 	    node="`basename ${node}`"
 	    ;;
 	svn*)
@@ -199,6 +199,12 @@ normalize_path()
 get_builddir()
 {
     dir="`normalize_path $1`"
+    # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
+    # like these:
+    # BUILD_ID 2013-09-02_20-23-02
+    # BUILD_NUMBER 1077
+    # BUILD_TAG	jenkins-cbuild-1077
+    tag="${BUILD_NUMBER}/"
     if test `echo $1 | grep -c eglibc` -gt 0; then
 	dir="${cbuild_top}/${hostname}/${target}/${dir}"
     else
@@ -257,17 +263,17 @@ get_toolname()
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	tool="`echo $1 | sed -e 's:-[0-9].*::'`"
+	tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::'`"
 	tool="`basename ${tool}`"
     else
-	tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::'`"
+	tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
     fi
     if test `echo $1 | grep -c "trunk"` -eq 1; then
 	tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
 	tool="`basename ${tool}`"
     fi
 
-    echo ${tool} | sed 's:-linaro::'
+    echo ${tool} | sed -e 's:-linaro::' -e 's:\.git::'
 
     return 0
 }
