@@ -73,14 +73,14 @@ AC_CHECK_LIB(libcurses, beep)
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
-#packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
-packages="texinfo"
+#packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
+packages="texinfo gawk"
 dpkg="`which dpkg`"
 result=$?
 missing=""
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib"
+    packages="${packages} gcc-multilib g++-multilib zlib1g-dev"
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
 #	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
