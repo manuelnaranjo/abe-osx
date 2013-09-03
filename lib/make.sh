@@ -19,7 +19,7 @@ build_all()
 
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
     if test x"${binutils_version}" = x; then
 	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
@@ -54,7 +54,7 @@ build_all()
 		fi
 		;;
 	    stage1)
-		build gcc-${gcc_version} stage1
+		build ${gcc_version} stage1
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
@@ -70,6 +70,8 @@ build_all()
 	    return 1
 	fi
     done
+
+    manifest
 
     return 0
 }
@@ -87,13 +89,13 @@ build()
     fi
 
     # if it's already instaled, we don't need to build it unless we force the build
-    # if test x"${force}" != xyes; then
-    # 	installed ${tool}
-    # 	if test $? -eq 0; then
-    # 	    notice "${tool} already installed, so not building"
-    # 	    return 0
-    # 	fi
-    # fi
+    if test x"${force}" != xyes; then
+     	installed ${tool}
+     	if test $? -eq 0; then
+     	    notice "${tool} already installed, so not building"
+     	    return 0
+    	fi
+    fi
 
     source_config ${tool}
     # if test $? -gt 0; then
@@ -122,27 +124,36 @@ build()
 		    set 2>&1 | grep "^[a-z_A-Z-]*=" > $1.env
 		    build $i
 		    . $1.env
+		    rm -f $1.env
 		fi
 	    done
 	fi
     fi
     
     if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
-	checkout ${url}
+	# Don't checkout
+	if test x"$2" != x"stage2" -o x"${build}" = x"${target}"; then
+	    checkout ${url}
+	fi
     else
-	fetch ${url}
-	extract ${url}
+	if test x"$2" != x"stage2" -o x"${build}" = x"${target}"; then
+	    fetch ${url}
+	    extract ${url}
+	fi
     fi
 
     # This command is only used to install the Linux kernel headers, which are
     # later used to compile eglibc.
     tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
+	if test x"${use_ccache}" = xyes; then
+	    opts="CC='ccache gcc' CXX='ccache g++'"
+	fi
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
-	    dryrun "make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
-	    dryrun "make -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
 	fi
 	return 0
     fi
@@ -179,8 +190,8 @@ build()
 	return 1
     fi
 
-    # See of we can compile and link a simple test case.
-    if test x"$2" != x"stage2"; then
+    # See if we can compile and link a simple test case.
+    if test x"$2" = x"stage2"; then
 	hello_world
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${url}..."
