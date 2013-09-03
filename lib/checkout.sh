@@ -74,7 +74,7 @@ checkout()
 		echo "Removing existing sources for ${local_snapshots}/${dir}"
 	    fi
 	    if test -e ${local_snapshots}/${dir}/.git; then
-		out="`(cd ${local_snapshots}/${dir} && git pull && git checkout ${branch})`"
+		out="`(cd ${local_snapshots}/${dir} && git pull origin master && git checkout ${branch})`"
 	    else
 		out="`git clone $1 ${local_snapshots}/${dir}`"
 	    fi
