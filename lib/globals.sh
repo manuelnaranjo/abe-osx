@@ -55,6 +55,7 @@ nodepends=no
 verbose=1
 network=""
 runtests=no
+ccache=no
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
