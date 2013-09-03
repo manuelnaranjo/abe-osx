@@ -22,6 +22,11 @@ checkout()
     fi
 
     dir="`normalize_path $1`"
+    if test `echo $1 | grep -c "\.git/"`; then
+	branch="`basename $1`"
+    else
+	branch="master"
+    fi
 
     notice "Checking out sources for $1"
 
@@ -69,7 +74,7 @@ checkout()
 		echo "Removing existing sources for ${local_snapshots}/${dir}"
 	    fi
 	    if test -e ${local_snapshots}/${dir}/.git; then
-		out="`(cd ${local_snapshots}/${dir} && git pull)`"
+		out="`(cd ${local_snapshots}/${dir} && git pull && git checkout ${branch})`"
 	    else
 		out="`git clone $1 ${local_snapshots}/${dir}`"
 	    fi
