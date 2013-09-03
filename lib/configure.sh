@@ -154,7 +154,7 @@ configure_build()
 	    ;;
     esac
 
-    if test -e ${builddir}/config.status -a x"${tool}" != x"gcc"; then
+    if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
 	export PATH="${local_builds}/${host}/bin:$PATH"
