@@ -163,7 +163,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 # test a git branch
-in="git://git.linaro.org/toolchain/binutils.git"
+in="git://git.linaro.org/toolchain/binutils.git/linaro-4.7-branch"
 out="`normalize_path ${in}`"
 if test ${out} = "binutils.git"; then
     pass "normalize_path: git branch"
