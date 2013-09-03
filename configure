@@ -610,6 +610,7 @@ AUTOGEN
 BISON
 FLEX
 BASH
+CCACHE
 RSYNC
 SCP
 CURL
@@ -3344,6 +3345,46 @@ fi
 if test x"${RSYNC}" = x; then
    as_fn_error $? "You need 'rsync' to fully run cbuild!" "$LINENO" 5
 fi
+# Extract the first word of "ccache", so it can be a program name with args.
+set dummy ccache; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_CCACHE+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CCACHE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CCACHE="$CCACHE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CCACHE="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CCACHE=$ac_cv_path_CCACHE
+if test -n "$CCACHE"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CCACHE" >&5
+$as_echo "$CCACHE" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 # Extract the first word of "bash", so it can be a program name with args.
 set dummy bash; ac_word=$2
@@ -3659,20 +3700,23 @@ _ACEOF
 fi
 
 
-#packages="git-svn  bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
-packages="svn-all-fast-exp texinfo"
+#packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
+packages="texinfo gawk"
 dpkg="`which dpkg`"
 result=$?
+missing=""
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib lib32gmp-dev"
+    packages="${packages} gcc-multilib g++-multilib zlib1g-dev"
     for i in ${packages}; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
 $as_echo_n "checking if $i is installed... " >&6; }
-	exists="`dpkg --get-selections | grep -c '^$i\[:space:]\*install'`"
-	if test ${exists} -eq 0; then
+#	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
+	exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
+	if test x"${exists}" != x'ii'; then
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
+	    missing="${missing} $i"
 	else
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -3686,6 +3730,7 @@ else
 	if test ${exists} -eq 0; then
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
+	    missing="${missing} $i"
 	else
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -5186,6 +5231,10 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+
+if test x"${missing}" != x; then
+    as_fn_error $? "You need to install these packages: ${missing}" "$LINENO" 5
+fi
 
 # Local Variables:
 # c-basic-offset: 2
