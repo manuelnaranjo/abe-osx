@@ -163,6 +163,10 @@ while test $# -gt 0; do
 	--check|-ch*)
 	    runtests=yes
 	    ;;
+	--host|-h*)
+	    host=$2
+	    shift
+	    ;;
 	--srcdir|-sr*)
 	    notice "fixme:"
 	    ;;
@@ -225,14 +229,14 @@ while test $# -gt 0; do
             get_list $2
 	    shift
             ;;
-	--nodep*|-n)		# nodepends
+	--nodepends|-n)		# nodepends
 	    nodepends=yes
 	    ;;
-	--parallel|-p*)			# parallel
+	--parallel|-par*)			# parallel
             make_flags="-j ${cpus}"
             ;;
-	--release|-r)
-            release ${url}
+	--release|-r*)
+            release=$3
 	    shift
             ;;
 	--snapshots|-s)
