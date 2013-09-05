@@ -56,6 +56,7 @@ verbose=1
 network=""
 runtests=no
 ccache=no
+release="`date +%Y.%m.%d`"
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
