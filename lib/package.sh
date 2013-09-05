@@ -1,6 +1,34 @@
 #!/bin/bash
 
 # This script contains functions for building binary packages.
+
+build_deb()
+{
+    echo "unimplemented"
+}
+
+build_rpm()
+{
+    echo "unimplemented"
+}
+
+
+# Build a binary tarball
+# $1 - the version to use, usually something like 2013.07-2
+source_tarball()
+{
+    if test x"$1" = x; then
+	error "Need to supply a release version!!"
+	return 1
+    else
+	release="$1"
+    fi
+
+
+    
+}
+
+# Build a binary tarball
 # $1 - the version to use, usually something like 2013.07-2
 binary_tarball()
 {
@@ -71,18 +99,16 @@ binary_sysroot()
     return 0
 }
 
-build_deb()
-{
-    echo "unimplemented"
-}
-
-build_rpm()
-{
-    echo "unimplemented"
-}
-
+# Create a manifest file that lists all the versions of the other components
+# used for this build.
 manifest()
 {
+    if test x"$1" = x; then
+	dest=/tmp
+    else
+	dest="`get_builddir $1`"
+    fi
+
     if test x"${gcc_version}" = x; then
 	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
@@ -115,7 +141,7 @@ manifest()
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
     fi        
 
-    outfile=/tmp/manifest.txt
+    outfile=${dest}/manifest.txt
     cat <<EOF > ${outfile}
 gmp_version=${gmp_version}
 mpc_version=${mpc_version}
@@ -129,15 +155,12 @@ EOF
     else
 	case ${clibrary} in
 	    eglibc)
-		eglibc = ${eglibc_version}
 		echo "eglibc_version=${eglibc_version}" >> ${outfile}
 		;;
 	    glibc)
-		glibc = ${glibc_version}
 		echo "glibc_version=${glibc_version}" >> ${outfile}
 		;;
 	    newlib)
-		newlib = ${newlib_version}
 		echo "newlib_version=${newlib_version}" >> ${outfile}
 		;;
 	    *)
