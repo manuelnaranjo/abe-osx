@@ -32,20 +32,8 @@ source_tarball()
 # $1 - the version to use, usually something like 2013.07-2
 binary_tarball()
 {
-    if test x"$1" = x; then
-	error "Need to supply a release version!!"
-	return 1
-    else
-	release="$1"
-    fi
-
-    if test x"$2" = x; then
-#	packages="toolchain sysroot"
-	packages="sysroot"
-    else
-	packages="$2"
-    fi
-
+    packages="sysroot toolchain"
+    
     for i in ${packages}; do
 	case $i in
 	    toolchain)
@@ -55,7 +43,7 @@ binary_tarball()
 		binary_sysroot ${release}
 		;;
 	    *)
-		echo "unimplemented"
+		echo "$i package building unimplemented"
 		;;
 	esac
     done
@@ -64,37 +52,60 @@ binary_tarball()
 # Produce a binary toolchain tarball
 binary_toolchain()
 {
-    release="gcc-linaro-${target}-$1"
-
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="gcc-linaro-`${target}-gcc -v 2>&1 | grep "gcc version " | cut -d ' ' -f 3 | cut -d '.' -f 1-2`-$1"
+#	gcc_version="gcc-linaro-`${target}-gcc -v 2>&1 | grep "gcc version " | cut -d ' ' -f 3 | cut -d '.' -f 1-2`-$1"
+	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
-#	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-#    else
 
     builddir="`get_builddir ${gcc_version}`"
-    destdir=/tmp/linaro/${release}
+
+    tag="${gcc_version}-${target}-${host}"
+    destdir=/tmp/linaro/${tag}
+    mkdir -p ${destdir}/bin
+    mkdir -p ${destdir}/share
+    mkdir -p ${destdir}/lib/gcc
+    mkdir -p ${destdir}/libexec/gcc
+
+    # Get the binaries
+    cp -r ${local_builds}/${host}/bin/${target}-* ${destdir}/bin/
+    cp -r ${local_builds}/${host}/${target} ${destdir}/
+    cp -r ${local_builds}/${host}/lib/gcc/${target} ${destdir}/lib/gcc/
+    cp -r ${local_builds}/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/
+
+    if test -e /tmp/manifest.txt; then
+	cp /tmp/manifest.txt ${destdir}
+    fi
 
     # install in alternate directory so it's easier to build the tarball
     dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
 
     # make the tarball from the tree we just created.
-    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${release}.tar.xz linaro/${release}"
+    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
 
     return 0
 }
 
 binary_sysroot()
 {
-    if test x"${eglibc_version}" = x; then
-	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+    if test x"${clibrary}" = x"newlib"; then
+	if test x"${newlb_version}" = x; then
+	    libc_version="newlib-`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+	else
+	    libc_version="newlib-${newlib_version}"
+	fi
+    else
+	if test x"${newlb_version}" = x; then
+	    libc_version="eglibc-`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+	else
+	    libc_version="eglibc-${eglibc_version}"
+	fi
     fi
-    release="sysroot-${eglibc_version}-${target}"
+    tag="sysroot-${libc_version}-${target}"
 
-    cp -fr ${local_builds}/sysroots/${target} /tmp/linaro/${release}
+    cp -fr ${local_builds}/sysroots/${target} /tmp/${tag}
 
-    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${release}.tar.xz linaro/${release}"
+    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
 
     return 0
 }
