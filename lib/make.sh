@@ -28,6 +28,10 @@ build_all()
 	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
     fi
 
+    if test x"${newlib_version}" = x; then
+	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+    fi
+
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
@@ -47,9 +51,13 @@ build_all()
 	    # Build stage 1 of GCC, which is a limited C compiler used to compile
 	    # the C library.
 	    libc)
-		build eglibc-${eglibc_version}
+		if test x"${clibrary}" = x"eglibc"; then
+		    build eglibc-${eglibc_version}
+		else
+		    build newlib-${newlib_version}
+		fi
 		if test $? -gt 0; then
-		    error "Couldn't build eglibc!"
+		    error "Couldn't build ${clibrary}!"
 		    return 1
 		fi
 		;;
@@ -66,12 +74,12 @@ build_all()
 		;;
 	esac
 	if test $? -gt 0; then
-	    error "Couldn't build $i"
+	    error "Couldn't build all!"
 	    return 1
 	fi
     done
 
-    manifest
+    manifest ${gcc_version}
 
     return 0
 }
@@ -88,8 +96,11 @@ build()
 	name="`echo $1 | sed -e 's:\.tar\..*::'`"
     fi
 
-    # if it's already instaled, we don't need to build it unless we force the build
-    if test x"${force}" != xyes; then
+    # if it's already installed, we don't need to build it unless we force the
+    # build. GCC gets built and installed twice, so we don't check for that
+    # component.
+    if test x"${force}" != xyes -a x"${tool}" != x"gcc"; then
+     	built ${name}
      	installed ${tool}
      	if test $? -eq 0; then
      	    notice "${tool} already installed, so not building"
@@ -191,7 +202,7 @@ build()
     fi
 
     # See if we can compile and link a simple test case.
-    if test x"$2" = x"stage2"; then
+    if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
 	hello_world
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${url}..."
@@ -244,11 +255,23 @@ make_install()
 	make_flags=" install_root=${sysroots} ${make_flags}"
     fi
 
-    export CONFIG_SHELL=${bash_shell}
-    dryrun "make install SHELL=${bash_shell} ${make_flags} $2 -w -C ${builddir}"
+    # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
+    # like parallel jobs. We also change tooldir, so the headers and libraries
+    # get install in the right place in our non-multilib'd sysroot.
+    if test x"${tool}" = x"newlib"; then
+        # as newlib supports multilibs, we force the install directory to build
+        # a single sysroot for now. FIXME: we should not disable multilibs!
+	make_flags=" tooldir=${sysroots}/usr/"
+    fi
+
+    # Don't stop on CONFIG_SHELL if it's set in the environment.
+    if test x"${CONFIG_SHELL}" = x; then
+	export CONFIG_SHELL=${bash_shell}
+    fi
+    dryrun "make install ${make_flags} $2 -w -C ${builddir}"
 
     if test $? != "0"; then
-	warning "Make failed!"
+	warning "Make install failed!"
 	return 1
     fi
 
@@ -283,8 +306,8 @@ make_clean()
 	make clean ${make_flags} -w -i -k -C ${builddir}
     fi
     if test $? != "0"; then
-	warning "Make failed!"
-	return 1
+	warning "Make clean failed!"
+	#return 1
     fi
 
     return 0
@@ -304,8 +327,8 @@ main(int argc, char *argv[])
 }
 EOF
 
-
-    # See if it compiles to a fully linked executable
-    ${target}-g++ -static -o hi hello.cpp
-
+    # See if a test case compiles to a fully linked executable. Since
+    # our sysroot isn't installed in it's final destination, pass in
+    # the path to the freshly built sysroot.
+    ${target}-g++ -static --sysroot=${sysroot}/${target} -o hi hello.cpp
 }
