@@ -107,6 +107,40 @@ installed()
     return 1
 }
 
+# $1 - the toolchain component to see if it's already been compiled
+built()
+{
+    tool=`get_toolname $1`
+    latest="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    builddir="`get_builddir $1`-${latest}"
+
+    source_config ${tool}
+
+    if test x"${installs}" != x; then
+	# It the installed file is a library, then we have to look for both
+	# static and shared versions.
+	if test "`echo ${installs} | grep -c '^lib'`" -gt 0; then
+	    if test -e ${builddir}/${installs}la; then
+		notice "${tool} has already been built"
+		return 0
+	    fi
+	else
+	    if test -e ${builddir}/${installs}; then
+		notice "${tool} has already been built"
+		return 0
+	    else
+		warning "${tool} has not been built"
+		return 1
+	    fi
+	fi
+    else
+	warning "No install dependency specified"
+	return 1
+    fi
+    
+    return 1
+}
+
 # These are the latest copies of the infrastructure files required to
 # fully build GCC in all it's glory. While it is possible to pass
 # --disable-* options at configure time to GCC, these are use for
