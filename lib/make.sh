@@ -81,6 +81,8 @@ build_all()
 
     manifest ${gcc_version}
 
+    binary_tarball 
+
     return 0
 }
 
