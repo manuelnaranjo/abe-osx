@@ -7,6 +7,8 @@ configure_build()
 {
     builddir=`get_builddir $1`    
     dir="`normalize_path $1`"
+    tool=`get_toolname $1`
+
     if test `echo $1 | grep -c trunk` -gt 0; then
 	srcdir="${local_snapshots}/${dir}/trunk"
     else
@@ -18,14 +20,22 @@ configure_build()
 	mkdir -p ${builddir}
     fi
 
-    # not all packages commit their configure script, so if it has autogen,
-    # then run that to create the configure script.
+    # Linux isn't build project, we only need the header via the existing Makefile.
+    if test x"${tool}" = x"linux"; then
+	return 0
+    fi
+
     if test ! -f ${srcdir}/configure; then
 	warning "No configure script in ${srcdir}!"
+        # not all packages commit their configure script, so if it has autogen,
+        # then run that to create the configure script.
 	if test -f ${srcdir}/autogen.sh; then
 	    (cd ${srcdir} && ./autogen.sh)
 	fi
-	return 0
+	if test ! -f ${srcdir}/configure; then
+	    error "No configure script in ${srcdir}!"
+	    return 1
+	fi
     fi
 
     # If a target architecture isn't specified, then it's a native build
@@ -158,8 +168,11 @@ configure_build()
 	warning "${buildir} already configured!"
     else
 	export PATH="${local_builds}/${host}/bin:$PATH"
-	export CONFIG_SHELL=${bash_shell}
-	dryrun "(cd ${builddir} && ${bash_shell} ${srcdir}/configure ${default_configure_flags} ${opts})"
+	# Don't stop on CONFIG_SHELL if it's set in the environment.
+	if test x"${CONFIG_SHELL}" = x; then
+	    export CONFIG_SHELL=${bash_shell}
+	fi
+	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
 	return $?
 
 	# unset this to avoid problems later
