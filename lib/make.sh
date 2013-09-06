@@ -101,14 +101,14 @@ build()
     # if it's already installed, we don't need to build it unless we force the
     # build. GCC gets built and installed twice, so we don't check for that
     # component.
-    if test x"${force}" != xyes -a x"${tool}" != x"gcc"; then
-     	built ${name}
-     	installed ${tool}
-     	if test $? -eq 0; then
-     	    notice "${tool} already installed, so not building"
-     	    return 0
-    	fi
-    fi
+#    if test x"${force}" != xyes -a x"${tool}" != x"gcc"; then
+#     	built ${name}
+#     	installed ${tool}
+#     	if test $? -eq 0; then
+#     	    notice "${tool} already installed, so not building"
+#     	    return 0
+#    	fi
+#    fi
 
     source_config ${tool}
     # if test $? -gt 0; then
@@ -159,14 +159,11 @@ build()
     # later used to compile eglibc.
     tool="`echo $1 | cut -d '-' -f 1`"
     if test x"${tool}" = x"linux"; then
-	if test x"${use_ccache}" = xyes; then
-	    opts="CC='ccache gcc' CXX='ccache g++'"
-	fi
 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
-	    dryrun "make ${opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
-	    dryrun "make ${opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
 	fi
 	return 0
     fi
@@ -235,6 +232,10 @@ make_all()
 {
     builddir="`get_builddir $1`"
     notice "Making all in ${builddir}"
+
+    # if test x"${use_ccache}" = xyes; then
+    # 	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
+    # fi
 
     export CONFIG_SHELL=${bash_shell}
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
