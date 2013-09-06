@@ -82,6 +82,11 @@ dryrun()
     return 0
 }
 
+trace()
+{
+    echo "TRACE: $*"
+}
+
 error()
 {
     echo "ERROR: $1"
