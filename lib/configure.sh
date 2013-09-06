@@ -61,9 +61,9 @@ configure_build()
 	# if there is a local config file in the build directory, allow
 	# it to override the default settings
 	# unset these two variables to avoid problems later
-	if test -e "${builddir}/${tool}.conf"; then
+	if test -e "${builddir}/${tool}.conf" -a ${builddir}/${tool}.conf -nt ${topdir}/config/${tool}.conf; then
 	    . "${builddir}/${tool}.conf"
-	    notice "Local ${tool}.conf overiding defaults"
+	    notice "Local ${tool}.conf overriding defaults"
 	else
 	    # Since there is no local config file, make one using the
 	    # default, and then add the target architecture so it doesn't
