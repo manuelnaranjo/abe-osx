@@ -167,24 +167,26 @@ infrastructure()
      	files="${files} `grep /$i ${local_snapshots}/md5sums ${local_snapshots}/*/md5sums| cut -d ' ' -f3`"
     done
     
-    # first fetch and extract all the tarballs listed in the md5sums file
+    # First fetch and extract all the tarballs listed in the md5sums file
     for i in ${files}; do
-	if test x"${build}" = x"${target}" -a `echo $i | grep -c /linux` -eq 0; then
-	    fetch_http $i
-	    extract $i
+	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
+	    continue
 	fi
+	fetch_http $i
+	extract $i
     done
 
     # Store the current value so we can reset it ater we're done.
     nodep=${nodepends}
 
-    # Turn off dependency checking, as everything is handled here
+    # Turn off dependency checking, as everything is handled here.
     nodepends=yes
     for i in ${files}; do
 	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-	if test x"${build}" = x"${target}" -a `echo $i | grep -c /linux` -eq 0; then
-	    build ${name}
+	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
+	    continue
 	fi
+	build ${name}
     done
 
     # Reset to the stored value
