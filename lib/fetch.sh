@@ -3,6 +3,8 @@
 # Fetch a file from a remote machine
 fetch()
 {
+    trace "fetch() $*"
+
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
@@ -88,6 +90,8 @@ fetch()
 
 fetch_http()
 {
+    trace "fetch() $*"
+
     getfile=$1
     dir="`dirname $1`/"
     if test x"${dir}" = x"./"; then
@@ -134,10 +138,12 @@ fetch_rsync()
 
 check_md5sum()
 {
+    trace "check_md5sum() $*"
+
     if test ! -e ${local_snapshots}/md5sums; then
 	fetch_http md5sums
 	if test $? -gt 0; then
-	    error g"couldn't fetch md5sums"
+	    error "couldn't fetch md5sums"
 	    return 1
 	fi
     fi
@@ -178,6 +184,8 @@ check_md5sum()
 # decompress and untar a fetched tarball
 extract()
 {
+    trace "extract() $*"
+
     extractor=
     taropt=
 
@@ -222,7 +230,7 @@ extract()
     # -linaro-VERSION.YYYY.MM part.
     dir="`echo ${file} | sed -e 's:.tar\..*::'`"
     if test ! -d ${local_snapshots}/${dir}; then
-	dir2="`echo ${dir} | sed -e 's:-linaro::' -e 's:-20[0-9][0-9].*::'`"
+	dir2="`echo ${dir} | sed -e 's:-linaro::'`"
 	if test -d ${local_snapshots}/${dir2}; then
 	    warning "Making a symbolic link for nonstandard directory name!"
 	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
