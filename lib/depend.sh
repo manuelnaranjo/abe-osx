@@ -177,6 +177,7 @@ infrastructure()
 
     # Store the current value so we can reset it ater we're done.
     nodep=${nodepends}
+
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
     for i in ${files}; do
@@ -185,6 +186,7 @@ infrastructure()
 	    build ${name}
 	fi
     done
+
     # Reset to the stored value
     nodepends=${nodep}
 }
