@@ -79,8 +79,6 @@ fetch()
 	return 1
     fi
 
-    notice "Fetched ${getfile} via ${protocol}"
-
     check_md5sum ${getfile}
     if test $? -gt 0; then
 	return 1
@@ -91,8 +89,8 @@ fetch()
 fetch_http()
 {
     getfile=$1
-    dir="`dirname $1`"
-    if test x"${dir}" = x"."; then
+    dir="`dirname $1`/"
+    if test x"${dir}" = x"./"; then
 	dir=""
     else
 	if test ! -d ${local_snapshots}/${dir}; then
@@ -182,7 +180,6 @@ extract()
 {
     extractor=
     taropt=
-    echo "Uncompressing and untarring $1 into $2..."
 
     dir="`dirname $1`"
     if test x"${dir}" = x"."; then
@@ -198,17 +195,14 @@ extract()
     # Figure out how to decompress a tarball
     case "${file}" in
 	*.xz)
-	    echo "XZ File"
 	    extractor="xz -d "
 	    taropt="J"
 	    ;;
 	*.bz*)
-	    echo "bzip2 file"
 	    extractor="bzip2 -d "
 	    taropt="j"
 	    ;;
 	*.gz)
-	    echo "Gzip file"
 	    extractor="gunzip "
 	    taropt="x"
 	    ;;
