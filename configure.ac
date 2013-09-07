@@ -148,7 +148,7 @@ dnl The top of the cbuild tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),
   SYSROOTS=${withval},
-  SYSROOTS="${PWD}"/`hostname`/destdir/sysroots)
+  SYSROOTS="${CBUILD_TOP}"/sysroots)
 AC_SUBST(SYSROOTS)
 
 if test ! -d ${SYSROOTS}; then
@@ -160,7 +160,7 @@ dnl The local directory where snapshots are stored
 AC_ARG_WITH(local-snapshots,
   AC_HELP_STRING([--with-local-snapshots], [Where downloaded tarballs are stored]),
   LOCAL_SNAPSHOTS=${withval},
-  LOCAL_SNAPSHOTS="${PWD}/snapshots")
+  LOCAL_SNAPSHOTS="${CBUILD_TOP}/snapshots")
 AC_SUBST(LOCAL_SNAPSHOTS)
 
 if test ! -d ${LOCAL_SNAPSHOTS}; then
@@ -172,8 +172,13 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
-  LOCAL_BUILDS="${PWD}/`hostname`/destdir")
+  LOCAL_BUILDS="${CBUILD_TOP}/builds")
 AC_SUBST(LOCAL_BUILDS)
+
+if test ! -d ${LOCAL_BUILDS}; then
+   AC_MSG_WARN(${LOCAL_BUILDS} does not exist so creating directory!)
+   mkdir -p ${LOCAL_BUILDS}
+fi
 
 dnl A URL to the remote directory where snapshots are stored
 AC_ARG_WITH(remote-snapshots,
