@@ -68,10 +68,10 @@ binary_toolchain()
     mkdir -p ${destdir}/libexec/gcc
 
     # Get the binaries
-    cp -r ${local_builds}/${host}/bin/${target}-* ${destdir}/bin/
-    cp -r ${local_builds}/${host}/${target} ${destdir}/
-    cp -r ${local_builds}/${host}/lib/gcc/${target} ${destdir}/lib/gcc/
-    cp -r ${local_builds}/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/
+    cp -r ${local_builds}/destdir/${host}/bin/${target}-* ${destdir}/bin/
+    cp -r ${local_builds}/destdir/${host}/${target} ${destdir}/
+    cp -r ${local_builds}/destdir/${host}/lib/gcc/${target} ${destdir}/lib/gcc/
+    cp -r ${local_builds}/destdir/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/
 
     if test -e /tmp/manifest.txt; then
 	cp /tmp/manifest.txt ${destdir}
