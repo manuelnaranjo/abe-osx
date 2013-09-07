@@ -211,12 +211,12 @@ get_builddir()
     # BUILD_TAG	jenkins-cbuild-1077
     tag="${BUILD_NUMBER}/"
     if test `echo $1 | grep -c eglibc` -gt 0; then
-	dir="${cbuild_top}/${hostname}/${target}/${dir}"
+	dir="${local_builds}/${host}/${target}/${dir}"
     else
 	if test `echo $1 | grep -c trunk` -gt 0; then
-	    dir="${cbuild_top}/${hostname}/${target}/${dir}/trunk"
+	    dir="${local_builds}/${host}/${target}/${dir}/trunk"
 	else
-	    dir="${cbuild_top}/${hostname}/${target}/${dir}"
+	    dir="${local_builds}/${host}/${target}/${dir}"
 	fi
     fi
 
