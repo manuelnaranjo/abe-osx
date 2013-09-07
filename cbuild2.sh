@@ -31,26 +31,20 @@ get_list()
 
     # http://cbuild.validation.linaro.org/snapshots
     case $1 in
-	base|b*)
-	    #base="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/base/*.xz | sed -e 's:^.*/::'`"
-	    base="`lynx -dump ${remote_snapshots}/base | grep "${remote_snapshots}/base" | sed -e 's:.*/::' -e 's:%2b:+:' | grep -v '^$'`"
-	    echo "${base}"
+	testcode|t*)
+	    testcode="`grep testcode ${local_snapshots}/testcode/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	    echo "${testcode}"
 	    ;;
 	snapshots|s*)
-	    #snapshots="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/*.{xz,bz2} | sed -e 's:^.*/::'`"
-	    snapshots="`lynx -dump ${remote_snapshots} | grep "${remote_snapshots}" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    snapshots="`egrep -v "\.asc|\.diff|\.txt|xdelta|base|infrastructure|testcode" ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
 	    echo "${snapshots}"
 	    ;;
 	infrastructure|i*)
-	    infrastructure="`lynx -dump ${remote_snapshots}/infrastructure | grep "${remote_snapshots}/infrastructure" | sed -e 's:.*/::' -e 's:%2b:+:' | egrep -v "md5sums|base|prebuilt" | grep -v '^$'`"
+	    infrastructure="`grep infrastructure ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
 	    echo "${infrastructure}"
 	    ;;
-	prebuilt|p*)
-	    #prebuilt="`ssh cbuild@toolchain64.lab ls -C1 /home/cbuild/var/snapshots/prebuilt/*.{xz,bz2} | sed -e 's:^.*/::'`"
-	    #prebuilt="`lynx -dump ${remote_snapshots}/prebuilt | `"
-	    echo "${prebuilt}"
-	    ;;
     esac
+	    return 0
 }
 
 # Get some info on the build system
@@ -131,8 +125,8 @@ usage()
     exit 1
 }
 
-export PATH="${local_builds}/${build}/bin:$PATH"
-#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib"
+export PATH="${local_builds}/destdir/${build}/bin:$PATH"
+#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/destdir/${build}/lib"
 
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
@@ -246,11 +240,25 @@ while test $# -gt 0; do
 	--target|-ta*)			# target
             target=$2
 	    sysroots=${sysroots}/${target}
-	    host=${build}
 	    shift
             ;;
 	--testcode|te*)
 	    testcode
+	    ;;
+	# Disable steps in the complete process of building a toolchain. These happen
+	# after the build is done.
+	--disable)
+	    case $2 in
+		boostrap|b*)
+		    bootstrap=no
+		    ;;
+		check|c*)
+		    makecheck=no
+		    ;;
+		tarball|t*)
+		    tarballs=no
+		    ;;
+	    esac
 	    ;;
 	# Execute only one step of the entire process. This is primarily
 	# used for debugging.
