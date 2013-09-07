@@ -56,6 +56,12 @@ verbose=1
 network=""
 runtests=no
 ccache=no
+
+# These are flags for the --disable option to cbuild, which are enabled by default
+bootstrap=yes
+makecheck=yes
+tarballs=yes
+
 release="`date +%Y.%m.%d`"
 
 # source a user specific config file for commonly used configure options.
