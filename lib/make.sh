@@ -7,6 +7,8 @@
 # This performs all the steps to build a full cross toolchain
 build_all()
 {
+    trace "build_all() $*"
+
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
 
@@ -81,13 +83,17 @@ build_all()
 
     manifest ${gcc_version}
 
-    binary_tarball 
+    if test x"${tarballs}" = x"yes"; then
+	binary_tarball 
+    fi
 
     return 0
 }
 
 build()
 {
+    trace "build_all() $*"
+
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
     if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
@@ -194,10 +200,15 @@ build()
     if test $? -gt 0; then
 	return 1
     fi
-    
-    make_install ${url}
-    if test $? -gt 0; then
-	return 1
+
+    if test x"${install}" = x"yes"; then    
+	make_install ${url}
+	if test $? -gt 0; then
+	    return 1
+	fi
+    else
+	notice "make installed disabled by user action."
+	return 0
     fi
 
     # See if we can compile and link a simple test case.
@@ -230,12 +241,16 @@ build()
 
 make_all()
 {
+    trace "make_all() $*"
+
     builddir="`get_builddir $1`"
     notice "Making all in ${builddir}"
 
-    # if test x"${use_ccache}" = xyes; then
-    # 	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
-    # fi
+#    if test x"${use_ccache}" = xyes -a x"${build}" != x"${target}"; then
+#     	make_flags="${make_flags} CC='ccache ${target}-gcc' CXX='ccache ${target}-g++'"
+#    else
+#     	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
+#    fi
 
     export CONFIG_SHELL=${bash_shell}
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
@@ -249,6 +264,8 @@ make_all()
 
 make_install()
 {
+    trace "make_install() $*"
+
     if test x"${builddir}" = x; then
 	builddir="`get_builddir $1`"
     fi
@@ -283,6 +300,8 @@ make_install()
 
 make_check()
 {
+    trace "make_check() $*"
+
     if test x"${builddir}" = x; then
 	builddir="`get_builddir $1`"
     fi
@@ -300,6 +319,8 @@ make_check()
 
 make_clean()
 {
+    trace "make_clean() $*"
+
     builddir="`get_builddir $1`"
     notice "Making clean in ${builddir}"
 
@@ -333,5 +354,5 @@ EOF
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
-    ${target}-g++ -static --sysroot=${sysroot}/${target} -o hi hello.cpp
+    ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi hello.cpp
 }
