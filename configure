@@ -3793,7 +3793,7 @@ fi
 if test "${with_sysroot+set}" = set; then :
   withval=$with_sysroot; SYSROOTS=${withval}
 else
-  SYSROOTS="${PWD}"/`hostname`/destdir/sysroots
+  SYSROOTS="${CBUILD_TOP}"/sysroots
 fi
 
 
@@ -3809,7 +3809,7 @@ fi
 if test "${with_local_snapshots+set}" = set; then :
   withval=$with_local_snapshots; LOCAL_SNAPSHOTS=${withval}
 else
-  LOCAL_SNAPSHOTS="${PWD}/snapshots"
+  LOCAL_SNAPSHOTS="${CBUILD_TOP}/snapshots"
 fi
 
 
@@ -3825,10 +3825,16 @@ fi
 if test "${with_local_builds+set}" = set; then :
   withval=$with_local_builds; LOCAL_BUILDS=${withval}
 else
-  LOCAL_BUILDS="${PWD}/`hostname`/destdir"
+  LOCAL_BUILDS="${CBUILD_TOP}/builds"
 fi
 
 
+
+if test ! -d ${LOCAL_BUILDS}; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${LOCAL_BUILDS} does not exist so creating directory!" >&5
+$as_echo "$as_me: WARNING: ${LOCAL_BUILDS} does not exist so creating directory!" >&2;}
+   mkdir -p ${LOCAL_BUILDS}
+fi
 
 
 # Check whether --with-remote-snapshots was given.
