@@ -154,6 +154,14 @@ manifest()
 
     outfile=${dest}/manifest.txt
     cat <<EOF > ${outfile}
+# Build machine data
+build=${build}
+kernel=${kernel}
+hostname=${hostname}
+distribution=${distribution}
+host_gcc="${host_gcc_version}"
+
+# Component versions
 gmp_version=${gmp_version}
 mpc_version=${mpc_version}
 mpfr_version=${mpfr_version}
