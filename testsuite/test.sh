@@ -8,6 +8,13 @@ else
     topdir=$PWD
 fi
 
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    warning "no host.conf file!"
+fi
+
 . "${topdir}/lib/common.sh" || exit 1
 . "${topdir}/host.conf" || exit 1
 
@@ -24,7 +31,7 @@ fi
 verbose()
 {
     if test x"${debug}" = x"yes"; then
-	echo "$1 $2"
+	echo "($BASH_LINENO): $1 $2"
     fi
 }
 
@@ -66,7 +73,7 @@ else
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "/build/cbuild2/test/test.foobar.org/x86_64-linux-gnu/gdb-7.6~20121001+git3e2e76a"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gdb-7.6~20121001+git3e2e76a"; then
     pass "get_builddir: tarball uncompressed"
 else
     fail "get_builddir: tarball uncompressed"
@@ -92,7 +99,7 @@ else
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "/build/cbuild2/test/test.foobar.org/x86_64-linux-gnu/gcc-linaro-4.8-2013.06-1"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-linaro-4.8-2013.06-1"; then
     pass "get_builddir: tarball compressed"
 else
     fail "get_builddir: tarball compressed"
@@ -119,7 +126,7 @@ else
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "/build/cbuild2/test/test.foobar.org/x86_64-linux-gnu/gcc-4_7-branch"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-4_7-branch"; then
     pass "get_builddir: svn branch"
 else
     fail "get_builddir: svn branch"
@@ -146,7 +153,7 @@ else
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "/build/cbuild2/test/test.foobar.org/x86_64-linux-gnu/gdb-linaro_7.5"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gdb-linaro_7.5"; then
     pass "get_builddir: bzr branch"
 else
     fail "get_builddir: bzr branch"
@@ -173,7 +180,7 @@ else
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "/build/cbuild2/test/test.foobar.org/x86_64-linux-gnu/binutils.git"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/binutils.git"; then
     pass "get_builddir: git branch"
 else
     fail "get_builddir: git branch"
