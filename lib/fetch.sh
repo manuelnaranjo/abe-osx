@@ -107,8 +107,8 @@ fetch_http()
 	if test x"${wget_bin}" != x; then
 	    # --continue --progress=bar
 	    dryrun "${wget_bin} --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
-	    if test ! -e ${local_snapshots}/${getfile}; then
-		# warning "${getfile} didn't download via http!"
+	    if test ! -s ${local_snapshots}/${getfile}; then
+		warning "downloaded file ${getfile} has zero data!"
 		return 1
 	    fi
 	fi
@@ -231,7 +231,7 @@ extract()
     dir="`echo ${file} | sed -e 's:.tar\..*::'`"
     if test ! -d ${local_snapshots}/${dir}; then
 	dir2="`echo ${dir} | sed -e 's:-linaro::'`"
-	if test -d ${local_snapshots}/${dir2}; then
+	if test ! -d ${local_snapshots}/${dir}; then
 	    warning "Making a symbolic link for nonstandard directory name!"
 	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
 	else
