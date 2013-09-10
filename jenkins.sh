@@ -7,7 +7,6 @@ changes=""
 if test x"${gmp_snapshot}" != x"latest"; then
     change="${change} gmp=${gmp_snapshot}"
 fi
-
 if test x"${mpc_snapshot}" != x"latest"; then
     change="${change} mpc=${mpc_snapshot}"
 fi
@@ -58,10 +57,10 @@ fi
 # if build_type is true, then this is a cross build. For cross builds we build a
 # native GCC, and then use that to compile the cross compiler to bootstrap.
 if test x"${build_type}" = xtrue; then
-    $CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} --disable bootstrap --build all
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable bootstrap --build all
 fi
 
-$CONFIG_SHELL ../cbuild2.sh --force --nodepends --parallel ${change} ${runtest} --target ${target} --build all
+$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --target ${target} --build all
 
 if test x"${runtests}" = xtrue; then
     sums="`find -name \*.sum`"
