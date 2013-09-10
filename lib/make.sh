@@ -201,15 +201,15 @@ build()
 	return 1
     fi
 
-    if test x"${install}" = x"yes"; then    
+#    if test x"${install}" = x"yes"; then    
 	make_install ${url}
 	if test $? -gt 0; then
 	    return 1
 	fi
-    else
-	notice "make installed disabled by user action."
-	return 0
-    fi
+#    else
+#	notice "make installed disabled by user action."
+#	return 0
+#    fi
 
     # See if we can compile and link a simple test case.
     if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
