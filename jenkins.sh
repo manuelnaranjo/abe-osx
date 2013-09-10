@@ -39,7 +39,10 @@ rm -f localhost/${target}/*/*.conf
 # Configure Cbuildv2 itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
-export CONFIG_SHELL="/bin/bash -x"
+export CONFIG_SHELL="/bin/bash"
+if test x"${debug}" = x"yes"; then
+    export CONFIG_SHELL="/bin/bash -x"
+fi
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
@@ -62,12 +65,14 @@ fi
 
 $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --target ${target} --build all
 
-if test x"${runtests}" = xtrue; then
-    sums="`find -name \*.sum`"
-    for i in ${sums}; do
-	name="`echo $i | cut -d '.' -f 1`"
-	../sum2junit.sh $i ${name}.junit
-    done
-    cat *.junit
-    rm *.junit
+if test $? -eq 0; then
+    if test x"${runtests}" = xtrue; then
+	sums="`find -name \*.sum`"
+	for i in ${sums}; do
+	    name="`echo $i | cut -d '.' -f 1`"
+	    ../sum2junit.sh $i ${name}.junit
+	done
+	cat *.junit
+	rm *.junit
+    fi
 fi
