@@ -348,6 +348,12 @@ if test x"${missing}" != x; then
     AC_MSG_ERROR([You need to install these packages: ${missing}])
 fi
 
+rm -f Makefile
+cat<<EOF > Makefile
+check:
+	${srcdir}/testsuite/test.sh
+EOF
+
 # Local Variables:
 # c-basic-offset: 2
 # tab-width: 2
