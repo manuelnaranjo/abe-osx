@@ -7,7 +7,7 @@
 # This performs all the steps to build a full cross toolchain
 build_all()
 {
-    trace "build_all() $*"
+    trace "$*"
 
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
@@ -92,7 +92,7 @@ build_all()
 
 build()
 {
-    trace "build_all() $*"
+    trace "$*"
 
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
@@ -241,7 +241,7 @@ build()
 
 make_all()
 {
-    trace "make_all() $*"
+    trace "$*"
 
     builddir="`get_builddir $1`"
     notice "Making all in ${builddir}"
@@ -264,7 +264,7 @@ make_all()
 
 make_install()
 {
-    trace "make_install() $*"
+    trace "$*"
 
     if test x"${builddir}" = x; then
 	builddir="`get_builddir $1`"
@@ -300,7 +300,7 @@ make_install()
 
 make_check()
 {
-    trace "make_check() $*"
+    trace "$*"
 
     if test x"${builddir}" = x; then
 	builddir="`get_builddir $1`"
@@ -319,7 +319,7 @@ make_check()
 
 make_clean()
 {
-    trace "make_clean() $*"
+    trace "$*"
 
     builddir="`get_builddir $1`"
     notice "Making clean in ${builddir}"
