@@ -45,13 +45,6 @@ if test x"${debug}" = x"yes"; then
 fi
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
-# Run Cbuildv2. We force all components to rebuild cleanly, and do parallel builds.
-# if test x"${build_type}" = x"true"; then
-#     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --target ${target} --build all
-# else
-#     $CONFIG_SHELL ../cbuild2.sh --force --parallel ${change} --build all
-# fi
-
 # if runtests is true, then run mke check after the build completes
 if test x"${runtests}" = xyes; then
     runtest=--check
@@ -63,7 +56,7 @@ if test x"${build_type}" = xtrue; then
     $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable bootstrap --build all
 fi
 
-$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --target ${target} --build all
+$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --tarballs --target ${target} --build all
 
 if test $? -eq 0; then
     if test x"${runtests}" = xtrue; then
