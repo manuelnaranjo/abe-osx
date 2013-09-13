@@ -5,14 +5,21 @@
 # $2 - which gcc stage to build
 configure_build()
 {
-    builddir=`get_builddir $1`    
-    dir="`normalize_path $1`"
-    tool=`get_toolname $1`
+    trace "$*"
 
-    if test `echo $1 | grep -c trunk` -gt 0; then
-	srcdir="${local_snapshots}/${dir}/trunk"
+    local builddir="`get_builddir $1`"
+    if test `echo $1 | grep -c "\.git/"` -gt 0; then
+	local dir="`normalize_path $1`"
+	local dir="`dirname ${dir}`"
     else
-	srcdir="${local_snapshots}/${dir}"
+	local dir="`normalize_path $1`"
+    fi
+    local tool="`get_toolname $1`"
+
+    if test "`echo $1 | grep -c trunk`" -gt 0; then
+	local srcdir="${local_snapshots}/${dir}/trunk"
+    else
+	local srcdir="${local_snapshots}/${dir}"
     fi
     
     if test ! -d ${builddir}; then
@@ -88,14 +95,9 @@ configure_build()
 	opts="--disable-shared --enable-static"
     fi
 
-    # Add all the rest of the arguments to the options used when configuring.
-#    if test $# -gt 1; then
-#	opts="${opts} `echo $* | cut -d ' ' -f2-10`"
-#    fi
-
     # prefix is the root everything gets installed under.
-    prefix="${local_builds}/${host}"
-#    prefix="/opt/linaro/${build}"
+    prefix="${local_builds}/destdir/${host}"
+
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
@@ -103,7 +105,7 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	*libc)
-	    opts="${opts} --build=${build} --host=${target} --prefix=/usr"
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
 	    ;;
 	gcc*)
 	    # Force a complete reconfigure, as we changed the flags. We could do a
@@ -151,16 +153,16 @@ configure_build()
 		opts="${opts} ${stage2_flags}"
 	    fi
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${prefix}"
+	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	binutils*)
-	    opts="${opts} --build=${build} --host=${build} --target=${target} --prefix=${prefix}"
+	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
-	    opts="${opts} --prefix=${prefix}"
+	    opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 	    ;;
 	*)
-	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
+	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
     esac
 
