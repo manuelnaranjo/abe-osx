@@ -99,7 +99,7 @@ build()
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
     if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
-	tool="`basename $1 | sed -e 's:\..*::' | cut -d ' ' -f 1`"
+	tool="`basename $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
 	name="`basename $1`"
     else
 	tool="`echo $1 | sed -e 's:-[0-9].*::'`"
@@ -252,7 +252,9 @@ make_all()
      	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi
 
-    export CONFIG_SHELL=${bash_shell}
+    if test x"${CONFIG_SHELL}" = x; then
+	export CONFIG_SHELL=${bash_shell}
+    fi
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
     if test $? -gt 0; then
 	warning "Make had failures!"
