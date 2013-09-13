@@ -98,7 +98,7 @@ build()
 
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
-    if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
+    if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp|\.git"` -gt 0; then	
 	tool="`basename $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
 	name="`basename $1`"
     else
