@@ -12,21 +12,23 @@ fetch()
 	file="`basename $1`"
     fi
 
-    dir="`dirname $1`/"
+    if test "`echo $1 | grep -c \.git`" -gt 0; then
+	dir="`dirname $1`/"
+    fi
     if test x"${dir}" = x"."; then
-	dir=""
+	    dir=""
     fi
 
     # first, see if there is a working network connection, because
     # without one, downloading files won't work.
-    ping -c 1 cbuild.validation.linaro.org
-    if test $? -eq 0; then
-	network=yes
-    else
-	warning "No network connection! Downloading files disabled."
-	network=no
-	return 1
-    fi
+    # ping -c 1 cbuild.validation.linaro.org
+    # if test $? -eq 0; then
+    # 	network=yes
+    # else
+    # 	warning "No network connection! Downloading files disabled."
+    # 	network=no
+    # 	return 1
+    # fi
 
     # The md5sums file is handled differently, as it's used to find all
     # the other names of the tarballs for remote downloading.
