@@ -32,22 +32,11 @@ set_gcc()
     gcc="$1"
 }
 
-set_binutils()
-{
-    echo "Set binutils version $1..."
-    binutils="$1"
-}
 
 set_sysroot()
 {
     echo "Set sysroot to $1..."
     sysroots="$1"
-}
-
-set_libc()
-{
-    echo "Set libc to $1..."
-    libc="$1"
 }
 
 set_config()
@@ -75,6 +64,12 @@ dryrun()
     if test x"${dryrun}" = xyes; then
 	echo "DRYRUN: $1"
     else
+	if test x"${interactive}" = x"yes"; then
+	    notice "About to execute $1"
+	    notice "Hit any key to continue: "
+	    read answer
+	    return $?
+	fi
 	eval $1
 	return $?
     fi
@@ -84,12 +79,13 @@ dryrun()
 
 trace()
 {
-    echo "TRACE: $*"
+    echo "TRACE(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)"
+
 }
 
 error()
 {
-    echo "ERROR: $1"
+    echo "ERROR (#${BASH_LINENO}): $1"
     return 1
 }
 
@@ -112,21 +108,27 @@ notice()
 # unique in the source.conf file.
 get_URL()
 {
-    srcs="${topdir}/config/sources.conf"
+    local srcs="${topdir}/config/sources.conf"
+    local node="`echo $1 | cut -d '/' -f 1`"
+    branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+    commit="`echo $1 | cut -d '@' -f 2`"
+    
     if test -e ${srcs}; then
-	if test "`grep -c "^$1" ${srcs}`" -gt 1; then
+	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
 	    echo "ERROR: Need unique component and version to get URL!"
 	    echo ""
 	    echo "Choose one from this list"
 #	    list_URL $1
 	    return 1
 	fi
-	url="`grep "^$1" ${srcs}`"
-	url="`echo ${out} | cut -d ' ' -f 2`"
-	echo ${url}
+	url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
+	url="${url} ${branch} ${commit}"
+	url_data[branch]=${branch}
+
+	echo "${url}"
 	return 0
     else
-	error "No config file for sources! Choose one from this list"
+	error "No config file for repository sources!"
 	return 1
     fi
 
@@ -139,7 +141,7 @@ get_URL()
 # $1 - The name of the toolchain component, partial strings ok
 list_URL()
 {
-    srcs="${topdir}/config/sources.conf"
+    locals srcs="${topdir}/config/sources.conf"
     
     if test -e ${srcs}; then
 	notice "Supported source repositories for $1 are:"
@@ -203,7 +205,7 @@ normalize_path()
 # $1 - The full URL to the source tree as returned by get_URL()
 get_builddir()
 {
-    dir="`normalize_path $1`"
+    local dir="`normalize_path $1`"
     # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
     # like these:
     # BUILD_ID 2013-09-02_20-23-02
@@ -268,7 +270,7 @@ get_toolname()
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::'`"
+	local tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::'`"
 	tool="`basename ${tool}`"
     else
 	tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
@@ -295,7 +297,7 @@ find_snapshot()
 	return 1
    fi
 
-    dir="`dirname $1`/"
+    local dir="`dirname $1`/"
     if test x"${dir}" = x"."; then
 	dir=""
     fi
@@ -345,7 +347,7 @@ get_source()
     fi
     # If a full URL isn't passed as an argument, assume we want a
     # tarball snapshot
-    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp"` -eq 0; then
+    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
 	find_snapshot $1
 	# got an error
 	if test $? -gt 0; then
