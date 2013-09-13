@@ -16,7 +16,7 @@ fetch()
 	dir="`dirname $1`/"
     fi
     if test x"${dir}" = x"."; then
-	    dir=""
+	dir=""
     fi
 
     # first, see if there is a working network connection, because
@@ -44,7 +44,7 @@ fetch()
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
     
-    md5file="`grep ${file} ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
+    md5file="`grep ${file} ${local_snapshots}/${dir}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
 	return 1
