@@ -11,6 +11,8 @@
 # $1 - find the toolchain components to build to satisfiy necessary dependencies.
 dependencies()
 {
+    trace "$*"
+
     # Don't process any dependencies in the conf file.
     if test x"${nodepends}" = xyes; then
 	warning "Dependencies for $1 disabled!"
@@ -74,7 +76,11 @@ dependencies()
 # $1 - the toolchain component to see if it's already installed
 installed()
 {
-    tool=`get_toolname $1`
+    trace "$*"
+
+    if test x"${tool}" = x; then
+	tool=`get_toolname $1`
+    fi
     source_config ${tool}
 
     if test ! -d ${local_builds}/lib -a ! ${local_builds}/bin; then
@@ -91,7 +97,7 @@ installed()
 		return 0
 	    fi
 	else
-	    if test -e ${local_builds}/bin/${installs} -o -e ${local_builds}/bin/${target}-${installs}; then
+	    if test -e ${local_builds}/bin/${installs} -o -e ${local_builds}/bin/${target}-${installs} -o ${local_builds}/bin/${installs}.exe; then
 		notice "${tool} already installed"
 		return 0
 	    else
@@ -110,6 +116,8 @@ installed()
 # $1 - the toolchain component to see if it's already been compiled
 built()
 {
+    trace "$*"
+
     tool=`get_toolname $1`
     latest="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
     builddir="`get_builddir $1`-${latest}"
@@ -147,6 +155,8 @@ built()
 # good reason, so we download, build and install them.
 infrastructure()
 {
+    trace "$*"
+
     rm -f ${local_snapshots}/infrastructure/md5sums
     fetch_http infrastructure/md5sums
     rm -f ${local_snapshots}/infrastructure/ChangeLog
@@ -159,7 +169,7 @@ infrastructure()
 	return 1
     fi
     
-    # We have to grep each dependency separetly to preserve the order, as
+    # We have to grep each dependency seperately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
     files=
