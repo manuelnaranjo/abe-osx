@@ -21,7 +21,7 @@ build_all()
 
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
     if test x"${binutils_version}" = x; then
 	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
@@ -83,6 +83,8 @@ build_all()
 
     manifest ${gcc_version}
 
+    gcc_src_tarball
+
     if test x"${tarballs}" = x"yes"; then
 	binary_tarball 
     fi
@@ -97,7 +99,7 @@ build()
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
     if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
-	tool="`basename $1 | sed -e 's:\..*::'`"
+	tool="`basename $1 | sed -e 's:\..*::' | cut -d ' ' -f 1`"
 	name="`basename $1`"
     else
 	tool="`echo $1 | sed -e 's:-[0-9].*::'`"
@@ -108,7 +110,7 @@ build()
     # build. GCC gets built and installed twice, so we don't check for that
     # component.
 #    if test x"${force}" != xyes -a x"${tool}" != x"gcc"; then
-#     	built ${name}
+#     	#built ${name}
 #     	installed ${tool}
 #     	if test $? -eq 0; then
 #     	    notice "${tool} already installed, so not building"
@@ -246,11 +248,9 @@ make_all()
     builddir="`get_builddir $1`"
     notice "Making all in ${builddir}"
 
-#    if test x"${use_ccache}" = xyes -a x"${build}" != x"${target}"; then
-#     	make_flags="${make_flags} CC='ccache ${target}-gcc' CXX='ccache ${target}-g++'"
-#    else
-#     	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
-#    fi
+    if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
+     	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
+    fi
 
     export CONFIG_SHELL=${bash_shell}
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
@@ -308,7 +308,7 @@ make_check()
     notice "Making check in ${builddir}"
 
 #    dryrun "make check RUNTESTFLAGS="${runtest_flags} -a" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
-    dryrun "make check ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     if test $? -gt 0; then
 	warning "Make check had failures!"
 	return 1
@@ -354,5 +354,5 @@ EOF
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
-    ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi hello.cpp
+    dryrun ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi hello.cpp
 }
