@@ -45,7 +45,7 @@ if test x"${debug}" = x"yes"; then
 fi
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
-# if runtests is true, then run mke check after the build completes
+# if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xyes; then
     runtest=--check
 fi
