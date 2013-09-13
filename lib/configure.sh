@@ -19,7 +19,7 @@ configure_build()
     if test "`echo $1 | grep -c trunk`" -gt 0; then
 	local srcdir="${local_snapshots}/${dir}/trunk"
     else
-	local srcdir="${local_snapshots}/${dir}"
+	local srcdir="${local_snapshots}/$1"
     fi
     
     if test ! -d ${builddir}; then
