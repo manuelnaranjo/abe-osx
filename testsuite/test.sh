@@ -31,7 +31,7 @@ fi
 verbose()
 {
     if test x"${debug}" = x"yes"; then
-	echo "($BASH_LINENO): $1 $2"
+	echo "($BASH_LINENO): $*"
     fi
 }
 
@@ -197,7 +197,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 out="`find_snapshot gcc`"
-if test $# -eq 1; then
+if test $? -eq 1; then
     pass "find_snapshot: not unique tarball name"
 else
     fail "find_snapshot: not unique tarball name"
@@ -245,8 +245,67 @@ else
     verbose "get_URL returned ${out}"
 fi
 
+out="`get_URL gcc.git/linaro-4.8-branch@12345`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+    pass "get_URL: git URL in latest field"
+else
+    fail "get_URL: git URL in latest field"
+    verbose "get_URL returned ${out}"
+fi
+if test x"`echo ${out} | cut -d ' ' -f 2`" = x"linaro-4.8-branch"; then
+    pass "get_URL: git URL branch in latest field"
+else
+    fail "get_URL: git URL branch in latest field"
+    verbose "get_URL returned ${out}"
+fi
+if test x"`echo ${out} | cut -d ' ' -f 3`" = x"12345"; then
+    pass "get_URL: git URL commit in latest field"
+else
+    fail "get_URL: git URL commit in latest field"
+    verbose "get_URL returned ${out}"
+fi
+
+echo "FIXME: ${data[data]}"
 
 # ----------------------------------------------------------------------------------
+#
+# Test package buildingru
+
+dryrun=yes
+#gcc_version=linaro-4.8-2013.09
+gcc_version=git://git.linaro.org/toolchain/gcc.git/fsf-gcc-4_8-branch
+
+out="`binary_toolchain 2>&1 | tee xx |grep "DRYRUN:.*Jcvf"`"
+
+date="`date +%Y%m%d`"
+tarname="`echo $out | cut -d ' ' -f 9`"
+destdir="`echo $out | cut -d ' ' -f 10`"
+match="${local_snapshots}/gcc.git-${target}-${host}-${date}"
+
+if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
+    pass "binary_toolchain: git repository"
+else
+    fail "binary_toolchain: git repository"
+    verbose "get_URL returned ${out}"
+fi
+
+#binutils_version=linaro-4.8-2013.09
+binutils_version=git://git.linaro.org/toolchain/binutils.git
+out="`binary_sysroot 2>&1 | tee xx |grep "DRYRUN:.*Jcvf"`"
+tarname="`echo $out | cut -d ' ' -f 9`"
+destdir="`echo $out | cut -d ' ' -f 10`"
+match="${local_snapshots}/sysroot-eglibc-linaro-2.18-2013.09-${target}-${date}"
+echo "${tarname}"
+echo "${match}"
+if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
+    pass "binary_toolchain: git repository"
+else
+    fail "binary_toolchain: git repository"
+    verbose "get_URL returned ${out}"
+fi
+
+
+gcc_src_tarball
 
 # list of dependencies for a toolchain component
 # out="`dependencies gcc`"
@@ -260,3 +319,4 @@ fi
 # ----------------------------------------------------------------------------------
 # print the total of test results
 totals
+
