@@ -23,7 +23,8 @@ checkout()
 
     dir="`normalize_path $1`"
     if test `echo $1 | grep -c "\.git/"`; then
-	branch="`basename $1`"
+	branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	commit="`echo $1 | cut -d '@' -f 2`"
     else
 	branch="master"
     fi
