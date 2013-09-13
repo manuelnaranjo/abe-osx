@@ -72,7 +72,7 @@ build_all()
 		;;
 	    # Build anything not GCC or infrastructure
 	    *)
-		build binutils-${binutils_version}
+		build ${binutils_version}
 		;;
 	esac
 	if test $? -gt 0; then
