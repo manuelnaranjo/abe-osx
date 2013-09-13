@@ -245,20 +245,24 @@ while test $# -gt 0; do
 	--testcode|te*)
 	    testcode
 	    ;;
-	# Disable steps in the complete process of building a toolchain. These happen
-	# after the build is done.
+	# Disable steps in the complete process of building a toolchain. All of
+	# these are enabled by default, but not always desired.
 	--disable)
 	    case $2 in
 		boostrap|b*)
 		    bootstrap=no
 		    ;;
 		check|c*)
-		    makecheck=no
+		    makecheck=yes
 		    ;;
 		tarball|t*)
-		    tarballs=no
+		    tarballs=yes
+		    ;;
+		install|i*)
+		    install=no
 		    ;;
 	    esac
+	    shift
 	    ;;
 	# Execute only one step of the entire process. This is primarily
 	# used for debugging.
@@ -392,3 +396,6 @@ while test $# -gt 0; do
 	shift
     fi
 done
+
+notice "Build took ${SECONDS} seconds"
+
