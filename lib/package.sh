@@ -12,26 +12,12 @@ build_rpm()
     echo "unimplemented"
 }
 
-
-# Build a binary tarball
-# $1 - the version to use, usually something like 2013.07-2
-source_tarball()
-{
-    if test x"$1" = x; then
-	error "Need to supply a release version!!"
-	return 1
-    else
-	release="$1"
-    fi
-
-
-    
-}
-
 # Build a binary tarball
 # $1 - the version to use, usually something like 2013.07-2
 binary_tarball()
 {
+    trace "$*"
+
     packages="sysroot toolchain"
     
     for i in ${packages}; do
@@ -50,28 +36,49 @@ binary_tarball()
 }
 
 # Produce a binary toolchain tarball
+# For daily builds produced by Jenkins, we use
+# `date +%Y%m%d`-${BUILD_NUMBER}-${GIT_REVISION}
+# e.g artifact_20130906-12-245f0869.tar.xz
 binary_toolchain()
 {
+    trace "$*"
+
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-#	gcc_version="gcc-linaro-`${target}-gcc -v 2>&1 | grep "gcc version " | cut -d ' ' -f 3 | cut -d '.' -f 1-2`-$1"
 	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
 
-    builddir="`get_builddir ${gcc_version}`"
+    if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	branch="`basename ${gcc_version}`"
+	gcc_version="gcc.git"
+    else
+	if test `echo ${gcc_version} | grep -c "\.git"`; then
+	    branch="master"
+	fi
+    fi
 
-    tag="${gcc_version}-${target}-${host}"
+    date="`date +%Y%m%d`"
+    builddir="`get_builddir ${gcc_version}`"
+    srcdir="${local_snapshots}/`basename ${builddir}`"
+    if test -d ${srcdir}/.git; then
+	revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	tag="${gcc_version}-${target}-${host}-${date}~${revision}"
+    else
+	tag="${gcc_version}-${target}-${host}-${date}~${BUILD_NUMBER}"
+    fi
+
     destdir=/tmp/linaro/${tag}
-    mkdir -p ${destdir}/bin
-    mkdir -p ${destdir}/share
-    mkdir -p ${destdir}/lib/gcc
-    mkdir -p ${destdir}/libexec/gcc
+
+    dryrun "mkdir -p ${destdir}/bin"
+    dryrun "mkdir -p ${destdir}/share"
+    dryrun "mkdir -p ${destdir}/lib/gcc"
+    dryrun "mkdir -p ${destdir}/libexec/gcc"
 
     # Get the binaries
-    cp -r ${local_builds}/destdir/${host}/bin/${target}-* ${destdir}/bin/
-    cp -r ${local_builds}/destdir/${host}/${target} ${destdir}/
-    cp -r ${local_builds}/destdir/${host}/lib/gcc/${target} ${destdir}/lib/gcc/
-    cp -r ${local_builds}/destdir/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/
+    dryrun "cp -r ${local_builds}/destdir/${host}/bin/${target}-* ${destdir}/bin/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/${target} ${destdir}/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/lib/gcc/${target} ${destdir}/lib/gcc/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/"
 
     if test -e /tmp/manifest.txt; then
 	cp /tmp/manifest.txt ${destdir}
@@ -88,6 +95,8 @@ binary_toolchain()
 
 binary_sysroot()
 {
+    trace "$*"
+
     if test x"${clibrary}" = x"newlib"; then
 	if test x"${newlb_version}" = x; then
 	    libc_version="newlib-`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
@@ -101,9 +110,17 @@ binary_sysroot()
 	    libc_version="eglibc-${eglibc_version}"
 	fi
     fi
-    tag="sysroot-${libc_version}-${target}"
 
-    cp -fr ${local_builds}/sysroots/${target} /tmp/${tag}
+    date="`date +%Y%m%d`"
+    srcdir="${local_snapshots}/${libc_version}"
+    if test -d ${srcdir}/.git; then
+	revision="1`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	tag="sysroot-${libc_version}-${target}-${date}-${revision}"
+    else
+	tag="sysroot-${libc_version}-${target}-${date}~${BUILD_NUMBER}"
+    fi
+
+    dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
 
     dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
 
@@ -187,5 +204,83 @@ EOF
 		;;
 	esac
     fi
+}
+
+# Build a source tarball
+# $1 - the version to use, usually something like 2013.07-2
+gcc_src_tarball()
+{
+    trace "$*"
+
+    # See if specific component versions were specified at runtime
+    if test x"${gcc_version}" = x; then
+	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    fi
+    dir="`normalize_path ${gcc_version} | cut -d '/' -f 1`"
+    branch="`${dir} | cut -d '/' -f 2`"
+    srcdir="${local_snapshots}/${dir}"
+
+    date="`date +%Y%m%d`"
+    if test -d ${srcdir}/.git; then
+	gcc_version="${dir}-${date}"
+	revision="~`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	exclude="--exclude .git"
+    else
+	gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
+	revision=""
+	exclude=""
+    fi
+    tag="`echo ${gcc_version}${revision} | sed -e 's:\.git:-src:'`"
+
+    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
+#    dryrun "cp -r ${srcdir} /tmp/${tag}"
+
+    # Cleanup any temp files.
+    #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
+
+    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
+
+    # We don't need the symbolic link anymore.
+    dryrun "rm -rf /tmp/${tag}"
+
+    return 0
+}
+
+# Build a source tarball
+# $1 - the version to use, usually something like 2013.07-2
+binutils_src_tarball()
+{
+    trace "$*"
+
+    # See if specific component versions were specified at runtime
+    if test x"${gcc_version}" = x; then
+	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    fi
+    dir="`normalize_path ${gcc_version}`"
+    srcdir="${local_snapshots}/${dir}"
+
+    date="`date +%Y%m%d`"
+    if test -d ${srcdir}/.git; then
+	gcc_version="${dir}-${date}"
+	revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	exclude="${exclude} .git"
+    else
+	gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
+	revision=""
+	exclude=""
+    fi
+    tag="${gcc_version}${revision}"
+
+    dryrun "ln -s ${srcdir} /tmp/${tag}"
+
+    # Cleanup any temp files.
+    #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
+
+    dryrun "cd /tmp && tar ${exclude} Jcvfh ${local_snapshots}/${tag}.tar.xz ${tag}/"
+
+    # We don't need the symbolic link anymore.
+    dryrun "rm -f /tmp/${tag}"
+
+    return 0
 }
 
