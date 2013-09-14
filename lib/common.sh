@@ -379,8 +379,10 @@ get_source()
 	url=${snapshot}
 	return 0
     else
-	url=$1
-	return 0
+	if test `echo $1 | egrep -c "\.git"` -eq 0 -a `echo $1 | egrep -c "^git"` -eq 0; then
+	    url=$1
+	    return 0
+	fi
     fi
     
     # If a full URL isn't passed as an argment, get one for the
