@@ -9,14 +9,15 @@ fetch()
 	error "No file name specified to fetch!"
 	return 1
     else
-	file="`basename $1`"
+	local file="`basename $1`"
     fi
 
+    local dir=""
     if test "`echo $1 | grep -c \.git`" -gt 0; then
-	dir="`dirname $1`/"
+	local dir="`dirname $1`/"
     fi
     if test x"${dir}" = x"."; then
-	dir=""
+	local dir=""
     fi
 
     # first, see if there is a working network connection, because
@@ -35,7 +36,9 @@ fetch()
     if test x"$1" = x"md5sums"; then
 	# Move the existing file to force a fresh copy to be downloaded.
 	# Otherwise this file can get stale, and new tarballs not found.
-	mv -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak	
+	if test -f ${local_snapshots}/${dir}md5sums; then
+	    mv -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak	
+	fi
 	fetch_http ${dir}md5sums
 	return $?
     fi
@@ -43,37 +46,44 @@ fetch()
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
-    
-    md5file="`grep ${file} ${local_snapshots}/${dir}/md5sums | cut -d ' ' -f 3`"
+    local md5file="`grep ${file} ${local_snapshots}/${dir}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
 	return 1
     fi
     if test x"${file}" != x; then
-	getfile="${md5file}"
+	local getfile="${md5file}"
     else
-	getfile=${dir}${file}.tar.xz
+	local getfile=${dir}${file}.tar.xz
     fi
 
+    # If the tarball hasn't changed, then don't fetch anything
+    if test ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file}; then
+     	fixme "stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
+	return 0
+    else
+     	fixme "stamp-fetch-${file} is not newer than ${md5file}, so fetching ${md5file}"
+    fi
+    
     # FIXME: Stash the md5sum for this tarball in the build directory. Compare
     # the current one we just got with the stored one to determine if we should
     # download it.
     if test x"$2" = x; then
 #	notice "Using default fetching protocol 'http'"
-	protocol=http
+	local protocol=http
     else
-	protocol=$2
-    fi 
+	local protocol=$2
+    fi
 
     # download the file
     fetch_${protocol} ${getfile}
     if test $? -gt 0; then
 	warning "couldn't fetch $1, trying xdelta3 instead"
-	getfile=${file}.tar.xdelta3.xz
+	local getfile=${file}.tar.xdelta3.xz
 	fetch_${protocol} ${file}
 	if test $? -gt 0; then
 	    warning "couldn't fetch ${getfile}, trying .bz2 instead"
-	    getfile=${file}.tar.bz2
+	    local getfile=${file}.tar.bz2
 	    fetch_${protocol} ${getfile}
 	    if test $? -gt 0; then
 		error "couldn't fetch ${getfile}"
@@ -87,6 +97,9 @@ fetch()
     if test $? -gt 0; then
 	return 1
     fi
+
+    touch ${local_builds}/stamp-fetch-${file}
+
     return 0
 }
 
@@ -94,10 +107,10 @@ fetch_http()
 {
     trace "$*"
 
-    getfile=$1
-    dir="`dirname $1`/"
+    local getfile=$1
+    local dir="`dirname $1`/"
     if test x"${dir}" = x"./"; then
-	dir=""
+	local dir=""
     else
 	if test ! -d ${local_snapshots}/${dir}; then
 	    mkdir -p ${local_snapshots}/${dir}
@@ -127,7 +140,7 @@ fetch_scp()
 
 fetch_rsync()
 {
-    getfile="`basename $1`"
+    local getfile="`basename $1`"
 
     dryrun "${rsync_bin} $1 ${local_snapshots}"
     if test ! -e ${local_snapshots}/${getfile}; then
@@ -150,13 +163,13 @@ check_md5sum()
 	fi
     fi
 
-    dir="`dirname $1`/"
+    local dir="`dirname $1`/"
     if test x"${dir}" = x"."; then
-	dir=""
+	local dir=""
     fi
 
     # Drop the file name from .tar to the end to keep grep happy
-    getfile=`echo ${1}`
+    local getfile=`echo ${1}`
 
     newsum="`md5sum ${local_snapshots}/$1 | cut -d ' ' -f 1`"
     oldsum="`grep ${getfile} ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 1`"
@@ -169,7 +182,7 @@ check_md5sum()
 
     if test x"${oldsum}" = x"${newsum}"; then
 	notice "md5sums matched"
-	builddir="`get_builddir $1`"
+	local builddir="`get_builddir $1`"
 	rm -f ${builddir}/md5sum
 	echo "${newsum} > ${builddir}/md5sum"
 	return 0
@@ -188,33 +201,41 @@ extract()
 {
     trace "$*"
 
-    extractor=
-    taropt=
+    local extractor=
+    local taropt=
 
-    dir="`dirname $1`"
+    local dir="`dirname $1`"
     if test x"${dir}" = x"."; then
-	dir=""
+	local dir=""
     fi
 
     if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
-	file="`grep $1 ${local_snapshots}/${dir}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3`"
+	local file="`grep $1 ${local_snapshots}/${dir}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
     else
-	file=$1
+	local file="`echo $1 | cut -d '/' -f 2`"
     fi
+
+    # If the tarball hasn't changed, then don't fetch anything
+    if test ${local_builds}/stamp-extract-${file} -nt ${local_snapshots}/${dir}/${file}; then
+     	fixme "stamp-extract-${file} is newer than ${file}, so not extracting ${file}"
+	return 0
+    else
+     	fixme "stamp-extract-${file} is not newer than ${file}, so extracting ${file}"
+    fi    
     
     # Figure out how to decompress a tarball
     case "${file}" in
 	*.xz)
-	    extractor="xz -d "
-	    taropt="J"
+	    local extractor="xz -d "
+	    local taropt="J"
 	    ;;
 	*.bz*)
-	    extractor="bzip2 -d "
-	    taropt="j"
+	    local extractor="bzip2 -d "
+	    local taropt="j"
 	    ;;
 	*.gz)
-	    extractor="gunzip "
-	    taropt="x"
+	    local extractor="gunzip "
+	    local taropt="x"
 	    ;;
 	*) ;;
     esac
@@ -223,19 +244,19 @@ extract()
 	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
-	taropts="${taropt}xf"
-	tar ${taropts} ${local_snapshots}/${file} -C ${local_snapshots}/${dir}
+	local taropts="${taropt}xf"
+	tar ${taropts} ${local_snapshots}/${dir}/${file} -C ${local_snapshots}/${dir}
     fi
 
     # FIXME: this is hopefully is temporary hack for tarballs where the directory
     # name versions doesn't match the tarball version. This means it's missing the
     # -linaro-VERSION.YYYY.MM part.
-    dir="`echo ${file} | sed -e 's:.tar\..*::'`"
+    local dir="`echo ${file} | sed -e 's:.tar\..*::'`"
     if test ! -d ${local_snapshots}/${dir}; then
-	dir2="`echo ${dir} | sed -e 's:-linaro::'`"
+	local dir2="`echo ${dir} | sed -e 's:-linaro::'`"
 	if test ! -d ${local_snapshots}/${dir}; then
 	    if test -d "`echo ${local_snapshots}/${dir2} | cut -d '-' -f 1-2`"; then
-		dir2="`echo ${dir2} | cut -d '-' -f 1-2`"
+		local dir2="`echo ${dir2} | cut -d '-' -f 1-2`"
 	    fi
 	    warning "Making a symbolic link for nonstandard directory name!"
 	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
@@ -244,6 +265,8 @@ extract()
 	    return 1
 	fi
     fi
+
+    touch ${local_builds}/stamp-extract-${file} 
 
     return 0
 }

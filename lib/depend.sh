@@ -20,13 +20,14 @@ dependencies()
     fi
 
     if test x"${depends}"  = x; then
-	tool=`get_toolname $1`
+	local tool=`get_toolname $1`
+	local depends="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
 	source_config ${tool}
     fi
 
     if test x"${depends}"  != x; then
 	for i in ${depends}; do
-	    version=""
+	    local version=""
 	    case $i in
 		b*|binutils)
 		    version="${binutils_version}"
@@ -61,7 +62,7 @@ dependencies()
 	    installed $i
 	    if test $? -gt 0; then
 		notice "Need component ${tool}-${version}"
-		components="${components} ${tool}-${version}"
+		local components="${components} ${tool}-${version}"
 	    fi
 	done
 	depends=""
@@ -69,7 +70,7 @@ dependencies()
 	return $?
     fi
     
-    notice "${components}"
+    echo "${components}"
     return 1
 }
 
@@ -79,7 +80,7 @@ installed()
     trace "$*"
 
     if test x"${tool}" = x; then
-	tool=`get_toolname $1`
+	local tool=`get_toolname $1`
     fi
     source_config ${tool}
 
@@ -118,9 +119,9 @@ built()
 {
     trace "$*"
 
-    tool=`get_toolname $1`
-    latest="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-    builddir="`get_builddir $1`-${latest}"
+    local tool=`get_toolname $1`
+    local latest="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    local builddir="`get_builddir $1`-${latest}"
 
     source_config ${tool}
 
@@ -169,30 +170,30 @@ infrastructure()
 	return 1
     fi
     
-    # We have to grep each dependency seperately to preserve the order, as
+    # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
-    files=
+    local files=
     for i in ${depends}; do
-     	files="${files} `grep /$i ${local_snapshots}/md5sums ${local_snapshots}/*/md5sums| cut -d ' ' -f3`"
+     	files="${files} `grep /$i ${local_snapshots}/md5sums ${local_snapshots}/*/md5sums | cut -d ' ' -f3 | uniq`"
     done
     
     # First fetch and extract all the tarballs listed in the md5sums file
-    for i in ${files}; do
-	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
-	    continue
-	fi
-	fetch_http $i
-	extract $i
-    done
+#    for i in ${files}; do
+#	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
+#	    continue
+#	fi
+#	fetch_http $i
+#	extract $i
+#    done
 
     # Store the current value so we can reset it ater we're done.
-    nodep=${nodepends}
+    local nodep=${nodepends}
 
     # Turn off dependency checking, as everything is handled here.
     nodepends=yes
     for i in ${files}; do
-	name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
+	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
 	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
 	    continue
 	fi

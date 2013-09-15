@@ -14,9 +14,9 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	builds="infrastructure binutils stage1 libc stage2"
+	local builds="infrastructure binutils stage1 libc stage2"
     else
-	builds="infrastructure binutils stage2" # native build
+	local builds="infrastructure binutils stage2" # native build
     fi
 
     # See if specific component versions were specified at runtime
@@ -40,12 +40,12 @@ build_all()
     # build each component
     for i in ${builds}; do
 	notice "Building all, current component $i"
-	# If an interactive build, stop betweeen each step so we can
-	# check the build and config options.
-	if test x"${interactive}" = x"yes"; then
-	    echo "Hit any key to continue..."
-	    read answer		
-	fi
+	# # If an interactive build, stop betweeen each step so we can
+	# # check the build and config options.
+	# if test x"${interactive}" = x"yes"; then
+	#     echo "Hit any key to continue..."
+	#     read answer		
+	# fi
 	case $i in
 	    infrastructure)
 		infrastructure
@@ -54,9 +54,9 @@ build_all()
 	    # the C library.
 	    libc)
 		if test x"${clibrary}" = x"eglibc"; then
-		    build eglibc-${eglibc_version}
+		    build ${eglibc_version}
 		else
-		    build newlib-${newlib_version}
+		    build ${newlib_version}
 		fi
 		if test $? -gt 0; then
 		    error "Couldn't build ${clibrary}!"
@@ -81,11 +81,10 @@ build_all()
 	fi
     done
 
-    manifest ${gcc_version}
-
-    gcc_src_tarball
-
     if test x"${tarballs}" = x"yes"; then
+	gcc_src_tarball
+
+	manifest ${gcc_version}
 	binary_tarball 
     fi
 
@@ -98,12 +97,17 @@ build()
 
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
-    if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp|\.git"` -gt 0; then	
-	tool="`basename $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
-	name="`basename $1`"
+    if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
+	local tool="`basename $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
+	local file="`basename $1`"
     else
-	tool="`echo $1 | sed -e 's:-[0-9].*::'`"
-	name="`echo $1 | sed -e 's:\.tar\..*::'`"
+	if test `echo $1 | egrep -c "\.git"` -gt 0; then	
+	    local tool="`dirname $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
+	    local file="`dirname $1`"
+	else
+	    local tool="`echo $1 | sed -e 's:-[0-9].*::'`"
+	    local file="`echo $1 | sed -e 's:\.tar\..*::'`"
+	fi
     fi
 
     # if it's already installed, we don't need to build it unless we force the
@@ -123,33 +127,39 @@ build()
     # 	return 1
     # fi
     if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -gt 0; then	
-	url=$1
+	local url=$1
     else
-	get_source $1
+	local url="`get_source $1 | cut -d ' ' -f 1`"
     fi
+    # If the tarball hasn't changed, then don't fetch anything
+    if test ${local_builds}/${host}/${target}/stamp-build-${file} -nt ${local_snapshots}/${url} -a x"${force}" = xno; then
+     	fixme "stamp-build-${file} is newer than ${url}, so not building ${file}"
+	return 0
+    else
+     	fixme "stamp-build-${file} is not newer than ${url}, so building ${file}"
+    fi    
+    
     notice "Building ${url}"
 
     # if test $? -gt 0; then
     # 	return 1
     # fi
     # Get the list of other components that need to be built first.
-    if test x"${nodepends}" = xno; then
-	dependencies ${tool}
-	if test $? -eq 0; then
-	    for i in ${components}; do
-		installed $i
-	        # Build and install the component if it's not installed already
-		if test $? -gt 0 -o x"${force}" = xyes; then
-		    # preserve the current shell environment to avoid contamination
-		    rm -f $1.env
-		    set 2>&1 | grep "^[a-z_A-Z-]*=" > $1.env
-		    build $i
-		    . $1.env
-		    rm -f $1.env
-		fi
-	    done
-	fi
-    fi
+    # if test x"${nodepends}" = xno; then
+    # 	local components="`dependencies ${tool}`"
+    # 	for i in ${components}; do
+    # 	    installed $i
+    # 	        # Build and install the component if it's not installed already
+    # 	    if test $? -gt 0 -o x"${force}" = xyes; then
+    # 		    # preserve the current shell environment to avoid contamination
+    # 		rm -f $1.env
+    # 		set 2>&1 | grep "^[a-z_A-Z-]*=" > $1.env
+    # 		build $i
+    # 		. $1.env
+    # 		rm -f $1.env
+    # 	    fi
+    # 	done
+    # fi
     
     if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
 	# Don't checkout
@@ -165,16 +175,16 @@ build()
 
     # This command is only used to install the Linux kernel headers, which are
     # later used to compile eglibc.
-    tool="`echo $1 | cut -d '-' -f 1`"
-    if test x"${tool}" = x"linux"; then
-	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
-	if test `echo ${target} | grep -c aarch64` -gt 0; then
-	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
-	else
-	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
-	fi
-	return 0
-    fi
+    # tool="`echo $1 | cut -d '-' -f 1`"
+    # if test x"${tool}" = x"linux"; then
+    # 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
+    # 	if test `echo ${target} | grep -c aarch64` -gt 0; then
+    # 	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+    # 	else
+    # 	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+    # 	fi
+    # 	return 0
+    # fi
 
     # Then configure as a seperate step, so if something goes wrong, we
     # at least have the sources
@@ -224,8 +234,9 @@ build()
 	fi
     fi
 
+    touch ${local_builds}/${host}/${target}/stamp-build-${file}     
     notice "Done building ${url} $1..."
-    
+
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes; then
@@ -244,6 +255,13 @@ build()
 make_all()
 {
     trace "$*"
+
+    local tool="`get_toolname $1`"
+    # Linux isn't a build project, we only need the headers via the existing
+    # Makefile, so there is nothing to compile.
+    if test x"${tool}" = x"linux"; then
+	return 0
+    fi
 
     builddir="`get_builddir $1`"
     notice "Making all in ${builddir}"
@@ -268,9 +286,18 @@ make_install()
 {
     trace "$*"
 
-    if test x"${builddir}" = x; then
-	builddir="`get_builddir $1`"
+    local tool="`get_toolname $1`"
+    if test x"${tool}" = x"linux"; then
+     	local srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
+	if test `echo ${target} | grep -c aarch64` -gt 0; then
+	    dryrun "make ${make_opts} -C ${local_snapshots}/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+	else
+	    dryrun "make ${make_opts} -C ${local_snapshots}/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+	fi
+	return 0
     fi
+
+    local builddir="`get_builddir $1`"
     notice "Making install in ${builddir}"
 
     if test x"${tool}" = x"eglibc"; then

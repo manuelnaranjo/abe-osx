@@ -7,6 +7,13 @@ configure_build()
 {
     trace "$*"
 
+    local tool="`get_toolname $1`"
+    # Linux isn't a build project, we only need the headers via the existing
+    # Makefile, so there is nothing to configure.
+    if test x"${tool}" = x"linux"; then
+	return 0
+    fi
+
     local builddir="`get_builddir $1`"
     if test `echo $1 | grep -c "\.git/"` -gt 0; then
 	local dir="`normalize_path $1`"
@@ -14,22 +21,28 @@ configure_build()
     else
 	local dir="`normalize_path $1`"
     fi
-    local tool="`get_toolname $1`"
 
+    if test ${local_builds}/${host}/${target}/stamp-configure-$1 -nt ${local_snapshots}/$1  -a x"${force}" = xno; then
+     	fixme "stamp-configure-${file} is newer than $1, so not configuring $1"
+	return 0
+    else
+     	fixme "stamp-configure-${file} is not newer than $1, so configuring $1"
+    fi    
+    
     if test "`echo $1 | grep -c trunk`" -gt 0; then
 	local srcdir="${local_snapshots}/${dir}/trunk"
     else
-	local srcdir="${local_snapshots}/$1"
+	local srcdir="${local_snapshots}/${dir}"
     fi
-    
+
+    # Eglibc has no top level configure script, it's in the libc subdirectoruy.
+    if test x"${tool}" = x"eglibc"; then
+	local srcdir="${srcdir}/libc"
+    fi
+
     if test ! -d ${builddir}; then
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
-    fi
-
-    # Linux isn't build project, we only need the header via the existing Makefile.
-    if test x"${tool}" = x"linux"; then
-	return 0
     fi
 
     if test ! -f ${srcdir}/configure; then
@@ -180,6 +193,8 @@ configure_build()
 	# unset this to avoid problems later
 	default_configure_flags=
     fi
+
+    touch ${local_builds}/${host}/${target}/stamp-configure-${file} 
 
     return 0
 }

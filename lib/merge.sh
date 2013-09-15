@@ -2,8 +2,8 @@
 
 # FIXME: this is a hack while in development. These need to be configurable
 trunk_top=/linaro/src/gnu/gcc/trunk
-merge_top=/linaro/src/linaro/gcc
-bzr_top=/linaro/src/linaro/gcc/gcc-linaro-merges
+merge_top=/linaro/src/linaro/merges
+bzr_top=/linaro/src/linaro/merges/bzr-branches
 
 # $1 - The version number to diff
 merge_diff()
@@ -13,7 +13,7 @@ merge_diff()
     rm -f ${bzr_top}/merge-$1.diff.txt
     diff -ruNp -x '*.patch' -x '*.svn' -x '*~' -x '*.bzr' -x '*.rej' -x '*.orig' -x '*.edited' -x '*diff.txt' -x '*.log' -x 'x' -x '*merge-left*' -x '*merge-right*' -x "*.working" -x '*/.gitignore' 4.8-branch ${merge_top}/merge-r$1 > ${bzr_top}/merge-r$1.diff.txt
     
-    # revert the bzr irce tree so we get a clean patch
+    # revert the bzr source tree so we get a clean patch
     notice "Reverting previous changes"
     (cd ${bzr_top}/merge-r$1 && bzr revert)
 
@@ -73,7 +73,9 @@ merge_branch()
 	if test x"${email}" = x; then
 	    email="${LOGNAME}@`hostname`"
 	fi
-	fullname="`grep ^${LOGNAME} /etc/passwd | cut -d ':' -f 5 | sed -e 's:,*::g'`"
+	if test x"${fullname}" = x; then
+	    fullname="`grep ^${LOGNAME} /etc/passwd | cut -d ':' -f 5 | sed -e 's:,*::g'`"
+	fi
         # reset the list
 	problems=""
 	

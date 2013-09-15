@@ -20,25 +20,6 @@
 # This way there can be some error recovery and handing.
 #
 
-set_snapshots()
-{
-    echo "Set snapshot URL $1..."
-    snapshots="$1"
-}
-
-set_gcc()
-{
-    echo "Set gcc version $1..."
-    gcc="$1"
-}
-
-
-set_sysroot()
-{
-    echo "Set sysroot to $1..."
-    sysroots="$1"
-}
-
 set_config()
 {
     echo "Set config file to $1..."
@@ -83,6 +64,12 @@ trace()
 
 }
 
+fixme()
+{
+    echo "FIXME(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)"
+
+}
+
 error()
 {
     echo "ERROR (#${BASH_LINENO}): $1"
@@ -108,10 +95,16 @@ notice()
 # unique in the source.conf file.
 get_URL()
 {
+#    trace "$*"
+
     local srcs="${topdir}/config/sources.conf"
     local node="`echo $1 | cut -d '/' -f 1`"
-    branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
-    commit="`echo $1 | cut -d '@' -f 2`"
+    local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="`echo $1 | cut -d '@' -f 2`"
+    else
+	local commit=
+    fi
     
     if test -e ${srcs}; then
 	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
@@ -121,11 +114,8 @@ get_URL()
 #	    list_URL $1
 	    return 1
 	fi
-	url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
-	url="${url} ${branch} ${commit}"
-	url_data[branch]=${branch}
-
-	echo "${url}"
+	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
+	echo "${url} ${branch} ${commit}"
 	return 0
     else
 	error "No config file for repository sources!"
@@ -141,12 +131,13 @@ get_URL()
 # $1 - The name of the toolchain component, partial strings ok
 list_URL()
 {
-    locals srcs="${topdir}/config/sources.conf"
-    
+#    trace "$*"
+
+    locals srcs="${topdir}/config/sources.conf"    
     if test -e ${srcs}; then
 	notice "Supported source repositories for $1 are:"
 #	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
-	url="`grep $1 ${srcs} | tr -s ' ' | cut -d ' ' -f 2`"
+	local url="`grep $1 ${srcs} | tr -s ' ' | cut -d ' ' -f 2`"
 	for i in ${url}; do
 	    echo "	$i"
 	done
@@ -164,34 +155,36 @@ list_URL()
 # $1 - the path to fixup
 normalize_path()
 {
+#    trace "$*"
+
     case $1 in
 	lp*)
-	    node="`echo $1 | sed -e 's@lp:@@' -e 's:/:_:'`"
+	    local node="`echo $1 | sed -e 's@lp:@@' -e 's:/:_:'`"
 	    ;;
 	bzr*)
-	    node="`echo $1 | sed -e 's:^.*branch/::'`"
-	    node="`echo ${node} | sed -e 's:/:_:'`"
+	    local node="`echo $1 | sed -e 's:^.*branch/::'`"
+	    local node="`echo ${node} | sed -e 's:/:_:'`"
 	    ;;
 	git*)
-	    node="`echo $1 | sed -e 's@^.*/git/@@' -e 's:\.git.*:.git:'`"
-	    node="`basename ${node}`"
+	    local node="`echo $1 | sed -e 's@^.*/git/@@' -e 's:\.git.*:.git:'`"
+	    local node="`basename ${node}`"
 	    ;;
 	svn*)
-	    node="`echo $1 | sed -e 's@^.*/svn/@@'`"
-	    node="`basename ${node}`"
+	    local node="`echo $1 | sed -e 's@^.*/svn/@@'`"
+	    local node="`basename ${node}`"
 	    ;;
 	http*)
-	    node="`echo $1 | sed -e 's@^.*/http/@@'`"
-	    node="`basename ${node}`"
+	    local node="`echo $1 | sed -e 's@^.*/http/@@'`"
+	    local node="`basename ${node}`"
 	    if test x"${node}" = x"trunk"; then
-		node="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::' `"
-		node="`basename ${node}`"
+		local node="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::' `"
+		local node="`basename ${node}`"
 	    else
-		node="`basename $1 | sed -e 's:\.tar.*::'`"
+		local node="`basename $1 | sed -e 's:\.tar.*::'`"
 	    fi
 	    ;;
 	*)
-	    node="`echo $1 | sed -e 's:\.tar\..*::'`"
+	    local node="`echo $1 | sed -e 's:\.tar\..*::'`"
 	    ;;
     esac
 
@@ -205,6 +198,8 @@ normalize_path()
 # $1 - The full URL to the source tree as returned by get_URL()
 get_builddir()
 {
+#    trace "$*"
+
     local dir="`normalize_path $1`"
     # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
     # like these:
@@ -265,19 +260,21 @@ source_config()
 #      tarball name.
 get_toolname()
 {
+#    trace "$*"
+
     if test x"$1" = x; then
 	error "No toolchain component name argument!"
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	local tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::'`"
-	tool="`basename ${tool}`"
+	local tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::' -e 's:\.git.*::'`"
+	local tool="`basename ${tool}`"
     else
-	tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
+	local tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
     fi
     if test `echo $1 | grep -c "trunk"` -eq 1; then
-	tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
-	tool="`basename ${tool}`"
+	local tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
+	local tool="`basename ${tool}`"
     fi
 
     echo ${tool} | sed -e 's:-linaro::' -e 's:\.git::'
@@ -341,6 +338,8 @@ find_snapshot()
 # returns ${url}
 get_source()
 {
+#    trace "$*"
+
     if test x"$1" = x; then
 	error "get_source() called without an argument!"
 	return 1
@@ -357,14 +356,14 @@ get_source()
 		    echo "	$i"
 		done
 	     	read answer
-	     	url="`find_snapshot ${answer}`"
+	     	local url="`find_snapshot ${answer}`"
 		return $?
 	    else
 		if test x"${snapshot}" != x; then
 		    # If there is a config file for this toolchain component,
 		    # see if it has a latest version set. If so, we use that.
 		    if test x"${latest}"  != x; then
-			url=`find_snapshot ${latest}`
+			local url=`find_snapshot ${latest}`
 			return $?
 		    fi
 		    notice "Pick a unique snapshot name from this list and try again: "
@@ -376,11 +375,11 @@ get_source()
 		fi
 	    fi
 	fi
-	url=${snapshot}
+	local url=${snapshot}
 	return 0
     else
-	if test `echo $1 | egrep -c "\.git"` -eq 0 -a `echo $1 | egrep -c "^git"` -eq 0; then
-	    url=$1
+	if test `echo $1 | egrep -c "\.git"` -eq 0; then
+	    local url=$1
 	    return 0
 	fi
     fi
@@ -389,7 +388,7 @@ get_source()
     # toolchain component from the sources.conf file.
     # If passed a full URL, use that to checkout the sources
     if test x"${url}" = x; then
-	url="`get_URL $1`"
+	local url="`get_URL $1 | cut -d ' ' -f 1`"
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
 	     	notice "Pick a unique URL from this list: "
@@ -400,11 +399,11 @@ get_source()
 	     	read answer
 		url="`get_URL ${answer}`"
 	    fi
-	else
-	    notice "Pick a unique URL from this list: "
-	    for i in ${url}; do
-		echo "\t$i"
-	    done
+	# else
+	#     notice "Pick a unique URL from this list: "
+	#     for i in ${url}; do
+	# 	echo "	$i"
+	#     done
 	fi
     fi
 
