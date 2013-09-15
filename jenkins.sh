@@ -40,13 +40,13 @@ rm -f localhost/${target}/*/*.conf
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
 export CONFIG_SHELL="/bin/bash"
-#if test x"${debug}" = x"yes"; then
+if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
-#fi
+fi
 $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # if runtests is true, then run make check after the build completes
-if test x"${runtests}" = xyes; then
+if test x"${runtests}" = xtrue; then
     runtest=--check
 fi
 
