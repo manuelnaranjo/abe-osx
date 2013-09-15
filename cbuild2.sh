@@ -237,6 +237,9 @@ while test $# -gt 0; do
             set_snapshots ${url}
 	    shift
             ;;
+	--tarball*|-tarb*)
+	    tarballs=yes
+	    ;;
 	--target|-ta*)			# target
             target=$2
 	    sysroots=${sysroots}/${target}
@@ -276,19 +279,19 @@ while test $# -gt 0; do
 		    exit 1
 		    ;;
 	    esac
-
-	    get_source $3
+	    
+	    url="`get_source $3`"
 	    if test $? -gt 0; then
 		error "Couldn't find the source for $3"
 		exit 1
 	    fi
 
             case $2 in
-		# this executes the entire process, but ignores any of
-		# the dependencies in the config file
 		depends)
 		    dependencies ${url}
 		    ;;
+		# this executes the entire process, but ignores any of
+		# the dependencies in the config file
 		build|b*)
 		    nodepends=yes
 		    build ${url}
