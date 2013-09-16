@@ -28,7 +28,7 @@ if test x"$1" = x"-v"; then
     debug=yes
 fi
 
-verbose()
+fixme()
 {
     if test x"${debug}" = x"yes"; then
 	echo "($BASH_LINENO): $*"
@@ -69,7 +69,7 @@ if test ${out} = "gdb-7.6~20121001+git3e2e76a"; then
     pass "normalize_path: tarball uncompressed"
 else
     fail "normalize_path: tarball uncompressed"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_builddir ${in}`"
@@ -84,7 +84,7 @@ if test ${out} = "gdb"; then
     pass "get_toolname: tarball uncompressed"
 else
     fail "get_toolname: tarball uncompressed"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ if test ${out} = "gcc-linaro-4.8-2013.06-1"; then
     pass "normalize_path: tarball compressed"
 else
     fail "normalize_path: tarball compressed"
-    verbose "${in} should produce ${out}"
+    fixme "${in} should produce ${out}"
 fi
 
 out="`get_builddir ${in}`"
@@ -103,7 +103,7 @@ if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-
     pass "get_builddir: tarball compressed"
 else
     fail "get_builddir: tarball compressed"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_toolname ${in}`"
@@ -111,7 +111,7 @@ if test ${out} = "gcc"; then
     pass "get_toolname: tarball compressed"
 else
     fail "get_toolname: tarball compressed"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ if test ${out} = "gcc-4_7-branch"; then
     pass "normalize_path: svn branch"
 else
     fail "normalize_path: svn branch"
-    verbose "${in} should produce ${out}"
+    fixme "${in} should produce ${out}"
 fi
 
 out="`get_builddir ${in}`"
@@ -130,7 +130,7 @@ if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-
     pass "get_builddir: svn branch"
 else
     fail "get_builddir: svn branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_toolname ${in}`"
@@ -138,7 +138,7 @@ if test ${out} = "gcc"; then
     pass "get_toolname: svn branch"
 else
     fail "get_toolname: svn branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ if test ${out} = "gdb-linaro_7.5"; then
     pass "normalize_path: bzr branch"
 else
     fail "normalize_path: bzr branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_builddir ${in}`"
@@ -157,7 +157,7 @@ if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gdb-
     pass "get_builddir: bzr branch"
 else
     fail "get_builddir: bzr branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_toolname ${in}`"
@@ -165,26 +165,26 @@ if test ${out} = "gdb"; then
     pass "get_toolname: bzr branch"
 else
     fail "get_toolname: bzr branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
 # test a git branch
-in="git://git.linaro.org/toolchain/binutils.git/linaro-4.7-branch"
+in="git://git.linaro.org/toolchain/binutils.git/binutils-2_18-branch"
 out="`normalize_path ${in}`"
 if test ${out} = "binutils.git"; then
     pass "normalize_path: git branch"
 else
     fail "normalize_path: git branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/binutils.git"; then
+if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/binutils.git/binutils-2_18-branch"; then
     pass "get_builddir: git branch"
 else
     fail "get_builddir: git branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
 fi
 
 out="`get_toolname ${in}`"
@@ -192,7 +192,16 @@ if test ${out} = "binutils"; then
     pass "get_toolname: git branch"
 else
     fail "get_toolname: git branch"
-    verbose "${in} returned ${out}"
+    fixme "${in} returned ${out}"
+fi
+
+in="eglibc.git/linaro_eglibc-2_18"
+out="`get_toolname ${in}`"
+if test ${out} = "eglibc"; then
+    pass "get_toolname: git branch"
+else
+    fail "get_toolname: git branch"
+    fixme "${in} returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -201,7 +210,7 @@ if test $? -eq 1; then
     pass "find_snapshot: not unique tarball name"
 else
     fail "find_snapshot: not unique tarball name"
-    verbose "find_snapshot returned ${out}"
+    fixme "find_snapshot returned ${out}"
 fi
 
 out="`find_snapshot gcc-linaro-4.8-2013.08`"
@@ -209,7 +218,7 @@ if test $? -eq 0; then
     pass "find_snapshot: unique tarball name"
 else
     fail "find_snapshot: unique tarball name"
-    verbose "find_snapshot returned ${out}"
+    fixme "find_snapshot returned ${out}"
 fi
 
 out="`find_snapshot gcc-linaro-4.8-2013.06XXX`"
@@ -217,7 +226,7 @@ if test $? -eq 1; then
     pass "find_snapshot: unknown tarball name"
 else
     fail "find_snapshot: unknown tarball name"
-    verbose "find_snapshot returned ${out}"
+    fixme "find_snapshot returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -226,7 +235,7 @@ if test $? -eq 1; then
     pass "get_URL: not unique in repository"
 else
     fail "get_URL: not unique in repository"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
@@ -234,7 +243,7 @@ if test $? -eq 0; then
     pass "get_URL: unique name in repository"
 else
     fail "get_URL: unique name in repository"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 
 out="`get_URL gcc-linaro-4.8-2013.06-1`"
@@ -242,7 +251,7 @@ if test $? -eq 0; then
     pass "get_URL: unknown repository"
 else
     fail "get_URL: unknown repository"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 
 out="`get_URL gcc.git/linaro-4.8-branch@12345`"
@@ -250,19 +259,19 @@ if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gc
     pass "get_URL: git URL in latest field"
 else
     fail "get_URL: git URL in latest field"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 if test x"`echo ${out} | cut -d ' ' -f 2`" = x"linaro-4.8-branch"; then
     pass "get_URL: git URL branch in latest field"
 else
     fail "get_URL: git URL branch in latest field"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 if test x"`echo ${out} | cut -d ' ' -f 3`" = x"12345"; then
     pass "get_URL: git URL commit in latest field"
 else
     fail "get_URL: git URL commit in latest field"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 
 echo "FIXME: ${data[data]}"
@@ -286,7 +295,7 @@ if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
     pass "binary_toolchain: git repository"
 else
     fail "binary_toolchain: git repository"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
 fi
 
 #binutils_version=linaro-4.8-2013.09
@@ -301,19 +310,36 @@ if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
     pass "binary_toolchain: git repository"
 else
     fail "binary_toolchain: git repository"
-    verbose "get_URL returned ${out}"
+    fixme "get_URL returned ${out}"
+fi
+dryrun=yes
+
+# Test get_source with a variety of inputs
+in="eglibc.git/linaro_eglibc-2_17"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git"; then
+    pass "get_source: git repository with branch"
+else
+    fail "get_source: git repository with branch"
+    fixme "get_source returned ${out}"
 fi
 
-
-gcc_src_tarball
+in="newlib.git/binutils-2_23-branch@e9a210b"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git"; then
+    pass "get_source: git repository with branch and commit"
+else
+    fail "get_source: git repository with branch and commit"
+    fixme "get_source returned ${out}"
+fi
 
 # list of dependencies for a toolchain component
-# out="`dependencies gcc`"
+#out="`dependencies gcc`"
 # if test `echo $out |grep -c "gmp.*mpc.*mpfr.*binutils"` -eq 1; then
 #     pass "dependencies"
 # else
 #     fail "dependencies"
-#     verbose "dependencies returned ${out}"
+#     fixme "dependencies returned ${out}"
 # fi
 
 # ----------------------------------------------------------------------------------
