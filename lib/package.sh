@@ -99,15 +99,15 @@ binary_sysroot()
 
     if test x"${clibrary}" = x"newlib"; then
 	if test x"${newlb_version}" = x; then
-	    libc_version="newlib-`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+	    libc_version="`grep ^latest= ${topdir}/config/newlib.conf |  cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '"'`"
 	else
-	    libc_version="newlib-${newlib_version}"
+	    libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
 	fi
     else
-	if test x"${newlb_version}" = x; then
-	    libc_version="eglibc-`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+	if test x"${eglibc_version}" = x; then
+	    libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '"'`"
 	else
-	    libc_version="eglibc-${eglibc_version}"
+	    libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
 	fi
     fi
 
@@ -230,7 +230,7 @@ gcc_src_tarball()
 	revision=""
 	exclude=""
     fi
-    tag="`echo ${gcc_version}${revision} | sed -e 's:\.git:-src:'`"
+    tag="`echo ${gcc_version}${revision} | sed -e 's:\.git:-linaro:'`"
 
     dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
 #    dryrun "cp -r ${srcdir} /tmp/${tag}"
@@ -238,7 +238,9 @@ gcc_src_tarball()
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
-    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
+    if test ! -f ${local_snapshots}/${tag}.tar.xz; then
+	dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
+    fi
 
     # We don't need the symbolic link anymore.
     dryrun "rm -rf /tmp/${tag}"
