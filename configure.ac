@@ -226,6 +226,11 @@ if test x"${DEJAGNU}" = x; then
    AC_MSG_WARN([You should install dejagnu so you can run tests])
 fi
 
+AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
+if test x"${NEWWORKDIR}" = x; then
+   AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
+fi
+
 dnl dnl The GNU toolchain, GCC specifically needs these libraries to build.
 dnl AC_MSG_NOTICE([These are needed by GCC to compile and link])
 dnl AC_CHECK_LIB(isl, isl_version)	dnl at least version 0.11.1
