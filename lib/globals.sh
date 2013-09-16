@@ -62,7 +62,7 @@ bootstrap=yes
 makecheck=no
 tarballs=no
 install=yes
-release="`date +%Y.%m.%d`"
+release=""
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
