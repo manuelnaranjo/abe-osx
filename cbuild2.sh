@@ -116,7 +116,7 @@ usage()
     echo "  --db-passwd XXX (specify MySQL password)"
     echo "  --dump (dump the values in the config file)"
     echo "  --dostep XXX (fetch,extract,configure,build,checkout,package)"
-    echo "  --release XXX (make a release tarball)"
+    echo "  --release XXX (replace the default vesion string in the release tarballs)"
     echo "  --clobber (force files to be downloaded even when they exist)"
     echo "  --force (force make errors to be ignored, answer yes for any prompts)"
     echo "  --parallel (do parallel builds, one per cpu core)"
@@ -332,7 +332,7 @@ while test $# -gt 0; do
 		    push ${url}
 		    ;;
 		release|r*)
-		    release ${url}
+		    release=$4
 		    ;;
 		tag|ta**)
 		    tag ${url} $4
@@ -400,5 +400,5 @@ while test $# -gt 0; do
     fi
 done
 
-notice "Build took ${SECONDS} seconds"
+notice "Complete build process took ${SECONDS} seconds"
 
