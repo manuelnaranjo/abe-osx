@@ -43,31 +43,42 @@ binary_toolchain()
 {
     trace "$*"
 
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
 
     if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	branch="`basename ${gcc_version}`"
-	gcc_version="gcc.git"
+	local branch="`basename ${gcc_version}`"
     else
 	if test `echo ${gcc_version} | grep -c "\.git"`; then
-	    branch="master"
+	    local branch="master"
 	fi
     fi
 
-    date="`date +%Y%m%d`"
-    builddir="`get_builddir ${gcc_version}`"
-    srcdir="${local_snapshots}/`basename ${builddir}`"
-    if test -d ${srcdir}/.git; then
-	revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	tag="${gcc_version}-${target}-${host}-${date}~${revision}"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="@`echo $1 | cut -d '@' -f 2`"
     else
-	tag="${gcc_version}-${target}-${host}-${date}~${BUILD_NUMBER}"
+	local commit=""
     fi
+    local builddir="`get_builddir ${gcc_version}`"
+    local srcdir="${local_snapshots}/`basename ${builddir}`"
+    if test x"${release}" = x; then
+	local release="`date +%Y%m%d`"
+    fi
+    if test -d ${srcdir}/.git; then
+	local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+    else
+	local revision=${BUILD_NUMBER}
+    fi
+    if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
+    fi
+    local tag="`echo ${version}~${revision}-${target}-${host}-${release}${commit} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
-    destdir=/tmp/linaro/${tag}
+    local destdir=/tmp/linaro/${tag}
 
     dryrun "mkdir -p ${destdir}/bin"
     dryrun "mkdir -p ${destdir}/share"
@@ -99,26 +110,36 @@ binary_sysroot()
 
     if test x"${clibrary}" = x"newlib"; then
 	if test x"${newlb_version}" = x; then
-	    libc_version="`grep ^latest= ${topdir}/config/newlib.conf |  cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '"'`"
+	    local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
 	else
-	    libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
+	    local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
 	fi
     else
 	if test x"${eglibc_version}" = x; then
-	    libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '"'`"
+	    local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
+	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	else
-	    libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
+	    local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
+	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	fi
     fi
 
-    date="`date +%Y%m%d`"
-    srcdir="${local_snapshots}/${libc_version}"
-    if test -d ${srcdir}/.git; then
-	revision="1`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	tag="sysroot-${libc_version}-${target}-${date}-${revision}"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="@`echo $1 | cut -d '@' -f 2`"
     else
-	tag="sysroot-${libc_version}-${target}-${date}~${BUILD_NUMBER}"
+	local commit=""
     fi
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    local srcdir="${local_snapshots}/${libc_version}"
+    if test x"${release}" = x; then
+	release="`date +%Y%m%d`"
+    fi
+    if test -d ${srcdir}/.git; then
+	local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+    else
+	revision="${BUILD_NUMBER}"
+    fi
+    local tag="`echo sysroot-${libc_version}~${revision}-${target}-${release}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
     dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
 
@@ -214,23 +235,29 @@ gcc_src_tarball()
 
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
-    dir="`normalize_path ${gcc_version} | cut -d '/' -f 1`"
-    branch="`${dir} | cut -d '/' -f 2`"
-    srcdir="${local_snapshots}/${dir}"
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    local branch="`echo ${gcc_version} | cut -d '/' -f 2`"
+    local srcdir="${local_snapshots}/`echo ${gcc_version} | cut -d '/' -f 1`"
+    local gcc_version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
 
-    date="`date +%Y%m%d`"
-    if test -d ${srcdir}/.git; then
-	gcc_version="${dir}-${date}"
-	revision="~`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	exclude="--exclude .git"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="@`echo $1 | cut -d '@' -f 2`"
     else
-	gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
-	revision=""
-	exclude=""
+	local commit=""
     fi
-    tag="`echo ${gcc_version}${revision} | sed -e 's:\.git:-linaro:'`"
+    if test x"${release}" = x; then
+	local release="`date +%Y%m%d`"
+    fi
+    if test -d ${srcdir}/.git; then
+	local revision="~`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	local exclude="--exclude .git"
+    else
+	local revision=""
+	local exclude=""
+    fi
+    local tag="${gcc_version}${revision}-${release}${commit}"
 
     dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
 #    dryrun "cp -r ${srcdir} /tmp/${tag}"
@@ -256,22 +283,27 @@ binutils_src_tarball()
 
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
-	gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
-    dir="`normalize_path ${gcc_version}`"
-    srcdir="${local_snapshots}/${dir}"
+    local dir="`normalize_path ${gcc_version}`"
+    local srcdir="${local_snapshots}/${dir}"
 
-    date="`date +%Y%m%d`"
-    if test -d ${srcdir}/.git; then
-	gcc_version="${dir}-${date}"
-	revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	exclude="${exclude} .git"
+    local date="`date +%Y%m%d`"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="`echo $1 | cut -d '@' -f 2`"
     else
-	gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
-	revision=""
-	exclude=""
+	local commit=""
     fi
-    tag="${gcc_version}${revision}"
+    if test -d ${srcdir}/.git; then
+	local gcc_version="${dir}-${date}"
+	local revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	local exclude="${exclude} .git"
+    else
+	local gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
+	local revision=""
+	local exclude=""
+    fi
+    local tag="${gcc_version}${revision}${commit}"
 
     dryrun "ln -s ${srcdir} /tmp/${tag}"
 
