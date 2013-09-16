@@ -24,7 +24,7 @@ if test x"${linux_snapshot}" != x"latest"; then
 fi
 
 # Delete the previous build directory
-rm -fr _build
+# rm -fr _build
 
 # Create a build directory
 mkdir -p _build
