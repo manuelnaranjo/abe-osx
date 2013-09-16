@@ -52,7 +52,7 @@ fi
 
 # if build_type is true, then this is a cross build. For cross builds we build a
 # native GCC, and then use that to compile the cross compiler to bootstrap.
-if test x"${build_type}" = xtrue; then
+if test x"${bootstrap}" = xtrue; then
     $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable bootstrap --build all
 fi
 
