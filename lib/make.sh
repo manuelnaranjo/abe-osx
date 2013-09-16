@@ -81,6 +81,8 @@ build_all()
 	fi
     done
 
+    notice "Build took ${SECONDS} seconds"
+    
     if test x"${tarballs}" = x"yes"; then
 	gcc_src_tarball
 
@@ -163,35 +165,16 @@ build()
     
     if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
 	# Don't checkout
-	if test x"$2" != x"stage2" -o x"${build}" = x"${target}"; then
+	if test x"$2" != x"stage2"; then
 	    checkout ${url}
 	fi
     else
-	if test x"$2" != x"stage2" -o x"${build}" = x"${target}"; then
+	if test x"$2" != x"stage2"; then
 	    fetch ${url}
 	    extract ${url}
 	fi
     fi
 
-    # This command is only used to install the Linux kernel headers, which are
-    # later used to compile eglibc.
-    # tool="`echo $1 | cut -d '-' -f 1`"
-    # if test x"${tool}" = x"linux"; then
-    # 	srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
-    # 	if test `echo ${target} | grep -c aarch64` -gt 0; then
-    # 	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
-    # 	else
-    # 	    dryrun "make ${make_opts} -C ${local_snapshots}/infrastructure/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
-    # 	fi
-    # 	return 0
-    # fi
-
-    # Then configure as a seperate step, so if something goes wrong, we
-    # at least have the sources
-    # unset these two variables to avoid problems later
-    # default_configure_flags=
-    #export PATH="${PWD}/${hostname}/${build}/depends/bin:$PATH"
-    #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/depends/lib:${local_builds}/depends/sysroot/usr/lib"
     notice "Configuring ${url}..."
     configure_build ${url} $2
     if test $? -gt 0; then
