@@ -400,5 +400,6 @@ while test $# -gt 0; do
     fi
 done
 
-notice "Complete build process took ${SECONDS} seconds"
+time="`expr ${SECONDS} / 60`"
+notice "Complete build process took ${time} minutes"
 
