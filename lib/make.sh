@@ -134,7 +134,7 @@ build()
 	local url="`get_source $1 | cut -d ' ' -f 1`"
     fi
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/${host}/${target}/stamp-build-${file} -nt ${local_snapshots}/${url} -a x"${force}" = xno; then
+    if test ${local_builds}/${host}/${target}/stamp-build-${file} -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
      	fixme "stamp-build-${file} is newer than ${url}, so not building ${file}"
 	return 0
     else
@@ -211,7 +211,7 @@ build()
 	hello_world
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${url}..."
-	#return 1
+	    #return 1
 	else
 	    notice "Hello World test succeeded for ${url}..."
 	fi
@@ -310,22 +310,78 @@ make_install()
     return 0
 }
 
+# Run the testsuite for the component. By default, this runs the testsuite
+# using the freshly built executables in the build tree. It' also possible
+# to run the testsuite on installed tools, so we can test out binary releases.
+# For binutils, use check-DEJAGNU. 
+# For GCC, use check-gcc-c, check-gcc-c++, or check-gcc-fortran
+# GMP uses check-mini-gmp, MPC and MPFR appear to only test with the freshly built
+# components.
+#
+# $1 - The component to test
+make_check_installed()
+{
+    trace "$*"
+
+    local tool="`get_toolname $1`"
+    if test x"${builddir}" = x; then
+	local builddir="`get_builddir $1`"
+    fi
+    notice "Making check in ${builddir}"
+
+    # TODO:
+    # extract binary tarball
+    # If build tree exists, then 'make check' there.
+    # if no build tree, untar the matching source release, configure it, and
+    # then run 'make check'.
+
+    local tests=""
+    case $1 in
+	binutils*)
+	    # these 
+	    local builddir="`get_builddir ${binutils_version}`"
+	    dryrun "make -C ${builddir}/as check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
+	    dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
+	    ;;
+	gcc*)
+	    local builddir="`get_builddir ${gcc_version}`"
+	    for i in "c c++"; do
+		dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
+	    done
+	    ;;
+	*libc*)
+	    ;;
+	newlib*)
+	    ;;
+	gdb*)
+	    ;;
+	*)
+	    ;;
+    esac
+
+    return 0
+}
+
+# Run the testsuite for the component. By default, this runs the testsuite
+# using the freshly built executables in the build tree. It' also possible
+# $1 - The component to test
+# $2 - If set to anything, installed tools are used'
 make_check()
 {
     trace "$*"
 
+    local tool="`get_toolname $1`"
     if test x"${builddir}" = x; then
-	builddir="`get_builddir $1`"
+	local builddir="`get_builddir $1`"
     fi
     notice "Making check in ${builddir}"
 
-#    dryrun "make check RUNTESTFLAGS="${runtest_flags} -a" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
-    dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
-    if test $? -gt 0; then
-	warning "Make check had failures!"
-	return 1
+    if test x"$2" != x; then
+	make_check_installed
+	return 0
     fi
-
+    dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    
     return 0
 }
 
@@ -354,7 +410,7 @@ hello_world()
 {
 
     # Create the usual Hello World! test case
-    cat <<EOF > hello.cpp
+    cat <<EOF > /tmp/hello.cpp
 #include <iostream>
 int
 main(int argc, char *argv[])
@@ -366,5 +422,7 @@ EOF
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
-    dryrun ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi hello.cpp
+    dryrun ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi /tmp/hello.cpp
+
+    return $?
 }
