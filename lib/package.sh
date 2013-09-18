@@ -4,12 +4,12 @@
 
 build_deb()
 {
-    echo "unimplemented"
+    warning "unimplemented"
 }
 
 build_rpm()
 {
-    echo "unimplemented"
+    warning "unimplemented"
 }
 
 # Build a binary tarball
@@ -113,13 +113,16 @@ binary_sysroot()
 	    local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
 	else
 	    local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
+	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
 	fi
     else
 	if test x"${eglibc_version}" = x; then
 	    local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
+	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
 	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	else
 	    local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
+	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
 	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	fi
     fi
@@ -130,7 +133,6 @@ binary_sysroot()
 	local commit=""
     fi
     local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local srcdir="${local_snapshots}/${libc_version}"
     if test x"${release}" = x; then
 	release="`date +%Y%m%d`"
     fi
