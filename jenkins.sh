@@ -41,7 +41,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-#$CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
+$CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
