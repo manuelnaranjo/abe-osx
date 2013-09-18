@@ -9,7 +9,7 @@ if test x"$1" = x; then
   outfile="/tmp/testrun.xml"
   infile="/tmp/testrun.sum"
 else
-  outfile=`echo $1 | sed -e 's/\.sum.*/.xml/'`
+  outfile=`echo $1 | sed -e 's/\.sum.*/.junit/'`
   infile=$1
 fi
 
