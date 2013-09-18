@@ -142,7 +142,7 @@ while test $# -gt 0; do
 	    if test x"$2" != x"all"; then
 		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 		tool=`get_toolname $2`
-		get_source $2
+		url="`get_source $2`"
 		if test $? -gt 0; then
 		    error "Couldn't find the source for $2"
 		    exit 1
