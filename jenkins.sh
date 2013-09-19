@@ -62,7 +62,7 @@ $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarbal
 
 if test $? -eq 0; then
     if test x"${runtests}" = xtrue; then
-	sums="`find -name *.sum`"
+	sums="`find -name \*.sum`"
 	for i in ${sums}; do
 	    name="`echo $i | cut -d '.' -f 1`"
 	    ../sum2junit.sh $i
