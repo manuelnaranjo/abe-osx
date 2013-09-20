@@ -2,6 +2,15 @@
 
 echo "============= normalize_path() tests ================"
 
+in="gdb-7.6~20121001+git3e2e76a.tar.bz2"
+out="`normalize_path ${in}`"
+if test ${out} = "binutils.git"; then
+    pass "normalize_path: tarball old git format"
+else
+    fail "normalize_path: tarball old git format"
+    fixme "${in} returned ${out}"
+fi
+
 in="git://git.linaro.org/toolchain/binutils.git"
 out="`normalize_path ${in}`"
 if test ${out} = "binutils.git"; then

@@ -2,17 +2,17 @@
 
 echo "============= get_builddir() tests ================"
 
-in="http://cbuild.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
+in="gdb-7.6~20121001+git3e2e76a.tar"
 out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gdb-7.6~20121001+git3e2e76a"; then
-    pass "get_builddir: tarball uncompressed"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gdb-7.6~20121001+git3e2e76a"; then
+    pass "get_builddir: tarball uncompressed old git"
 else
-    fail "get_builddir: tarball uncompressed"
+    fail "get_builddir: tarball uncompressed old git"
 fi
 
-in="http://cbuild.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
+in="gcc-linaro-4.8-2013.06-1.tar.xz"
 out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-linaro-4.8-2013.06-1"; then
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc-linaro-4.8-2013.06-1"; then
     pass "get_builddir: tarball compressed"
 else
     fail "get_builddir: tarball compressed"
@@ -21,7 +21,7 @@ fi
 
 in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
 out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/x86_64-unknown-linux-gnu/x86_64-linux-gnu/gcc-4_7-branch"; then
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc-4_7-branch"; then
     pass "get_builddir: svn branch"
 else
     fail "get_builddir: svn branch"
