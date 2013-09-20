@@ -21,63 +21,62 @@ checkout()
 	return 1
     fi
 
-    dir="`normalize_path $1`"
     if test `echo $1 | grep -c "\.git/"`; then
-	branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
-	commit="`echo $1 | cut -d '@' -f 2`"
+	local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	local commit="`echo $1 | cut -d '@' -f 2`"
     else
-	branch="master"
+	local branch="master"
     fi
 
     notice "Checking out sources for $1"
-
+    local srcdir="`get_srcdir $1`"
     case $1 in
 	bzr*|lp*)
 	    if test x"${force}" =  xyes; then
 		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${local_snapshots}/${dir}"
+		echo "Removing existing sources for ${srcdir}"
 	    fi
 	    if test x"${usegit}" =  xyes; then
-		out="`git-bzr clone $1 ${local_snapshots}/${dir}`"
+		local out="`git-bzr clone $1 ${srcdir}`"
 	    else
-		if test -e ${local_snapshots}/${dir}/.bzr; then
-		    out="`(cd ${local_snapshots}/${dir} && bzr pull)`"
+		if test -e ${srcdir}/.bzr; then
+		    local out="`(cd ${srcdir} && bzr pull)`"
 		else
-		    out="`bzr branch $1 ${local_snapshots}/${dir}`"
+		    local out="`bzr branch $1 ${srcdir}`"
 		fi
 	    fi
 	    ;;
 	svn*|http*)
-	    trunk="`echo $1 |grep -c trunk`"
+	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
-		dir="`dirname $1`"
-		dir="`basename ${dir}`/trunk"
+		local dir="`dirname $1`"
+		local dir="`basename ${dir}`/trunk"
 	    fi
 	    if test x"${force}" =  xyes; then
 		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${local_snapshots}/${dir}"
+		echo "Removing existing sources for ${srcdir}"
 	    fi
 	    if test x"${usegit}" =  xyes; then
-		out="`git svn clone $1 ${local_snapshots}/${dir}`"
+		local out="`git svn clone $1 ${srcdir}`"
 	    else
-		if test -e ${local_snapshots}/${dir}/.svn; then
-		    (cd ${local_snapshots}/${dir} && svn update)
+		if test -e ${srcdir}/.svn; then
+		    (cd ${srcdir} && svn update)
 		    # Extract the revision number from the update message
 		    revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
 		else
-		    svn checkout $1 ${local_snapshots}/${dir}
+		    svn checkout $1 ${srcdir}
 		fi
 	    fi
 	    ;;
 	git*)
 	    if test x"${force}" =  xyes; then
 		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${local_snapshots}/${dir}"
+		echo "Removing existing sources for ${srcdir}"
 	    fi
-	    if test -e ${local_snapshots}/${dir}/.git; then
-		out="`(cd ${local_snapshots}/${dir} && git checkout ${branch} && git pull)`"
+	    if test -e ${srcdir}/.git; then
+		local out="`(cd ${srcdir} && git pull)`"
 	    else
-		out="`git clone $1 ${local_snapshots}/${dir}`"
+		local out="`git clone $1 ${srcdir}`"
 	    fi
 	    ;;
 	*)
@@ -265,4 +264,30 @@ tag()
     error "unimplemented"
 }
 
+# Change the active branch.
+# FIXME: for now, this only supports git.
+#
+# $1 - The toolchain component to use, which looks like this:
+# gcc.git/linaro-4.8-branch@123456
+# Which breaks down as gcc.git is the component name. Anything after a slash
+# is the branch. Anything after a '@' is a GIT commit hash ID.
+change_branch()
+{
+    trace "$*"
+    
+    local version="`echo $1 | cut -d '/' -f 1`"
+    local branch="`echo $1 | cut -d '/' -f 2`"
+    local srcdir="${local_snapshots}/${version}"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="`echo $1 | cut -d '@' -f 2`"
+    else
+	local commit=""
+    fi
+
+    if test ! -d ${srcdir}/../${branch}; then
+	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+    fi
+    
+    return 0
+}
 
