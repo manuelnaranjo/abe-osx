@@ -157,6 +157,7 @@ normalize_path()
 {
 #    trace "$*"
 
+    local branch=""
     case $1 in
 	lp*)
 	    local node="`echo $1 | sed -e 's@lp:@@' -e 's:/:_:'`"
@@ -168,6 +169,10 @@ normalize_path()
 	git*)
 	    local node="`echo $1 | sed -e 's@^.*/git/@@' -e 's:\.git.*:.git:'`"
 	    local node="`basename ${node}`"
+	    local branch="`echo $1 | sed -e "s:^.*${node}::" | tr -d '/'`"
+	    if test x"${branch}" != x; then
+		branch="-${branch}"
+	    fi
 	    ;;
 	svn*)
 	    local node="`echo $1 | sed -e 's@^.*/svn/@@'`"
@@ -184,11 +189,12 @@ normalize_path()
 	    fi
 	    ;;
 	*)
-	    local node="`echo $1 | sed -e 's:\.tar\..*::'`"
+	    local node="`echo $1 | sed -e 's:\.tar.*::' -e 's:\+git:@:'`"
 	    ;;
     esac
 
-    echo ${node}
+    echo ${node}${branch}
+
     return 0
 }
 
@@ -200,24 +206,30 @@ get_builddir()
 {
 #    trace "$*"
 
+    local branch=""
     local dir="`normalize_path $1`"
+#    local branch="`echo $1 | sed -e "s:^.*${dir}::" | cut -d '@' -f 1 | tr -d '/'`"
+    if test `echo ${dir} | grep -c '/'` -gt 0; then
+	local branch="`echo ${dir} | cut -d '/' -f 2 | cut -d '@' -f 1 | tr -d '/'`"
+	if test x"${branch}" != x; then
+	    local branch="/${branch}"
+	fi
+    fi
+    # if test "`echo $1 | grep -c '@'`" -gt 0; then
+    # 	local commit="@`echo $1 | cut -d '@' -f 2`"
+    # else
+    # 	local commit=""
+    # fi
+
     # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
     # like these:
     # BUILD_ID 2013-09-02_20-23-02
     # BUILD_NUMBER 1077
     # BUILD_TAG	jenkins-cbuild-1077
-    tag="${BUILD_NUMBER}/"
-    if test `echo $1 | grep -c eglibc` -gt 0; then
-	dir="${local_builds}/${host}/${target}/${dir}"
-    else
-	if test `echo $1 | grep -c trunk` -gt 0; then
-	    dir="${local_builds}/${host}/${target}/${dir}/trunk"
-	else
-	    dir="${local_builds}/${host}/${target}/${dir}"
-	fi
-    fi
+    local tag="${dir}${branch}${commit}"
+    local builddir="${local_builds}/${host}/${target}/${tag}"
 
-    echo ${dir}
+    echo ${builddir}
 
     return 0
 }
@@ -411,3 +423,52 @@ get_source()
     return 0
 }
 
+# Get the proper source directory
+# $1 - The component name
+# returns the fully qualified srcdir
+get_srcdir()
+{
+    trace "$*"
+    
+    local tool="`get_toolname $1`"
+    if test `echo $1 | grep -c '\.tar'` -gt 0; then
+	dir="`echo $1 | sed -e 's:\.tar.*::'`"
+    else
+	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
+	local branch="`echo ${dir} | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	if test "`echo $1 | grep -c '@'`" -gt 0; then
+	    local commit="`echo $1 | cut -d '@' -f 2`"
+	else
+	    local commit=""
+	fi
+    fi
+    
+    local srcdir="${local_snapshots}/${dir}"
+    if test -e ${srcdir}/config.sub; then
+	echo ${srcdir}
+	return 0
+    fi
+
+    # Some components have non-standard directory layouts.
+    case ${tool} in
+	gcc*)
+	    local sdir="`ls -d ${srcdir}/*-branch`"    
+	    if test -e ${sdir}/config.sub; then
+		local srcdir="${sdir}"		
+	    else
+		return 1
+	    fi
+	    ;;
+	eglibc*)
+            # Eglibc has no top level configure script, it's in the libc
+	    # subdirectoruy.
+	    local srcdir="${srcdir}/libc"
+	    ;;
+	*)
+	    ;;
+    esac
+    
+    echo ${srcdir}
+
+    return 0
+}
