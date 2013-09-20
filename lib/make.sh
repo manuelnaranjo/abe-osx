@@ -167,6 +167,13 @@ build()
 	# Don't checkout
 	if test x"$2" != x"stage2"; then
 	    checkout ${url}
+	    if test $? -gt 0; then
+		return 1
+	    fi
+	    change_branch $1
+	    if test $? -gt 0; then
+		return 1
+	    fi
 	fi
     else
 	if test x"$2" != x"stage2"; then
@@ -175,29 +182,29 @@ build()
 	fi
     fi
 
-    notice "Configuring ${url}..."
-    configure_build ${url} $2
+    notice "Configuring $1..."
+    configure_build $1 $2
     if test $? -gt 0; then
-	error "Configure of ${url} failed!"
+	error "Configure of $1 failed!"
 	return $?
     fi
     
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
-	make_clean ${url}
+	make_clean $1
 	if test $? -gt 0; then
 	    return 1
 	fi
     fi
     
     # Finally compile and install the libaries
-    make_all ${url}
+    make_all $1
     if test $? -gt 0; then
 	return 1
     fi
 
 #    if test x"${install}" = x"yes"; then    
-	make_install ${url}
+	make_install $1
 	if test $? -gt 0; then
 	    return 1
 	fi
