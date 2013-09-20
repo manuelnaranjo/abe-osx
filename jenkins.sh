@@ -48,7 +48,7 @@ if test x"${runtests}" = xtrue; then
     runtest=--check
 fi
 
-if test x"${bootstrap}" = xtrue; then
+if test x"${tarballs}" = xtrue; then
     tarballs=--tarballs
 fi
 
