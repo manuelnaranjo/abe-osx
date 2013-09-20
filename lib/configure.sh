@@ -15,12 +15,18 @@ configure_build()
     fi
 
     local builddir="`get_builddir $1`"
-    if test `echo $1 | grep -c "\.git/"` -gt 0; then
-	local dir="`normalize_path $1`"
-	local dir="`dirname ${dir}`"
+    if test "`echo $1 | grep -c '@'`" -gt 0; then
+	local commit="`echo $1 | cut -d '@' -f 2`"
     else
-	local dir="`normalize_path $1`"
+	local commit=""
     fi
+
+    # if test `echo $1 | grep -c "\.git/"` -gt 0; then
+    # 	local dir="`normalize_path $1`"
+    # 	local dir="`dirname ${dir}`"
+    # else
+    # 	local dir="`normalize_path $1`"
+    # fi
 
     if test ${local_builds}/${host}/${target}/stamp-configure-$1 -nt ${local_snapshots}/$1  -a x"${force}" = xno; then
      	fixme "stamp-configure-${file} is newer than $1, so not configuring $1"
@@ -28,12 +34,8 @@ configure_build()
     else
      	fixme "stamp-configure-${file} is not newer than $1, so configuring $1"
     fi    
-    
-    if test "`echo $1 | grep -c trunk`" -gt 0; then
-	local srcdir="${local_snapshots}/${dir}/trunk"
-    else
-	local srcdir="${local_snapshots}/${dir}"
-    fi
+
+    local srcdir="`get_srcdir $1`"
 
     # Eglibc has no top level configure script, it's in the libc subdirectoruy.
     if test x"${tool}" = x"eglibc"; then
