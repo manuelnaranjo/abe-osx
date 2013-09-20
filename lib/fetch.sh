@@ -121,7 +121,10 @@ fetch_http()
 	notice "Downloading ${getfile} to ${local_snapshots}"
 	if test x"${wget_bin}" != x; then
 	    # --continue --progress=bar
-	    dryrun "${wget_bin} --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
+	    # NOTE: the timeout is short, and we only try twice to access the
+	    # remote host. This is to improve performance when offline, or
+	    # the remote host is offline.
+	    dryrun "${wget_bin} --timeout=1 --tries=2 --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
 	    if test ! -s ${local_snapshots}/${getfile}; then
 		warning "downloaded file ${getfile} has zero data!"
 		return 1
