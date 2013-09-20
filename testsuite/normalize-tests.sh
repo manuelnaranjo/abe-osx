@@ -4,7 +4,7 @@ echo "============= normalize_path() tests ================"
 
 in="gdb-7.6~20121001+git3e2e76a.tar.bz2"
 out="`normalize_path ${in}`"
-if test ${out} = "binutils.git"; then
+if test ${out} = "gdb-7.6~20121001@3e2e76a"; then
     pass "normalize_path: tarball old git format"
 else
     fail "normalize_path: tarball old git format"
