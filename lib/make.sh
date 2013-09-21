@@ -97,6 +97,8 @@ build()
 {
     trace "$*"
 
+    local dir="`normalize_path $1`"
+
     # Start by fetching the tarball to build, and extract it, or it a URL is
     # supplied, checkout the sources.
     if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
@@ -182,8 +184,8 @@ build()
 	fi
     fi
 
-    notice "Configuring $1..."
-    configure_build $1 $2
+    notice "Configuring ${dir}..."
+    configure_build ${dir} $2
     if test $? -gt 0; then
 	error "Configure of $1 failed!"
 	return $?
@@ -198,13 +200,13 @@ build()
     fi
     
     # Finally compile and install the libaries
-    make_all $1
+    make_all ${dir}
     if test $? -gt 0; then
 	return 1
     fi
 
 #    if test x"${install}" = x"yes"; then    
-	make_install $1
+	make_install ${url}
 	if test $? -gt 0; then
 	    return 1
 	fi
@@ -278,7 +280,7 @@ make_install()
 
     local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
-     	local srcdir="`echo $1 | sed -e 's:\.tar\..*::'`"
+     	local srcdir="`get_srcdir $1`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
 	    dryrun "make ${make_opts} -C ${local_snapshots}/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else

@@ -21,13 +21,6 @@ configure_build()
 	local commit=""
     fi
 
-    # if test `echo $1 | grep -c "\.git/"` -gt 0; then
-    # 	local dir="`normalize_path $1`"
-    # 	local dir="`dirname ${dir}`"
-    # else
-    # 	local dir="`normalize_path $1`"
-    # fi
-
     if test ${local_builds}/${host}/${target}/stamp-configure-$1 -nt ${local_snapshots}/$1  -a x"${force}" = xno; then
      	fixme "stamp-configure-${file} is newer than $1, so not configuring $1"
 	return 0
@@ -37,24 +30,19 @@ configure_build()
 
     local srcdir="`get_srcdir $1`"
 
-    # Eglibc has no top level configure script, it's in the libc subdirectoruy.
-    if test x"${tool}" = x"eglibc"; then
-	local srcdir="${srcdir}/libc"
-    fi
-
-    if test ! -d ${builddir}; then
+    if test ! -d "${builddir}"; then
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
     fi
 
-    if test ! -f ${srcdir}/configure; then
+    if test ! -f "${srcdir}/configure"; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
         # then run that to create the configure script.
 	if test -f ${srcdir}/autogen.sh; then
 	    (cd ${srcdir} && ./autogen.sh)
 	fi
-	if test ! -f ${srcdir}/configure; then
+	if test ! -f "${srcdir}/configure"; then
 	    error "No configure script in ${srcdir}!"
 	    return 1
 	fi

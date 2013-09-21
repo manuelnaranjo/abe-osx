@@ -64,7 +64,7 @@ binary_toolchain()
 	local commit=""
     fi
     local builddir="`get_builddir ${gcc_version}`"
-    local srcdir="${local_snapshots}/`basename ${builddir}`"
+    local srcdir="`get_srcdir $1`"
     if test x"${release}" = x; then
 	local release="`date +%Y%m%d`"
     fi
@@ -113,16 +113,16 @@ binary_sysroot()
 	    local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
 	else
 	    local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
-	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
+	    local srcdir="`get_srcdir $1`"
 	fi
     else
 	if test x"${eglibc_version}" = x; then
 	    local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
+	    local srcdir="`get_srcdir $1`"
 	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	else
 	    local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
-	    local srcdir="`echo ${local_snapshots}/${libc_version}`"
+	    local srcdir="`get_srcdir $1`"
 	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	fi
     fi
@@ -241,7 +241,7 @@ gcc_src_tarball()
     fi
     local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
     local branch="`echo ${gcc_version} | cut -d '/' -f 2`"
-    local srcdir="${local_snapshots}/`echo ${gcc_version} | cut -d '/' -f 1`"
+    local srcdir="`get_srcdir ${gcc_version}`"
     local gcc_version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
 
     if test "`echo $1 | grep -c '@'`" -gt 0; then
@@ -288,7 +288,7 @@ binutils_src_tarball()
 	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
     local dir="`normalize_path ${gcc_version}`"
-    local srcdir="${local_snapshots}/${dir}"
+    local srcdir="get_srcdir ${gcc_version}"
 
     local date="`date +%Y%m%d`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then

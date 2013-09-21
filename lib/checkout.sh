@@ -74,9 +74,9 @@ checkout()
 		echo "Removing existing sources for ${srcdir}"
 	    fi
 	    if test -e ${srcdir}/.git; then
-		local out="`(cd ${srcdir} && git pull)`"
+		local out="`dryrun "(cd ${srcdir} && git pull)"`"
 	    else
-		local out="`git clone $1 ${srcdir}`"
+		local out="`dryrun "git clone $1 ${srcdir}"`"
 	    fi
 	    ;;
 	*)
@@ -274,7 +274,7 @@ tag()
 change_branch()
 {
     trace "$*"
-    
+    local dir="`normalize_path $1`"
     local version="`echo $1 | cut -d '/' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
     local srcdir="${local_snapshots}/${version}"

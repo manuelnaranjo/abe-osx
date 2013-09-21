@@ -209,24 +209,20 @@ get_builddir()
     local branch=""
     local dir="`normalize_path $1`"
 #    local branch="`echo $1 | sed -e "s:^.*${dir}::" | cut -d '@' -f 1 | tr -d '/'`"
+#    if test `echo ${dir} | grep -c 'infrastructure/'` -eq 0; then
     if test `echo ${dir} | grep -c '/'` -gt 0; then
 	local branch="`echo ${dir} | cut -d '/' -f 2 | cut -d '@' -f 1 | tr -d '/'`"
 	if test x"${branch}" != x; then
-	    local branch="/${branch}"
+	    local branch="-${branch}"
 	fi
     fi
-    # if test "`echo $1 | grep -c '@'`" -gt 0; then
-    # 	local commit="@`echo $1 | cut -d '@' -f 2`"
-    # else
-    # 	local commit=""
-    # fi
-
+    #local dir="`echo ${dir} | cut -d '/' -f 1`"
     # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
     # like these:
     # BUILD_ID 2013-09-02_20-23-02
     # BUILD_NUMBER 1077
     # BUILD_TAG	jenkins-cbuild-1077
-    local tag="${dir}${branch}${commit}"
+    local tag="${dir}"
     local builddir="${local_builds}/${host}/${target}/${tag}"
 
     echo ${builddir}
@@ -428,7 +424,7 @@ get_source()
 # returns the fully qualified srcdir
 get_srcdir()
 {
-    trace "$*"
+#    trace "$*"
     
     local tool="`get_toolname $1`"
     if test `echo $1 | grep -c '\.tar'` -gt 0; then
