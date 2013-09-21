@@ -56,3 +56,11 @@ else
     untested "get_srcdir: with tarball"
 fi
 
+in="infrastructure/gmp-5.1.2.tar.xz"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/infrastructure/gmp-5.1.2"; then
+    pass "get_srcdir: with tarball in subdirectory"
+else
+    fail "get_srcdir: with tarball in subdirectory"
+    fixme "get_srcdir returned ${out}"
+fi

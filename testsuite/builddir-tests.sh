@@ -47,3 +47,11 @@ else
     fixme "${in} returned ${out}"
 fi
 
+in="infrastructure/gmp-5.1.2.tar.xz"
+out="`get_builddir ${in}`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/infrastructure/gmp-5.1.2"; then
+    pass "get_builddir: tarball in subdirectory"
+else
+    fail "get_builddir: tarball in subdirectory"
+    fixme "${in} returned ${out}"
+fi

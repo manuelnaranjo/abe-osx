@@ -76,6 +76,9 @@ totals()
 . "${topdir}/testsuite/srcdir-tests.sh"
 
 # ----------------------------------------------------------------------------------
+
+echo "============= get_toolname() tests ================"
+
 # test an uncompressed tarball
 in="http://cbuild.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
 out="`get_toolname ${in}`"
@@ -88,8 +91,6 @@ fi
 
 # ----------------------------------------------------------------------------------
 # test an compressed tarball
-echo "============= get_toolname() tests ================"
-
 in="http://cbuild.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
 out="`get_toolname ${in}`"
 if test ${out} = "gcc"; then
