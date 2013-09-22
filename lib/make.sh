@@ -184,8 +184,8 @@ build()
 	fi
     fi
 
-    notice "Configuring ${dir}..."
-    configure_build ${dir} $2
+    notice "Configuring ${url}..."
+    configure_build ${url} $2
     if test $? -gt 0; then
 	error "Configure of $1 failed!"
 	return $?
@@ -193,14 +193,14 @@ build()
     
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
-	make_clean $1
+	make_clean ${dir}
 	if test $? -gt 0; then
 	    return 1
 	fi
     fi
     
     # Finally compile and install the libaries
-    make_all ${dir}
+    make_all ${url}
     if test $? -gt 0; then
 	return 1
     fi
@@ -282,9 +282,9 @@ make_install()
     if test x"${tool}" = x"linux"; then
      	local srcdir="`get_srcdir $1`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
-	    dryrun "make ${make_opts} -C ${local_snapshots}/${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
-	    dryrun "make ${make_opts} -C ${local_snapshots}/${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+	    dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
 	fi
 	return 0
     fi
