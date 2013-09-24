@@ -18,7 +18,7 @@ else
 fi
 
 if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch; then
-    in="git://git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
+    in="gcc.git/linaro-4.8-branch"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git-linaro-4.8-branch/gcc-4_8-branch"; then
 	pass "get_srcdir: git repository with branch"
@@ -26,6 +26,16 @@ if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch; then
 	fail "get_srcdir: git repository with branch"
 	fixme "get_srcdir returned ${out}"
     fi
+
+    in="git://git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
+    out="`get_srcdir $in | grep -v TRACE`"
+    if test x"${out}" = x"${local_snapshots}/gcc.git-linaro-4.8-branch/gcc-4_8-branch"; then
+	pass "get_srcdir: git repository URL with branch"
+    else
+	fail "get_srcdir: git repository URL with branch"
+	fixme "get_srcdir returned ${out}"
+    fi
+
 else
     untested "get_srcdir: git repository with branch"
 fi
