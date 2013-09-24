@@ -259,7 +259,7 @@ echo "============= get_source() tests ================"
 # Test get_source with a variety of inputs
 in="eglibc.git/linaro_eglibc-2_17"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git"; then
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git linaro_eglibc-2_17 "; then
     pass "get_source: git repository with branch"
 else
     fail "get_source: git repository with branch"
@@ -268,13 +268,13 @@ fi
 
 in="newlib.git/binutils-2_23-branch@e9a210b"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git"; then
+if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git binutils-2_23-branch e9a210b"; then
     pass "get_source: git repository with branch and commit"
 else
     fail "get_source: git repository with branch and commit"
     fixme "get_source returned ${out}"
 fi
-dryrun=no
+
 
 # ----------------------------------------------------------------------------------
 
