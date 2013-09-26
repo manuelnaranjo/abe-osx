@@ -218,9 +218,9 @@ extract()
 	local file="`echo $1 | cut -d '/' -f 2`"
     fi
 
-    if test ! -d ${local_snapshots}/${dir}; then
-	mkdir -fp ${local_snapshots}/${dir}
-    fi
+#    if test ! -d ${local_snapshots}/${dir}; then
+#	mkdir -fp ${local_snapshots}/${dir}
+#    fi
 
     # If the tarball hasn't changed, then don't fetch anything
     if test ${local_builds}/${dir}stamp-extract-${file} -nt ${local_snapshots}/${dir}${file} -a x"${force}" = xno; then
@@ -247,30 +247,27 @@ extract()
 	*) ;;
     esac
 
+    # FIXME: this is hopefully is temporary hack for tarballs where the directory
+    # name versions doesn't match the tarball version. This means it's missing the
+    # -linaro-VERSION.YYYY.MM part.
+    local name="`echo ${file} | sed -e 's:.tar\..*::'`"
+    if test ! -d ${local_snapshots}/${dir}${name}; then
+	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
+	if test ! -d ${local_snapshots}/${name}; then
+	    warning "Making a symbolic link for nonstandard directory name!"
+	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${name}
+	else
+	    error "${dir} doesn't seem to exist!"
+	    return 1
+	fi
+    fi
+
     if test -d `echo ${local_snapshots}/${dir}${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
 	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
 	local taropts="${taropt}xf"
 	tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}
-    fi
-
-    # FIXME: this is hopefully is temporary hack for tarballs where the directory
-    # name versions doesn't match the tarball version. This means it's missing the
-    # -linaro-VERSION.YYYY.MM part.
-    local name="`echo ${file} | sed -e 's:.tar\..*::'`"
-    if test ! -d ${local_snapshots}/${dir}${name}; then
-	local dir2="`echo ${dir} | sed -e 's:-linaro::'`"
-	if test ! -d ${local_snapshots}/${dir}; then
-	    if test -d "`echo ${local_snapshots}/${dir2} | cut -d '-' -f 1-2`"; then
-		local dir2="`echo ${dir2} | cut -d '-' -f 1-2`"
-	    fi
-	    warning "Making a symbolic link for nonstandard directory name!"
-	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${dir}
-	else
-	    error "${dir} doesn't seem to exist!"
-	    return 1
-	fi
     fi
 
     touch ${local_builds}/stamp-extract-${file} 
