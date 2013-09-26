@@ -93,6 +93,12 @@ notice()
 # Get the URL to checkout out development sources.
 # $1 - The toolchain component to get the source URL for, which must be
 # unique in the source.conf file.
+#
+# returns a string that represents the full URL for git, and optionally
+# a branch and revision number. These are returned as a string with the
+# fields separated by spaces, so the calling function can more easily
+# parse the data. As URLs have embedded slashes, and slashes are also used
+# for branches, spaces work better.
 get_URL()
 {
 #    trace "$*"
@@ -101,9 +107,9 @@ get_URL()
     local node="`echo $1 | cut -d '/' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="`echo $1 | cut -d '@' -f 2`"
+	local revision="`echo $1 | cut -d '@' -f 2`"
     else
-	local commit=
+	local revision=
     fi
     
     if test -e ${srcs}; then
@@ -115,7 +121,8 @@ get_URL()
 	    return 1
 	fi
 	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
-	echo "${url} ${branch} ${commit}"
+	echo "${url} ${branch} ${revision}"
+
 	return 0
     else
 	error "No config file for repository sources!"
@@ -343,7 +350,9 @@ find_snapshot()
 # $1 - A toolchain component to search for, which should be something like
 #      binutils, gcc, glibc, newlib, etc...
 #
-# returns ${url}
+# returns ${url} as a string with either a single string that is the tarball
+# name, or a URL that can be used by git. The fields are as returned by
+# get_URL(), which is 'git url' and optionally 'git branch' 'git revision'.
 get_source()
 {
 #    trace "$*"
@@ -396,7 +405,12 @@ get_source()
     # toolchain component from the sources.conf file.
     # If passed a full URL, use that to checkout the sources
     if test x"${url}" = x; then
-	local url="`get_URL $1 | cut -d ' ' -f 1`"
+	# get_URL() returns a string with the parsed fields separated by spaces.
+	# These fields are 'git URL' 'git branch' 'git revision'.
+	local gitinfo="`get_URL $1`"
+	local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
+	local branch="`echo ${gitinfo} | cut -d ' ' -f 2`"
+	local revision="`echo ${gitinfo} | cut -d ' ' -f 3`"
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
 	     	notice "Pick a unique URL from this list: "
@@ -405,7 +419,7 @@ get_source()
 		    echo "\t$i"
 		done
 	     	read answer
-		url="`get_URL ${answer}`"
+		local url="`get_URL ${answer}`"
 	    fi
 	# else
 	#     notice "Pick a unique URL from this list: "
@@ -415,7 +429,8 @@ get_source()
 	fi
     fi
 
-    echo ${url}
+    echo "${url} ${branch} ${revision}"
+
     return 0
 }
 
