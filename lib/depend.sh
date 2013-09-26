@@ -175,7 +175,7 @@ infrastructure()
     # unfortunately sorts the files, which screws up the order.
     local files=
     for i in ${depends}; do
-     	files="${files} `grep /$i ${local_snapshots}/md5sums ${local_snapshots}/*/md5sums | cut -d ' ' -f3 | uniq`"
+     	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
     done
     
     # First fetch and extract all the tarballs listed in the md5sums file
