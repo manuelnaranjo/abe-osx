@@ -106,7 +106,10 @@ get_URL()
     local srcs="${topdir}/config/sources.conf"
     local node="`echo $1 | cut -d '/' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
+    if test x"${branch}" = x"${node}"; then
+	local branch=
+    fi
+    if test "`echo $1 | grep -c '@'`" -eq 1; then
 	local revision="`echo $1 | cut -d '@' -f 2`"
     else
 	local revision=
