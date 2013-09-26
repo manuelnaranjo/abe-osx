@@ -412,8 +412,14 @@ get_source()
 	# These fields are 'git URL' 'git branch' 'git revision'.
 	local gitinfo="`get_URL $1`"
 	local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
-	local branch="`echo ${gitinfo} | cut -d ' ' -f 2`"
-	local revision="`echo ${gitinfo} | cut -d ' ' -f 3`"
+	if test `echo ${gitinfo} | wc -w` -gt 1; then
+	    local branch="`echo ${gitinfo} | cut -d ' ' -f 2`"
+	else
+	    branch=
+	fi
+	if test `echo ${gitinfo} | wc -w` -gt 2; then
+	    local revision="`echo ${gitinfo} | cut -d ' ' -f 3`"
+	fi
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
 	     	notice "Pick a unique URL from this list: "
