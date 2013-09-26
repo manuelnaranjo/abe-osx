@@ -74,7 +74,7 @@ checkout()
 		echo "Removing existing sources for ${srcdir}"
 	    fi
 	    if test -e ${srcdir}/.git; then
-		local out="`dryrun "(cd ${srcdir} && git pull)"`"
+		local out="`dryrun "(cd ${srcdir} && git pull origin ${branch})"`"
 	    else
 		local out="`dryrun "git clone $1 ${srcdir}"`"
 	    fi
@@ -105,13 +105,13 @@ push ()
     fi
     if test x"$2" = x; then
 	warning "No host given, so using origin"
-	repo="origin"
+	local repo="origin"
     fi
 
     # bzr uses slashes in it's path names, so convert them so we
     # can use the for accessing the source directory.
-    url="`echo $1 | sed -e 's:/:_:'`"
-    dir="`basename ${url} |sed -e 's/^.*://'`"
+    local url="`echo $1 | sed -e 's:/:_:'`"
+    local dir="`basename ${url} |sed -e 's/^.*://'`"
 
     # We use git for our copy by importing from the other systems
     case $1 in
@@ -131,10 +131,10 @@ push ()
 	    fi
 	    ;;
 	svn*)
-	    trunk="`echo $1 |grep -c trunk`"
+	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
-		dir="`dirname $1`"
-		dir="`basename ${dir}`/trunk"
+		local dir="`dirname $1`"
+		local dir="`basename ${dir}`/trunk"
 	    fi
 	    if test x"${usegit}" =  xyes; then
 		#out="`git svn push $1 ${local_snapshots}/${dir}`"
@@ -153,7 +153,7 @@ push ()
 	git*)
 	    if test x"$3" = x; then
 		warning "No branch given, so using master or trunk"
-		branch="master"
+		local branch="master"
 	    fi
 	    if test -e ${local_snapshots}/${dir}/.git; then
 		#out="`(cd ${local_snapshots}/${dir} && git push ${repo} ${branch}`"
@@ -181,8 +181,8 @@ commit ()
 {
     # bzr uses slashes in it's path names, so convert them so we
     # can use the for accessing the source directory.
-    url="`echo $1 | sed -e 's:/:_:'`"
-    dir="`basename ${url} |sed -e 's/^.*://'`"
+    local url="`echo $1 | sed -e 's:/:_:'`"
+    local dir="`basename ${url} |sed -e 's/^.*://'`"
 
     # We use git for our copy by importing from the other systems
     case $1 in
@@ -193,9 +193,9 @@ commit ()
 	    else
 		if test x"$2" = x; then
 		    warning "No file given, so commiting all"
-		    files=""
+		    local files=""
 		else
-		    files="$2"
+		    local files="$2"
 		fi
 		if test -e ${local_snapshots}/${dir}/.bzr; then
 		    #out="`(cd ${local_snapshots}/${dir} && bzr commit --file ${local_snapshots}/${dir}/commitmsg.txt ${files}`"
@@ -208,16 +208,16 @@ commit ()
 	    fi
 	    ;;
 	svn*)
-	    trunk="`echo $1 |grep -c trunk`"
+	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
-		dir="`dirname $1`"
-		dir="`basename ${dir}`/trunk"
+		local dir="`dirname $1`"
+		local dir="`basename ${dir}`/trunk"
 	    fi
 	    if test x"$2" = x; then
 		warning "No file given, so commiting all"
-		files=""
+		local files=""
 	    else
-		files="$2"
+		local files="$2"
 	    fi
 	    if test x"${usegit}" =  xyes; then
 		#out="`git svn push $1 ${local_snapshots}/${dir}`"
@@ -236,9 +236,9 @@ commit ()
 	git*)
 	    if test x"$2" = x; then
 		warning "No files given, so commiting all"
-		files="-a"
+		local files="-a"
 	    else
-		files="$2"
+		local files="$2"
 	    fi
 	    if test -e ${local_snapshots}/${dir}/.git; then
 		#out="`(cd ${local_snapshots}/${dir} && git commit --file ${local_snapshots}/${dir}/commitmsg.txt ${files}`"
@@ -277,15 +277,18 @@ change_branch()
     local dir="`normalize_path $1`"
     local version="`echo $1 | cut -d '/' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
-    local srcdir="${local_snapshots}/${version}"
+#    local srcdir="${local_snapshots}/${version}"
+    local srcdir="`get_srcdir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local commit="`echo $1 | cut -d '@' -f 2`"
     else
 	local commit=""
     fi
 
-    if test ! -d ${srcdir}/../${branch}; then
+    if test ! -d ${srcdir}/${branch}; then
 	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+    else
+	dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
     fi
     
     return 0
