@@ -84,6 +84,7 @@ build_all()
     notice "Build took ${SECONDS} seconds"
     
     if test x"${tarballs}" = x"yes"; then
+	binutils_src_tarball
 	gcc_src_tarball
 
 	manifest ${gcc_version}
@@ -97,53 +98,30 @@ build()
 {
     trace "$*"
 
-    local dir="`normalize_path $1`"
-
-    # Start by fetching the tarball to build, and extract it, or it a URL is
-    # supplied, checkout the sources.
-    if test `echo $1 | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
-	local tool="`basename $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
-	local file="`basename $1`"
-    else
-	if test `echo $1 | egrep -c "\.git"` -gt 0; then	
-	    local tool="`dirname $1 | sed -e 's:\..*::' | cut -d '/' -f 1`"
-	    local file="`dirname $1`"
-	else
-	    local tool="`echo $1 | sed -e 's:-[0-9].*::'`"
-	    local file="`echo $1 | sed -e 's:\.tar\..*::'`"
-	fi
+    local file="`echo $1 | sed -e 's:\.tar.*::'`"
+    local gitinfo="`get_source $1`"
+    local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
+    if test `echo ${gitinfo} | wc -w` -eq 2; then
+	local branch="/`echo ${gitinfo} | cut -d ' ' -f 2`"
     fi
-
-    # if it's already installed, we don't need to build it unless we force the
-    # build. GCC gets built and installed twice, so we don't check for that
-    # component.
-#    if test x"${force}" != xyes -a x"${tool}" != x"gcc"; then
-#     	#built ${name}
-#     	installed ${tool}
-#     	if test $? -eq 0; then
-#     	    notice "${tool} already installed, so not building"
-#     	    return 0
-#    	fi
-#    fi
-
-    source_config ${tool}
-    # if test $? -gt 0; then
-    # 	return 1
+    if test `echo ${gitinfo} | wc -w` -eq 3; then
+	local revision="@`echo ${gitinfo} | cut -d ' ' -f 3`"
+    fi
+    # if test `echo ${url} | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then 
+    # 	local url="`echo ${tmp} | cut -d ' ' -f 1`"
+    # 	local branch="`echo ${tmp} | cut -d ' ' -f 2`"
     # fi
-    if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -gt 0; then	
-	local url=$1
-    else
-	local url="`get_source $1 | cut -d ' ' -f 1`"
-    fi
+    local tag="${url}${branch}${revision}"
+
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/${host}/${target}/stamp-build-${file} -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
+    if test ${local_builds}/${host}/${target}/stamp-build-${file}$2 -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
      	fixme "stamp-build-${file} is newer than ${url}, so not building ${file}"
 	return 0
     else
      	fixme "stamp-build-${file} is not newer than ${url}, so building ${file}"
     fi    
     
-    notice "Building ${url}"
+    notice "Building ${tag}"
 
     # if test $? -gt 0; then
     # 	return 1
@@ -165,14 +143,14 @@ build()
     # 	done
     # fi
     
-    if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp"` -gt 0; then	
+    if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp|\.git"` -gt 0; then	
 	# Don't checkout
 	if test x"$2" != x"stage2"; then
-	    checkout ${url}
+	    checkout ${tag}
 	    if test $? -gt 0; then
 		return 1
 	    fi
-	    change_branch $1
+	    change_branch ${tag}
 	    if test $? -gt 0; then
 		return 1
 	    fi
@@ -184,8 +162,8 @@ build()
 	fi
     fi
 
-    notice "Configuring ${url}..."
-    configure_build ${url} $2
+    notice "Configuring ${url}${branch}..."
+    configure_build ${tag} $2
     if test $? -gt 0; then
 	error "Configure of $1 failed!"
 	return $?
@@ -193,20 +171,20 @@ build()
     
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
-	make_clean ${dir}
+	make_clean ${tag}
 	if test $? -gt 0; then
 	    return 1
 	fi
     fi
     
     # Finally compile and install the libaries
-    make_all ${url}
+    make_all ${tag}
     if test $? -gt 0; then
 	return 1
     fi
 
 #    if test x"${install}" = x"yes"; then    
-	make_install ${url}
+	make_install ${tag}
 	if test $? -gt 0; then
 	    return 1
 	fi
@@ -226,8 +204,8 @@ build()
 	fi
     fi
 
-    touch ${local_builds}/${host}/${target}/stamp-build-${file}     
-    notice "Done building ${url} $1..."
+    touch ${local_builds}/${host}/${target}/stamp-build-${file}$2
+    notice "Done building ${tag}..."
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
@@ -261,11 +239,14 @@ make_all()
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi
-
+ 
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
+#    if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
+#	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+#    fi
     if test $? -gt 0; then
 	warning "Make had failures!"
 	return 1
@@ -417,7 +398,9 @@ make_clean()
 # See if we can link a simple executable
 hello_world()
 {
+    trace "$*"
 
+    if test ! -e /tmp/hello.cpp; then
     # Create the usual Hello World! test case
     cat <<EOF > /tmp/hello.cpp
 #include <iostream>
@@ -427,7 +410,8 @@ main(int argc, char *argv[])
     std::cout << "Hello World!" << std::endl; 
 }
 EOF
-
+    fi
+    
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
