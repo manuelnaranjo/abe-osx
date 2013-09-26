@@ -4,12 +4,39 @@
 
 build_deb()
 {
+    trace "$*"
+
     warning "unimplemented"
 }
 
 build_rpm()
 {
+    trace "$*"
+
     warning "unimplemented"
+}
+
+# This removes files that don't go into a release, primarily stuff left
+# over from development.
+#
+# $1 - the top level path to files to cleanup for a source release
+sanitize()
+{
+    trace "$*"
+
+    # the files left from random file editors we don't want.
+    local edits="`find $1 -name \*~ -o -name \.\#\* -o -name \*.bak`"
+
+    if test "`git st $1 | grep -c "nothing to commit, working directory clean"`" -eq 0; then
+	error "uncommited files in $1! Commit files before releasing."
+	return 1
+    fi
+
+    if test x"${edits}" != x; then
+	rm -fr ${edits}
+    fi
+
+    return 0
 }
 
 # Build a binary tarball
@@ -244,6 +271,9 @@ gcc_src_tarball()
     local srcdir="`get_srcdir ${gcc_version}`"
     local gcc_version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
 
+    # clean up files that don't go into a release, often left over from development
+    sanitize ${srcdir}
+
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local commit="@`echo $1 | cut -d '@' -f 2`"
     else
@@ -289,7 +319,35 @@ binutils_src_tarball()
     fi
     local dir="`normalize_path ${gcc_version}`"
     local srcdir="get_srcdir ${gcc_version}"
+    local builddir="`get_bulddir ${gcc_version}`"
 
+    # clean up files that don't go into a release, often left over from development
+    sanitize ${srcdir}
+
+    # from /linaro/snapshots/binutils.git/src-release: do-proto-toplev target
+    # Take out texinfo from a few places.
+    dirs="`find ${srcdir} -name Makefile.in`"
+    for d in ${dirs}; do
+	sed -i -e '/^all\.normal: /s/\all-texinfo //' -e '/^install-texinfo /d' $d
+    done
+
+    # Make links, and run "make diststuff" or "make info" when needed
+    dirs="`find ${builddir} -name Makefile`"
+    for d in ${dirs}; do
+	if test -f $d; then
+	    if test `grep -c '^diststuff:' $d` -gt 0; then
+		$(MAKE) -C $d MAKEINFOFLAGS="$(MAKEINFOFLAGS)" diststuff
+	    fi
+	    if test `grep -c '^info:' $d` -gt 0; then
+		$(MAKE) -C $d MAKEINFOFLAGS="$(MAKEINFOFLAGS) " info
+	    fi
+	fi
+    done
+    # Create .gmo files from .po files.
+    for f in `find . -name '*.po' -type f -print`; do
+        msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f
+    done
+ 
     local date="`date +%Y%m%d`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local commit="`echo $1 | cut -d '@' -f 2`"
@@ -308,6 +366,23 @@ binutils_src_tarball()
     local tag="${gcc_version}${revision}${commit}"
 
     dryrun "ln -s ${srcdir} /tmp/${tag}"
+
+# from /linaro/snapshots/binutils-2.23.2/src-release
+#
+# NOTE: No double quotes in the below.  It is used within shell script
+# as VER="$(VER)"
+
+    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' $(TOOL)/configure.in >/dev/null 2>&1; then
+	sed < bfd/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
+    elif grep AM_INIT_AUTOMAKE $(TOOL)/configure.in >/dev/null 2>&1; then
+	sed < $(TOOL)/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
+    elif test -f $(TOOL)/version.in; then
+	head -1 $(TOOL)/version.in;
+    elif grep VERSION $(TOOL)/Makefile.in > /dev/null 2>&1; then
+	sed < $(TOOL)/Makefile.in -n 's/^VERSION *= *//p';
+    else
+	echo VERSION;
+    fi
 
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
