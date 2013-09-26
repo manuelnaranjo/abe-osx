@@ -12,11 +12,8 @@ fetch()
 	local file="`basename $1`"
     fi
 
-    local dir=""
-    if test "`echo $1 | grep -c \.git`" -gt 0; then
-	local dir="`dirname $1`/"
-    fi
-    if test x"${dir}" = x"."; then
+    local dir="`dirname $1`/"
+    if test x"${dir}" = x"./"; then
 	local dir=""
     fi
 
@@ -37,16 +34,19 @@ fetch()
 	# Move the existing file to force a fresh copy to be downloaded.
 	# Otherwise this file can get stale, and new tarballs not found.
 	if test -f ${local_snapshots}/${dir}md5sums; then
-	    mv -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak	
+	    cp -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak
 	fi
 	fetch_http ${dir}md5sums
+	if test ! -s ${dir}md5sums; then
+	    cp -f ${local_snapshots}/${dir}md5sums.bak ${local_snapshots}/${dir}md5sums
+	fi
 	return $?
     fi
 
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
     # file isn't listed in the md5sums file.
-    local md5file="`grep ${file} ${local_snapshots}/${dir}/md5sums | cut -d ' ' -f 3`"
+    local md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
 	return 1
@@ -58,7 +58,7 @@ fetch()
     fi
 
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file}; then
+    if test ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
      	fixme "stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
 	return 0
     else
@@ -207,23 +207,27 @@ extract()
     local extractor=
     local taropt=
 
-    local dir="`dirname $1`"
-    if test x"${dir}" = x"."; then
+    local dir="`dirname $1`/"
+    if test x"${dir}" = x"./"; then
 	local dir=""
     fi
 
     if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
-	local file="`grep $1 ${local_snapshots}/${dir}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	local file="`grep $1 ${local_snapshots}/${dir}md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
     else
 	local file="`echo $1 | cut -d '/' -f 2`"
     fi
 
+    if test ! -d ${local_snapshots}/${dir}; then
+	mkdir -fp ${local_snapshots}/${dir}
+    fi
+
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/stamp-extract-${file} -nt ${local_snapshots}/${dir}/${file}; then
-     	fixme "stamp-extract-${file} is newer than ${file}, so not extracting ${file}"
+    if test ${local_builds}/${dir}stamp-extract-${file} -nt ${local_snapshots}/${dir}${file} -a x"${force}" = xno; then
+     	fixme "${dir}stamp-extract-${file} is newer than ${file}, so not extracting ${file}"
 	return 0
     else
-     	fixme "stamp-extract-${file} is not newer than ${file}, so extracting ${file}"
+     	fixme "${dir}stamp-extract-${file} is not newer than ${file}, so extracting ${file}"
     fi    
     
     # Figure out how to decompress a tarball
@@ -243,19 +247,19 @@ extract()
 	*) ;;
     esac
 
-    if test -d `echo ${local_snapshots}/${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
+    if test -d `echo ${local_snapshots}/${dir}${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
 	notice "${local_snapshots}/${file} is already extracted!"
 	return 0
     else
 	local taropts="${taropt}xf"
-	tar ${taropts} ${local_snapshots}/${dir}/${file} -C ${local_snapshots}/${dir}
+	tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}
     fi
 
     # FIXME: this is hopefully is temporary hack for tarballs where the directory
     # name versions doesn't match the tarball version. This means it's missing the
     # -linaro-VERSION.YYYY.MM part.
-    local dir="`echo ${file} | sed -e 's:.tar\..*::'`"
-    if test ! -d ${local_snapshots}/${dir}; then
+    local name="`echo ${file} | sed -e 's:.tar\..*::'`"
+    if test ! -d ${local_snapshots}/${dir}${name}; then
 	local dir2="`echo ${dir} | sed -e 's:-linaro::'`"
 	if test ! -d ${local_snapshots}/${dir}; then
 	    if test -d "`echo ${local_snapshots}/${dir2} | cut -d '-' -f 1-2`"; then
