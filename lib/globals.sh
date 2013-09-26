@@ -58,7 +58,7 @@ runtests=no
 ccache=no
 
 # These are flags for the --disable option to cbuild, which are enabled by default
-bootstrap=yes
+bootstrap=no
 makecheck=no
 tarballs=no
 install=yes
