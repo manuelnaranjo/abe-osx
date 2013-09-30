@@ -57,13 +57,13 @@ if test -d ${local_snapshots}/gcc-linaro-4.8-2013.06-1; then
     in="gcc-linaro-4.8-2013.06-1.tar.xz"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc-linaro-4.8-2013.06-1"; then
-	pass "get_srcdir: with tarball"
+	pass "get_srcdir: with tarball and full path"
     else
-	fail "get_srcdir: with tarball"
+	fail "get_srcdir: with tarball and full path"
 	fixme "get_srcdir returned ${out}"
     fi
 else
-    untested "get_srcdir: with tarball"
+    untested "get_srcdir: with tarball and full path"
 fi
 
 in="infrastructure/gmp-5.1.2.tar.xz"
@@ -73,4 +73,17 @@ if test x"${out}" = x"${local_snapshots}/infrastructure/gmp-5.1.2"; then
 else
     fail "get_srcdir: with tarball in subdirectory"
     fixme "get_srcdir returned ${out}"
+fi
+
+if test -d ${local_snapshots}/gcc-linaro-4.7-2013.09; then
+    in="gcc-linaro-4.7-2013.09.tar.bz2"
+    out="`get_srcdir $in | grep -v TRACE`"
+    if test x"${out}" = x"${local_snapshots}/gcc-linaro-4.7-2013.09"; then
+	pass "get_srcdir: with tarball"
+    else
+	fail "get_srcdir: with tarball"
+	fixme "get_srcdir returned ${out}"
+    fi
+else
+    untested "get_srcdir: with tarball"
 fi
