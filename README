@@ -122,11 +122,11 @@ step separately. To build the full toolchain, do this:
 Older NOTES
 
 x86_64-none-linux-gnu
-aarch64-none-linux-gnu
-aarch64-none-elf
 arm-none-linux-gnueabi
 arm-none-linux-gnueabihf
 armeb-none-linux-gnueabihf
+aarch64-none-linux-gnu
+aarch64-none-elf
 aarch64_be-none-elf
 aarch64_be-none-linux-gnu
 
