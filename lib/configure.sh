@@ -16,9 +16,9 @@ configure_build()
 
     local builddir="`get_builddir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="`echo $1 | cut -d '@' -f 2`"
+	local revision="`echo $1 | cut -d '@' -f 2`"
     else
-	local commit=""
+	local revision=""
     fi
 
     if test ${local_builds}/${host}/${target}/stamp-configure-$1 -nt ${local_snapshots}/$1  -a x"${force}" = xno; then
@@ -100,6 +100,7 @@ configure_build()
 
     # prefix is the root everything gets installed under.
     prefix="${local_builds}/destdir/${host}"
+#    prefix="${sysroots}/"
 
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
