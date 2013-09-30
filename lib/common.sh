@@ -452,14 +452,14 @@ get_srcdir()
     
     local tool="`get_toolname $1`"
     if test `echo $1 | grep -c '\.tar'` -gt 0; then
-	dir="`echo $1 | sed -e 's:\.tar.*::'`"
+	local dir="`echo $1 | sed -e 's:\.tar.*::'`"
     else
 	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
-	local branch="`echo ${dir} | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	local branch="`echo ${dir} | sed -e "s:${tool}.git-::"`"
 	if test "`echo $1 | grep -c '@'`" -gt 0; then
-	    local commit="`echo $1 | cut -d '@' -f 2`"
+	    local revision="`echo $1 | cut -d '@' -f 2`"
 	else
-	    local commit=""
+	    local revision=""
 	fi
     fi
     
