@@ -158,7 +158,15 @@ build()
     else
 	if test x"$2" != x"stage2"; then
 	    fetch ${url}
+	    if test $? -gt 0; then
+		error "Couldn't fetch tarball ${url}"
+		return 1
+	    fi
 	    extract ${url}
+	    if test $? -gt 0; then
+		error "Couldn't extract tarball ${url}"
+		return 1
+	    fi
 	fi
     fi
 
