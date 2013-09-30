@@ -197,6 +197,8 @@ check_md5sum()
 	    return 1
 	fi
     fi
+
+    return 0
 }
 
 # decompress and untar a fetched tarball
@@ -251,7 +253,7 @@ extract()
     # name versions doesn't match the tarball version. This means it's missing the
     # -linaro-VERSION.YYYY.MM part.
     local name="`echo ${file} | sed -e 's:.tar\..*::'`"
-    if test ! -d ${local_snapshots}/${dir}${name}; then
+    if test ! -d ${local_snapshots}/${name}; then
 	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
 	if test ! -d ${local_snapshots}/${name}; then
 	    warning "Making a symbolic link for nonstandard directory name!"
