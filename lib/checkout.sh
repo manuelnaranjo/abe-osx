@@ -21,15 +21,19 @@ checkout()
 	return 1
     fi
 
-    if test `echo $1 | grep -c "\.git/"`; then
-	local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
-	local commit="`echo $1 | cut -d '@' -f 2`"
-    else
-	local branch="master"
+    local branch="master"
+    if test `echo $1 | grep -c \.git/` -gt 0; then
+        local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	if test `echo $1 | grep -c '@'` -gt 0; then
+	    local revision="`echo $1 | cut -d '@' -f 2`"
+	else
+	    local revision=
+	fi
     fi
 
     notice "Checking out sources for $1"
     local srcdir="`get_srcdir $1`"
+
     case $1 in
 	bzr*|lp*)
 	    if test x"${force}" =  xyes; then
@@ -62,7 +66,7 @@ checkout()
 		if test -e ${srcdir}/.svn; then
 		    (cd ${srcdir} && svn update)
 		    # Extract the revision number from the update message
-		    revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
+		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
 		else
 		    svn checkout $1 ${srcdir}
 		fi
@@ -74,9 +78,9 @@ checkout()
 		echo "Removing existing sources for ${srcdir}"
 	    fi
 	    if test -e ${srcdir}/.git; then
-		local out="`dryrun "(cd ${srcdir} && git pull origin ${branch})"`"
+		local out="`cd ${srcdir} && git pull origin ${branch}`"
 	    else
-		local out="`dryrun "git clone $1 ${srcdir}"`"
+		local out="`git clone $1 ${srcdir}`"
 	    fi
 	    ;;
 	*)
@@ -274,21 +278,27 @@ tag()
 change_branch()
 {
     trace "$*"
+
     local dir="`normalize_path $1`"
-    local version="`echo $1 | cut -d '/' -f 1`"
+    local version="`basename $1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
+
 #    local srcdir="${local_snapshots}/${version}"
     local srcdir="`get_srcdir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="`echo $1 | cut -d '@' -f 2`"
+	local revision="`echo $1 | cut -d '@' -f 2`"
     else
-	local commit=""
+	local revision=""
     fi
 
     if test ! -d ${srcdir}/${branch}; then
 	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
     else
-	dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
+	if test x"${branch}" = x; then
+	    dryrun "(cd ${local_snapshots}/${version} && git pull origin master)"
+	else
+	    dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
+	fi
     fi
     
     return 0
