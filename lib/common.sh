@@ -455,34 +455,34 @@ get_srcdir()
 	local dir="`echo $1 | sed -e 's:\.tar.*::'`"
     else
 	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
-	local branch="`echo ${dir} | sed -e "s:${tool}.git-::"`"
+	local branch="-`echo ${dir} | sed -e "s:${tool}.git-::"`"
 	if test "`echo $1 | grep -c '@'`" -gt 0; then
-	    local revision="`echo $1 | cut -d '@' -f 2`"
+	    local revision="@`echo $1 | cut -d '@' -f 2`"
 	else
 	    local revision=""
 	fi
     fi
     
     local srcdir="${local_snapshots}/${dir}"
-    if test -e ${srcdir}/config.sub; then
-	echo ${srcdir}
-	return 0
-    fi
 
     # Some components have non-standard directory layouts.
     case ${tool} in
 	gcc*)
-	    local sdir="`ls -d ${srcdir}/*-branch`"    
-	    if test -e ${sdir}/config.sub; then
-		local srcdir="${sdir}"		
-	    else
-		return 1
+	    local newdir="`echo ${srcdir} | sed -e 's:\.git-linaro::' | tr '.' '_'`"
+	    local newdir="`basename ${newdir}`"
+	    if test ! -e ${srcdir}/config.sub; then
+		if test -e ${srcdir}/${newdir}${revision}/config.sub; then
+		    local srcdir="${srcdir}/${newdir}"
+		fi
 	    fi
 	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
-	    # subdirectoruy.
-	    local srcdir="${srcdir}/libc"
+	    # subdirectory.
+	    local srcdir="${srcdir}${branch}/libc"
+	    ;;
+	binutils*)
+	    local srcdir="${srcdir}${branch}"
 	    ;;
 	*)
 	    ;;
