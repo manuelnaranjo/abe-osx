@@ -21,18 +21,20 @@ checkout()
 	return 1
     fi
 
-    local branch="master"
+    local tool="`get_toolname $1`"
+    local branch=
+    local revision=
     if test `echo $1 | grep -c \.git/` -gt 0; then
-        local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
+        local branch="`basename $1`"
+        local branch="`echo $branch | cut -d '@' -f 1`"
 	if test `echo $1 | grep -c '@'` -gt 0; then
 	    local revision="`echo $1 | cut -d '@' -f 2`"
-	else
-	    local revision=
 	fi
     fi
 
-    notice "Checking out sources for $1"
-    local srcdir="`get_srcdir $1`"
+    local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
+    local srcdir="${local_snapshots}/${dir}"
+    notice "Checking out sources for $1 into ${srcdir}"
 
     case $1 in
 	bzr*|lp*)
@@ -73,14 +75,14 @@ checkout()
 	    fi
 	    ;;
 	git*)
-	    if test x"${force}" =  xyes; then
-		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${srcdir}"
-	    fi
 	    if test -e ${srcdir}/.git; then
 		local out="`cd ${srcdir} && git pull origin ${branch}`"
 	    else
-		local out="`git clone $1 ${srcdir}`"
+		if test x"${branch}" = x; then
+		    local out="`git clone $1 ${srcdir}`"
+		else
+		    dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir} ${branch}"
+		fi
 	    fi
 	    ;;
 	*)
@@ -283,7 +285,6 @@ change_branch()
     local version="`basename $1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
 
-#    local srcdir="${local_snapshots}/${version}"
     local srcdir="`get_srcdir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local revision="`echo $1 | cut -d '@' -f 2`"
