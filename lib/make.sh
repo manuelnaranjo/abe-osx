@@ -150,10 +150,10 @@ build()
 	    if test $? -gt 0; then
 		return 1
 	    fi
-	    change_branch ${tag}
-	    if test $? -gt 0; then
-		return 1
-	    fi
+	    # change_branch ${tag}
+	    # if test $? -gt 0; then
+	    # 	return 1
+	    # fi
 	fi
     else
 	if test x"$2" != x"stage2"; then
@@ -423,7 +423,12 @@ EOF
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
-    dryrun ${target}-g++ -static --sysroot=${sysroot}/${host} -o hi /tmp/hello.cpp
+    dryrun "${target}-g++ --sysroot=${sysroots} -o /tmp/hi /tmp/hello.cpp"
 
-    return $?
+    if test -e /tmp/hi; then
+	rm -f /tmp/hi
+	return 0
+    else
+	return 1
+    fi
 }
