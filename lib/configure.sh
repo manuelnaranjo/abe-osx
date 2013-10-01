@@ -110,6 +110,7 @@ configure_build()
 	    ;;
 	*libc)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    mkdir -p ${sysroots}/usr/lib
 	    ;;
 	gcc*)
 	    # Force a complete reconfigure, as we changed the flags. We could do a
