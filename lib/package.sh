@@ -319,7 +319,7 @@ binutils_src_tarball()
     fi
     local dir="`normalize_path ${gcc_version}`"
     local srcdir="get_srcdir ${gcc_version}"
-    local builddir="`get_bulddir ${gcc_version}`"
+    local builddir="`get_builddir ${gcc_version}`"
 
     # clean up files that don't go into a release, often left over from development
     sanitize ${srcdir}
