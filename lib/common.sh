@@ -456,6 +456,9 @@ get_srcdir()
     else
 	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
 	local branch="-`echo ${dir} | sed -e "s:${tool}.git-::"`"
+	if test x"${branch}" = x"-${dir}"; then
+	    local branch=
+	fi
 	if test "`echo $1 | grep -c '@'`" -gt 0; then
 	    local revision="@`echo $1 | cut -d '@' -f 2`"
 	else
