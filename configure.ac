@@ -58,11 +58,6 @@ if test x"${AUTOGEN}" = x; then
    AC_MSG_ERROR([You need 'autogen' to run configure properly!])
 fi
 
-AC_PATH_PROG(LYNX, lynx)
-if test x"${LYNX}" = x; then
-   AC_MSG_WARN([You need 'lsync' to fully run cbuild!])
-fi
-
 AC_PATH_PROG(WGET, wget)
 if test x"${WGET}" = x; then
    AC_MSG_ERROR([You need 'wget' to run configure properly!])

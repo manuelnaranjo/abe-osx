@@ -333,7 +333,6 @@ find_snapshot()
     fi
 
 #    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
-#    snapshot="`lynx -dump ${remote_snapshots} | egrep -v "\.asc" | cut -d ']' -f 2 | grep "$1" | sed -e 's@.*$1@@' -e 's: .*::'`"
     if test x"${snapshot}" = x; then
 	error "No results for $1!"
 	return 1
