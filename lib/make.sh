@@ -113,12 +113,19 @@ build()
     # fi
     local tag="${url}${branch}${revision}"
 
+    # git repositories might have a branch name designated with a slash.
+    # Change the / to a - in the stamp name, otherwise stamp creation
+    # will fail because the shell thinks the part before the / is a directory
+    # name.
+    local stamp="`echo ${file} | sed -e 's:/:-:'`"
+    local stamp="stamp-build-${stamp}${2:+-$2}"
+
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/${host}/${target}/stamp-build-${file}$2 -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
-     	fixme "stamp-build-${file} is newer than ${url}, so not building ${file}"
+    if test ${local_builds}/${host}/${target}/${stamp} -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
+     	fixme "${stamp} is newer than ${url}, so not building ${file}"
 	return 0
     else
-     	fixme "stamp-build-${file} is not newer than ${url}, so building ${file}"
+     	fixme "${stamp} is not newer than ${url}, so building ${file}"
     fi    
     
     notice "Building ${tag}"
@@ -212,7 +219,7 @@ build()
 	fi
     fi
 
-    touch ${local_builds}/${host}/${target}/stamp-build-${file}$2
+    touch ${local_builds}/${host}/${target}/${stamp}
     notice "Done building ${tag}..."
 
     # For cross testing, we need to build a C library with our freshly built
@@ -252,9 +259,9 @@ make_all()
 	export CONFIG_SHELL=${bash_shell}
     fi
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
-#    if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
-#	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
-#    fi
+    if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
+	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+    fi
     if test $? -gt 0; then
 	warning "Make had failures!"
 	return 1
@@ -403,6 +410,35 @@ make_clean()
     return 0
 }
 
+make_docs()
+{
+    trace "$*"
+
+    local tool="`get_toolname $1`"
+    builddir="`get_builddir $1`"
+
+    notice "Making docs in ${builddir}"
+
+    case ${tool} in
+	binutils*)
+	    # the diststuff target isn't supported by all the subdirectories,
+	    # so we build both doc targets and ignore the error.
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info diststuff 2>&1 | tee -a ${builddir}/make.log"
+	    return 0
+	    ;;
+	gcc*)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info 2>&1 | tee -a ${builddir}/make.log"
+	    return 0
+	    ;;
+	*)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info 2>&1 | tee -a ${builddir}/make.log"
+	    return $?
+	    ;;
+    esac
+
+    return 0
+}
+
 # See if we can link a simple executable
 hello_world()
 {
@@ -432,3 +468,4 @@ EOF
 	return 1
     fi
 }
+
