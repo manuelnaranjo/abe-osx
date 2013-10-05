@@ -189,7 +189,10 @@ configure_build()
 	    export CONFIG_SHELL=${bash_shell}
 	fi
 	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
-	return $?
+	if test $? -gt 0; then
+	    error "Configure of $1 failed."
+	    return $?
+	fi
 
 	# unset this to avoid problems later
 	default_configure_flags=
