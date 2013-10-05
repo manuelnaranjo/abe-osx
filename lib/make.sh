@@ -84,8 +84,8 @@ build_all()
     notice "Build took ${SECONDS} seconds"
     
     if test x"${tarballs}" = x"yes"; then
-	binutils_src_tarball
 	gcc_src_tarball
+	binutils_src_tarball
 
 	manifest ${gcc_version}
 	binary_tarball 
@@ -197,6 +197,8 @@ build()
     if test $? -gt 0; then
 	return 1
     fi
+
+    make_docs ${tag}
 
 #    if test x"${install}" = x"yes"; then    
 	make_install ${tag}
@@ -414,8 +416,7 @@ make_docs()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
-    builddir="`get_builddir $1`"
+    local builddir="`get_builddir $1`"
 
     notice "Making docs in ${builddir}"
 
