@@ -27,9 +27,9 @@ sanitize()
     # the files left from random file editors we don't want.
     local edits="`find $1 -name \*~ -o -name \.\#\* -o -name \*.bak`"
 
-    if test "`git st $1 | grep -c "nothing to commit, working directory clean"`" -eq 0; then
+    if test "`git st $1 | grep -c "nothing to commit, working directory clean"`" -gt 0; then
 	error "uncommited files in $1! Commit files before releasing."
-	return 1
+	#return 1
     fi
 
     if test x"${edits}" != x; then
@@ -91,6 +91,13 @@ binary_toolchain()
 	local commit=""
     fi
     local builddir="`get_builddir ${gcc_version}`"
+
+    # Build the documentation.
+    make_docs $1
+    if test $? -gt 0; then
+	return 1
+    fi
+
     local srcdir="`get_srcdir $1`"
     if test x"${release}" = x; then
 	local release="`date +%Y%m%d`"
@@ -256,8 +263,7 @@ EOF
     fi
 }
 
-# Build a source tarball
-# $1 - the version to use, usually something like 2013.07-2
+# Build a source tarball for GCC
 gcc_src_tarball()
 {
     trace "$*"
@@ -270,38 +276,48 @@ gcc_src_tarball()
     local branch="`echo ${gcc_version} | cut -d '/' -f 2`"
     local srcdir="`get_srcdir ${gcc_version}`"
     local gcc_version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
+    
+    if test -d ${srcdir}/.git; then
+	local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	local exclude="--exclude .git"
+    fi
+
+    # Build the documentation.
+    if test x"${branch}" != x; then
+	branch="~${branch}"
+    fi
+
+    if test x"${revision}" != x; then
+	revision="@${revision}"
+    fi
+
+    if test $? -gt 0; then
+	return 1
+    fi
 
     # clean up files that don't go into a release, often left over from development
     sanitize ${srcdir}
 
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="@`echo $1 | cut -d '@' -f 2`"
-    else
-	local commit=""
-    fi
+    # if the release variable is enabled, it overides everything.
     if test x"${release}" = x; then
-	local release="`date +%Y%m%d`"
-    fi
-    if test -d ${srcdir}/.git; then
-	local revision="~`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	local exclude="--exclude .git"
+	local tag="gcc.git${branch}${revision}"
     else
-	local revision=""
-	local exclude=""
+	local tag="gcc-linaro-${release}"
     fi
-    local tag="${gcc_version}${revision}-${release}${commit}"
 
-    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
 #    dryrun "cp -r ${srcdir} /tmp/${tag}"
+    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
 
-    # Cleanup any temp files.
-    #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
+    # Copy all the HTML files
+#    dryrun "mkdir -p /tmp/${tag}/INSTALL"
+    local docs="`find ${srcdir} -name \*.info`"
+    dryrun "cp -r ${docs} /tmp/${tag}/"
 
-    if test ! -f ${local_snapshots}/${tag}.tar.xz; then
-	dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
-    fi
+#    if test ! -f ${local_snapshots}/${tag}.tar.xz; then
+    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
+#    fi
 
-    # We don't need the symbolic link anymore.
+    # We don't need the symbolic link and html files anymore.
     dryrun "rm -rf /tmp/${tag}"
 
     return 0
@@ -318,7 +334,7 @@ binutils_src_tarball()
 	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
     local dir="`normalize_path ${gcc_version}`"
-    local srcdir="get_srcdir ${gcc_version}"
+    local srcdir="`get_srcdir ${gcc_version}`"
     local builddir="`get_builddir ${gcc_version}`"
 
     # clean up files that don't go into a release, often left over from development
@@ -372,14 +388,14 @@ binutils_src_tarball()
 # NOTE: No double quotes in the below.  It is used within shell script
 # as VER="$(VER)"
 
-    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' $(TOOL)/configure.in >/dev/null 2>&1; then
+    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' $(tool)/configure.in >/dev/null 2>&1; then
 	sed < bfd/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
-    elif grep AM_INIT_AUTOMAKE $(TOOL)/configure.in >/dev/null 2>&1; then
-	sed < $(TOOL)/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
-    elif test -f $(TOOL)/version.in; then
-	head -1 $(TOOL)/version.in;
-    elif grep VERSION $(TOOL)/Makefile.in > /dev/null 2>&1; then
-	sed < $(TOOL)/Makefile.in -n 's/^VERSION *= *//p';
+    elif grep AM_INIT_AUTOMAKE $(tool)/configure.in >/dev/null 2>&1; then
+	sed < $(tool)/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
+    elif test -f $(tool)/version.in; then
+	head -1 $(tool)/version.in;
+    elif grep VERSION $(tool)/Makefile.in > /dev/null 2>&1; then
+	sed < $(tool)/Makefile.in -n 's/^VERSION *= *//p';
     else
 	echo VERSION;
     fi
