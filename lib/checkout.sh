@@ -76,10 +76,10 @@ checkout()
 	    ;;
 	git*)
 	    if test -e ${srcdir}/.git; then
-		local out="`cd ${srcdir} && git pull origin ${branch}`"
+		dryrun "(cd ${srcdir} && git pull origin ${branch})"
 	    else
 		if test x"${branch}" = x; then
-		    local out="`git clone $1 ${srcdir}`"
+		    dryrun "git clone $1 ${srcdir}"
 		else
 		    dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir} ${branch}"
 		fi
