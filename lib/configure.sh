@@ -21,11 +21,20 @@ configure_build()
 	local revision=""
     fi
 
-    if test ${local_builds}/${host}/${target}/stamp-configure-$1 -nt ${local_snapshots}/$1  -a x"${force}" = xno; then
-     	fixme "stamp-configure-${file} is newer than $1, so not configuring $1"
+    # git repositories might have a branch name designated with a slash.
+    # Change the / to a - in the stamp name, otherwise stamp creation
+    # will fail because the shell thinks the part before the / is a directory
+    # name.
+    local file="`echo ${file} | sed -e 's:/:-:'`"
+    local stamp="stamp-configure-${file}"
+
+    if test ${local_builds}/${host}/${target}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
+	fixme "${stamp} is newer than $1, so not configuring $1"
 	return 0
     else
-     	fixme "stamp-configure-${file} is not newer than $1, so configuring $1"
+	# FIXME: Don't output a message that implies that there is a stamp if
+	# this is the first time through and one doesn't exist.
+	fixme "${stamp} is not newer than $1, so configuring $1"
     fi    
 
     local srcdir="`get_srcdir $1`"
@@ -186,7 +195,7 @@ configure_build()
 	default_configure_flags=
     fi
 
-    touch ${local_builds}/${host}/${target}/stamp-configure-${file} 
+    touch ${local_builds}/${host}/${target}/${stamp}
 
     return 0
 }
