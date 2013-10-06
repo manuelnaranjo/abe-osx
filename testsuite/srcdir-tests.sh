@@ -13,9 +13,19 @@ if test -d ${local_snapshots}/gcc.git; then
 	fail "get_srcdir: git repository"
 	fixme "get_srcdir returned ${out}"
     fi
+
+    in="gcc.git"
+    out="`get_srcdir $in | grep -v TRACE`"
+    if test x"${out}" = x"${local_snapshots}/gcc.git"; then
+	pass "get_srcdir: git repository no path"
+    else
+	fail "get_srcdir: git repository no path"
+	fixme "get_srcdir returned ${out}"
+    fi
 else
     untested  "get_srcdir: git repository"
 fi
+
 
 if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch; then
     in="gcc.git/linaro-4.8-branch"

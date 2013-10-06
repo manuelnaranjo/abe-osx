@@ -275,17 +275,45 @@ else
     fixme "get_source returned ${out}"
 fi
 
-
 # ----------------------------------------------------------------------------------
 
-# list of dependencies for a toolchain component
-#out="`dependencies gcc`"
-# if test `echo $out |grep -c "gmp.*mpc.*mpfr.*binutils"` -eq 1; then
-#     pass "dependencies"
-# else
-#     fail "dependencies"
-#     fixme "dependencies returned ${out}"
-# fi
+date="`date +%Y%m%d`"
+in="gcc.git/gcc-4.8-branch@12345abcde"
+out="`create_release_tag ${in} | grep -v TRACE`"
+toolname="`echo ${out} | cut -d ' ' -f 1`"
+branch="`echo ${out} | cut -d ' ' -f 2`"
+revision="`echo ${out} | cut -d ' ' -f 3`"
+if test x"${out}" = x"gcc-linaro~gcc-4.8-branch@12345abcde-${date}"; then
+    pass "create_release_tag: repository with branch and revision"
+else
+    fail "create_release_tag: repository with branch and revision"
+    fixme "create_release_tag returned ${out}"
+fi
+
+branch=
+revision=
+if test -d ${srcdir}; then
+    in="gcc.git"
+    out="`create_release_tag ${in} | grep -v TRACE`"
+    if test x"${out}" = x"gcc-linaro-${date}"; then
+	pass "create_release_tag: repository branch empty"
+    else
+	fail "create_release_tag: repository branch empty"
+	fixme "create_release_tag returned ${out}"
+    fi
+else
+    untested "create_release_tag: repository branch empty"
+fi
+
+in="gcc-linaro-4.8-2013.06-1.tar.xz"
+out="`create_release_tag ${in} | grep -v TRACE`"
+if test x"${out}" = x"gcc-linaro-4.8-${date}"; then
+    pass "create_release_tag: tarball"
+else
+    fail "create_release_tag: tarball"
+    fixme "create_release_tag returned ${out}"
+fi
+
 
 # ----------------------------------------------------------------------------------
 # print the total of test results

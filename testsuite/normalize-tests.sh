@@ -20,7 +20,7 @@ else
     fixme "${in} returned ${out}"
 fi
 
-out="`normalize_path ${in}/binutils-2_18-branch`"
+out="`normalize_path binutils.git/binutils-2_18-branch`"
 if test ${out} = "binutils.git-binutils-2_18-branch"; then
     pass "normalize_path: git repository with branch"
 else

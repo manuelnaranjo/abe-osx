@@ -47,6 +47,15 @@ else
     fixme "${in} returned ${out}"
 fi
 
+in="gcc.git/linaro-4.8-branch"
+out="`get_builddir ${in}`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc.git-linaro-4.8-branch"; then
+    pass "get_builddir: git repository with branch, no URL"
+else
+    fail "get_builddir: git repository with branch, no URL"
+    fixme "get_buildir returned ${out}"
+fi
+
 in="infrastructure/gmp-5.1.2.tar.xz"
 out="`get_builddir ${in}`"
 if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/infrastructure/gmp-5.1.2"; then
@@ -55,3 +64,4 @@ else
     fail "get_builddir: tarball in subdirectory"
     fixme "${in} returned ${out}"
 fi
+
