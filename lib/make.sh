@@ -84,11 +84,11 @@ build_all()
     notice "Build took ${SECONDS} seconds"
     
     if test x"${tarballs}" = x"yes"; then
-	gcc_src_tarball
-	binutils_src_tarball
+	release_gcc_src
+	#binutils_src_tarball
 
-	manifest ${gcc_version}
-	binary_tarball 
+	# manifest ${gcc_version}
+	# binary_tarball 
     fi
 
     return 0
@@ -198,7 +198,11 @@ build()
 	return 1
     fi
 
+    # Build the documentation.
     make_docs ${tag}
+    if test $? -gt 0; then
+	return 1
+    fi
 
 #    if test x"${install}" = x"yes"; then    
 	make_install ${tag}
@@ -424,15 +428,15 @@ make_docs()
 	binutils*)
 	    # the diststuff target isn't supported by all the subdirectories,
 	    # so we build both doc targets and ignore the error.
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info diststuff 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man diststuff 2>&1 | tee -a ${builddir}/make.log"
 	    return 0
 	    ;;
 	gcc*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
 	    return 0
 	    ;;
 	*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/make.log"
 	    return $?
 	    ;;
     esac
