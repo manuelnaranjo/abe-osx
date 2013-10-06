@@ -199,7 +199,7 @@ normalize_path()
 	    fi
 	    ;;
 	*)
-	    local node="`echo $1 | sed -e 's:\.tar.*::' -e 's:\+git:@:'`"
+	    local node="`echo $1 | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
 	    ;;
     esac
 
@@ -217,13 +217,16 @@ get_builddir()
 #    trace "$*"
 
     local branch=""
+
+    local tag="`create_release_tag $1`"
+
     local dir="`normalize_path $1`"
 #    local branch="`echo $1 | sed -e "s:^.*${dir}::" | cut -d '@' -f 1 | tr -d '/'`"
 #    if test `echo ${dir} | grep -c 'infrastructure/'` -eq 0; then
     if test `echo ${dir} | grep -c '/'` -gt 0; then
-	local branch="`echo ${dir} | cut -d '/' -f 2 | cut -d '@' -f 1 | tr -d '/'`"
+	local branch="`echo ${dir2} | cut -d '/' -f 2 | cut -d '@' -f 1 | tr -d '/'`"
 	if test x"${branch}" != x; then
-	    local branch="-${branch}"
+	    local branch="~${branch}"
 	fi
     fi
     #local dir="`echo ${dir} | cut -d '/' -f 1`"
@@ -232,10 +235,7 @@ get_builddir()
     # BUILD_ID 2013-09-02_20-23-02
     # BUILD_NUMBER 1077
     # BUILD_TAG	jenkins-cbuild-1077
-    local tag="${dir}"
-    local builddir="${local_builds}/${host}/${target}/${tag}"
-
-    echo ${builddir}
+    echo "${local_builds}/${host}/${target}/${dir}"
 
     return 0
 }
@@ -443,26 +443,27 @@ get_source()
 }
 
 # Get the proper source directory
-# $1 - The component name
+# $1 - The component name, which is a git URL or a tarball
+# 
 # returns the fully qualified srcdir
 get_srcdir()
 {
 #    trace "$*"
     
     local tool="`get_toolname $1`"
-    if test `echo $1 | grep -c '\.tar'` -gt 0; then
+    if test `echo $1 | grep -c "\.tar"` -gt 0; then
+	# tarballs have no branch or revision
 	local dir="`echo $1 | sed -e 's:\.tar.*::'`"
     else
 	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
-	local branch="-`echo ${dir} | sed -e "s:${tool}.git-::"`"
-	if test x"${branch}" = x"-${dir}"; then
-	    local branch=
+	if test `echo $1 | grep -c "\.git/"` -gt 0; then
+	    local branch="~`basename $1`"
 	fi
 	if test "`echo $1 | grep -c '@'`" -gt 0; then
 	    local revision="@`echo $1 | cut -d '@' -f 2`"
 	else
-	    local revision=""
-	fi
+	    local revision=
+	fi    
     fi
     
     local srcdir="${local_snapshots}/${dir}"
@@ -474,17 +475,17 @@ get_srcdir()
 	    local newdir="`basename ${newdir}`"
 	    if test ! -e ${srcdir}/config.sub; then
 		if test -e ${srcdir}/${newdir}${revision}/config.sub; then
-		    local srcdir="${srcdir}/${newdir}"
+		    local srcdir="${srcdir}/${newdir}${revision}"
 		fi
 	    fi
 	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
 	    # subdirectory.
-	    local srcdir="${srcdir}${branch}/libc"
+	    local srcdir="${srcdir}${branch}${revision}/libc"
 	    ;;
 	binutils*)
-	    local srcdir="${srcdir}${branch}"
+	    local srcdir="${srcdir}${branch}${revision}"
 	    ;;
 	*)
 	    ;;
@@ -494,3 +495,53 @@ get_srcdir()
 
     return 0
 }
+
+# Parse a version string and produced the proper output fields. This is
+# used when naming releases for both directories, tarballs, and
+# internal version numbers. The version string looks like
+# 'gcc.git/gcc-4.8-branch' or 'gcc-linaro-4.8-2013.09'
+#
+# returns "version~branch@revision"
+create_release_tag()
+{
+#    trace "$*"
+
+    local version=$1
+
+    # See if specific component versions were specified at runtime
+    if test "`echo ${version} | grep -c "\.git/"`" -gt 0; then
+	local branch="`echo ${version} | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	local srcdir="`get_srcdir ${version}`"
+	if test -d ${srcdir}/.git; then
+	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	fi
+    else
+	local branch=
+	local revision=
+    fi    
+
+    # Override the revision
+    if test `echo $1 | grep -c @` -gt 0; then
+	local revision="`echo $1 | cut -d '@' -f 2`"
+    fi
+
+    local name="`echo ${version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
+    
+    # prepend the branch delimiter
+    if test x"${branch}" != x; then
+	local branch="~${branch}"
+    fi
+
+    # prepend the revision delimiter
+    if test x"${revision}" != x; then
+	local revision="@${revision}"
+    fi
+
+    local date="`date +%Y%m%d`"
+
+    # return the version string array
+    echo ${name}${branch}${revision}-${date}
+
+    return 0
+}
+
