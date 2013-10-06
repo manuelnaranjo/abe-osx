@@ -366,7 +366,7 @@ while test $# -gt 0; do
 		value="`echo $1 | cut -d '=' -f 2`"
 		case ${name} in
 		    b*|binutils)
-			binutils_version="`echo ${value} | sed -e 's:binutils-::'`"
+			binutils_version="`echo ${value}`"
 			;;
 		    gc*|gcc)
 			gcc_version="`echo ${value} | sed -e 's:gcc-::'`"
