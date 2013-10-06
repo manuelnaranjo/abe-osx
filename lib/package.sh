@@ -25,7 +25,7 @@ sanitize()
     trace "$*"
 
     # the files left from random file editors we don't want.
-    local edits="`find $1 -name \*~ -o -name \.\#\* -o -name \*.bak`"
+    local edits="`find $1/ -name \*~ -o -name \.\#\* -o -name \*.bak -o -name x`"
 
     if test "`git st $1 | grep -c "nothing to commit, working directory clean"`" -gt 0; then
 	error "uncommited files in $1! Commit files before releasing."
@@ -92,12 +92,6 @@ binary_toolchain()
     fi
     local builddir="`get_builddir ${gcc_version}`"
 
-    # Build the documentation.
-    make_docs $1
-    if test $? -gt 0; then
-	return 1
-    fi
-
     local srcdir="`get_srcdir $1`"
     if test x"${release}" = x; then
 	local release="`date +%Y%m%d`"
@@ -134,6 +128,9 @@ binary_toolchain()
 
     # make the tarball from the tree we just created.
     dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 
     return 0
 }
@@ -181,6 +178,8 @@ binary_sysroot()
 
     dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
 
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
     return 0
 }
 
@@ -188,12 +187,6 @@ binary_sysroot()
 # used for this build.
 manifest()
 {
-    if test x"$1" = x; then
-	dest=/tmp
-    else
-	dest="`get_builddir $1`"
-    fi
-
     if test x"${gcc_version}" = x; then
 	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
@@ -226,8 +219,15 @@ manifest()
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
     fi        
 
+    if test x"$1" = x; then
+	dest=/tmp
+    else
+	dest="`get_builddir $1`"
+    fi
+
     outfile=${dest}/manifest.txt
-    cat <<EOF > ${outfile}
+    rm -f ${outfile}
+    cat >> ${outfile} <<EOF 
 # Build machine data
 build=${build}
 kernel=${kernel}
@@ -263,66 +263,6 @@ EOF
     fi
 }
 
-# Build a source tarball for GCC
-gcc_src_tarball()
-{
-    trace "$*"
-
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-	local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2` | tr -d '\"'"
-    fi
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local branch="`echo ${gcc_version} | cut -d '/' -f 2`"
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
-    
-    if test -d ${srcdir}/.git; then
-	local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	local exclude="--exclude .git"
-    fi
-
-    # Build the documentation.
-    if test x"${branch}" != x; then
-	branch="~${branch}"
-    fi
-
-    if test x"${revision}" != x; then
-	revision="@${revision}"
-    fi
-
-    if test $? -gt 0; then
-	return 1
-    fi
-
-    # clean up files that don't go into a release, often left over from development
-    sanitize ${srcdir}
-
-    # if the release variable is enabled, it overides everything.
-    if test x"${release}" = x; then
-	local tag="gcc.git${branch}${revision}"
-    else
-	local tag="gcc-linaro-${release}"
-    fi
-
-#    dryrun "cp -r ${srcdir} /tmp/${tag}"
-    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
-
-    # Copy all the HTML files
-#    dryrun "mkdir -p /tmp/${tag}/INSTALL"
-    local docs="`find ${srcdir} -name \*.info`"
-    dryrun "cp -r ${docs} /tmp/${tag}/"
-
-#    if test ! -f ${local_snapshots}/${tag}.tar.xz; then
-    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
-#    fi
-
-    # We don't need the symbolic link and html files anymore.
-    dryrun "rm -rf /tmp/${tag}"
-
-    return 0
-}
-
 # Build a source tarball
 # $1 - the version to use, usually something like 2013.07-2
 binutils_src_tarball()
@@ -330,35 +270,25 @@ binutils_src_tarball()
     trace "$*"
 
     # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    if test x"${binutils_version}" = x; then
+	local binutils_version="binutils-`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
-    local dir="`normalize_path ${gcc_version}`"
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local builddir="`get_builddir ${gcc_version}`"
+
+    local dir="`normalize_path ${binutils_version}`"
+    local srcdir="`get_srcdir ${binutils_version}`"
+    local builddir="`get_builddir ${binutils_version}`"
+    local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
 
     # clean up files that don't go into a release, often left over from development
     sanitize ${srcdir}
 
     # from /linaro/snapshots/binutils.git/src-release: do-proto-toplev target
     # Take out texinfo from a few places.
-    dirs="`find ${srcdir} -name Makefile.in`"
+    local dirs="`find ${srcdir} -name Makefile.in`"
     for d in ${dirs}; do
 	sed -i -e '/^all\.normal: /s/\all-texinfo //' -e '/^install-texinfo /d' $d
     done
 
-    # Make links, and run "make diststuff" or "make info" when needed
-    dirs="`find ${builddir} -name Makefile`"
-    for d in ${dirs}; do
-	if test -f $d; then
-	    if test `grep -c '^diststuff:' $d` -gt 0; then
-		$(MAKE) -C $d MAKEINFOFLAGS="$(MAKEINFOFLAGS)" diststuff
-	    fi
-	    if test `grep -c '^info:' $d` -gt 0; then
-		$(MAKE) -C $d MAKEINFOFLAGS="$(MAKEINFOFLAGS) " info
-	    fi
-	fi
-    done
     # Create .gmo files from .po files.
     for f in `find . -name '*.po' -type f -print`; do
         msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f
@@ -366,20 +296,17 @@ binutils_src_tarball()
  
     local date="`date +%Y%m%d`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="`echo $1 | cut -d '@' -f 2`"
-    else
-	local commit=""
+	local revision="`echo $1 | cut -d '@' -f 2`"
     fi
     if test -d ${srcdir}/.git; then
-	local gcc_version="${dir}-${date}"
+	local binutils_version="${dir}-${date}"
 	local revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	local exclude="${exclude} .git"
+	local exclude="--exclude .git"
     else
-	local gcc_version="`echo ${gcc_version} | sed -e "s:-2.*:-${date}:"`"
-	local revision=""
-	local exclude=""
+	local binutils_version="`echo ${binutils_version} | sed -e "s:-2.*:-${date}:"`"
     fi
-    local tag="${gcc_version}${revision}${commit}"
+    local date="`date +%Y%m%d`"
+    local tag="${binutils_version}-linaro${revision}-${date}"
 
     dryrun "ln -s ${srcdir} /tmp/${tag}"
 
@@ -388,14 +315,14 @@ binutils_src_tarball()
 # NOTE: No double quotes in the below.  It is used within shell script
 # as VER="$(VER)"
 
-    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' $(tool)/configure.in >/dev/null 2>&1; then
+    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' binutils/configure.in >/dev/null 2>&1; then
 	sed < bfd/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
-    elif grep AM_INIT_AUTOMAKE $(tool)/configure.in >/dev/null 2>&1; then
-	sed < $(tool)/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
-    elif test -f $(tool)/version.in; then
-	head -1 $(tool)/version.in;
-    elif grep VERSION $(tool)/Makefile.in > /dev/null 2>&1; then
-	sed < $(tool)/Makefile.in -n 's/^VERSION *= *//p';
+    elif grep AM_INIT_AUTOMAKE binutils/configure.in >/dev/null 2>&1; then
+	sed < binutils/configure.in -n 's/AM_INIT_AUTOMAKE[^,]*, *\([^)]*\))/\1/p';
+    elif test -f binutils/version.in; then
+	head -1 binutils/version.in;
+    elif grep VERSION binutils/Makefile.in > /dev/null 2>&1; then
+	sed < binutils/Makefile.in -n 's/^VERSION *= *//p';
     else
 	echo VERSION;
     fi
@@ -403,8 +330,10 @@ binutils_src_tarball()
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
-    dryrun "cd /tmp && tar ${exclude} Jcvfh ${local_snapshots}/${tag}.tar.xz ${tag}/"
+    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
 
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
     # We don't need the symbolic link anymore.
     dryrun "rm -f /tmp/${tag}"
 
