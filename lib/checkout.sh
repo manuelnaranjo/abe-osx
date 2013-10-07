@@ -81,7 +81,10 @@ checkout()
 		if test x"${branch}" = x; then
 		    dryrun "git clone $1 ${srcdir}"
 		else
-		    git-new-workdir ${local_snapshots}/${tool}.git ${srcdir} ${branch}
+		    if test ! -d ${local_snapshots}/${tool}.git; then
+			dryrun "git clone $1 ${srcdir}"
+		    fi
+		    dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir} ${branch}"
 		fi
 	    fi
 	    ;;
