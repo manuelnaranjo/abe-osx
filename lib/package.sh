@@ -119,9 +119,8 @@ binary_toolchain()
     dryrun "cp -r ${local_builds}/destdir/${host}/lib/gcc/${target} ${destdir}/lib/gcc/"
     dryrun "cp -r ${local_builds}/destdir/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/"
 
-    if test -e /tmp/manifest.txt; then
-	cp /tmp/manifest.txt ${destdir}
-    fi
+    manifest
+    cp /tmp/manifest.txt ${destdir}
 
     # install in alternate directory so it's easier to build the tarball
     dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
@@ -187,6 +186,12 @@ binary_sysroot()
 # used for this build.
 manifest()
 {
+    if test x"$1" = x; then
+	local outfile=/tmp/manifest.txt
+    else
+	local outfile=$1
+    fi
+
     if test x"${gcc_version}" = x; then
 	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
@@ -219,14 +224,7 @@ manifest()
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
     fi        
 
-    if test x"$1" = x; then
-	dest=/tmp
-    else
-	dest="`get_builddir $1`"
-    fi
-
-    outfile=${dest}/manifest.txt
-    rm -f ${outfile}
+     rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
 build=${build}
