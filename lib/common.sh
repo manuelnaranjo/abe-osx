@@ -507,48 +507,37 @@ create_release_tag()
 #    trace "$*"
 
     local version=$1
-
-    # See if specific component versions were specified at runtime
-    if test "`echo ${version} | grep -c "\.git/"`" -gt 0; then
-	local branch="`echo ${version} | cut -d '/' -f 2 | cut -d '@' -f 1`"
-	local srcdir="`get_srcdir ${version}`"
-	if test -d ${srcdir}/.git; then
-	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-    else
-	local branch=
-	local revision=
-    fi    
-
-    # Override the revision
-    if test `echo $1 | grep -c @` -gt 0; then
-	local revision="`echo $1 | cut -d '@' -f 2`"
-    fi
+    local branch=
+    local revision=
 
     local name="`echo ${version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
+	
+    if test x"${release}" = x; then
+        # extract the branch from the version
+	if test "`echo $1 | grep -c "\.git/"`" -gt 0; then
+	    local branch="~`echo ${version} | cut -d '/' -f 2 | cut -d '@' -f 1`"
+	fi    
+
+	local srcdir="`get_srcdir ${version}`"
+	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
+	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	fi
+		
+	local date="`date +%Y%m%d`"
+	
+        # return the version string array
+	local tag="${name}${branch}${revision}-${date}"
+        # when 'linaro' is part of the branch name, we get a duplicate
+	# identifier, which we remove to be less confusing, as the tag name 
+	# is long enough as it is...
+	local tag="`echo ${tag} | sed -e 's:-linaro~linaro:~linaro:'`"
+
+    else
+	local tag="${name}-${release}"
+    fi
     
-    # prepend the branch delimiter
-    if test x"${branch}" != x; then
-	local branch="~${branch}"
-    fi
-
-    # prepend the revision delimiter
-    if test x"${revision}" != x; then
-	local revision="@${revision}"
-    fi
-
-    local date="`date +%Y%m%d`"
-
-    # return the version string array
-    local tag="${name}${branch}${revision}-${date}"
-
-    # when 'linaro' is part of the branch name, we get a duplicate identifier,
-    # which we remove to be less confusing, as the tag name is long enough as
-    # it is...
-    local tag="`echo ${tag} | sed -e 's:-linaro~linaro:~linaro:'`"
-
     echo ${tag}
-
+    
     return 0
 }
 
