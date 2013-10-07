@@ -116,13 +116,9 @@ release_gcc_src()
 
     # Update the GCC version
     rm -f ${destdir}/gcc/LINARO-VERSION
-    if test x"${release}" = x;then
-	echo "${tag}" > ${destdir}/gcc/LINARO-VERSION
-	edit_changelogs ${srcdir} ${tag}
-    else
-	echo "${release}" > ${destdir}/gcc/LINARO-VERSION
-	edit_changelogs ${srcdir} ${release}
-    fi
+    echo "${tag}" > ${destdir}/gcc/LINARO-VERSION
+
+    edit_changelogs ${srcdir} ${tag}
     
     regenerate_checksums ${destdir}
 
@@ -213,22 +209,17 @@ edit_changelogs()
 
     local date="`date +%Y-%m-%d`"
 
-    local clogs="`find $1 -name ChangeLog.linaro`"
-    if test x"${clogs}" = x; then
-	local clogs="`find $1 -type d`/ChangeLog.linaro"
-    fi
-
-    if test `echo ${srcdir} | grep -c "/gdb"`; then
+    if test `echo ${srcdir} | grep -c "/gdb"` -gt 0; then
 	local tool=gdb
-	if test `echo ${srcdir} | grep -c "/gcc"`; then
+	if test `echo ${srcdir} | grep -c "/gcc"` -gt 0; then
 	    local tool=gdb
-	    if test `echo ${srcdir} | grep -c "/binutils"`; then
+	    if test `echo ${srcdir} | grep -c "/binutils"` -gt 0; then
 		local tool=binutils
-		if test `echo ${srcdir} | grep -c "/glibc"`; then
+		if test `echo ${srcdir} | grep -c "/glibc"` -gt 0; then
 		    local tool=glibc
-		    if test `echo ${srcdir} | grep -c "/eglibc"`; then
+		    if test `echo ${srcdir} | grep -c "/eglibc"` -gt 0; then
 			local tool=eglibc
-			if test `echo ${srcdir} | grep -c "/newlib"`; then
+			if test `echo ${srcdir} | grep -c "/newlib"` -gt 0; then
 			    local tool=newlib
 			fi
 		    fi
@@ -236,8 +227,22 @@ edit_changelogs()
 	    fi
 	fi
     fi
+
+    local clogs="`find $1 -name ChangeLog.linaro`"
+    if test x"${clogs}" = x; then
+	local dirs="`find $1 -maxdepth 2 -type d | grep -v "/\.git/"`"
+	local clogs=
+	for i in ${dirs}; do
+	    local clogs="$i/ChangeLog.linaro ${clogs}"
+	done
+    fi
+
     for i in ${clogs}; do
-     	mv $i /tmp/
+	if test -e $i; then
+     	    mv $i /tmp/
+	else
+	    touch /tmp/ChangeLog.linaro
+	fi
      	echo "${date}  ${fullname}  <${email}>" >> $i
      	echo "" >> $i
          echo "        GCC Linaro $2 released." >> $i
