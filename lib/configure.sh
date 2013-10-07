@@ -28,7 +28,7 @@ configure_build()
     local file="`echo ${file} | sed -e 's:/:-:'`"
     local stamp="stamp-configure-${file}"
 
-    if test ${local_builds}/${host}/${target}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
+    if test ${builddir}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
 	fixme "${stamp} is newer than $1, so not configuring $1"
 	return 0
     else
@@ -37,12 +37,12 @@ configure_build()
 	fixme "${stamp} is not newer than $1, so configuring $1"
     fi    
 
-    local srcdir="`get_srcdir $1`"
-
     if test ! -d "${builddir}"; then
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
     fi
+
+    local srcdir="`get_srcdir $1`"
 
     if test ! -f "${srcdir}/configure"; then
 	warning "No configure script in ${srcdir}!"
