@@ -484,9 +484,9 @@ get_srcdir()
 	    # subdirectory.
 	    local srcdir="${srcdir}${branch}${revision}/libc"
 	    ;;
-	binutils*)
-	    local srcdir="${srcdir}${branch}${revision}"
-	    ;;
+#	binutils*)
+#	    local srcdir="${srcdir}${branch}${revision}"
+#	    ;;
 	*)
 	    ;;
     esac
@@ -540,7 +540,14 @@ create_release_tag()
     local date="`date +%Y%m%d`"
 
     # return the version string array
-    echo ${name}${branch}${revision}-${date}
+    local tag="${name}${branch}${revision}-${date}"
+
+    # when 'linaro' is part of the branch name, we get a duplicate identifier,
+    # which we remove to be less confusing, as the tag name is long enough as
+    # it is...
+    local tag="`echo ${tag} | sed -e 's:-linaro~linaro:~linaro:'`"
+
+    echo ${tag}
 
     return 0
 }
