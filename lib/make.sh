@@ -85,10 +85,9 @@ build_all()
     
     if test x"${tarballs}" = x"yes"; then
 	release_gcc_src
-	#binutils_src_tarball
+	release_binutils_src
 
-	# manifest ${gcc_version}
-	# binary_tarball 
+	binary_tarball
     fi
 
     return 0
@@ -311,7 +310,15 @@ make_install()
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
-    dryrun "make install ${make_flags} $2 -w -C ${builddir}"
+
+    if test x"${tool}" = x"binutils"; then
+	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
+	# due to an info file problem, so we ignore the error so the build
+	# will continue.
+	dryrun "make install ${make_flags} $2 -i -k -w -C ${builddir}"
+    else
+	dryrun "make install ${make_flags} $2 -w -C ${builddir}"
+    fi
 
     if test $? != "0"; then
 	warning "Make install failed!"
@@ -424,16 +431,19 @@ make_docs()
 
     notice "Making docs in ${builddir}"
 
-    case ${tool} in
-	binutils*)
+    case $1 in
+	*binutils*)
 	    # the diststuff target isn't supported by all the subdirectories,
 	    # so we build both doc targets and ignore the error.
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man diststuff 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags}  -w -C ${builddir} info man diststuff 2>&1 | tee -a ${builddir}/make.log"
 	    return 0
 	    ;;
-	gcc*)
+	*gcc*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
 	    return 0
+	    ;;
+	*linux*)
+	    # no docs to install for this component
 	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/make.log"
