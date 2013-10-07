@@ -295,7 +295,7 @@ revision=
 if test -d ${srcdir}; then
     in="gcc.git"
     out="`create_release_tag ${in} | grep -v TRACE`"
-    if test x"${out}" = x"gcc-linaro-${date}"; then
+    if test "`echo ${out} | grep -c "gcc-linaro\@[a-z0-9]*-${date}"`" -gt 0; then
 	pass "create_release_tag: repository branch empty"
     else
 	fail "create_release_tag: repository branch empty"
