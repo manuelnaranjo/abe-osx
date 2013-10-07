@@ -50,10 +50,10 @@ binary_tarball()
     for i in ${packages}; do
 	case $i in
 	    toolchain)
-		binary_toolchain ${release}
+		binary_toolchain
 		;;
 	    sysroot)
-		binary_sysroot ${release}
+		binary_sysroot
 		;;
 	    *)
 		echo "$i package building unimplemented"
@@ -72,39 +72,36 @@ binary_toolchain()
 
     local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
 
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-	local gcc_version="gcc-`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-
-    if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	local branch="`basename ${gcc_version}`"
-    else
-	if test `echo ${gcc_version} | grep -c "\.git"`; then
-	    local branch="master"
-	fi
-    fi
-
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="@`echo $1 | cut -d '@' -f 2`"
-    else
-	local commit=""
-    fi
-    local builddir="`get_builddir ${gcc_version}`"
-
-    local srcdir="`get_srcdir $1`"
+    # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
-	local release="`date +%Y%m%d`"
-    fi
-    if test -d ${srcdir}/.git; then
-	local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	if test x"${gcc_version}" = x; then
+	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	fi
+	
+	if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	    local branch="`basename ${gcc_version}`"
+	else
+	    if test `echo ${gcc_version} | grep -c "\.git"`; then
+		local branch=
+	    fi
+	fi
+	
+	local builddir="`get_builddir ${gcc_version}`"
+	local srcdir="`get_srcdir ${gcc_version}`"
+
+	local date="`date +%Y%m%d`"
+	if test -d ${srcdir}/.gito -e ${srcdir}/.gitignore; then
+	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	fi
+	if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
+	fi
+	local tag="`echo ${version}~${revision}-${target}-${host}-${revision}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
-	local revision=${BUILD_NUMBER}
+	# use an explicit tag for the release name
+	local tag="`echo gcc-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+
     fi
-    if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
-    fi
-    local tag="`echo ${version}~${revision}-${target}-${host}-${release}${commit} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
     local destdir=/tmp/linaro/${tag}
 
@@ -138,40 +135,43 @@ binary_sysroot()
 {
     trace "$*"
 
-    if test x"${clibrary}" = x"newlib"; then
-	if test x"${newlb_version}" = x; then
-	    local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
-	else
-	    local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
-	    local srcdir="`get_srcdir $1`"
-	fi
-    else
-	if test x"${eglibc_version}" = x; then
-	    local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-	    local srcdir="`get_srcdir $1`"
-	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	else
-	    local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
-	    local srcdir="`get_srcdir $1`"
-	    local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	fi
-    fi
-
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local commit="@`echo $1 | cut -d '@' -f 2`"
-    else
-	local commit=""
-    fi
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
-	release="`date +%Y%m%d`"
-    fi
-    if test -d ${srcdir}/.git; then
-	local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	if test x"${clibrary}" = x"newlib"; then
+	    if test x"${newlb_version}" = x; then
+		local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
+	    else
+		local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
+	    fi
+	else
+	    if test x"${eglibc_version}" = x; then
+		local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
+		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
+	    else
+		local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
+		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
+	    fi
+	fi
+
+	local builddir="`get_builddir ${libc_version}`"
+	local srcdir="`get_srcdir ${libc_version}`"
+	
+        # if test "`echo $1 | grep -c '@'`" -gt 0; then
+        # 	local commit="@`echo $1 | cut -d '@' -f 2`"
+        # else
+        # 	local commit=""
+        # fi
+	local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+	date="`date +%Y%m%d`"
+	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
+	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	else
+	    revision="${BUILD_NUMBER}"
+	fi
+	local tag="`echo sysroot-${libc_version}-${revision}-${target}-${date}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
-	revision="${BUILD_NUMBER}"
+	local tag="sysroot-${clibrary}-${release}-${target}"
     fi
-    local tag="`echo sysroot-${libc_version}~${revision}-${target}-${release}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
     dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
 
