@@ -48,13 +48,53 @@ sign_tarball()
     return 0
 }
 
-release()
+release_binutils_src()
 {
-    trace "$*"
+    # See if specific component versions were specified at runtime
+    if test x"${binutils_version}" = x; then
+	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2` | tr -d '\"'"
+    fi
+    local srcdir="`get_srcdir ${binutils_version}`"
+    local builddir="`get_builddir ${binutils_version}`"
+    local tag="`create_release_tag ${binutils_version}`"
+    local destdir=/tmp/${tag}
 
-    local tool="`get_toolname $1`"
-    notice "Releasing ${tool}"
-    release_gdb $1		# FIXME: don't hardcode the tool name!
+    # make a link with the correct name for the tarball's source directory
+    dryrun "ln -sfnT ${srcdir} ${destdir}"
+
+    # Update the Binutils version
+    rm -f ${destdir}/binutils/LINARO-VERSION
+    if test x"${release}" = x;then
+	edit_changelogs ${srcdir} ${tag}
+    else
+	edit_changelogs ${srcdir} ${release}
+    fi    
+
+    # Create .gmo files from .po files.
+    for i in `find ${srcdir} -name '*.po' -type f -print`; do
+        msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i
+    done
+
+    # Copy all the info files and man pages into the release directory
+    local docs="`find ${builddir}/ -name \*.info -o -name \*.1 -o -name \*.7 | sed -e "s:${builddir}/::"`"
+    for i in ${docs}; do
+      	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
+    done
+
+    regenerate_checksums ${destdir}
+
+    # Remove extra files left over from any development hacking
+    sanitize ${srcdir}
+
+    # make a link with the correct name for the tarball's source directory
+    dryrun "ln -sfnT ${srcdir}/ ${destdir}"
+    
+    exclude="--exclude-vcs --exclude .gitignore           "
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
+
+    # Make the md5sum file for this tarball
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"    
 }
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GCC/ReleaseProcess
@@ -92,7 +132,8 @@ release_gcc_src()
     # make a link with the correct name for the tarball's source directory
     dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
     
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp --exclude .git ${tag}/"
+    exclude="--exclude-vcs --exclude .gitignore .cvsignore"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
@@ -121,13 +162,20 @@ install_gcc_docs()
     SOURCEDIR=${srcdir}/gcc/doc
     DESTDIR=${destdir}/INSTALL
     . ${srcdir}/gcc/doc/install.texi2html
-    
-#    dryrun "cp -f ${builddir}/gcc/po/*.gmo ${destdir}/gcc/po/"
-        
+
+    # Create .gmo files from .po files.
+    for i in `find ${srcdir} -name '*.po' -type f -print`; do
+        msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i
+    done
+
+    # Make a man alias instead of copying the entire man page for G++
+    rm -f ${builddir}/g++.1
+    echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1
+
     # Copy all the info files and man pages into the release directory
     local docs="`find ${builddir}/ -name \*.info -o -name \*.1 -o -name \*.7 | sed -e "s:${builddir}/::"`"
     for i in ${docs}; do
-      	dryrun "cp ${builddir}/$i ${destdir}/$i"
+      	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
     done
 
     return 0
@@ -189,13 +237,13 @@ edit_changelogs()
 	fi
     fi
     for i in ${clogs}; do
-	mv $i /tmp/
-	echo "${date}  ${fullname}  <${email}>" >> $i
-	echo "" >> $i
-        echo "        GCC Linaro $2 released." >> $i
-	echo "" >> $i
-	cat /tmp/ChangeLog.linaro >> $i
-	rm /tmp/ChangeLog.linaro
+     	mv $i /tmp/
+     	echo "${date}  ${fullname}  <${email}>" >> $i
+     	echo "" >> $i
+         echo "        GCC Linaro $2 released." >> $i
+     	echo "" >> $i
+     	cat /tmp/ChangeLog.linaro >> $i
+     	rm -f /tmp/ChangeLog.linaro
     done
 }
 
@@ -219,12 +267,6 @@ release_gdb()
     # Check in the changes, and tag them
     # bzr commit -m "Make 7.X-20XX.XX[-X] release."
     # bzr tag gdb-linaro-7.X-20XX.XX[-X]
-}
-
-release_binutils()
-{
-    # First, checkout all the sources, or grab a snapshot
-    error "unimplemented"
 }
 
 release_newlib()
