@@ -79,7 +79,9 @@ checkout()
 		dryrun "(cd ${srcdir} && git pull origin ${branch})"
 	    else
 		if test x"${branch}" = x; then
-		    dryrun "git clone $1 ${srcdir}"
+		    # Strip off the "/<branchname>" from $1 to get the repo address
+		    local repo="`echo $1 | sed -e "s:\(^.*/${tool}.git\).*:\1:"`"
+		    dryrun "git clone ${repo} ${local_snapshots}/${tool}.git"
 		else
 		    if test ! -d ${local_snapshots}/${tool}.git; then
 			dryrun "git clone $1 ${srcdir}"
