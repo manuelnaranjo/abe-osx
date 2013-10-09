@@ -60,15 +60,20 @@ fi
 
 $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
 
-if test $? -eq 0; then
-    if test x"${runtests}" = xtrue; then
-	sums="`find -name \*.sum`"
-	for i in ${sums}; do
-	    name="`echo $i | cut -d '.' -f 1`"
-	    ../sum2junit.sh $i
-	done
-	junits="`find -name *.junit`"
-	cat ${junits}
-	rm ${junits}
-    fi
-fi
+# 	sums="`find -name \*.sum`"
+
+ls -F $WORKSPACE/cbuildv2/snapshots
+find -name \*.sum
+
+# if test $? -eq 0; then
+#     if test x"${runtests}" = xtrue; then
+# 	sums="`find -name \*.sum`"
+# 	for i in ${sums}; do
+# 	    name="`echo $i | cut -d '.' -f 1`"
+# 	    ../sum2junit.sh $i
+# 	done
+# 	junits="`find -name *.junit`"
+# 	cat ${junits}
+# 	rm ${junits}
+#     fi
+# fi
