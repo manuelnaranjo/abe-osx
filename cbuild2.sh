@@ -252,7 +252,7 @@ while test $# -gt 0; do
 	# these are enabled by default, but not always desired.
 	--disable)
 	    case $2 in
-		boostrap|b*)
+		bootstrap|b*)
 		    bootstrap=no
 		    ;;
 		check|c*)
