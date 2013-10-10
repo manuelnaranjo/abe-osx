@@ -40,7 +40,7 @@ get_list()
 	    echo "${snapshots}"
 	    ;;
 	infrastructure|i*)
-	    infrastructure="`grep infrastructure ${local_snapshots}/infrastructure/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	    infrastructure="`grep infrastructure ${local_snapshots}/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
 	    echo "${infrastructure}"
 	    ;;
     esac
