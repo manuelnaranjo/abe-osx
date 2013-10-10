@@ -322,7 +322,7 @@ find_snapshot()
     #fetch_rsync ${remote_snapshots}/md5sums
 
     # Search for the snapshot in the md5sum file, and filter out anything we don't want.
-    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
+    snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	    error "Too many results for $1!"

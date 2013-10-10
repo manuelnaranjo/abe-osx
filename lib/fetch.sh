@@ -33,12 +33,12 @@ fetch()
     if test x"$1" = x"md5sums"; then
 	# Move the existing file to force a fresh copy to be downloaded.
 	# Otherwise this file can get stale, and new tarballs not found.
-	if test -f ${local_snapshots}/${dir}md5sums; then
-	    cp -f ${local_snapshots}/${dir}md5sums ${local_snapshots}/${dir}md5sums.bak
+	if test -f ${local_snapshots}/md5sums; then
+	    cp -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
 	fi
-	fetch_http ${dir}md5sums
-	if test ! -s ${dir}md5sums; then
-	    cp -f ${local_snapshots}/${dir}md5sums.bak ${local_snapshots}/${dir}md5sums
+	fetch_http md5sums
+	if test ! -s md5sums; then
+	    cp -f ${local_snapshots}/md5sums.bak ${local_snapshots}/md5sums
 	fi
 	return $?
     fi
@@ -175,7 +175,7 @@ check_md5sum()
     local getfile=`echo ${1}`
 
     newsum="`md5sum ${local_snapshots}/$1 | cut -d ' ' -f 1`"
-    oldsum="`grep ${getfile} ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 1`"
+    oldsum="`grep ${getfile} ${local_snapshots}/md5sums | cut -d ' ' -f 1`"
     # if there isn't an entry in the md5sum file, we're probably downloading
     # something else that's less critical.
     if test x"${oldsum}" = x; then
@@ -215,7 +215,7 @@ extract()
     fi
 
     if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
-	local file="`grep $1 ${local_snapshots}/${dir}md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	local file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
     else
 	local file="`echo $1 | cut -d '/' -f 2`"
     fi

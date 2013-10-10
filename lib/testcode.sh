@@ -4,19 +4,15 @@
 
 testcode()
 {
-    # force downloading the md5sum file, as it changes frequently
-    rm -f ${local_snapshots}/testcode/md5sums
-    fetch_http testcode/md5sums
-
     rm -f ${local_snapshots}/testcode/ChangeLog
     fetch_http testcode/ChangeLog
 
-    if test -f ${local_snapshots}/testcode/md5sums; then
-     	files="`cat ${local_snapshots}/testcode/md5sums | cut -d ' ' -f3`"
+    if test -f ${local_snapshots}/md5sums; then
+     	files="`grep testcode ${local_snapshots}/md5sums | cut -d ' ' -f3`"
      	for i in ${files}; do
-     	    build testcode/$i
+     	    build $i
 	    if test $? -gt 0; then
-		error "Couldn't build testcode/$i!"
+		error "Couldn't build $i!"
 		return 1
 	    fi
      	done
