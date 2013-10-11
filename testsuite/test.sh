@@ -15,7 +15,6 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     warning "no host.conf file!"
-    exit 1
 fi
 
 # Since we're testing, we don't load the host.conf file, instead
