@@ -8,6 +8,8 @@ else
     topdir=$PWD
 fi
 
+. "${topdir}/lib/common.sh" || exit 1
+
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -15,7 +17,6 @@ else
     warning "no host.conf file!"
 fi
 
-. "${topdir}/lib/common.sh" || exit 1
 . "${topdir}/host.conf" || exit 1
 
 # Since we're testing, we don't load the host.conf file, instead
