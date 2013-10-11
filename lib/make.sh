@@ -88,6 +88,7 @@ build_all()
 	release_binutils_src
 
 	binary_tarball
+	binary_runtime
     fi
 
     return 0
@@ -474,13 +475,15 @@ EOF
     # See if a test case compiles to a fully linked executable. Since
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
-    dryrun "${target}-g++ --sysroot=${sysroots} -o /tmp/hi /tmp/hello.cpp"
-
-    if test -e /tmp/hi; then
-	rm -f /tmp/hi
-	return 0
-    else
-	return 1
+    if test x"${build}" != x"${target}"; then
+	dryrun "${target}-g++ --sysroot=${sysroots} -o /tmp/hi /tmp/hello.cpp"
+	if test -e /tmp/hi; then
+	    rm -f /tmp/hi
+	else
+	    return 1
+	fi
     fi
+
+    return 0
 }
 
