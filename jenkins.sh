@@ -63,7 +63,7 @@ $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarbal
 # 	sums="`find -name \*.sum`"
 
 ls -F $WORKSPACE/cbuildv2/snapshots
-find -name \*.sum
+find $WORKSPACE -name \*.sum
 
 # if test $? -eq 0; then
 #     if test x"${runtests}" = xtrue; then
