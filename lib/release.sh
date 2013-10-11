@@ -72,7 +72,7 @@ release_binutils_src()
 
     # Create .gmo files from .po files.
     for i in `find ${srcdir} -name '*.po' -type f -print`; do
-        msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i
+        dryrun "msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i"
     done
 
     # Copy all the info files and man pages into the release directory
@@ -161,19 +161,24 @@ install_gcc_docs()
 
     # Create .gmo files from .po files.
     for i in `find ${srcdir} -name '*.po' -type f -print`; do
-        msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i
+        dryrun "msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i"
     done
 
     # Make a man alias instead of copying the entire man page for G++
-    rm -f ${builddir}/g++.1
-    echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1
+    if test ! -e ${builddir}/g++.1; then
+	echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1
+    fi
 
     # Copy all the info files and man pages into the release directory
     local docs="`find ${builddir}/ -name \*.info -o -name \*.1 -o -name \*.7 | sed -e "s:${builddir}/::"`"
     for i in ${docs}; do
+	local dir="${destdir}/`dirname $i`"
+	if test ! -d ${dir}; then
+	    mkdir -p ${dir}
+	fi
       	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
     done
-
+    
     return 0
 }
 
@@ -230,10 +235,9 @@ edit_changelogs()
 
     local clogs="`find $1 -name ChangeLog.linaro`"
     if test x"${clogs}" = x; then
-	local dirs="`find $1 -maxdepth 2 -type d | grep -v "/\.git/"`"
-	local clogs=
+	local dirs="`find $1 -name ChangeLog`.linaro"
 	for i in ${dirs}; do
-	    local clogs="$i/ChangeLog.linaro ${clogs}"
+	    local clogs="$i ${clogs}"
 	done
     fi
 
@@ -306,4 +310,39 @@ tag_release()
 	local dccs = $1
     fi
     error "release TAGging unimplemented"
+}
+
+# $1 - The release ttee directory to put the script in for packaging.
+sysroot_install_script()
+{
+    trace "$*"
+
+    local script=$1/INSTALL-SYSROOT.sh
+    local tag="`basename $1`"
+
+    if test ! -e ${script}; then
+    # Create the usual Hello World! test case
+	cat <<EOF > ${script}
+#!/bin/sh
+
+# make the top level directory
+if test ! -d /opt/linaro/; then
+  echo "This script will install this sysroot in /opt/linaro. Write permission"
+  echo "to /opt is required. The files will stay where they are, only a symbolic"
+  echo "is created, which can be changed to swap sysroots at compile time."
+  echo ""
+  echo "Continue ? Hit any key..."
+  read answer
+
+  mkdir -p /opt/linaro
+fi
+
+# If it doesn't already exist, link to the sysroot path GCC will be using
+if test ! -d /opt/linaro/${tag}; then
+  ln -sf  \${PWD} /opt/linaro/sysroot-eglibc.git-${target}
+fi
+EOF
+    fi
+
+    return 0
 }
