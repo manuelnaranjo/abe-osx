@@ -37,7 +37,7 @@ fetch()
 	    cp -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
 	fi
 	fetch_http md5sums
-	if test ! -s md5sums; then
+	if test ! -s ${local_snapshots}/md5sums; then
 	    cp -f ${local_snapshots}/md5sums.bak ${local_snapshots}/md5sums
 	fi
 	return $?
