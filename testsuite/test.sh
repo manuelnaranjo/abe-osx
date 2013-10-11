@@ -10,14 +10,13 @@ fi
 
 . "${topdir}/lib/common.sh" || exit 1
 
-# load the configure file produced by configure
+# configure generates host.conf from host.conf.in.
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     warning "no host.conf file!"
+    exit 1
 fi
-
-. "${topdir}/host.conf" || exit 1
 
 # Since we're testing, we don't load the host.conf file, instead
 # we create false values that stay consistent.
