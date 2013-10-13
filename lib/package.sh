@@ -62,6 +62,63 @@ binary_tarball()
     done
 }
 
+# The runtime libraries are produced during dynamic builds of gcc, libgcc,
+# listdc++, and gfortran.
+binary_runtime()
+{
+    trace "$*"
+
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+
+    # no expicit release tag supplied, so create one.
+    if test x"${release}" = x; then
+	if test x"${gcc_version}" = x; then
+	    local gcc_version="~`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	fi
+	
+	if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	    local branch="`basename ${gcc_version}`"
+	else
+	    if test `echo ${gcc_version} | grep -c "\.git"`; then
+		local branch=
+	    fi
+	fi
+	
+	local builddir="`get_builddir ${gcc_version}`"
+	local srcdir="`get_srcdir ${gcc_version}`"
+
+	local date="`date +%Y%m%d`"
+	if test -d ${srcdir}/.gito -o -e ${srcdir}/.gitignore; then
+	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	fi
+	if test `echo ${gcc_version} | grep -c "\.git/"`; then
+	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
+	fi
+	local tag="`echo runtime-${version}~${revision}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+    else
+	# use an explicit tag for the release name
+	local tag="`echo runtime-${release}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+
+    fi
+
+    local destdir=/tmp/linaro/${tag}
+
+    dryrun "mkdir -p ${destdir}/lib/${target} ${destdir}/usr/lib/${target}"
+
+    # Get the binary libraries
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib64/libgcc_s* ${destdir}/lib/${target}/"
+    
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib64/libstdc++* ${destdir}/usr/lib/${target}/"
+
+    # make the tarball from the tree we just created.
+    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    return 0
+}
+
 # Produce a binary toolchain tarball
 # For daily builds produced by Jenkins, we use
 # `date +%Y%m%d`-${BUILD_NUMBER}-${GIT_REVISION}
@@ -90,7 +147,7 @@ binary_toolchain()
 	local srcdir="`get_srcdir ${gcc_version}`"
 
 	local date="`date +%Y%m%d`"
-	if test -d ${srcdir}/.gito -e ${srcdir}/.gitignore; then
+	if test -d ${srcdir}/.gito -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
@@ -115,6 +172,10 @@ binary_toolchain()
     dryrun "cp -r ${local_builds}/destdir/${host}/${target} ${destdir}/"
     dryrun "cp -r ${local_builds}/destdir/${host}/lib/gcc/${target} ${destdir}/lib/gcc/"
     dryrun "cp -r ${local_builds}/destdir/${host}/libexec/gcc/${target} ${destdir}/libexec/gcc/"
+
+    # Copy the sysroot
+    dryrun "mkdir -p ${destdir}/lib/gcc"
+    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
 
     manifest
     cp /tmp/manifest.txt ${destdir}
@@ -174,6 +235,9 @@ binary_sysroot()
     fi
 
     dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
+
+    # Generate the install script
+    sysroot_install_script /tmp/${tag}
 
     dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
 
@@ -289,7 +353,7 @@ binutils_src_tarball()
 
     # Create .gmo files from .po files.
     for f in `find . -name '*.po' -type f -print`; do
-        msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f
+        dryrun "msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f"
     done
  
     local date="`date +%Y%m%d`"
