@@ -29,12 +29,12 @@ EOF
 
     rm -f ${reldir}/MD5SUMS
     touch ${reldir}/MD5SUMS
- 
+    
     find ${reldir}/ -type f | grep -v MD5SUMS | sort > /tmp/md5sums
-    for i in `cat /tmp/md5sums`; do
-	md5sum $i 2>&1 | sed -e 's:/tmp/::' >> ${reldir}/MD5SUMS
-    done
-
+    md5sum `cat /tmp/md5sums` 2>&1 | sed -e 's:/tmp/::' >> ${reldir}/MD5SUMS
+#    for i in `cat /tmp/md5sums`; do
+#	md5sum $i 2>&1 | sed -e 's:/tmp/::' >> ${reldir}/MD5SUMS
+#    done
     return 0
 }
 
@@ -81,7 +81,7 @@ release_binutils_src()
       	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
     done
 
-    regenerate_checksums ${destdir}
+    dryrun "regenerate_checksums ${destdir}"
 
     # Remove extra files left over from any development hacking
     sanitize ${srcdir}
@@ -118,9 +118,13 @@ release_gcc_src()
     rm -f ${destdir}/gcc/LINARO-VERSION
     echo "${tag}" > ${destdir}/gcc/LINARO-VERSION
 
-    edit_changelogs ${srcdir} ${tag}
+    if test x"${release}" = x;then
+	edit_changelogs ${srcdir} ${tag}
+    else
+	edit_changelogs ${srcdir} ${release}
+    fi    
     
-    regenerate_checksums ${destdir}
+    dryrun "regenerate_checksums ${destdir}"
 
     # Remove extra files left over from any development hacking
     sanitize ${srcdir}
@@ -157,7 +161,7 @@ install_gcc_docs()
     # the GCC script needs these two values to work.
     SOURCEDIR=${srcdir}/gcc/doc
     DESTDIR=${destdir}/INSTALL
-    . ${srcdir}/gcc/doc/install.texi2html
+    dryrun ". ${srcdir}/gcc/doc/install.texi2html"
 
     # Create .gmo files from .po files.
     for i in `find ${srcdir} -name '*.po' -type f -print`; do
@@ -166,7 +170,7 @@ install_gcc_docs()
 
     # Make a man alias instead of copying the entire man page for G++
     if test ! -e ${builddir}/g++.1; then
-	echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1
+	dryrun "echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1"
     fi
 
     # Copy all the info files and man pages into the release directory
@@ -174,7 +178,7 @@ install_gcc_docs()
     for i in ${docs}; do
 	local dir="${destdir}/`dirname $i`"
 	if test ! -d ${dir}; then
-	    mkdir -p ${dir}
+	    dryrun "mkdir -p ${dir}"
 	fi
       	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
     done
@@ -233,27 +237,25 @@ edit_changelogs()
 	fi
     fi
 
-    local clogs="`find $1 -name ChangeLog.linaro`"
-    if test x"${clogs}" = x; then
-	local dirs="`find $1 -name ChangeLog`.linaro"
-	for i in ${dirs}; do
-	    local clogs="$i ${clogs}"
+    # Get all the ChangeLog files.
+    local clogs="`find $1 -name ChangeLog`"
+
+    # For a dryrun, don't actually edit any ChangeLog files.
+    if test x"${dryrun}" = x"no"; then
+	for i in ${clogs}; do
+	    if test -e $i.linaro; then
+     		mv $i.linaro /tmp/
+	    else
+		touch /tmp/ChangeLog.linaro
+	    fi
+     	    echo "${date}  ${fullname}  <${email}>" >> $i
+     	    echo "" >> $i
+            echo "        GCC Linaro $2 released." >> $i
+     	    echo "" >> $i
+     	    cat /tmp/ChangeLog.linaro >> $i
+     	    rm -f /tmp/ChangeLog.linaro
 	done
     fi
-
-    for i in ${clogs}; do
-	if test -e $i; then
-     	    mv $i /tmp/
-	else
-	    touch /tmp/ChangeLog.linaro
-	fi
-     	echo "${date}  ${fullname}  <${email}>" >> $i
-     	echo "" >> $i
-         echo "        GCC Linaro $2 released." >> $i
-     	echo "" >> $i
-     	cat /tmp/ChangeLog.linaro >> $i
-     	rm -f /tmp/ChangeLog.linaro
-    done
 }
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GDB/ReleaseProcess
