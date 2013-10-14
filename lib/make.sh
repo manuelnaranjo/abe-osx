@@ -152,7 +152,7 @@ build()
     
     if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp|\.git"` -gt 0; then	
 	# Don't checkout
-	if test x"$2" != x"stage2"; then
+	# if test x"$2" != x"stage2"; then
 	    checkout ${tag}
 	    if test $? -gt 0; then
 		return 1
@@ -161,7 +161,7 @@ build()
 	    # if test $? -gt 0; then
 	    # 	return 1
 	    # fi
-	fi
+	#fi
     else
 	if test x"$2" != x"stage2"; then
 	    fetch ${url}
