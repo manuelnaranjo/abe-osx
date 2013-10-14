@@ -97,7 +97,7 @@ binary_runtime()
 	local tag="`echo runtime-${version}~${revision}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
-	local tag="`echo runtime-${release}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	local tag="`echo runtime-linaro-gcc${version}-${release}-${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
 
     fi
 
@@ -156,7 +156,7 @@ binary_toolchain()
 	local tag="`echo ${version}~${revision}-${target}-${host}-${revision}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
-	local tag="`echo gcc-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	local tag="`echo gcc-linaro-${version}-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
 
     fi
 
@@ -196,6 +196,8 @@ binary_sysroot()
 {
     trace "$*"
 
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
 	if test x"${clibrary}" = x"newlib"; then
@@ -231,7 +233,7 @@ binary_sysroot()
 	fi
 	local tag="`echo sysroot-${libc_version}-${revision}-${target}-${date}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
-	local tag="sysroot-${clibrary}-${release}-${target}"
+	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
     fi
 
     dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
@@ -331,6 +333,8 @@ binutils_src_tarball()
 {
     trace "$*"
 
+    local version="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
+
     # See if specific component versions were specified at runtime
     if test x"${binutils_version}" = x; then
 	local binutils_version="binutils-`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
@@ -356,19 +360,23 @@ binutils_src_tarball()
         dryrun "msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f"
     done
  
-    local date="`date +%Y%m%d`"
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local revision="`echo $1 | cut -d '@' -f 2`"
-    fi
-    if test -d ${srcdir}/.git; then
-	local binutils_version="${dir}-${date}"
-	local revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	local exclude="--exclude .git"
+    if test x"${release}" != x; then
+	local date="`date +%Y%m%d`"
+	if test "`echo $1 | grep -c '@'`" -gt 0; then
+	    local revision="`echo $1 | cut -d '@' -f 2`"
+	fi
+	if test -d ${srcdir}/.git; then
+	    local binutils_version="${dir}-${date}"
+	    local revision="-`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+	    local exclude="--exclude .git"
+	else
+	    local binutils_version="`echo ${binutils_version} | sed -e "s:-2.*:-${date}:"`"
+	fi
+	local date="`date +%Y%m%d`"
+	local tag="${binutils_version}-linaro${revision}-${date}"
     else
-	local binutils_version="`echo ${binutils_version} | sed -e "s:-2.*:-${date}:"`"
+	local tag="binutils-linaro-${version}-${release}"
     fi
-    local date="`date +%Y%m%d`"
-    local tag="${binutils_version}-linaro${revision}-${date}"
 
     dryrun "ln -s ${srcdir} /tmp/${tag}"
 
