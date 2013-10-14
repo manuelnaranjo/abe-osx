@@ -58,7 +58,7 @@ fetch()
     fi
 
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
+    if test -e ${local_snapshots}/${md5file} -a ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
      	fixme "stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
 	return 0
     else
@@ -253,7 +253,7 @@ extract()
     # name versions doesn't match the tarball version. This means it's missing the
     # -linaro-VERSION.YYYY.MM part.
     local name="`echo ${file} | sed -e 's:.tar\..*::'`"
-    if test ! -d ${local_snapshots}/${name}; then
+    if test ! -d ${local_snapshots}/${dir}${name}; then
 	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
 	if test ! -d ${local_snapshots}/${name}; then
 	    warning "Making a symbolic link for nonstandard directory name!"
