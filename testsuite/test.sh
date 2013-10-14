@@ -15,6 +15,10 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     warning "no host.conf file!"
+    remote_snapshots=http://cbuild.validation.linaro.org/snapshots
+    local_snapshots=test_snapshots
+    wget_bin=/usr/bin/wget
+    wget_quiet=yes
 fi
 
 # Since we're testing, we don't load the host.conf file, instead
@@ -22,6 +26,10 @@ fi
 cbuild_top=/build/cbuild2/test
 hostname=test.foobar.org
 target=x86_64-linux-gnu
+#remote_snapshots=http://cbuild.validation.linaro.org/snapshots
+#local_snapshots=test_snapshots
+#wget_bin=/usr/bin/wget
+#wget_quiet=yes
 
 if test x"$1" = x"-v"; then
     debug=yes
@@ -141,6 +149,19 @@ else
     fixme "${in} returned ${out}"
 fi
 
+# ----------------------------------------------------------------------------------
+echo "============= fetch() tests ================"
+if test -d "${local_snapshots}"; then
+    notice "${local_snapshots} directory exists.  Moving it to ${local_snapshots}.bak."
+    mv ${local_snapshots} ${local_snapshots}.bak
+fi
+
+out="`fetch md5sums`"
+if test $? -eq 0; then
+    pass "fetch md5sums"
+else
+    fail "fetch md5sums"
+fi
 # ----------------------------------------------------------------------------------
 echo "============= find_snapshot() tests ================"
 
