@@ -16,9 +16,19 @@ if test -e "${PWD}/host.conf"; then
 else
     warning "no host.conf file!"
     remote_snapshots=http://cbuild.validation.linaro.org/snapshots
-    local_snapshots=test_snapshots
     wget_bin=/usr/bin/wget
     wget_quiet=yes
+fi
+
+# We always override $local_snapshots so that we don't damage or move the
+# local_snapshots directory of an existing build.
+local_snapshots="`mktemp -d /tmp/cbuild2.XXX`/snapshots"
+
+# Let's make sure that the snapshots portion of the directory is created before
+# we use it just to be safe.
+out="`mkdir -p ${local_snapshots}`"
+if test "$?" -gt 1; then
+    exit 1
 fi
 
 # Since we're testing, we don't load the host.conf file, instead
@@ -26,10 +36,6 @@ fi
 cbuild_top=/build/cbuild2/test
 hostname=test.foobar.org
 target=x86_64-linux-gnu
-#remote_snapshots=http://cbuild.validation.linaro.org/snapshots
-#local_snapshots=test_snapshots
-#wget_bin=/usr/bin/wget
-#wget_quiet=yes
 
 if test x"$1" = x"-v"; then
     debug=yes
@@ -151,11 +157,6 @@ fi
 
 # ----------------------------------------------------------------------------------
 echo "============= fetch() tests ================"
-if test -d "${local_snapshots}"; then
-    notice "${local_snapshots} directory exists.  Moving it to ${local_snapshots}.bak."
-    mv ${local_snapshots} ${local_snapshots}.bak
-fi
-
 out="`fetch md5sums`"
 if test $? -eq 0; then
     pass "fetch md5sums"
