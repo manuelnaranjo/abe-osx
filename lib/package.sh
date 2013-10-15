@@ -105,10 +105,11 @@ binary_runtime()
 
     dryrun "mkdir -p ${destdir}/lib/${target} ${destdir}/usr/lib/${target}"
 
-    # Get the binary libraries
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib64/libgcc_s* ${destdir}/lib/${target}/"
+    # Get the binary libraries. aarch64 uses /lib64, arm uses /lib, s we use a wildcard
+    # to get either.
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc_s* ${destdir}/lib/${target}/"
     
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib64/libstdc++* ${destdir}/usr/lib/${target}/"
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
 
     # make the tarball from the tree we just created.
     dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
