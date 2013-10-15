@@ -17,12 +17,14 @@ else
     warning "no host.conf file!"
     remote_snapshots=http://cbuild.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
-    wget_quiet=yes
 fi
+
+# Use wget -q in the testsuite
+wget_quiet=yes
 
 # We always override $local_snapshots so that we don't damage or move the
 # local_snapshots directory of an existing build.
-local_snapshots="`mktemp -d /tmp/cbuild2.XXX`/snapshots"
+local_snapshots="`mktemp -d /tmp/cbuild2.$$.XXX`/snapshots"
 
 # Let's make sure that the snapshots portion of the directory is created before
 # we use it just to be safe.
@@ -162,6 +164,26 @@ if test $? -eq 0; then
     pass "fetch md5sums"
 else
     fail "fetch md5sums"
+fi
+
+# Fetching again to test the .bak functionality.
+out="`fetch md5sums`"
+if test $? -eq 0; then
+    pass "fetch md5sums"
+else
+    fail "fetch md5sums"
+fi
+
+if test ! -e "${local_snapshots}/md5sums"; then
+    fail "Did not find ${local_snapshots}/md5sums"
+else
+    pass "Found ${local_snapshots}/md5sums"
+fi
+
+if test ! -e "${local_snapshots}/md5sums.bak"; then
+    fail "Did not find ${local_snapshots}/md5sums.bak"
+else
+    pass "Found ${local_snapshots}/md5sums.bak"
 fi
 # ----------------------------------------------------------------------------------
 echo "============= find_snapshot() tests ================"
