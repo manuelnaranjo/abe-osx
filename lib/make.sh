@@ -188,26 +188,26 @@ build()
     
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
-	make_clean ${tag}
+	make_clean ${tag} $2
 	if test $? -gt 0; then
 	    return 1
 	fi
     fi
     
     # Finally compile and install the libaries
-    make_all ${tag}
+    make_all ${tag} $2
     if test $? -gt 0; then
 	return 1
     fi
 
     # Build the documentation.
-    make_docs ${tag}
+    make_docs ${tag} $2
     if test $? -gt 0; then
 	return 1
     fi
 
 #    if test x"${install}" = x"yes"; then    
-	make_install ${tag}
+	make_install ${tag} $2
 	if test $? -gt 0; then
 	    return 1
 	fi
@@ -235,7 +235,7 @@ build()
     if test x"${runtests}" = xyes; then
 	if test x"$2" != x"stage1"; then
 	    notice "Starting test run for ${url}"
-	    make_check ${url}
+	    make_check ${url} stage2
 	    if test $? -gt 0; then
 		return 1
 	    fi
@@ -256,7 +256,7 @@ make_all()
 	return 0
     fi
 
-    builddir="`get_builddir $1`"
+    builddir="`get_builddir $1 $2`"
     notice "Making all in ${builddir}"
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
@@ -266,7 +266,7 @@ make_all()
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
-    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} $2 2>&1 | tee ${builddir}/make.log"
+    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
     if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
 	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
     fi
@@ -293,7 +293,7 @@ make_install()
 	return 0
     fi
 
-    local builddir="`get_builddir $1`"
+    local builddir="`get_builddir $1 $2`"
     notice "Making install in ${builddir}"
 
     if test x"${tool}" = x"eglibc"; then
@@ -318,9 +318,9 @@ make_install()
 	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
 	# due to an info file problem, so we ignore the error so the build
 	# will continue.
-	dryrun "make install ${make_flags} $2 -i -k -w -C ${builddir}"
+	dryrun "make install ${make_flags} -i -k -w -C ${builddir}"
     else
-	dryrun "make install ${make_flags} $2 -w -C ${builddir}"
+	dryrun "make install ${make_flags} -w -C ${builddir}"
     fi
 
     if test $? != "0"; then
@@ -346,7 +346,7 @@ make_check_installed()
 
     local tool="`get_toolname $1`"
     if test x"${builddir}" = x; then
-	local builddir="`get_builddir $1`"
+	local builddir="`get_builddir $1 $2`"
     fi
     notice "Making check in ${builddir}"
 
@@ -365,7 +365,7 @@ make_check_installed()
 	    dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
 	    ;;
 	gcc*)
-	    local builddir="`get_builddir ${gcc_version}`"
+	    local builddir="`get_builddir ${gcc_version} $2`"
 	    for i in "c c++"; do
 		dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
 	    done
@@ -393,7 +393,7 @@ make_check()
 
     local tool="`get_toolname $1`"
     if test x"${builddir}" = x; then
-	local builddir="`get_builddir $1`"
+	local builddir="`get_builddir $1 $2`"
     fi
     notice "Making check in ${builddir}"
 
@@ -410,7 +410,7 @@ make_clean()
 {
     trace "$*"
 
-    builddir="`get_builddir $1`"
+    builddir="`get_builddir $1 $2`"
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
@@ -430,7 +430,7 @@ make_docs()
 {
     trace "$*"
 
-    local builddir="`get_builddir $1`"
+    local builddir="`get_builddir $1 $2`"
 
     notice "Making docs in ${builddir}"
 

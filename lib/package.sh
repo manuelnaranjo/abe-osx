@@ -84,7 +84,7 @@ binary_runtime()
 	    fi
 	fi
 	
-	local builddir="`get_builddir ${gcc_version}`"
+	local builddir="`get_builddir ${gcc_version} stage2`"
 	local srcdir="`get_srcdir ${gcc_version}`"
 
 	local date="`date +%Y%m%d`"
@@ -144,7 +144,7 @@ binary_toolchain()
 	    fi
 	fi
 	
-	local builddir="`get_builddir ${gcc_version}`"
+	local builddir="`get_builddir ${gcc_version} stage2`"
 	local srcdir="`get_srcdir ${gcc_version}`"
 
 	local date="`date +%Y%m%d`"

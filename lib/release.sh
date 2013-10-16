@@ -108,7 +108,7 @@ release_gcc_src()
 	local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
     local srcdir="`get_srcdir ${gcc_version}`"
-    local builddir="`get_builddir ${gcc_version}`"
+    local builddir="`get_builddir ${gcc_version} stage2`"
     local tag="`create_release_tag ${gcc_version}`"
     local destdir=/tmp/${tag}
 

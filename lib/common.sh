@@ -235,7 +235,7 @@ get_builddir()
     # BUILD_ID 2013-09-02_20-23-02
     # BUILD_NUMBER 1077
     # BUILD_TAG	jenkins-cbuild-1077
-    echo "${local_builds}/${host}/${target}/${dir}"
+    echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
 
     return 0
 }

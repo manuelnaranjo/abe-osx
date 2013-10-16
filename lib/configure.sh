@@ -14,7 +14,7 @@ configure_build()
 	return 0
     fi
 
-    local builddir="`get_builddir $1`"
+    local builddir="`get_builddir $1 $2`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local revision="`echo $1 | cut -d '@' -f 2`"
     else
@@ -26,7 +26,7 @@ configure_build()
     # will fail because the shell thinks the part before the / is a directory
     # name.
     local file="`echo ${file} | sed -e 's:/:-:'`"
-    local stamp="stamp-configure-${file}"
+    local stamp="stamp-configure-${file}${2:+-$2}"
 
     if test ${builddir}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
 	fixme "${stamp} is newer than $1, so not configuring $1"
