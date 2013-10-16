@@ -88,7 +88,9 @@ build_all()
 	release_binutils_src
 
 	binary_tarball
-	binary_runtime
+	if test x"${clibrary}" != x"newlib"; then
+	    binary_runtime
+	fi
     fi
 
     return 0
