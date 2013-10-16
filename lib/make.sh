@@ -318,9 +318,9 @@ make_install()
 	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
 	# due to an info file problem, so we ignore the error so the build
 	# will continue.
-	dryrun "make install ${make_flags} -i -k -w -C ${builddir}"
+	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
-	dryrun "make install ${make_flags} -w -C ${builddir}"
+	dryrun "make install ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
 
     if test $? != "0"; then
