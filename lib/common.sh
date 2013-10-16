@@ -143,7 +143,7 @@ list_URL()
 {
 #    trace "$*"
 
-    locals srcs="${topdir}/config/sources.conf"    
+    local srcs="${topdir}/config/sources.conf"    
     if test -e ${srcs}; then
 	notice "Supported source repositories for $1 are:"
 #	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
