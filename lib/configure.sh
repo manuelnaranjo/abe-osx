@@ -27,8 +27,11 @@ configure_build()
     # name.
     local file="`echo ${file} | sed -e 's:/:-:'`"
     local stamp="stamp-configure-${file}${2:+-$2}"
+    # Don't look for the stamp in the builddir because it's in builddir's
+    # parent directory.
+    local stampdir="`dirname ${builddir}`"
 
-    if test ${builddir}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
+    if test ${stampdir}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
 	fixme "${stamp} is newer than $1, so not configuring $1"
 	return 0
     else
@@ -198,7 +201,7 @@ configure_build()
 	default_configure_flags=
     fi
 
-    touch ${local_builds}/${host}/${target}/${stamp}
+    touch ${stampdir}/${stamp}
 
     return 0
 }
