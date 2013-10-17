@@ -43,7 +43,7 @@ set_dbpasswd()
 dryrun()
 {
     if test x"${dryrun}" = xyes; then
-	echo "DRYRUN: $1"
+	echo "DRYRUN: $1" 1>&2
     else
 	if test x"${interactive}" = x"yes"; then
 	    notice "About to execute $1"
@@ -60,33 +60,33 @@ dryrun()
 
 trace()
 {
-    echo "TRACE(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)"
+    echo "TRACE(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)" 1>&2
 
 }
 
 fixme()
 {
-    echo "FIXME(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)"
+    echo "FIXME(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)" 1>&2
 
 }
 
 error()
 {
-    echo "ERROR (#${BASH_LINENO}): $1"
+    echo "ERROR (#${BASH_LINENO}): ${FUNCNAME[1]} ($1)" 1>&2
     return 1
 }
 
 warning()
 {
     if test "${verbose}" -gt 0; then
-	echo "WARNING: $1"
+	echo "WARNING: $1" 1>&2
     fi
 }
 
 notice()
 {
     if test "${verbose}" -gt 0; then
-	echo "NOTE: $1"
+	echo "NOTE: $1" 1>&2
     fi
 }
 
@@ -117,9 +117,9 @@ get_URL()
     
     if test -e ${srcs}; then
 	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
-	    echo "ERROR: Need unique component and version to get URL!"
-	    echo ""
-	    echo "Choose one from this list"
+	    error "Need unique component and version to get URL!"
+	    echo "" 1>&2
+	    echo "Choose one from this list" 1>&2
 #	    list_URL $1
 	    return 1
 	fi
@@ -149,7 +149,7 @@ list_URL()
 #	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
 	local url="`grep $1 ${srcs} | tr -s ' ' | cut -d ' ' -f 2`"
 	for i in ${url}; do
-	    echo "	$i"
+	    echo "	$i" 1>&2
 	done
 	return 0
     else
@@ -325,7 +325,7 @@ find_snapshot()
     snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	    error "Too many results for $1!"
+	    warning "Too many results for $1!"
 	    return 1
 	fi
 	echo "${snapshot}"
@@ -334,11 +334,11 @@ find_snapshot()
 
 #    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
     if test x"${snapshot}" = x; then
-	error "No results for $1!"
+	warning "No results for $1!"
 	return 1
     fi
     if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	error "Too many results for $1!"
+	warning "Too many results for $1!"
 	return 1
     fi
 
@@ -372,7 +372,7 @@ get_source()
 	    if test x"${interactive}" = x"yes"; then
 	     	notice "Pick a unique snapshot name from this list: "
 		for i in ${snapshot}; do
-		    echo "	$i"
+		    echo "	$i" 1>&2
 		done
 	     	read answer
 	     	local url="`find_snapshot ${answer}`"
@@ -387,7 +387,7 @@ get_source()
 		    fi
 		    notice "Pick a unique snapshot name from this list and try again: "
 		    for i in ${snapshot}; do
-			echo "	$i"
+			echo "	$i" 1>&2
 		    done
 		    list_URL $1
 		    return 0
@@ -424,7 +424,7 @@ get_source()
 	     	notice "Pick a unique URL from this list: "
 		list_URL $3
 		for i in ${url}; do
-		    echo "\t$i"
+		    echo "\t$i" 1>&2
 		done
 	     	read answer
 		local url="`get_URL ${answer}`"
@@ -432,7 +432,7 @@ get_source()
 	# else
 	#     notice "Pick a unique URL from this list: "
 	#     for i in ${url}; do
-	# 	echo "	$i"
+	# 	echo "	$i" 1>&2
 	#     done
 	fi
     fi
