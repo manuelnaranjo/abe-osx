@@ -102,6 +102,10 @@ build()
 
     local file="`echo $1 | sed -e 's:\.tar.*::'`"
     local gitinfo="`get_source $1`"
+    if test -z "${gitinfo}"; then
+	error "No matching source found for \"$1\"."
+	return 1
+    fi
     local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
     if test `echo ${gitinfo} | wc -w` -gt 1; then
 	local branch="/`echo ${gitinfo} | cut -d ' ' -f 2`"
