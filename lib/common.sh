@@ -482,7 +482,15 @@ get_srcdir()
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
 	    # subdirectory.
-	    local srcdir="${srcdir}${branch}${revision}/libc"
+	    if test ! -d "${srcdir}${branch}${revision}/libc"; then
+		# If the directory does not yet exist the caller wants to know
+		# where to put the eglibc sources.
+		local srcdir="${srcdir}${branch}${revision}"
+	    else
+	    	# If the directory already exists the caller wants to know
+		# where the sources are.
+		local srcdir="${srcdir}${branch}${revision}/libc"
+	    fi
 	    ;;
 #	binutils*)
 #	    local srcdir="${srcdir}${branch}${revision}"

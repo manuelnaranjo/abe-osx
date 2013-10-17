@@ -32,8 +32,7 @@ checkout()
 	fi
     fi
 
-    local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
-    local srcdir="${local_snapshots}/${dir}"
+    srcdir="`get_srcdir $1`"
     notice "Checking out sources for $1 into ${srcdir}"
 
     case $1 in
