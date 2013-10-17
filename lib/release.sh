@@ -89,7 +89,7 @@ release_binutils_src()
     # make a link with the correct name for the tarball's source directory
     dryrun "ln -sfnT ${srcdir}/ ${destdir}"
     
-    exclude="--exclude-vcs --exclude .gitignore           "
+    exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
     dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
 
     # Make the md5sum file for this tarball
@@ -132,7 +132,7 @@ release_gcc_src()
     # make a link with the correct name for the tarball's source directory
     dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
     
-    exclude="--exclude-vcs --exclude .gitignore .cvsignore"
+    exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
     dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
 
     # Make the md5sum file for this tarball
@@ -248,11 +248,11 @@ edit_changelogs()
 	    else
 		touch /tmp/ChangeLog.linaro
 	    fi
-     	    echo "${date}  ${fullname}  <${email}>" >> $i
-     	    echo "" >> $i
-            echo "        GCC Linaro $2 released." >> $i
-     	    echo "" >> $i
-     	    cat /tmp/ChangeLog.linaro >> $i
+     	    echo "${date}  ${fullname}  <${email}>" >> $i.linaro
+     	    echo "" >> $i.linaro 
+            echo "        GCC Linaro $2 released." >> $i.linaro
+     	    echo "" >> $i.linaro
+     	    cat /tmp/ChangeLog.linaro >> $i.linaro
      	    rm -f /tmp/ChangeLog.linaro
 	done
     fi
