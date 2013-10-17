@@ -154,7 +154,7 @@ binary_toolchain()
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
 	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
 	fi
-	local tag="`echo ${version}~${revision}-${target}-${host}-${revision}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	local tag="`echo ${version}~${revision}-${target}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
 	local tag="`echo gcc-linaro-${version}-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
@@ -207,18 +207,20 @@ binary_sysroot()
 	    else
 		local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
 	    fi
+	    local srcdir="`get_srcdir ${libc_version}`"
 	else
 	    if test x"${eglibc_version}" = x; then
 		local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
+		local srcdir="`get_srcdir ${libc_version}`"
 		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	    else
 		local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
+		local srcdir="`get_srcdir ${libc_version}`"
 		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
 	    fi
 	fi
 
 	local builddir="`get_builddir ${libc_version}`"
-	local srcdir="`get_srcdir ${libc_version}`"
 	
         # if test "`echo $1 | grep -c '@'`" -gt 0; then
         # 	local commit="@`echo $1 | cut -d '@' -f 2`"
