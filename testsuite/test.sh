@@ -159,7 +159,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 echo "============= fetch() tests ================"
-out="`fetch md5sums`"
+out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
     pass "fetch md5sums"
 else
@@ -167,7 +167,7 @@ else
 fi
 
 # Fetching again to test the .bak functionality.
-out="`fetch md5sums`"
+out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
     pass "fetch md5sums"
 else
@@ -188,7 +188,7 @@ fi
 # ----------------------------------------------------------------------------------
 echo "============= find_snapshot() tests ================"
 
-out="`find_snapshot gcc`"
+out="`find_snapshot gcc 2>/dev/null`"
 if test $? -eq 1; then
     pass "find_snapshot: not unique tarball name"
 else
@@ -204,7 +204,7 @@ else
     fixme "find_snapshot returned ${out}"
 fi
 
-out="`find_snapshot gcc-linaro-4.8-2013.06XXX`"
+out="`find_snapshot gcc-linaro-4.8-2013.06XXX 2>/dev/null`"
 if test $? -eq 1; then
     pass "find_snapshot: unknown tarball name"
 else
@@ -215,7 +215,8 @@ fi
 # ----------------------------------------------------------------------------------
 echo "============= get_URL() tests ================"
 
-out="`get_URL gcc`"
+# This will dump an error to stderr, so squelch it.
+out="`get_URL gcc 2>/dev/null`"
 if test $? -eq 1; then
     pass "get_URL: not unique in repository"
 else
@@ -236,6 +237,14 @@ if test $? -eq 0; then
     pass "get_URL: unknown repository"
 else
     fail "get_URL: unknown repository"
+    fixme "get_URL returned ${out}"
+fi
+
+out="`get_URL gcc.git`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+    pass "get_URL: git URL with no branch or revision info"
+else
+    fail "get_URL: git URL with no branch or revision info"
     fixme "get_URL returned ${out}"
 fi
 
@@ -300,9 +309,36 @@ fi
 echo "============= get_source() tests ================"
 
 # Test get_source with a variety of inputs
+in="asdfasdf"
+out="`get_source ${in} 2>&1`"
+if test $? -eq 1; then
+    pass "get_source: unknown repository"
+else
+    fail "get_source: unknown repository"
+    fixme "get_source returned \"${out}\""
+fi
+
+in=''
+out="`get_source ${in} 2>/dev/null`"
+if test $? -eq 1; then
+    pass "get_source: empty url"
+else
+    fail "get_source: empty url"
+    fixme "get_source returned \"${out}\""
+fi
+
+in="eglibc.git"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git"; then
+    pass "get_source: git repository"
+else
+    fail "get_source: git repository"
+    fixme "get_source returned ${out}"
+fi
+
 in="eglibc.git/linaro_eglibc-2_17"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git linaro_eglibc-2_17 "; then
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git linaro_eglibc-2_17"; then
     pass "get_source: git repository with branch"
 else
     fail "get_source: git repository with branch"
@@ -317,6 +353,16 @@ else
     fail "get_source: git repository with branch and commit"
     fixme "get_source returned ${out}"
 fi
+
+in="gcc-linaro-4.8-2013.05.tar.bz2"
+out="`get_source ${in}`"
+if test x"${out}" = x"gcc-linaro-4.8-2013.05.tar.bz2"; then
+    pass "get_source: tar.bz2 archive"
+else
+    fail "get_source: tar.bz2 archive"
+    fixme "get_source returned \"${out}\""
+fi
+
 
 # ----------------------------------------------------------------------------------
 
