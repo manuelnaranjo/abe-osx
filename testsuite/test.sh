@@ -250,6 +250,20 @@ else
     fixme "get_URL returned ${out}"
 fi
 
+out="`get_URL gcc.git@12345`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+    pass "get_URL: match URL for URL.git@revision"
+else
+    fail "get_URL: match URL for URL.git@revision"
+    fixme "get_URL returned ${out}"
+fi
+if test x"`echo ${out} | cut -d ' ' -f 2`" = x"12345"; then
+    pass "get_URL: match revision for URL.git@revision"
+else
+    fail "get_URL: match revision for URL.git@revision"
+    fixme "get_URL returned ${out}"
+fi
+
 out="`get_URL gcc.git/linaro-4.8-branch@12345`"
 if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
     pass "get_URL: git URL in latest field"
