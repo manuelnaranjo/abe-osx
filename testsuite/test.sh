@@ -328,6 +328,10 @@ echo "============= get_source() tests ================"
 #      This might be due to running testsuite in a builddir rather than a
 #      source dir.
 
+# get_sources might, at times peak at latest for a hint if it can't find
+# things.  Keep it unset unless you want to test a specific code leg.
+latest=''
+
 # Test get_source with a variety of inputs
 in="asdfasdf"
 out="`get_source ${in} 2>&1`"
@@ -446,9 +450,9 @@ else
     fixme "get_source returned ${out}"
 fi
 
-in="gcc-4.6"
+in="gcc-4.8"
 out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_6-branch"; then
+if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
     pass "get_source: tag matching an svn repo in ${sources_conf}"
 else
     fail "get_source: tag matching an svn repo in ${sources_conf}"
@@ -491,6 +495,25 @@ else
     fixme "get_source returned ${out}"
 fi
 
+latest=''
+in="gcc-linaro-4.8"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x""; then
+    pass "get_source: partial match in snapshots, latest not set."
+else
+    fail "get_source: partial match in snapshots, latest not set."
+    fixme "get_source returned ${out}"
+fi
+
+latest="gcc-linaro-4.8-2013.06.tar.bz2"
+in="gcc-linaro-4.8"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"gcc-linaro-4.8-2013.06.tar.bz2"; then
+    pass "get_source: too many matches in snapshots, latest set."
+else
+    fail "get_source: partial matches in snapshots, latest set."
+    fixme "get_source returned ${out}"
+fi
 # ----------------------------------------------------------------------------------
 
 echo "========= create_release_tag() tests ============"

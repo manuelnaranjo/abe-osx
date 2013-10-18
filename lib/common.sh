@@ -378,16 +378,23 @@ get_source()
 		    echo "	$i" 1>&2
 		done
 	     	read answer
-	     	local url="`find_snapshot ${answer}`"
-		return $?
+		local url
+	     	url="`find_snapshot ${answer}`"
+		local ssret=$?
+		echo "${url}"
+		return ${ssret}
 	    else
 		if test x"${snapshot}" != x; then
-		    # If there is a config file for this toolchain component,
-		    # see if it has a latest version set. If so, we use that.
+		    # It's possible that the value passed in to get_sources
+		    # didn't match any known snapshots OR there were too many
+		    # matches.  Check <package>.conf:latest to see if there's a
+		    # matching snapshot.
 		    if test x"${latest}"  != x; then
-			# TODO: Add a testcase for this leg.
-			local url=`find_snapshot ${latest}`
-			return $?
+			local url
+			url=`find_snapshot ${latest}`
+			local ssret=$?
+			echo "${url}"
+			return ${ssret}
 		    fi
 		    # Technically 'notice' and 'get_URL' already suppress without
 		    # verbose being set but no reason to do unnecessary work.
