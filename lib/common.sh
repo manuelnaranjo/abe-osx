@@ -118,13 +118,10 @@ get_URL()
     if test -e ${srcs}; then
 	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
 	    error "Need unique component and version to get URL!"
-	    echo "" 1>&2
-	    echo "Choose one from this list" 1>&2
-#	    list_URL $1
 	    return 1
 	fi
 	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
-	echo "${url} ${branch} ${revision}"
+	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
 	return 0
     else
@@ -437,7 +434,7 @@ get_source()
 	fi
     fi
 
-    echo "${url} ${branch} ${revision}"
+    echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
     return 0
 }
