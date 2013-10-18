@@ -363,6 +363,14 @@ else
     fixme "get_source returned \"${out}\""
 fi
 
+in="gcc-linaro"
+out="`get_source ${in} 2>/dev/null`"
+if test $? -eq 1; then
+    pass "get_source: Too many snapshot matches."
+else
+    fail "get_source: Too many snapshot matches."
+    fixme "get_source returned ${out}"
+fi
 
 # ----------------------------------------------------------------------------------
 

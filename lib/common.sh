@@ -323,6 +323,7 @@ find_snapshot()
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	    warning "Too many results for $1!"
+	    echo "${snapshot}"
 	    return 1
 	fi
 	echo "${snapshot}"
@@ -336,6 +337,7 @@ find_snapshot()
     fi
     if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	warning "Too many results for $1!"
+	echo "${snapshot}"
 	return 1
     fi
 
@@ -367,7 +369,7 @@ get_source()
 	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
-	     	notice "Pick a unique snapshot name from this list: "
+	     	echo "Pick a unique snapshot name from this list: " 1>&2
 		for i in ${snapshot}; do
 		    echo "	$i" 1>&2
 		done
@@ -379,15 +381,20 @@ get_source()
 		    # If there is a config file for this toolchain component,
 		    # see if it has a latest version set. If so, we use that.
 		    if test x"${latest}"  != x; then
+		        fixme "explicit snapshot listed in latest." 1>&2
 			local url=`find_snapshot ${latest}`
 			return $?
 		    fi
-		    notice "Pick a unique snapshot name from this list and try again: "
-		    for i in ${snapshot}; do
-			echo "	$i" 1>&2
-		    done
-		    list_URL $1
-		    return 0
+		    # Technically 'notice' and 'get_URL' already suppress without
+		    # verbose being set but no reason to do unnecessary work.
+		    if test "${verbose}" -gt 0; then
+		        notice "Pick a unique snapshot name from this list and try again: "
+			for i in ${snapshot}; do
+			    echo "	$i" 1>&2
+			done
+		        list_URL $1
+		    fi
+		    return 1
 		fi
 	    fi
 	fi
