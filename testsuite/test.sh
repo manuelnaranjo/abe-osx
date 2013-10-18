@@ -374,6 +374,8 @@ fi
 
 # ----------------------------------------------------------------------------------
 
+echo "========= create_release_tag() tests ============"
+
 date="`date +%Y%m%d`"
 in="gcc.git/gcc-4.8-branch@12345abcde"
 out="`create_release_tag ${in} | grep -v TRACE`"

@@ -369,6 +369,8 @@ get_source()
 	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
+		# TODO: Add a testcase for this leg, conditional on
+		# interactive.
 	     	echo "Pick a unique snapshot name from this list: " 1>&2
 		for i in ${snapshot}; do
 		    echo "	$i" 1>&2
@@ -381,7 +383,7 @@ get_source()
 		    # If there is a config file for this toolchain component,
 		    # see if it has a latest version set. If so, we use that.
 		    if test x"${latest}"  != x; then
-		        fixme "explicit snapshot listed in latest." 1>&2
+			# TODO: Add a testcase for this leg.
 			local url=`find_snapshot ${latest}`
 			return $?
 		    fi
@@ -397,10 +399,12 @@ get_source()
 		    return 1
 		fi
 	    fi
+	else
+	    echo ${snapshot}
+	    return 0
 	fi
-	local url=${snapshot}
-	return 0
     else
+	# TODO: Add a testcase for this leg?
 	if test `echo $1 | egrep -c "\.git"` -eq 0; then
 	    local url=$1
 	    return 0
