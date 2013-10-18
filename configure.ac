@@ -139,6 +139,9 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
+SOURCES_CONF="${srcdir}/config/sources.conf"
+AC_SUBST(SOURCES_CONF)
+
 dnl The top of the cbuild tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),

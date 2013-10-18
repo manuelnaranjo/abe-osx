@@ -604,6 +604,7 @@ REMOTE_SNAPSHOTS
 LOCAL_BUILDS
 LOCAL_SNAPSHOTS
 SYSROOTS
+SOURCES_CONF
 CBUILD_TOP
 BUILDDATE
 AUTOGEN
@@ -3742,6 +3743,9 @@ if test ! -d ${CBUILD_TOP}; then
 $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" >&2;}
    mkdir -p ${CBUILD_TOP}
 fi
+
+SOURCES_CONF="${srcdir}/config/sources.conf"
+
 
 
 # Check whether --with-sysroot was given.

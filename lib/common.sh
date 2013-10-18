@@ -103,7 +103,7 @@ get_URL()
 {
 #    trace "$*"
 
-    local srcs="${topdir}/config/sources.conf"
+    local srcs="${sources_conf}"
     local node="`echo $1 | cut -d '/' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
     if test x"${branch}" = x"${node}"; then
@@ -140,7 +140,7 @@ list_URL()
 {
 #    trace "$*"
 
-    local srcs="${topdir}/config/sources.conf"    
+    local srcs="${sources_conf}"    
     if test -e ${srcs}; then
 	notice "Supported source repositories for $1 are:"
 #	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1

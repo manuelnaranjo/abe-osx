@@ -17,7 +17,9 @@ else
     warning "no host.conf file!"
     remote_snapshots=http://cbuild.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
+    sources_conf=${cbuild}testsuite/test_sources.conf
 fi
+echo "Testsuite using ${sources_conf}"
 
 # Use wget -q in the testsuite
 wget_quiet=yes
@@ -307,6 +309,10 @@ fi
 # dryrun=no
 
 echo "============= get_source() tests ================"
+# TODO Test ${sources_conf} for ${in} for relevant tests.
+#      Mark tests as untested if the expected match isn't in sources_conf.
+#      This might be due to running testsuite in a builddir rather than a
+#      source dir.
 
 # Test get_source with a variety of inputs
 in="asdfasdf"
@@ -430,9 +436,9 @@ fi
 in="gcc-4.6"
 out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_6-branch"; then
-    pass "get_source: tag matching an svn repo in sources.conf"
+    pass "get_source: tag matching an svn repo in ${sources_conf}"
 else
-    fail "get_source: tag matching an svn repo in sources.conf"
+    fail "get_source: tag matching an svn repo in ${sources_conf}"
     fixme "get_source returned ${out}"
 fi
 
