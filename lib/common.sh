@@ -363,8 +363,8 @@ get_source()
     # If a full URL isn't passed as an argument, assume we want a
     # tarball snapshot
     if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
-	find_snapshot $1
-	# got an error
+        local snapshot
+	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
 	     	notice "Pick a unique snapshot name from this list: "
