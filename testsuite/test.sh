@@ -424,7 +424,7 @@ else
     fixme "get_source returned ${out}"
 fi
 
-in="foo.git"
+in="nomatch.git"
 out="`get_source ${in}`"
 if test x"${out}" = x""; then
     pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
