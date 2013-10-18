@@ -10,6 +10,8 @@ local_snapshots=@LOCAL_SNAPSHOTS@
 remote_snapshots=@REMOTE_SNAPSHOTS@
 cbuild_top=@CBUILD_TOP@
 
+sources_conf=@SOURCES_CONF@
+
 # This is where the components we build go, ie... make install
 local_builds=@LOCAL_BUILDS@
 

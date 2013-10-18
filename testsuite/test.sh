@@ -17,7 +17,9 @@ else
     warning "no host.conf file!"
     remote_snapshots=http://cbuild.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
+    sources_conf=${cbuild}testsuite/test_sources.conf
 fi
+echo "Testsuite using ${sources_conf}"
 
 # Use wget -q in the testsuite
 wget_quiet=yes
@@ -159,7 +161,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 echo "============= fetch() tests ================"
-out="`fetch md5sums`"
+out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
     pass "fetch md5sums"
 else
@@ -167,7 +169,7 @@ else
 fi
 
 # Fetching again to test the .bak functionality.
-out="`fetch md5sums`"
+out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
     pass "fetch md5sums"
 else
@@ -188,7 +190,7 @@ fi
 # ----------------------------------------------------------------------------------
 echo "============= find_snapshot() tests ================"
 
-out="`find_snapshot gcc`"
+out="`find_snapshot gcc 2>/dev/null`"
 if test $? -eq 1; then
     pass "find_snapshot: not unique tarball name"
 else
@@ -204,7 +206,7 @@ else
     fixme "find_snapshot returned ${out}"
 fi
 
-out="`find_snapshot gcc-linaro-4.8-2013.06XXX`"
+out="`find_snapshot gcc-linaro-4.8-2013.06XXX 2>/dev/null`"
 if test $? -eq 1; then
     pass "find_snapshot: unknown tarball name"
 else
@@ -215,7 +217,8 @@ fi
 # ----------------------------------------------------------------------------------
 echo "============= get_URL() tests ================"
 
-out="`get_URL gcc`"
+# This will dump an error to stderr, so squelch it.
+out="`get_URL gcc 2>/dev/null`"
 if test $? -eq 1; then
     pass "get_URL: not unique in repository"
 else
@@ -236,6 +239,28 @@ if test $? -eq 0; then
     pass "get_URL: unknown repository"
 else
     fail "get_URL: unknown repository"
+    fixme "get_URL returned ${out}"
+fi
+
+out="`get_URL gcc.git`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+    pass "get_URL: git URL with no branch or revision info"
+else
+    fail "get_URL: git URL with no branch or revision info"
+    fixme "get_URL returned ${out}"
+fi
+
+out="`get_URL gcc.git@12345`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+    pass "get_URL: match URL for URL.git@revision"
+else
+    fail "get_URL: match URL for URL.git@revision"
+    fixme "get_URL returned ${out}"
+fi
+if test x"`echo ${out} | cut -d ' ' -f 2`" = x"12345"; then
+    pass "get_URL: match revision for URL.git@revision"
+else
+    fail "get_URL: match revision for URL.git@revision"
     fixme "get_URL returned ${out}"
 fi
 
@@ -298,11 +323,46 @@ fi
 # dryrun=no
 
 echo "============= get_source() tests ================"
+# TODO Test ${sources_conf} for ${in} for relevant tests.
+#      Mark tests as untested if the expected match isn't in sources_conf.
+#      This might be due to running testsuite in a builddir rather than a
+#      source dir.
+
+# get_sources might, at times peak at latest for a hint if it can't find
+# things.  Keep it unset unless you want to test a specific code leg.
+latest=''
 
 # Test get_source with a variety of inputs
+in="asdfasdf"
+out="`get_source ${in} 2>&1`"
+if test $? -eq 1; then
+    pass "get_source: unknown repository"
+else
+    fail "get_source: unknown repository"
+    fixme "get_source returned \"${out}\""
+fi
+
+in=''
+out="`get_source ${in} 2>/dev/null`"
+if test $? -eq 1; then
+    pass "get_source: empty url"
+else
+    fail "get_source: empty url"
+    fixme "get_source returned \"${out}\""
+fi
+
+in="eglibc.git"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git"; then
+    pass "get_source: git repository"
+else
+    fail "get_source: git repository"
+    fixme "get_source returned ${out}"
+fi
+
 in="eglibc.git/linaro_eglibc-2_17"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git linaro_eglibc-2_17 "; then
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git linaro_eglibc-2_17"; then
     pass "get_source: git repository with branch"
 else
     fail "get_source: git repository with branch"
@@ -318,7 +378,145 @@ else
     fixme "get_source returned ${out}"
 fi
 
+in="newlib.git@e9a210b"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git e9a210b"; then
+    pass "get_source: <repo>.git@commit"
+else
+    fail "get_source: <repo>.git@commit"
+    fixme "get_source returned ${out}"
+fi
+
+in="gcc-linaro-4.8-2013.05.tar.bz2"
+out="`get_source ${in}`"
+if test x"${out}" = x"gcc-linaro-4.8-2013.05.tar.bz2"; then
+    pass "get_source: tar.bz2 archive"
+else
+    fail "get_source: tar.bz2 archive"
+    fixme "get_source returned \"${out}\""
+fi
+
+in="gcc-linaro"
+out="`get_source ${in} 2>/dev/null`"
+if test $? -eq 1; then
+    pass "get_source: Too many snapshot matches."
+else
+    fail "get_source: Too many snapshot matches."
+    fixme "get_source returned ${out}"
+fi
+
+in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
+out="`get_source ${in}`"
+if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"; then
+    pass "get_source: Non-git direct url"
+else
+    fail "get_source: Non-git direct url"
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/eglibc"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc"; then
+    pass "get_source: git direct url not ending in .git"
+else
+    fail "get_source: git direct url not ending in .git"
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/eglibc/branchname@revision"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc/branchname@revision"; then
+    pass "get_source: git direct url not ending in .git with revision returns bogus url."
+else
+    fail "get_source: git direct url not ending in .git with revision returns bogus url."
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/foo.git"
+out="`get_source ${in}`"
+if test x"${out}" = x""; then
+    pass "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+else
+    fail "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+    fixme "get_source returned ${out}"
+fi
+
+in="nomatch.git"
+out="`get_source ${in}`"
+if test x"${out}" = x""; then
+    pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+else
+    fail "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+    fixme "get_source returned ${out}"
+fi
+
+in="gcc-4.8"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
+    pass "get_source: tag matching an svn repo in ${sources_conf}"
+else
+    fail "get_source: tag matching an svn repo in ${sources_conf}"
+    fixme "get_source returned ${out}"
+fi
+
+in="bitbake.git"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://git.openembedded.org/bitbake"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git/bar"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo bar"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git/bar@rev"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo bar rev"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+    fixme "get_source returned ${out}"
+fi
+
+latest=''
+in="gcc-linaro-4.8"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x""; then
+    pass "get_source: partial match in snapshots, latest not set."
+else
+    fail "get_source: partial match in snapshots, latest not set."
+    fixme "get_source returned ${out}"
+fi
+
+latest="gcc-linaro-4.8-2013.06.tar.bz2"
+in="gcc-linaro-4.8"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"gcc-linaro-4.8-2013.06.tar.bz2"; then
+    pass "get_source: too many matches in snapshots, latest set."
+else
+    fail "get_source: partial matches in snapshots, latest set."
+    fixme "get_source returned ${out}"
+fi
 # ----------------------------------------------------------------------------------
+
+echo "========= create_release_tag() tests ============"
 
 date="`date +%Y%m%d`"
 in="gcc.git/gcc-4.8-branch@12345abcde"

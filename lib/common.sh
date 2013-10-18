@@ -103,8 +103,10 @@ get_URL()
 {
 #    trace "$*"
 
-    local srcs="${topdir}/config/sources.conf"
-    local node="`echo $1 | cut -d '/' -f 1`"
+    local srcs="${sources_conf}"
+    # account for <repo>.git/<branch>@<revision> and
+    # account for <repo>.git@<revision>
+    local node="`echo $1 | cut -d '/' -f 1 | cut -d '@' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
     if test x"${branch}" = x"${node}"; then
 	local branch=
@@ -118,13 +120,10 @@ get_URL()
     if test -e ${srcs}; then
 	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
 	    error "Need unique component and version to get URL!"
-	    echo "" 1>&2
-	    echo "Choose one from this list" 1>&2
-#	    list_URL $1
 	    return 1
 	fi
 	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
-	echo "${url} ${branch} ${revision}"
+	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
 	return 0
     else
@@ -143,7 +142,7 @@ list_URL()
 {
 #    trace "$*"
 
-    local srcs="${topdir}/config/sources.conf"    
+    local srcs="${sources_conf}"    
     if test -e ${srcs}; then
 	notice "Supported source repositories for $1 are:"
 #	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
@@ -326,6 +325,7 @@ find_snapshot()
     if test x"${snapshot}" != x; then
 	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	    warning "Too many results for $1!"
+	    echo "${snapshot}"
 	    return 1
 	fi
 	echo "${snapshot}"
@@ -339,6 +339,7 @@ find_snapshot()
     fi
     if test `echo "${snapshot}" | grep -c $1` -gt 1; then
 	warning "Too many results for $1!"
+	echo "${snapshot}"
 	return 1
     fi
 
@@ -366,39 +367,59 @@ get_source()
     # If a full URL isn't passed as an argument, assume we want a
     # tarball snapshot
     if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
-	find_snapshot $1
-	# got an error
+        local snapshot
+	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
-	     	notice "Pick a unique snapshot name from this list: "
+		# TODO: Add a testcase for this leg, conditional on
+		# interactive.
+	     	echo "Pick a unique snapshot name from this list: " 1>&2
 		for i in ${snapshot}; do
 		    echo "	$i" 1>&2
 		done
 	     	read answer
-	     	local url="`find_snapshot ${answer}`"
-		return $?
+		local url
+	     	url="`find_snapshot ${answer}`"
+		local ssret=$?
+		echo "${url}"
+		return ${ssret}
 	    else
 		if test x"${snapshot}" != x; then
-		    # If there is a config file for this toolchain component,
-		    # see if it has a latest version set. If so, we use that.
+		    # It's possible that the value passed in to get_sources
+		    # didn't match any known snapshots OR there were too many
+		    # matches.  Check <package>.conf:latest to see if there's a
+		    # matching snapshot.
 		    if test x"${latest}"  != x; then
-			local url=`find_snapshot ${latest}`
-			return $?
+			local url
+			url=`find_snapshot ${latest}`
+			local ssret=$?
+			echo "${url}"
+			return ${ssret}
 		    fi
-		    notice "Pick a unique snapshot name from this list and try again: "
-		    for i in ${snapshot}; do
-			echo "	$i" 1>&2
-		    done
-		    list_URL $1
-		    return 0
+		    # Technically 'notice' and 'get_URL' already suppress without
+		    # verbose being set but no reason to do unnecessary work.
+		    if test "${verbose}" -gt 0; then
+		        notice "Pick a unique snapshot name from this list and try again: "
+			for i in ${snapshot}; do
+			    echo "	$i" 1>&2
+			done
+		        list_URL $1
+		    fi
+		    return 1
 		fi
 	    fi
+	else
+	    echo ${snapshot}
+	    return 0
 	fi
-	local url=${snapshot}
-	return 0
     else
+	# This leg captures direct urls that don't end in .git.  This include
+	# svn directories and git repositories that don't end in .git.
+	# Unfortunately this means that <repo>@<revision> isn't
+	# supported.
 	if test `echo $1 | egrep -c "\.git"` -eq 0; then
 	    local url=$1
+	    echo "${url}"
 	    return 0
 	fi
     fi
@@ -437,7 +458,13 @@ get_source()
 	fi
     fi
 
-    echo "${url} ${branch} ${revision}"
+    # We aren't guaranteed a match even after snapshots and sources.conf have
+    # been checked.
+    if test x"${url}" = x; then
+	return 1
+    fi
+
+    echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
     return 0
 }
@@ -482,7 +509,15 @@ get_srcdir()
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
 	    # subdirectory.
-	    local srcdir="${srcdir}${branch}${revision}/libc"
+	    if test ! -d "${srcdir}${branch}${revision}/libc"; then
+		# If the directory does not yet exist the caller wants to know
+		# where to put the eglibc sources.
+		local srcdir="${srcdir}${branch}${revision}"
+	    else
+	    	# If the directory already exists the caller wants to know
+		# where the sources are.
+		local srcdir="${srcdir}${branch}${revision}/libc"
+	    fi
 	    ;;
 #	binutils*)
 #	    local srcdir="${srcdir}${branch}${revision}"
