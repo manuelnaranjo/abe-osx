@@ -363,11 +363,10 @@ fi
 in="newlib.git@e9a210b"
 out="`get_source ${in}`"
 if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git e9a210b"; then
-    pass "get_source: git repository with commit"
+    pass "get_source: <repo>.git@commit"
 else
-    fail "get_source: git repository with commit"
+    fail "get_source: <repo>.git@commit"
     fixme "get_source returned ${out}"
-    fixme "should return git://git.linaro.org/toolchain/newlib.git e9a210b"
 fi
 
 in="gcc-linaro-4.8-2013.05.tar.bz2"

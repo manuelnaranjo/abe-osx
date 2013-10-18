@@ -104,7 +104,9 @@ get_URL()
 #    trace "$*"
 
     local srcs="${sources_conf}"
-    local node="`echo $1 | cut -d '/' -f 1`"
+    # account for <repo>.git/<branch>@<revision> and
+    # account for <repo>.git@<revision>
+    local node="`echo $1 | cut -d '/' -f 1 | cut -d '@' -f 1`"
     local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
     if test x"${branch}" = x"${node}"; then
 	local branch=
