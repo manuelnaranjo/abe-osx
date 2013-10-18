@@ -442,6 +442,42 @@ else
     fixme "get_source returned ${out}"
 fi
 
+in="bitbake.git"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://git.openembedded.org/bitbake"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git/bar"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo bar"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git/bar@rev"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo bar rev"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+    fixme "get_source returned ${out}"
+fi
+
 # ----------------------------------------------------------------------------------
 
 echo "========= create_release_tag() tests ============"
