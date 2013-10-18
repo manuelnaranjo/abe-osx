@@ -354,6 +354,16 @@ else
     fixme "get_source returned ${out}"
 fi
 
+in="newlib.git@e9a210b"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git e9a210b"; then
+    pass "get_source: git repository with commit"
+else
+    fail "get_source: git repository with commit"
+    fixme "get_source returned ${out}"
+    fixme "should return git://git.linaro.org/toolchain/newlib.git e9a210b"
+fi
+
 in="gcc-linaro-4.8-2013.05.tar.bz2"
 out="`get_source ${in}`"
 if test x"${out}" = x"gcc-linaro-4.8-2013.05.tar.bz2"; then
@@ -369,6 +379,60 @@ if test $? -eq 1; then
     pass "get_source: Too many snapshot matches."
 else
     fail "get_source: Too many snapshot matches."
+    fixme "get_source returned ${out}"
+fi
+
+in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
+out="`get_source ${in}`"
+if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"; then
+    pass "get_source: Non-git direct url"
+else
+    fail "get_source: Non-git direct url"
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/eglibc"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc"; then
+    pass "get_source: git direct url not ending in .git"
+else
+    fail "get_source: git direct url not ending in .git"
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/eglibc/branchname@revision"
+out="`get_source ${in}`"
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc/branchname@revision"; then
+    pass "get_source: git direct url not ending in .git with revision returns bogus url."
+else
+    fail "get_source: git direct url not ending in .git with revision returns bogus url."
+    fixme "get_source returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/foo.git"
+out="`get_source ${in}`"
+if test x"${out}" = x""; then
+    pass "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+else
+    fail "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+    fixme "get_source returned ${out}"
+fi
+
+in="foo.git"
+out="`get_source ${in}`"
+if test x"${out}" = x""; then
+    pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+else
+    fail "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+    fixme "get_source returned ${out}"
+fi
+
+in="gcc-4.6"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_6-branch"; then
+    pass "get_source: tag matching an svn repo in sources.conf"
+else
+    fail "get_source: tag matching an svn repo in sources.conf"
     fixme "get_source returned ${out}"
 fi
 
