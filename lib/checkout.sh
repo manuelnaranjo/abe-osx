@@ -74,7 +74,7 @@ checkout()
 	    fi
 	    ;;
 	git*)
-	    if test -e ${srcdir}/.git; then
+	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 		dryrun "(cd ${srcdir} && git pull origin ${branch})"
 	    else
 		if test x"${branch}" = x; then
