@@ -404,9 +404,13 @@ get_source()
 	    return 0
 	fi
     else
-	# TODO: Add a testcase for this leg?
+	# This leg captures direct urls that don't end in .git.  This include
+	# svn directories and git repositories that don't end in .git.
+	# Unfortunately this means that <repo>@<revision> isn't
+	# supported.
 	if test `echo $1 | egrep -c "\.git"` -eq 0; then
 	    local url=$1
+	    echo "${url}"
 	    return 0
 	fi
     fi
