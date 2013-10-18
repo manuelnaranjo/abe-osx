@@ -445,6 +445,12 @@ get_source()
 	fi
     fi
 
+    # We aren't guaranteed a match even after snapshots and sources.conf have
+    # been checked.
+    if test x"${url}" = x; then
+	return 1
+    fi
+
     echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
     return 0
