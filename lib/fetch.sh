@@ -249,6 +249,14 @@ extract()
 	*) ;;
     esac
 
+    if test -d `echo ${local_snapshots}/${dir}${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
+	notice "${local_snapshots}/${file} is already extracted!"
+	return 0
+    else
+	local taropts="${taropt}xf"
+	tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}
+    fi
+
     # FIXME: this is hopefully is temporary hack for tarballs where the directory
     # name versions doesn't match the tarball version. This means it's missing the
     # -linaro-VERSION.YYYY.MM part.
@@ -262,14 +270,6 @@ extract()
 	    error "${dir} doesn't seem to exist!"
 	    return 1
 	fi
-    fi
-
-    if test -d `echo ${local_snapshots}/${dir}${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
-	notice "${local_snapshots}/${file} is already extracted!"
-	return 0
-    else
-	local taropts="${taropt}xf"
-	tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}
     fi
 
     touch ${local_builds}/stamp-extract-${file} 
