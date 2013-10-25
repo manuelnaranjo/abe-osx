@@ -1,0 +1,23 @@
+# The master configuration file should be here
+
+case "$target_triplet" in { 
+    { "arm*-*-*eabi*"} {
+	set target_list { arm-odroidU2 arm-odroidXU arm-chromebook }
+    }
+    
+    { "arm*-*-elf*"} { 
+	global SIM
+	# CPU and sysroot are set through the environment
+	set SIM "qemu-arm"
+	set target_list { "arm-qemu" } 
+    }
+    
+    { "aarch64*-*-elf*" } {
+	set target_list { "aarch64-none-elf-foundation" }
+	# Because of the way the Foundation model is invoked we have to
+	# wrap it in an invoke script.
+	global SIM
+	set SIM "invoke-foundation-v8-bare-metal.sh"
+    }
+}
+
