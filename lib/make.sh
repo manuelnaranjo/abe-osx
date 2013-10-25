@@ -405,6 +405,10 @@ make_check()
 	make_check_installed
 	return 0
     fi
+
+    # load the config file for Linaro build farms
+    export DEJAGNU=${srcdir}/config/linaro.exp
+
     dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     
     return 0
