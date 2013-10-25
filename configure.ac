@@ -149,9 +149,11 @@ AC_ARG_WITH(sysroot,
   SYSROOTS="${CBUILD_TOP}"/sysroots)
 AC_SUBST(SYSROOTS)
 
-if test ! -d ${SYSROOTS}; then
-   AC_MSG_WARN(${SYSROOTS} does not exist so creating directory!)
-   mkdir -p ${SYSROOTS}
+if test x"${target}" != x"${build}"; then
+  if test ! -d ${SYSROOTS}; then
+    AC_MSG_WARN(${SYSROOTS} does not exist so creating directory!)
+    mkdir -p ${SYSROOTS}
+  fi
 fi
 
 dnl The local directory where snapshots are stored
