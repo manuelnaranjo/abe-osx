@@ -3757,10 +3757,12 @@ fi
 
 
 
-if test ! -d ${SYSROOTS}; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${SYSROOTS} does not exist so creating directory!" >&5
+if test x"${target}" != x"${build}"; then
+  if test ! -d ${SYSROOTS}; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${SYSROOTS} does not exist so creating directory!" >&5
 $as_echo "$as_me: WARNING: ${SYSROOTS} does not exist so creating directory!" >&2;}
-   mkdir -p ${SYSROOTS}
+    mkdir -p ${SYSROOTS}
+  fi
 fi
 
 
