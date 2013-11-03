@@ -14,9 +14,9 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2"
+	local builds="infrastructure binutils stage1 libc stage2 gdb"
     else
-	local builds="infrastructure binutils stage2" # native build
+	local builds="infrastructure binutils stage2 gdb" # native build
     fi
 
     # See if specific component versions were specified at runtime
