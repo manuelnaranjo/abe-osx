@@ -62,6 +62,11 @@ $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarbal
 
 # 	sums="`find -name \*.sum`"
 
+# Canadian Crosses are a win32 hosted cross toolchain built on a Linux machine.
+if test x"${canadian}" = xtrue; then
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+fi
+
 ls -F $WORKSPACE/cbuildv2/snapshots
 find $WORKSPACE -name \*.sum
 
