@@ -52,23 +52,38 @@ if test x"${tarballs}" = xtrue; then
     tarballs=--tarballs
 fi
 
-# if build_type is true, then this is a cross build. For cross builds we build a
-# native GCC, and then use that to compile the cross compiler to bootstrap.
-if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable bootstrap --build all
-fi
+# Toolchain_cloud is an EC2 instance that is used to build all cross
+# compilers.
+if test x"${NODE_NAME}" = x"toolchain_cloud"; then
+    # if build_type is true, then this is a cross build. For cross builds we
+    # build a native GCC, and then use that to compile the cross compiler to
+    # bootstrap. Since it's just used to build the cross compiler, we
+    # don't bother to run 'make check'.
+    if test x"${bootstrap}" = xtrue; then
+        $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable-bootstrap --build all
+    fi
 
-$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
 
-# 	sums="`find -name \*.sum`"
-
-# Canadian Crosses are a win32 hosted cross toolchain built on a Linux machine.
-if test x"${canadian}" = xtrue; then
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+    # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
+    # machine.
+    if test x"${canadian}" = xtrue; then
+        $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+    fi
+else
+    # Native builds bootstrap and run tests.
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --bootstrap --build all
 fi
 
 ls -F $WORKSPACE/cbuildv2/snapshots
-find $WORKSPACE -name \*.sum
+sums="`find $WORKSPACE -name \*.sum`"
+
+# This will go away when make check produces something
+if test x"${sums}" != x; then
+    echo "Found test results finally!!!"
+else
+    echo "Bummer, no test results yet..."
+fi
 
 # if test $? -eq 0; then
 #     if test x"${runtests}" = xtrue; then
