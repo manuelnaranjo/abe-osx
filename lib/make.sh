@@ -327,6 +327,15 @@ make_install()
 	dryrun "make install ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
 
+    # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
+    # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
+    # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
+    # up, and then tries to redefine caddr_t yet again. We modify the installed
+    # types.h instead of the one in the source tree to be a tiny bit less ugly.
+    if test x"${tool}" = x"eglibc" -a `echo ${host} | grep -c mingw` -eq 1; then
+	sed -i -e '/typedef __caddr_t caddr_t/d' ${sysroots}/usr/include/sys/types.h
+    fi
+
     if test $? != "0"; then
 	warning "Make install failed!"
 	return 1
