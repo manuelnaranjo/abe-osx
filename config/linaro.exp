@@ -12,6 +12,10 @@ case "$target_triplet" in {
 	set target_list { "arm-qemu" } 
     }
     
+    { "aarch64*-*-*gnu*"} {
+	set target_list { aarch64-fv8 }
+    }
+
     { "aarch64*-*-elf*" } {
 	set target_list { "aarch64-none-elf-foundation" }
 	# Because of the way the Foundation model is invoked we have to
