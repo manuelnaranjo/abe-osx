@@ -34,6 +34,10 @@ build_all()
 	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
     fi
 
+    if test x"${gdb_version}" = x; then
+	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+    fi
+
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
@@ -69,6 +73,9 @@ build_all()
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
 		build ${gcc_version} stage2
+		;;
+	    gdb)
+		build ${gdb_version}
 		;;
 	    # Build anything not GCC or infrastructure
 	    *)
