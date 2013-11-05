@@ -175,7 +175,7 @@ configure_build()
 	binutils*|gdb*)
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
+	dejagnu|gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
 	    opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 	    ;;
 	*)
