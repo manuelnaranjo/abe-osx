@@ -128,7 +128,7 @@ configure_build()
 	    # Force a complete reconfigure, as we changed the flags. We could do a
 	    # make distclean, but this builds faster, as not all files have to be
 	    # recompiled.
-	    find ${builddir} -name Makefile -o -name config.status -o -name config.cache -exec rm {} \;
+#	    find ${builddir} -name Makefile -o -name config.status -o -name config.cache -exec rm {} \;
 #	    if test -e ${builddir}/Makefile; then
 #		make ${make_flags} -C ${builddir} distclean -i -k
 #	    fi
@@ -172,7 +172,7 @@ configure_build()
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	binutils*)
+	binutils*|gdb*)
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
