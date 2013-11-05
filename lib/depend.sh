@@ -177,11 +177,11 @@ infrastructure()
     # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
-    local files=
+    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
     for i in ${depends}; do
      	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
     done
-    
+
     # First fetch and extract all the tarballs listed in the md5sums file
 #    for i in ${files}; do
 #	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
