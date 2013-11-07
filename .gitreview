@@ -1,0 +1,6 @@
+[gerrit]
+host=staging.review.linaro.org
+port=29418
+project=people/robert.savoye/cbuild2.git
+defaultbranch=master
+
