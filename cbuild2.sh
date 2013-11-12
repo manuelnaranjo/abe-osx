@@ -343,7 +343,11 @@ while test $# -gt 0; do
     # URL can be either for a source tarball, or a checkout via svn, bzr,
     # or git
     case "$1" in
-	--bu*)			# build
+	--bu*|-bu*)			# build
+            if test `echo $1 | grep -c "\-\-bu.*=" ` -gt 0; then
+                error "A '=' is invalid after --build.  A space is expected."
+                exit 1;
+            fi
 	    if test x"$2" != x"all"; then
 		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 		tool=`get_toolname $2`
@@ -445,7 +449,11 @@ while test $# -gt 0; do
 	--tarball*|-tarb*)
 	    tarballs=yes
 	    ;;
-	--target|-ta*)			# target
+	--targ*|-targ*)			# target
+	    if test `echo $1 | grep -c "\-ta.*=" ` -gt 0; then
+		error "A '=' is invalid after --target.  A space is expected."
+		exit 1;
+	    fi
             target=$2
 	    sysroots=${sysroots}/${target}
 	    shift
