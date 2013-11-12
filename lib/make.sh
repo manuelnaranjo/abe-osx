@@ -278,8 +278,12 @@ make_all()
 	export CONFIG_SHELL=${bash_shell}
     fi
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
-	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+    # Make sure the make.log file is in place before grepping or the -gt
+    # statement is ill formed.  There is not make.log in a dryrun.
+    if test -e "${builddir}/make.log"; then
+       if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
+           error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+       fi
     fi
     if test $? -gt 0; then
 	warning "Make had failures!"
