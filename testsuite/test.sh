@@ -178,6 +178,8 @@ fi
 
 if test ! -e "${local_snapshots}/md5sums"; then
     fail "Did not find ${local_snapshots}/md5sums"
+    echo "md5sums needed for snapshots, get_URL, and get_sources tests.  Check your network connectivity." 1>&2
+    exit 1;
 else
     pass "Found ${local_snapshots}/md5sums"
 fi
@@ -263,6 +265,15 @@ else
     fail "get_URL: match revision for URL.git@revision"
     fixme "get_URL returned ${out}"
 fi
+
+# FIXME: known failure
+#out="`get_URL nomatch.git@12345`"
+#if test x"${out}" = x""; then
+#    pass "get_URL: match URL for nomatch.git@revision should fail"
+#else
+#    fail "get_URL: match URL for nomatch.git@revision should fail"
+#    fixme "get_URL returned ${out}"
+#fi
 
 out="`get_URL gcc.git/linaro-4.8-branch@12345`"
 if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
@@ -450,6 +461,15 @@ else
     fixme "get_source returned ${out}"
 fi
 
+in="nomatch.git@revision"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x""; then
+    pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
+else
+    pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
+    fixme "get_source returned ${out}"
+fi
+
 in="gcc-4.8"
 out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
@@ -495,6 +515,15 @@ else
     fixme "get_source returned ${out}"
 fi
 
+in="foo.git@rev"
+out="`get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo rev"; then
+    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
+else
+    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
+    fixme "get_source returned ${out}"
+fi
+
 latest=''
 in="gcc-linaro-4.8"
 out="`get_source ${in} 2>/dev/null`"
@@ -514,6 +543,7 @@ else
     fail "get_source: partial matches in snapshots, latest set."
     fixme "get_source returned ${out}"
 fi
+
 # ----------------------------------------------------------------------------------
 
 echo "========= create_release_tag() tests ============"
@@ -555,6 +585,69 @@ else
     fixme "create_release_tag returned ${out}"
 fi
 
+# ----------------------------------------------------------------------------------
+echo "============= checkout () tests ================"
+echo "  Checking out sources into ${local_snapshots}"
+echo "  Please be patient while sources are checked out...."
+echo "================================================"
+
+# These can be painfully slow so test small repos.
+
+test_checkout ()
+{
+    in="${package}${branch:+/${branch}}${revision:+@${revision}}"
+    url="`get_URL ${in}`"
+
+    if test `echo $url | grep -c "\.git "` -gt 0; then
+	package_url=`echo $url | cut -d ' ' -f 1`
+	url="${package_url}${branch:+/${branch}}${revision:+@${revision}}"
+    fi
+
+    out="`(cd ${local_snapshots} && checkout ${url} 2>/dev/null)`"
+    tmp_workdir="${local_snapshots}/${package}${branch:+-${branch}}${revision:+@${revision}}"
+    if test ! -d ${tmp_workdir}; then
+	branch_test=0
+    elif test x"${branch}" = x -a x"${revision}" = x; then
+	branch_test=`(cd ${tmp_workdir} && git branch | grep -c "^* master")`
+    else
+	branch_test=`(cd ${tmp_workdir} && git branch | grep -c "^* ${branch:+${branch}${revision:+_}}${revision:+${revision}}")`
+    fi
+
+    if test x"${branch_test}" = x1; then
+	pass "checkout: ${in}."
+	return 0
+    else
+	fail "checkout: ${in}."
+	return 1
+    fi
+}
+
+package="newlib.git"
+branch=
+revision=
+test_checkout
+
+package="newlib.git"
+branch=
+revision="71a86aef245be6fd9cc"
+test_checkout
+
+package="newlib.git"
+branch="phonybranchname"
+revision="71a86aef245be6fd9cc"
+test_checkout
+
+package="newlib.git"
+branch="linaro_newlib-branch"
+revision=
+test_checkout
+
+# A real branch name is treated like a phony branch name if there
+# is a revision, i.e., it's ignored and used as a directory tag.
+package="newlib.git"
+branch="linaro_newlib-branch"
+revision="71a86aef245be6fd9cc"
+test_checkout
 
 # ----------------------------------------------------------------------------------
 # print the total of test results
