@@ -222,25 +222,17 @@ echo "============= get_URL() tests ================"
 # This will dump an error to stderr, so squelch it.
 out="`get_URL gcc 2>/dev/null`"
 if test $? -eq 1; then
-    pass "get_URL: not unique in repository"
+    pass "get_URL: not unique in sources.conf file"
 else
-    fail "get_URL: not unique in repository"
+    fail "get_URL: not unique in sources.conf file"
     fixme "get_URL returned ${out}"
 fi
 
-out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $? -eq 0; then
-    pass "get_URL: unique name in repository"
+out="`get_URL gcc-linaro-4.8-2013.06-1 2>/dev/null`"
+if test $? -eq 1; then
+    pass "get_URL: unmatching snapshot not found in sources.conf file"
 else
-    fail "get_URL: unique name in repository"
-    fixme "get_URL returned ${out}"
-fi
-
-out="`get_URL gcc-linaro-4.8-2013.06-1`"
-if test $? -eq 0; then
-    pass "get_URL: unknown repository"
-else
-    fail "get_URL: unknown repository"
+    fail "get_URL: unmatching snapshot not found in sources.conf file"
     fixme "get_URL returned ${out}"
 fi
 
@@ -266,32 +258,31 @@ else
     fixme "get_URL returned ${out}"
 fi
 
-# FIXME: known failure
-#out="`get_URL nomatch.git@12345`"
-#if test x"${out}" = x""; then
-#    pass "get_URL: match URL for nomatch.git@revision should fail"
-#else
-#    fail "get_URL: match URL for nomatch.git@revision should fail"
-#    fixme "get_URL returned ${out}"
-#fi
+out="`get_URL nomatch.git@12345 2>/dev/null`"
+if test x"${out}" = x""; then
+    pass "get_URL: match URL for nomatch.git@revision should fail"
+else
+    fail "get_URL: match URL for nomatch.git@revision should fail"
+    fixme "get_URL returned ${out}"
+fi
 
 out="`get_URL gcc.git/linaro-4.8-branch@12345`"
 if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
-    pass "get_URL: git URL in latest field"
+    pass "get_URL: URL with tool.git/branch@revision "
 else
-    fail "get_URL: git URL in latest field"
+    fail "get_URL: URL with tool.git/branch@revision "
     fixme "get_URL returned ${out}"
 fi
 if test x"`echo ${out} | cut -d ' ' -f 2`" = x"linaro-4.8-branch"; then
-    pass "get_URL: git URL branch in latest field"
+    pass "get_URL: branch with tool.git/branch@revision "
 else
-    fail "get_URL: git URL branch in latest field"
+    fail "get_URL: branch with tool.git/branch@revision "
     fixme "get_URL returned ${out}"
 fi
 if test x"`echo ${out} | cut -d ' ' -f 3`" = x"12345"; then
-    pass "get_URL: git URL commit in latest field"
+    pass "get_URL: revision with tool.git/branch@revision "
 else
-    fail "get_URL: git URL commit in latest field"
+    fail "get_URL: revision with tool.git/branch@revision "
     fixme "get_URL returned ${out}"
 fi
 
@@ -341,6 +332,7 @@ echo "============= get_source() tests ================"
 
 # get_sources might, at times peak at latest for a hint if it can't find
 # things.  Keep it unset unless you want to test a specific code leg.
+saved_latest=${latest}
 latest=''
 
 # Test get_source with a variety of inputs
@@ -435,7 +427,7 @@ else
 fi
 
 in="git://git.linaro.org/toolchain/eglibc/branchname@revision"
-out="`get_source ${in}`"
+out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc/branchname@revision"; then
     pass "get_source: git direct url not ending in .git with revision returns bogus url."
 else
@@ -444,7 +436,7 @@ else
 fi
 
 in="git://git.linaro.org/toolchain/foo.git"
-out="`get_source ${in}`"
+out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x""; then
     pass "get_source: full url with <repo>.git with no matching source.conf entry should fail."
 else
@@ -453,7 +445,7 @@ else
 fi
 
 in="nomatch.git"
-out="`get_source ${in}`"
+out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x""; then
     pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
 else
@@ -543,6 +535,8 @@ else
     fail "get_source: partial matches in snapshots, latest set."
     fixme "get_source returned ${out}"
 fi
+
+latest=${saved_latest}
 
 # ----------------------------------------------------------------------------------
 
