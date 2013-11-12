@@ -411,7 +411,7 @@ while test $# -gt 0; do
             dispatch ${url}
 	    shift
             ;;
-	--dryrun)
+	--dry*|-dry)
             dryrun=yes
             ;;
 	--dump)
