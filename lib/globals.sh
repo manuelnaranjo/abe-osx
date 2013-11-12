@@ -11,7 +11,8 @@ host=${target}
 gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
-libc="default"
+# This is the default clibrary and can be overridden on the command line.
+clibrary="eglibc"
 snapshots="default"
 configfile="default"
 dbuser="default"

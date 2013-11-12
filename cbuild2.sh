@@ -11,7 +11,7 @@ cbuild2="`basename $0`"
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    warning "no host.conf file!"
+    warning "no host.conf file!  Did you run configure?"
 fi
 
 # this is used to launch builds of dependant components
@@ -20,6 +20,67 @@ command_line_arguments=$*
 #
 # These functions actually do something
 #
+
+# Determine whether the clibrary setting passed as $1 is compatible with the
+# designated target.
+crosscheck_clibrary_target()
+{
+    local test_clibrary=$1
+    local test_target=$2
+    case ${test_target} in
+       arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+           # Bare metal targets only support newlib.
+           if test x"${test_clibrary}" != x"newlib"; then
+               error "${test_target} is only compatible with newlib."
+               return 1
+           fi
+           ;;
+       *)
+           # No specified target, or non-baremetal targets.
+           ;;
+    esac
+    return 0
+}
+
+set_package()
+{
+    saveIFS=${IFS}
+    IFS='='
+    local in=($1)
+    IFS=${saveIFS}
+    local package=${in[0]}
+    local setting=${in[1]}
+
+    case ${package} in
+	libc)
+	    # Range check user input against supported C libraries.
+	    case ${setting} in
+		glibc|eglibc|newlib)    
+
+		    # Verify that the user specified libc is compatible with
+		    # the user specified target.
+		    crosscheck_clibrary_target ${setting} ${target}
+		    if test $? -gt 0; then
+			return 1
+		    fi
+
+		    clibrary="${setting}"
+		    notice "Using '${setting}' as the C library as directed by \"--set libc=${setting}\"."
+		    return 0
+		    ;;
+		*)
+		    error "'${setting}' is an unsupported libc option."
+		    ;;
+	    esac
+	    ;;
+	*)
+	    error "'${package}' is not a supported package for --set."
+	    ;;
+    esac
+
+    return 1
+}
+
 
 # This gets a list from a remote server of the available tarballs. We use HTTP
 # instead of SSH so it's more accessible to those behind nasty firewalls.
@@ -85,10 +146,10 @@ dump()
     echo "GCC is:            ${gcc}"
     echo "GCC version:       ${gcc_version}"
     echo "Sysroot is:        ${sysroots}"
+    echo "C library is:      ${clibrary}"
 
     # These variables have default values which we don't care about
     echo "Binutils is:       ${binutils}"
-    echo "Libc is:           ${libc}"
     echo "Config file is:    ${configfile}"
     echo "Snapshot URL is:   ${local_snapshots}"
     echo "DB User name is:   ${dbuser}"
@@ -440,6 +501,13 @@ while test $# -gt 0; do
             release=$2
 	    shift
             ;;
+	--set)
+	    set_package $2
+	    if test $? -gt 0; then
+		exit 1
+	    fi
+	    shift
+	    ;;
 	--snapshots|-s)
             set_snapshots ${url}
 	    shift
@@ -452,8 +520,20 @@ while test $# -gt 0; do
 		error "A '=' is invalid after --target.  A space is expected."
 		exit 1;
 	    fi
-            target=$2
+	    target=$2
 	    sysroots=${sysroots}/${target}
+
+	    # Certain targets only make sense using newlib as the default
+	    # clibrary. Override the normal default in lib/global.sh. The
+	    # user might try to override this with --set libc={glibc|eglibc}
+	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
+	    case ${target} in
+		arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+		    clibrary="newlib"
+		    ;;
+		 *)
+		    ;;
+	    esac
 	    shift
             ;;
 	--testcode|te*)
@@ -598,13 +678,24 @@ while test $# -gt 0; do
 		    mpc)
 			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
 			;;
+		    eglibc|glibc|newlib)
+			# Only allow valid combinations of target and clibrary.
+			crosscheck_clibrary_target ${name} ${target}
+			if test $? -gt 0; then
+			    exit 1
+			fi
+			# Continue to process individually.
+			;;&
 		    eglibc)
+			clibrary="eglibc"
 			eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
 			;;
 		    glibc)
+			clibrary="glibc"
 			glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
 			;;
 		    n*|newlib)
+			clibrary="newlib"
 			newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
 			;;
 		    *)

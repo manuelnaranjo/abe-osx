@@ -510,6 +510,9 @@ get_srcdir()
 		fi
 	    fi
 	    ;;
+	glibc*)
+	    srcdir="${srcdir}${branch:+${branch}}${revision:+${revision}}"
+	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
 	    # subdirectory.

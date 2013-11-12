@@ -47,7 +47,7 @@ configure_build()
 
     local srcdir="`get_srcdir $1`"
 
-    if test ! -f "${srcdir}/configure"; then
+    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
         # then run that to create the configure script.
@@ -122,7 +122,7 @@ configure_build()
 	    ;;
 	*libc)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
-	    mkdir -p ${sysroots}/usr/lib
+	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
 	    # Force a complete reconfigure, as we changed the flags. We could do a
