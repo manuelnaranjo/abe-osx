@@ -331,11 +331,9 @@ if test $# -lt 1; then
 fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
-#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/destdir/${build}/lib"
 
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
-#fetch_rsync ${remote_snapshots}/md5sums
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
@@ -344,7 +342,7 @@ while test $# -gt 0; do
     # or git
     case "$1" in
 	--bu*|-bu*)			# build
-            if test `echo $1 | grep -c "\-\-bu.*=" ` -gt 0; then
+            if test `echo $1 | grep -c "\-bu.*=" ` -gt 0; then
                 error "A '=' is invalid after --build.  A space is expected."
                 exit 1;
             fi
@@ -411,7 +409,7 @@ while test $# -gt 0; do
             dispatch ${url}
 	    shift
             ;;
-	--dry*|-dry)
+	--dry*|-dry*)
             dryrun=yes
             ;;
 	--dump)
@@ -612,6 +610,9 @@ while test $# -gt 0; do
 		    *)
 			;;
 		esac
+	    else
+		error "$1: Command not recognized."
+		exit 1
 	    fi
             ;;
     esac
