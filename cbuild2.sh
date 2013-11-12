@@ -419,6 +419,11 @@ while test $# -gt 0; do
 		fi
 	    else
 		build_all
+		if test $? -gt 0; then
+		    time="`expr ${SECONDS} / 60`"
+		    error "Build process failed after ${time} minutes"
+		    exit 1
+		fi
 	    fi	    
 	    shift
 	    ;;
