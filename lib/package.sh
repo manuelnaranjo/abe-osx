@@ -39,29 +39,6 @@ sanitize()
     return 0
 }
 
-# Build a binary tarball
-# $1 - the version to use, usually something like 2013.07-2
-binary_tarball()
-{
-    trace "$*"
-
-    packages="sysroot toolchain"
-    
-    for i in ${packages}; do
-	case $i in
-	    toolchain)
-		binary_toolchain
-		;;
-	    sysroot)
-		binary_sysroot
-		;;
-	    *)
-		echo "$i package building unimplemented"
-		;;
-	esac
-    done
-}
-
 # The runtime libraries are produced during dynamic builds of gcc, libgcc,
 # listdc++, and gfortran.
 binary_runtime()
@@ -118,6 +95,43 @@ binary_runtime()
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 
     return 0
+}
+
+binary_gdb()
+{
+    trace "$*"
+
+    local version="`${target}-gdb --version | head -1 | cut -d ' ' -f 4`"
+    local tag="`create_release_tag ${gdb_version}`"
+    local destdir=/tmp/linaro/${tag}
+    local builddir="`get_builddir ${gdb_version}`"
+
+    dryrun "mkdir -p ${destdir}/bin"
+    dryrun "mkdir -p ${destdir}/usr/include"
+    dryrun "mkdir -p ${destdir}/usr/share/gdb"
+    dryrun "mkdir -p ${destdir}/usr/share/man/man1"
+
+    # install in alternate directory so it's easier to build the tarball
+    #dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
+
+    # FIXME: we might want a make install here instead of copying everything
+    dryrun "cp -r ${local_builds}/destdir/${host}/bin/${target}-{gdb,rub,gcore} ${destdir}/bin/"
+#    dryrun "cp -r ${local_builds}/destdir/${host}/bin/${target}-gdb ${destdir}/lib/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/include/gdb ${destdir}/usr/include"
+    dryrun "cp -r ${local_builds}/destdir/${host}/share/locale ${destdir}/usr/share/locale/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/share/info/{gdbinit,standards,stabs,configure,gdb,annotate,bfd}}.info ${destdir}/usr/share/info/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/share/gdb ${destdir}/usr/share/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/share/gdb ${destdir}/usr/share/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/man/man1/{gdb,gcore,gdbserver}.1 ${destdir}/usr/man/man1/"
+    dryrun "cp -r ${local_builds}/destdir/${host}/xman/man1/gdb.1 ${destdir}/usr/man/man5/gdbinit.5"
+
+    # make the tarball from the tree we just created.
+    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    return 0    
 }
 
 # Produce a binary toolchain tarball
@@ -182,10 +196,18 @@ binary_toolchain()
     cp /tmp/manifest.txt ${destdir}
 
     # install in alternate directory so it's easier to build the tarball
-    dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
+    # dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
+
+    # We already built GDB but it goes in it's own tarball, so we delete
+    # it from the copy before tarring it up, cause the GDB tarball will
+    # be making a copy at packaging time from the original location.
+    local exclude="--exclude=*gdb* --exclude=*dejagnu*"
+
+    # We build and test GCCGO, but we don't release it yet
+    # dryrun "rm -fr ${destdir}/bin/${target}-gccgo"
 
     # make the tarball from the tree we just created.
-    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
