@@ -89,7 +89,7 @@ release_binutils_src()
     # make a link with the correct name for the tarball's source directory
     dryrun "ln -sfnT ${srcdir}/ ${destdir}"
     
-    exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
     dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
 
     # Make the md5sum file for this tarball
@@ -221,7 +221,7 @@ edit_changelogs()
     if test `echo ${srcdir} | grep -c "/gdb"` -gt 0; then
 	local tool=gdb
 	if test `echo ${srcdir} | grep -c "/gcc"` -gt 0; then
-	    local tool=gdb
+	    local tool=gcc
 	    if test `echo ${srcdir} | grep -c "/binutils"` -gt 0; then
 		local tool=binutils
 		if test `echo ${srcdir} | grep -c "/glibc"` -gt 0; then
@@ -239,7 +239,7 @@ edit_changelogs()
 
     # Get all the ChangeLog files.
     local clogs="`find $1 -name ChangeLog`"
-
+    local uptool="`echo ${tool} | tr "[:lower:]" "[:upper:]"`"
     # For a dryrun, don't actually edit any ChangeLog files.
     if test x"${dryrun}" = x"no"; then
 	for i in ${clogs}; do
@@ -250,7 +250,7 @@ edit_changelogs()
 	    fi
      	    echo "${date}  ${fullname}  <${email}>" >> $i.linaro
      	    echo "" >> $i.linaro 
-            echo "        GCC Linaro $2 released." >> $i.linaro
+            echo "        ${uptool} Linaro $2 released." >> $i.linaro
      	    echo "" >> $i.linaro
      	    cat /tmp/ChangeLog.linaro >> $i.linaro
      	    rm -f /tmp/ChangeLog.linaro
@@ -260,24 +260,45 @@ edit_changelogs()
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GDB/ReleaseProcess
 # $1 - file name-version to grab from source code control.
-release_gdb()
-{ 
+release_gdb_src()
+{
     trace "$*"
 
-    # First, checkout all the sources
-    if test -d ${local_snapshots}/$1; then
-	checkout $1 
+    # See if specific component versions were specified at runtime
+    if test x"${gdb_version}" = x; then
+	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
+    local srcdir="`get_srcdir ${gdb_version}`"
+#    local builddir="`get_builddir ${gdb_version}`"
+    local tag="`create_release_tag ${gdb_version}`"
+    local destdir=/tmp/${tag}
 
-    # Edit ChangeLog.linaro and add "GDB Linaro 7.X-20XX.XX[-X] released."
-    edit_changelog $1
+    # Update the GDB version
+    rm -f ${destdir}/gdb/LINARO-VERSION
+    echo "${tag}" > ${destdir}/gdb/LINARO-VERSION
 
-    # Update gdb/version.in
+    if test x"${release}" = x;then
+	edit_changelogs ${srcdir} ${tag}
+    else
+	edit_changelogs ${srcdir} ${release}
+    fi    
+    
+#    dryrun "regenerate_checksums ${destdir}"
 
-    #
-    # Check in the changes, and tag them
-    # bzr commit -m "Make 7.X-20XX.XX[-X] release."
-    # bzr tag gdb-linaro-7.X-20XX.XX[-X]
+    # Remove extra files left over from any development hacking
+    sanitize ${srcdir}
+
+    # make a link with the correct name for the tarball's source directory
+    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
+    
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
+
+    # Make the md5sum file for this tarball
+    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    return 0
 }
 
 release_newlib()
