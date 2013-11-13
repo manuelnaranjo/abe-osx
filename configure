@@ -3451,13 +3451,13 @@ $as_echo "$as_me: WARNING: You need 'autogen' to run configure properly!" >&2;}
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for beep in -llibcurses" >&5
-$as_echo_n "checking for beep in -llibcurses... " >&6; }
-if ${ac_cv_lib_libcurses_beep+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for doupdate in -lncurses" >&5
+$as_echo_n "checking for doupdate in -lncurses... " >&6; }
+if ${ac_cv_lib_ncurses_doupdate+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llibcurses  $LIBS"
+LIBS="-lncurses  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -3467,32 +3467,77 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char beep ();
+char doupdate ();
 int
 main ()
 {
-return beep ();
+return doupdate ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_libcurses_beep=yes
+  ac_cv_lib_ncurses_doupdate=yes
 else
-  ac_cv_lib_libcurses_beep=no
+  ac_cv_lib_ncurses_doupdate=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_libcurses_beep" >&5
-$as_echo "$ac_cv_lib_libcurses_beep" >&6; }
-if test "x$ac_cv_lib_libcurses_beep" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ncurses_doupdate" >&5
+$as_echo "$ac_cv_lib_ncurses_doupdate" >&6; }
+if test "x$ac_cv_lib_ncurses_doupdate" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBLIBCURSES 1
+#define HAVE_LIBNCURSES 1
 _ACEOF
 
-  LIBS="-llibcurses $LIBS"
+  LIBS="-lncurses $LIBS"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for unctrl in -ltermcap" >&5
+$as_echo_n "checking for unctrl in -ltermcap... " >&6; }
+if ${ac_cv_lib_termcap_unctrl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltermcap  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char unctrl ();
+int
+main ()
+{
+return unctrl ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_termcap_unctrl=yes
+else
+  ac_cv_lib_termcap_unctrl=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_termcap_unctrl" >&5
+$as_echo "$ac_cv_lib_termcap_unctrl" >&6; }
+if test "x$ac_cv_lib_termcap_unctrl" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBTERMCAP 1
+_ACEOF
+
+  LIBS="-ltermcap $LIBS"
 
 fi
 
@@ -5097,3 +5142,4 @@ EOF
 # tab-width: 2
 # indent-tabs-mode: nil
 # End:
+
