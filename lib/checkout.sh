@@ -40,7 +40,6 @@ checkout()
 
     # returns tool.git-branch-revision or tool.git-branch or tool.git-revision
     srcdir="`get_srcdir $1`"
-    notice "Checking out sources for $1 into ${srcdir}"
 
     case $1 in
 	bzr*|lp*)
@@ -82,6 +81,7 @@ checkout()
 	    ;;
 	git*)
 	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
+		notice "Updating sources for $1 in ${srcdir}"
 		# A revision represents a snapshot in time so it doesn't need to
 		# be updated.  Otherwise for a named branch or 'master' we pull.
 		if test x"${revision}" = x; then
@@ -93,6 +93,7 @@ checkout()
 		# directory would be in the 'master' branch rather than a named
 		# branch but we can't handle every corner case.
 	    else
+		notice "Checking out sources for $1 into ${srcdir}"
 		if test x"${branch}" = x -a x"${revision}" = x; then
 		    dryrun "git clone $1 ${srcdir}"
 		else
