@@ -29,10 +29,13 @@ build_all()
     if test x"${eglibc_version}" = x; then
 	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
     fi
-
     if test x"${newlib_version}" = x; then
 	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
     fi
+    if test x"${glibc_version}" = x; then
+	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
+    fi
+
 
     if test x"${gdb_version}" = x; then
 	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
@@ -59,8 +62,13 @@ build_all()
 	    libc)
 		if test x"${clibrary}" = x"eglibc"; then
 		    build ${eglibc_version}
-		else
+		elif  test x"${clibrary}" = x"glibc"; then
+		    build ${glibc_version}
+		elif test x"${clibrary}" = x"newlib"; then
 		    build ${newlib_version}
+		else
+		    error "\${clibrary}=${clibrary} not supported."
+		    return 1
 		fi
 		if test $? -gt 0; then
 		    error "Couldn't build ${clibrary}!"
@@ -229,7 +237,7 @@ build()
 
     # See if we can compile and link a simple test case.
     if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
-	hello_world
+	dryrun "(hello_world)"
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${url}..."
 	    #return 1
@@ -278,8 +286,12 @@ make_all()
 	export CONFIG_SHELL=${bash_shell}
     fi
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
-	error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+    # Make sure the make.log file is in place before grepping or the -gt
+    # statement is ill formed.  There is not make.log in a dryrun.
+    if test -e "${builddir}/make.log"; then
+       if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
+           error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+       fi
     fi
     if test $? -gt 0; then
 	warning "Make had failures!"
@@ -307,7 +319,7 @@ make_install()
     local builddir="`get_builddir $1 $2`"
     notice "Making install in ${builddir}"
 
-    if test x"${tool}" = x"eglibc"; then
+    if test x"${tool}" = x"eglibc" -o x"${tool}" = x"glibc"; then
 	make_flags=" install_root=${sysroots} ${make_flags}"
     fi
 

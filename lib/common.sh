@@ -122,6 +122,10 @@ get_URL()
 	    error "Need unique component and version to get URL!"
 	    return 1
 	fi
+	if test "`grep -c "^${node}" ${srcs}`" -lt 1; then
+	    error "Component \"${node}\" not found in ${srcs} file!"
+	    return 1
+	fi
 	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
 	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
@@ -505,6 +509,9 @@ get_srcdir()
 		    local srcdir="${srcdir}/${newdir}${revision}"
 		fi
 	    fi
+	    ;;
+	glibc*)
+	    srcdir="${srcdir}${branch:+${branch}}${revision:+${revision}}"
 	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc

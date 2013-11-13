@@ -3,6 +3,7 @@
 # load commonly used functions
 cbuild="`which $0`"
 topdir="`dirname ${cbuild}`"
+cbuild2="`basename $0`"
 
 . "${topdir}/lib/common.sh" || exit 1
 
@@ -10,7 +11,7 @@ topdir="`dirname ${cbuild}`"
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    warning "no host.conf file!"
+    warning "no host.conf file!  Did you run configure?"
 fi
 
 # this is used to launch builds of dependant components
@@ -19,6 +20,67 @@ command_line_arguments=$*
 #
 # These functions actually do something
 #
+
+# Determine whether the clibrary setting passed as $1 is compatible with the
+# designated target.
+crosscheck_clibrary_target()
+{
+    local test_clibrary=$1
+    local test_target=$2
+    case ${test_target} in
+       arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+           # Bare metal targets only support newlib.
+           if test x"${test_clibrary}" != x"newlib"; then
+               error "${test_target} is only compatible with newlib."
+               return 1
+           fi
+           ;;
+       *)
+           # No specified target, or non-baremetal targets.
+           ;;
+    esac
+    return 0
+}
+
+set_package()
+{
+    saveIFS=${IFS}
+    IFS='='
+    local in=($1)
+    IFS=${saveIFS}
+    local package=${in[0]}
+    local setting=${in[1]}
+
+    case ${package} in
+	libc)
+	    # Range check user input against supported C libraries.
+	    case ${setting} in
+		glibc|eglibc|newlib)    
+
+		    # Verify that the user specified libc is compatible with
+		    # the user specified target.
+		    crosscheck_clibrary_target ${setting} ${target}
+		    if test $? -gt 0; then
+			return 1
+		    fi
+
+		    clibrary="${setting}"
+		    notice "Using '${setting}' as the C library as directed by \"--set libc=${setting}\"."
+		    return 0
+		    ;;
+		*)
+		    error "'${setting}' is an unsupported libc option."
+		    ;;
+	    esac
+	    ;;
+	*)
+	    error "'${package}' is not a supported package for --set."
+	    ;;
+    esac
+
+    return 1
+}
+
 
 # This gets a list from a remote server of the available tarballs. We use HTTP
 # instead of SSH so it's more accessible to those behind nasty firewalls.
@@ -84,10 +146,10 @@ dump()
     echo "GCC is:            ${gcc}"
     echo "GCC version:       ${gcc_version}"
     echo "Sysroot is:        ${sysroots}"
+    echo "C library is:      ${clibrary}"
 
     # These variables have default values which we don't care about
     echo "Binutils is:       ${binutils}"
-    echo "Libc is:           ${libc}"
     echo "Config file is:    ${configfile}"
     echo "Snapshot URL is:   ${local_snapshots}"
     echo "DB User name is:   ${dbuser}"
@@ -102,35 +164,237 @@ dump()
 
 usage()
 {
-    echo "Usage: $0 "
-    echo "  --build (architecture for the build machine, default native)"
-    echo "  --target (architecture for the target machine, default native)"
-    echo "  --snapshots XXX (URL of remote host or local directory)"
-    echo "  --list {base,prebuilt,snapshots} (list possible values for component versions)"
-    echo "  --set {gcc,binutils,libc,latest}=XXX (change config file setting)"
-    echo "  --config XXX (alternate config file)"
-    echo "  --clean (clean a previous build, default is to start where it left off)"
-    echo "  --dispatch (run on LAVA build farm, probably remote)"
-    echo "  --sysroot XXX (specify path to alternate sysroot)"
-    echo "  --db-user XXX (specify MySQL user"
-    echo "  --db-passwd XXX (specify MySQL password)"
-    echo "  --dump (dump the values in the config file)"
-    echo "  --dostep XXX (fetch,extract,configure,build,checkout,package)"
-    echo "  --release XXX (replace the default version string in the release tarballs)"
-    echo "  --clobber (force files to be downloaded even when they exist)"
-    echo "  --force (force make errors to be ignored, answer yes for any prompts)"
-    echo "  --parallel (do parallel builds, one per cpu core)"
-    echo "  --merge XXX (merge a commit from trunk)"
-    echo "  --check (run make check after the build completes)"
-    exit 1
+    # Format this section with 75 columns.
+    cat << EOF
+  ${cbuild2} [''|
+	     [--build [<package>|all|''] [--ccache] [--check]
+             [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
+	     [--fetch <url>] [--force] [--host <host_triple>] [--help]
+	     [--list] [--manifest <manifest_file>] [--parallel] [--release]
+	     [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
+	     [--target <target_triple>] [--usage] [--interactive]
+   	     [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
+		=<id|snapshot|url>]]
+
+EOF
+    return 0
 }
 
+help()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+NAME
+
+  ${cbuild2} - the Linaro Toolchain Build Framework.
+
+SYNOPSIS
+
+EOF
+    usage
+    cat << EOF
+KEY
+
+  [--foo]	  Optional switch
+  [<foo>]	  Optional user specified field 
+  <foo>		  Non-optional user specified field.
+  {foo|bar|bat}   Non-optional choice field.
+  [{foo|bar|bat}] Optional choice field.
+  [foo]		  Optional field 
+  ['']		  Optional Empty field 
+
+DESCRIPTION
+
+  ${cbuild2} is a toolchain build framework. The primary purpose of
+  ${cbuild2} is to unify the method used to build cross, native, and
+  Canadian-cross GNU toolchains.
+
+PRECONDITIONS
+
+  Autoconf (configure) must be run in order to construct the build
+  directory and host.conf file before it is valid to run ${cbuild2}.
+
+OPTIONS
+
+  ''		Specifying no options will display synopsis information.
+
+  --build [<package>|all|'']
+
+		<package>
+			Build the specific package as specified by the
+			configuration files.  This option is really only
+			useful if you've done a previous entire toolchain
+			build.
+
+		all
+			Build the entire toolchain.
+		''
+			If there are not options build the entire toolchain.
+  --check
+		Run make check on packages.  For cross builds this will run
+		the tests on native hardware.
+
+  --ccache	Use ccache when building packages.
+
+  --disable	{boostrap|tarball|install}
+
+  		bootstrap
+			Foo
+		tarball
+			Regardless of the default setting, disable the
+			building of tarballs.
+		install
+			Foo
+
+  --dryrun	Run as much of ${cbuild2} as possible without doing any
+		actual configuration, building, or installing.
+
+  --dump	Dump configuration file information for this build.
+
+  --fetch <url>
+
+  		Fetch the specified URL into the snapshots directory.
+
+  --force	Force download packages and force rebuild packages.
+
+  --help|-h	Display this usage information.
+
+  --host <host_triple>
+
+		Set the host triple.   This represents the machine where
+		the packages being built will run.  For a cross toolchain
+		build this would represent where the compiler is run.
+
+  --infrastructure Download and install the infrastructure libraries.
+
+  --interactive Interactively select packages from the snapshots file.
+
+  --list	List the available snapshots or configured repositories.
+
+  --manifest <manifest_file>
+
+  		Source the <manifest_file> to override the default
+		configuration. This is used to reproduce an identical
+		toolchain build from manifest files generated by a previous
+		build.
+
+  --parallel	Set the make flags for parallel builds.
+
+  --release
+		The build system will package the resulting toolchain as a
+		release.
+
+  --set		{libc}={glibc|eglibc|newlib}
+
+		The default value is stored in lib/global.sh.  This
+		setting overrides the default.  Specifying a libc
+		other than newlib on baremetal targets is an error.
+
+  --snapshots	<url>
+  		Use an alternate snapshots file as specified by <url>.
+
+  --tarball
+  		Build tarballs after a successful build.
+
+  --target	[<target_triple>|'']
+
+		This sets the target triple.  The GNU target triple
+		represents where the binaries built by the toolchain will
+		execute.
+
+		''
+			Build the toolchain native to the hardware that
+			${cbuild2} is running on.
+                 
+		<target_triple>
+
+			x86_64-none-linux-gnu
+			arm-none-linux-gnueabi
+			arm-none-linux-gnueabihf
+			armeb-none-linux-gnueabihf
+			aarch64-none-linux-gnu
+			aarch64-none-elf
+			aarch64_be-none-elf
+			aarch64_be-none-linux-gnu
+
+			If <target_triple> is not the same as the hardware
+			that ${cbuild2} is running on then build the
+			toolchain as a cross toolchain.
+
+  --usage	Display synopsis information.
+
+   [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
+
+		This option specifies a particular version of a package
+		that might differ from the default version in the
+		package config files.
+
+		For a specific package use a version tag that matches a
+		setting in a sources.conf file, a snapshots identifier,
+		or a direct repository URL.
+
+		Examples:
+
+			# Matches an identifier in sources.conf:
+			glibc=glibc.git
+
+			# Matches a tar snapshot in md5sums:
+			glibc=eglibc-linaro-2.17-2013.07
+
+			# Direct URL:
+			glibc=git://sourceware.org/git/glibc.git
+
+EXAMPLES
+
+  Build a Linux cross toolchain:
+
+    ${cbuild2} --target=arm-none-linux-gnueabihf --build all
+
+  Build a Linux cross toolchain with glibc as the clibrary:
+
+    ${cbuild2} --target=arm-none-linux-gnueabihf --set libc=glibc --build all
+
+  Build a bare metal toolchain:
+
+    ${cbuild2} --target=aarch64-none-elf --build all
+
+PRECONDITION FILES
+
+  ~/.cbuildrc		${cbuild2} user specific configuration file
+
+  host.conf		Generated by configure from host.conf.in.
+
+CBUILD GENERATED FILES AND DIRECTORIES
+
+  builds/		All builds are stored here.
+
+  snapshots/		Package sources are stored here.
+
+  snapshots/infrastructure Infrastructure (non-distributed) sources are stored
+			here.
+
+  snapshots/md5sums	The snapshots file of maintained package tarballs.
+
+AUTHOR
+  Rob Savoye <rob.savoye@linaro.org>
+  Ryan S. Arnold <ryan.arnold@linaro.org>
+
+EOF
+    return 0
+}
+
+# If there are no command options output the usage message.
+if test $# -lt 1; then
+    echo "Usage:"
+    usage
+    echo "Run \"${cbuild2} --help\" for detailed usage information."
+    exit 1
+fi
+
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
-#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${local_builds}/destdir/${build}/lib"
 
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
-#fetch_rsync ${remote_snapshots}/md5sums
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
@@ -138,7 +402,11 @@ while test $# -gt 0; do
     # URL can be either for a source tarball, or a checkout via svn, bzr,
     # or git
     case "$1" in
-	--bu*)			# build
+	--bu*|-bu*)			# build
+            if test `echo $1 | grep -c "\-bu.*=" ` -gt 0; then
+                error "A '=' is invalid after --build.  A space is expected."
+                exit 1;
+            fi
 	    if test x"$2" != x"all"; then
 		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 		tool=`get_toolname $2`
@@ -151,6 +419,11 @@ while test $# -gt 0; do
 		fi
 	    else
 		build_all
+		if test $? -gt 0; then
+		    time="`expr ${SECONDS} / 60`"
+		    error "Build process failed after ${time} minutes"
+		    exit 1
+		fi
 	    fi	    
 	    shift
 	    ;;
@@ -202,7 +475,7 @@ while test $# -gt 0; do
             dispatch ${url}
 	    shift
             ;;
-	--dryrun)
+	--dry*|-dry*)
             dryrun=yes
             ;;
 	--dump)
@@ -233,6 +506,13 @@ while test $# -gt 0; do
             release=$2
 	    shift
             ;;
+	--set)
+	    set_package $2
+	    if test $? -gt 0; then
+		exit 1
+	    fi
+	    shift
+	    ;;
 	--snapshots|-s)
             set_snapshots ${url}
 	    shift
@@ -240,9 +520,25 @@ while test $# -gt 0; do
 	--tarball*|-tarb*)
 	    tarballs=yes
 	    ;;
-	--target|-ta*)			# target
-            target=$2
+	--targ*|-targ*)			# target
+	    if test `echo $1 | grep -c "\-ta.*=" ` -gt 0; then
+		error "A '=' is invalid after --target.  A space is expected."
+		exit 1;
+	    fi
+	    target=$2
 	    sysroots=${sysroots}/${target}
+
+	    # Certain targets only make sense using newlib as the default
+	    # clibrary. Override the normal default in lib/global.sh. The
+	    # user might try to override this with --set libc={glibc|eglibc}
+	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
+	    case ${target} in
+		arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+		    clibrary="newlib"
+		    ;;
+		 *)
+		    ;;
+	    esac
 	    shift
             ;;
 	--testcode|te*)
@@ -357,9 +653,16 @@ while test $# -gt 0; do
 	--clobber)
             clobber=yes
             ;;
-	--help)
-            usage
-            ;;
+	--help|-h|--h)
+	    help 
+	    exit 0
+	     ;;
+	--usage)
+	    echo "Usage:"
+	    usage
+	    echo "Run \"${cbuild2} --help\" for detailed usage information."
+	    exit 0
+	      ;;
 	*)
 	    if test `echo $1 | grep -c =` -gt 0; then
 		name="`echo $1 | cut -d '=' -f 1`"
@@ -383,18 +686,32 @@ while test $# -gt 0; do
 		    mpc)
 			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
 			;;
+		    eglibc|glibc|newlib)
+			# Only allow valid combinations of target and clibrary.
+			crosscheck_clibrary_target ${name} ${target}
+			if test $? -gt 0; then
+			    exit 1
+			fi
+			# Continue to process individually.
+			;;&
 		    eglibc)
+			clibrary="eglibc"
 			eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
 			;;
 		    glibc)
+			clibrary="glibc"
 			glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
 			;;
 		    n*|newlib)
+			clibrary="newlib"
 			newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
 			;;
 		    *)
 			;;
 		esac
+	    else
+		error "$1: Command not recognized."
+		exit 1
 	    fi
             ;;
     esac

@@ -24,14 +24,21 @@ checkout()
     local tool="`get_toolname $1`"
     local branch=
     local revision=
-    if test `echo $1 | grep -c \.git/` -gt 0; then
+    if test `echo $1 | grep -c "\.git/"` -gt 0; then
+	# In git a revision always coincides with a specific branch.
+	# If a revision is present with a branch name the revision
+	# is what is used and the branch is just used to name
+	# the directory.
         local branch="`basename $1`"
         local branch="`echo $branch | cut -d '@' -f 1`"
 	if test `echo $1 | grep -c '@'` -gt 0; then
 	    local revision="`echo $1 | cut -d '@' -f 2`"
 	fi
+    elif test `echo $1 | grep -c "\.git@"` -gt 0; then
+	local revision=`echo $1 | cut -d '@' -f 2`
     fi
 
+    # returns tool.git-branch-revision or tool.git-branch or tool.git-revision
     srcdir="`get_srcdir $1`"
     notice "Checking out sources for $1 into ${srcdir}"
 
@@ -75,17 +82,40 @@ checkout()
 	    ;;
 	git*)
 	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-		dryrun "(cd ${srcdir} && git pull origin ${branch})"
+		# A revision represents a snapshot in time so it doesn't need to
+		# be updated.  Otherwise for a named branch or 'master' we pull.
+		if test x"${revision}" = x; then
+		    # If there's branch info, pull branch, otherwise just pull.
+		    dryrun "(cd ${srcdir} && git pull origin${branch:+ ${branch}})"
+		fi
+		# NOTE: It's possible that a git-new-workdir succeeded but the
+		# git checkout -b [branch|revision] didn't in which case our
+		# directory would be in the 'master' branch rather than a named
+		# branch but we can't handle every corner case.
 	    else
-		if test x"${branch}" = x; then
+		if test x"${branch}" = x -a x"${revision}" = x; then
 		    dryrun "git clone $1 ${srcdir}"
 		else
 		    if test ! -d ${local_snapshots}/${tool}.git; then
-			# Strip off the "/<branchname>" from $1 to get the repo address
+			# Strip off the "[/<branchname>][@<revision>]" from $1 to
+			# get the repo address
 			local repo="`echo $1 | sed -e "s:\(^.*/${tool}.git\).*:\1:"`"
 			dryrun "git clone ${repo} ${local_snapshots}/${tool}.git"
 		    fi
-		    dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir} ${branch}"
+
+		    # If revision is set only use ${branch} for naming.
+		    if test x"${revision}" != x; then
+			dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir}"
+			# Check out detached head state at ${revision}.
+			dryrun "(cd ${srcdir} && git checkout ${revision})"
+			# Create a [branch_]revision working branch.
+			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
+		    elif test x"${branch}" != x; then
+			# If there's no revision we checkout a specific branch.
+			dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir}${branch:+ ${branch}}"
+		    fi
+		    # We don't need a new-workdir if there's no designated
+		    # branch or revision.
 		fi
 	    fi
 	    ;;

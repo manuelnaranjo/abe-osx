@@ -230,6 +230,16 @@ binary_sysroot()
 		local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
 	    fi
 	    local srcdir="`get_srcdir ${libc_version}`"
+	elif test x"${clibrary}" = x"glibc"; then
+	    if test x"${glibc_version}" = x; then
+		local libc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
+		local srcdir="`get_srcdir ${libc_version}`"
+		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
+	    else
+		local libc_version="`echo ${glibc_version} | cut -d '/' -f 1`"
+		local srcdir="`get_srcdir ${libc_version}`"
+		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
+	    fi
 	else
 	    if test x"${eglibc_version}" = x; then
 		local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
@@ -332,24 +342,20 @@ gcc_version=${gcc_version}
 binutils_version=${binutils_version}
 EOF
     
-    if test x"${clibrary}" = x; then
-	echo "eglibc_version=${eglibc_version}" >> ${outfile}
-    else
-	case ${clibrary} in
-	    eglibc)
-		echo "eglibc_version=${eglibc_version}" >> ${outfile}
-		;;
-	    glibc)
-		echo "glibc_version=${glibc_version}" >> ${outfile}
-		;;
-	    newlib)
-		echo "newlib_version=${newlib_version}" >> ${outfile}
-		;;
-	    *)
-		echo "eglibc_version=${eglibc_version}" >> ${outfile}
-		;;
-	esac
-    fi
+    case ${clibrary} in
+	eglibc)
+	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
+	    ;;
+	glibc)
+	    echo "glibc_version=${glibc_version}" >> ${outfile}
+	    ;;
+	newlib)
+	    echo "newlib_version=${newlib_version}" >> ${outfile}
+	    ;;
+	*)
+	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
+	    ;;
+    esac
 }
 
 # Build a source tarball
