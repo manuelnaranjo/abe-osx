@@ -61,6 +61,7 @@ fi
 dnl Building GDB requires ncurses and termcap
 AC_CHECK_LIB(ncurses, doupdate)
 AC_CHECK_LIB(termcap, unctrl)
+AC_CHECK_LIB(z, gzread)
 
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
@@ -71,7 +72,7 @@ dpkg="`which dpkg`"
 result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib zlib1g-dev"
+    packages="${packages} gcc-multilib g++-multilib"
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
 #	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
