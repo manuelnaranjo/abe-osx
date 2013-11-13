@@ -58,7 +58,9 @@ if test x"${AUTOGEN}" = x; then
    missing="${missing} autogen"
 fi
 
-AC_CHECK_LIB(libcurses, beep)
+dnl Building GDB requires ncurses and termcap
+AC_CHECK_LIB(ncurses, doupdate)
+AC_CHECK_LIB(termcap, unctrl)
 
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
@@ -267,3 +269,4 @@ EOF
 # tab-width: 2
 # indent-tabs-mode: nil
 # End:
+
