@@ -374,6 +374,9 @@ while test $# -gt 0; do
 		    gm*|gmp)
 			gmp_version="`echo ${value} | sed -e 's:gmp-::'`"
 			;;
+		    gd*|gdb)
+			gdb_version="`echo ${value} | sed -e 's:gdb-::'`"
+			;;
 		    mpf*|mpfr)
 			mpfr_version="`echo ${value} | sed -e 's:mpfr-::'`"
 			;;
