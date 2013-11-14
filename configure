@@ -3496,6 +3496,9 @@ _ACEOF
 
 fi
 
+if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+   missing="${missing} ncurses"
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for unctrl in -ltermcap" >&5
 $as_echo_n "checking for unctrl in -ltermcap... " >&6; }
 if ${ac_cv_lib_termcap_unctrl+:} false; then :
@@ -3541,6 +3544,9 @@ _ACEOF
 
 fi
 
+if test x${ac_cv_lib_termcap_unctrl} != x"yes"; then
+   missing="${missing} termcap"
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gzread in -lz" >&5
 $as_echo_n "checking for gzread in -lz... " >&6; }
 if ${ac_cv_lib_z_gzread+:} false; then :
