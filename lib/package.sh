@@ -106,30 +106,20 @@ binary_gdb()
     local destdir=/tmp/linaro/${tag}
     local builddir="`get_builddir ${gdb_version}`"
 
-    dryrun "mkdir -p ${destdir}/bin"
-    dryrun "mkdir -p ${destdir}/usr/include"
-    dryrun "mkdir -p ${destdir}/usr/share/gdb"
-    dryrun "mkdir -p ${destdir}/usr/share/man/man1"
+    dryrun "mkdir -p ${destdir}-tmp"
+
+    local prefix="${local_builds}/destdir/${host}"
 
     # install in alternate directory so it's easier to build the tarball
-    #dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
+    dryrun "make install ${make_flags} DESTDIR=${destdir}-tmp -w -C ${builddir}"
+    dryrun "ln -sfnT ${destdir}-tmp/${prefix} ${destdir}"
 
-    # FIXME: we might want a make install here instead of copying everything
-    dryrun "cp -r ${local_builds}/destdir/${host}/bin/${target}-{gdb,rub,gcore} ${destdir}/bin/"
-#    dryrun "cp -r ${local_builds}/destdir/${host}/bin/${target}-gdb ${destdir}/lib/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/include/gdb ${destdir}/usr/include"
-    dryrun "cp -r ${local_builds}/destdir/${host}/share/locale ${destdir}/usr/share/locale/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/share/info/{gdbinit,standards,stabs,configure,gdb,annotate,bfd}}.info ${destdir}/usr/share/info/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/share/gdb ${destdir}/usr/share/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/share/gdb ${destdir}/usr/share/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/man/man1/{gdb,gcore,gdbserver}.1 ${destdir}/usr/man/man1/"
-    dryrun "cp -r ${local_builds}/destdir/${host}/xman/man1/gdb.1 ${destdir}/usr/man/man5/gdbinit.5"
-
+    local abbrev="`echo ${host}_${target} | sed -e 's:none-::' -e 's:unknown-::'`"
     # make the tarball from the tree we just created.
-    dryrun "cd /tmp/linaro && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+    dryrun "tar JcvCfh /tmp/linaro ${local_snapshots}/${tag}-${abbrev}.tar.xz ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
-    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+    dryrun "md5sum ${local_snapshots}/${tag}-${abbrev}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}-${abbrev}.tar.xz.asc"
 
     return 0    
 }
