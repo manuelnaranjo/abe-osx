@@ -435,7 +435,7 @@ make_check()
 
     if test x"$2" != x; then
 	make_check_installed
-	return 0
+#	return 0
     fi
 
     # load the config file for Linaro build farms
