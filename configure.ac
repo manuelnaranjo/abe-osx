@@ -60,7 +60,13 @@ fi
 
 dnl Building GDB requires ncurses and termcap
 AC_CHECK_LIB(ncurses, doupdate)
+if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+   missing="${missing} ncurses"
+fi
 AC_CHECK_LIB(termcap, unctrl)
+if test x${ac_cv_lib_termcap_unctrl} != x"yes"; then
+   missing="${missing} termcap"
+fi
 AC_CHECK_LIB(z, gzread)
 
 dnl Look for packages that do not have executables, so we are forced
