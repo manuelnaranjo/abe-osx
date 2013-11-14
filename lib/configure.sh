@@ -111,7 +111,7 @@ configure_build()
     fi
 
     # prefix is the root everything gets installed under.
-    prefix="${local_builds}/destdir/${host}"
+    local prefix="${local_builds}/destdir/${host}"
 #    prefix="${sysroots}/"
 
     # GCC and the binutils are the only toolchain components that need the
