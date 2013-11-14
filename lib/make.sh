@@ -99,10 +99,14 @@ build_all()
     notice "Build took ${SECONDS} seconds"
     
     if test x"${tarballs}" = x"yes"; then
-	release_gcc_src
-	release_binutils_src
+        release_binutils_src 
+        release_gdb_src
+        release_gcc_src
 
-	binary_tarball
+        binary_sysroot
+        binary_gdb
+        binary_toolchain
+
 	if test x"${clibrary}" != x"newlib"; then
 	    binary_runtime
 	fi
