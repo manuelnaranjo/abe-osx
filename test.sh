@@ -186,6 +186,22 @@ cb_commands="--target=foo"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
+cb_commands="--target"
+match="target requires a directive"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--timeout"
+match="timeout requires a directive"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--timeout=foo"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--timeout 25"
+match=''
+test_pass "${cb_commands}" "${match}"
+
 cb_commands="--target foo"
 match="Complete build process took"
 test_pass "${cb_commands}" "${match}"
@@ -256,6 +272,9 @@ target="aarch64-none-elf"
 cb_commands="--target ${target} newlib=newlib.git"
 match=''
 test_pass "${cb_commands}" "${match}"
+
+
+
 
 tmpdir=`dirname ${local_snapshots}`
 

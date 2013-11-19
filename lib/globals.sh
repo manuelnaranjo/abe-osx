@@ -20,6 +20,11 @@ dbpasswd="default"
 
 manifest=
 
+# The default timeout.  If you're on a wireless network this
+# might not be sufficient and can be overridden at the command
+# line.
+wget_timeout=1
+
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no
 

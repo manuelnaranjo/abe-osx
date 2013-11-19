@@ -166,14 +166,14 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  ${cbuild2} [''|
-	     [--build [<package>|all|''] [--ccache] [--check]
+  ${cbuild2} [''| [--timeout <value>]
+             [--build [<package>|all] [--ccache] [--check]
              [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
-	     [--fetch <url>] [--force] [--host <host_triple>] [--help]
-	     [--list] [--manifest <manifest_file>] [--parallel] [--release]
-	     [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
-	     [--target <target_triple>] [--usage] [--interactive]
-   	     [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
+             [--fetch <url>] [--force] [--host <host_triple>] [--help]
+             [--list] [--manifest <manifest_file>] [--parallel] [--release]
+             [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
+             [--target <target_triple>] [--usage] [--interactive]
+             [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
 		=<id|snapshot|url>]]
 
 EOF
@@ -218,7 +218,7 @@ OPTIONS
 
   ''		Specifying no options will display synopsis information.
 
-  --build [<package>|all|'']
+  --build [<package>|all]
 
 		<package>
 			Build the specific package as specified by the
@@ -321,6 +321,11 @@ OPTIONS
 			that ${cbuild2} is running on then build the
 			toolchain as a cross toolchain.
 
+  --timeout <timeout_value>
+
+                Use <timeout_value> as the timeout value for wget when
+                fetching snapshot packages.
+
   --usage	Display synopsis information.
 
    [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
@@ -393,8 +398,12 @@ fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
+timeout_save=${wget_timeout}
+# Do this temporarily until command processing is a state machine.
+wget_timeout=10
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
+wget_timeout=${timeout_save}
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
@@ -407,7 +416,12 @@ while test $# -gt 0; do
                 error "A '=' is invalid after --build.  A space is expected."
                 exit 1;
             fi
-	    if test x"$2" != x"all"; then
+	    if test x"$2" = x; then
+		error "--build requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit
+	    elif test x"$2" != x"all"; then
 		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 		tool=`get_toolname $2`
 		url="`get_source $2`"
@@ -525,6 +539,13 @@ while test $# -gt 0; do
 		error "A '=' is invalid after --target.  A space is expected."
 		exit 1;
 	    fi
+	    if test x"$2" = x; then
+		error "--target requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit
+	    fi
+
 	    target=$2
 	    sysroots=${sysroots}/${target}
 
@@ -544,6 +565,24 @@ while test $# -gt 0; do
 	--testcode|te*)
 	    testcode
 	    ;;
+       --time*|-time*)
+	    if test `echo $1 | grep -c "\-time.*=" ` -gt 0; then
+		error "A '=' is invalid after --timeout.  A space is expected."
+		exit 1;
+	    fi
+	    if test x"$2" = x; then
+		error "--timeout requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit
+	    elif test $2 -lt 11; then
+		wget_timeout=$2
+	    else
+		# FIXME: Range check for non-numerical values.
+		wget_timeout=10
+	    fi
+            shift
+            ;;
 	# Disable steps in the complete process of building a toolchain. All of
 	# these are enabled by default, but not always desired.
 	--disable)
