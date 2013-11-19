@@ -140,22 +140,85 @@ else
 fi
 
 # ----------------------------------------------------------------------------------
-# test a git branch
+# test git
 in="git://git.linaro.org/toolchain/binutils.git"
 out="`get_toolname ${in}`"
 if test ${out} = "binutils"; then
-    pass "get_toolname: git branch"
+    pass "get_toolname: <repo>.git"
 else
-    fail "get_toolname: git branch"
+    fail "get_toolname: <repo>.git"
+    fixme "${in} returned ${out}"
+fi
+
+in="git://git@git.linaro.org/toolchain/binutils.git"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <user>@<repo>.git"
+else
+    fail "get_toolname: <user>@<repo>.git"
+    fixme "${in} returned ${out}"
+fi
+
+# ----------------------------------------------------------------------------------
+# test a git branch
+in="git://git@staging.git.linaro.org/toolchain/binutils.git/2.4-branch"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <user>@<repo>.git/branch"
+else
+    fail "get_toolname: <user>@<repo>.git/branch"
+    fixme "${in} returned ${out}"
+fi
+
+# ----------------------------------------------------------------------------------
+# test a git with username, branch @ revision
+in="git://git@staging.git.linaro.org/toolchain/binutils.git/2.4-branch@12345"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <user>@<repo>.git/branch@revision"
+else
+    fail "get_toolname: <user>@<repo>.git/branch@revision"
+    fixme "${in} returned ${out}"
+fi
+
+in="git://git@git.linaro.org/toolchain/binutils.git@12345"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <user>@<repo>.git@revision"
+else
+    fail "get_toolname: <user>@<repo>.git@revision"
+    fixme "${in} returned ${out}"
+fi
+
+
+# ----------------------------------------------------------------------------------
+# test a git branch @ revision
+in="git://git.linaro.org/toolchain/binutils.git/2.4-branch@12345"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <repo>.git/branch@revision"
+else
+    fail "get_toolname: <repo>.git/branch@revision"
+    fixme "${in} returned ${out}"
+fi
+
+# ----------------------------------------------------------------------------------
+# test a git branch @ revision
+in="git://git.linaro.org/toolchain/binutils.git@12345"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: <repo>.git@revision"
+else
+    fail "get_toolname: <repo>.git@revision"
     fixme "${in} returned ${out}"
 fi
 
 in="eglibc.git/linaro_eglibc-2_18"
 out="`get_toolname ${in}`"
 if test ${out} = "eglibc"; then
-    pass "get_toolname: git branch"
+    pass "get_toolname: <repo>.git/branch"
 else
-    fail "get_toolname: git branch"
+    fail "get_toolname: <repo>.git/branch"
     fixme "${in} returned ${out}"
 fi
 
@@ -237,15 +300,26 @@ else
 fi
 
 out="`get_URL gcc.git`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git@staging.git.linaro.org/toolchain/gcc.git"; then
     pass "get_URL: git URL with no branch or revision info"
 else
     fail "get_URL: git URL with no branch or revision info"
     fixme "get_URL returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
+if test ! -e "${PWD}/host.conf"; then
+    out="`get_URL gcc_tab.git`"
+    if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git@staging.git.linaro.org/toolchain/gcc.git"; then
+	pass "get_URL: git URL where sources.conf has a tab"
+    else
+	fail "get_URL: git URL where sources.conf has a tab"
+	fixme "get_URL returned ${out}"
+    fi
+fi
+
 out="`get_URL gcc.git@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git@staging.git.linaro.org/toolchain/gcc.git"; then
     pass "get_URL: match URL for URL.git@revision"
 else
     fail "get_URL: match URL for URL.git@revision"
@@ -258,16 +332,19 @@ else
     fixme "get_URL returned ${out}"
 fi
 
-out="`get_URL nomatch.git@12345 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "get_URL: match URL for nomatch.git@revision should fail"
-else
-    fail "get_URL: match URL for nomatch.git@revision should fail"
-    fixme "get_URL returned ${out}"
+# The regular sources.conf won't have this entry.
+if test ! -e "${PWD}/host.conf"; then
+    out="`get_URL nomatch.git@12345 2>/dev/null`"
+    if test x"${out}" = x""; then
+	pass "get_URL: match URL for nomatch.git@revision should fail"
+    else
+	fail "get_URL: match URL for nomatch.git@revision should fail"
+	fixme "get_URL returned ${out}"
+    fi
 fi
 
 out="`get_URL gcc.git/linaro-4.8-branch@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/gcc.git"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git@staging.git.linaro.org/toolchain/gcc.git"; then
     pass "get_URL: URL with tool.git/branch@revision "
 else
     fail "get_URL: URL with tool.git/branch@revision "
@@ -444,22 +521,24 @@ else
     fixme "get_source returned ${out}"
 fi
 
-in="nomatch.git"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
-else
-    fail "get_source: <repo>.git identifier with no matching source.conf entry should fail."
-    fixme "get_source returned ${out}"
-fi
+if test ! -e "${PWD}/host.conf"; then
+    in="nomatch.git"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x""; then
+	pass "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+    else
+	fail "get_source: <repo>.git identifier with no matching source.conf entry should fail."
+	fixme "get_source returned ${out}"
+    fi
 
-in="nomatch.git@revision"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
-else
-    pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
-    fixme "get_source returned ${out}"
+    in="nomatch.git@revision"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x""; then
+	pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
+    else
+	pass "get_source: <repo>.git@rev identifier with no matching source.conf entry should fail."
+	fixme "get_source returned ${out}"
+    fi
 fi
 
 in="gcc-4.8"
@@ -590,6 +669,7 @@ echo "================================================"
 test_checkout ()
 {
     in="${package}${branch:+/${branch}}${revision:+@${revision}}"
+    local url=
     url="`get_URL ${in}`"
 
     if test `echo $url | grep -c "\.git "` -gt 0; then

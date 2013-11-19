@@ -126,7 +126,7 @@ get_URL()
 	    error "Component \"${node}\" not found in ${srcs} file!"
 	    return 1
 	fi
-	local url="`grep "^${node}" ${srcs} | sed -e 's:^.* ::'`"
+	local url="`grep "^${node}" ${srcs} | sed -e 's:^.*[ \t]::'`"
 	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
 	return 0
@@ -288,10 +288,10 @@ get_toolname()
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	local tool="`echo $1 | sed -e 's:/linaro::' -e 's:-[0-9].*::' -e 's:\.git.*::'`"
+	local tool="`echo $1 | sed -e 's:/git@:/:' -e 's:\.git[@/].*::' -e 's:-[0-9].*::'`"
 	local tool="`basename ${tool}`"
     else
-	local tool="`echo $1 | sed -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
+	local tool="`echo $1 | sed -e 's:git@::' -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
     fi
     if test `echo $1 | grep -c "trunk"` -eq 1; then
 	local tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
@@ -490,10 +490,15 @@ get_srcdir()
 	if test `echo $1 | grep -c "\.git/"` -gt 0; then
 	    local branch="~`basename $1`"
 	fi
-	if test "`echo $1 | grep -c '@'`" -gt 0; then
+	# Some URLs have a user@ in them, so we have to be careful which token
+	# we parse.
+	local revision=
+	local hasrevision="`echo $1 | grep -c \.git/`"
+	if test "`echo $1 | grep -c '@'`" -eq 2 -a ${hasrevision} -eq 1; then
+	    local revision="@`echo $1 | cut -d '@' -f 3`"
+	fi
+	if test "`echo $1 | grep -c '@'`" -eq 1 -a ${hasrevision} -eq 1; then
 	    local revision="@`echo $1 | cut -d '@' -f 2`"
-	else
-	    local revision=
 	fi    
     fi
     
@@ -511,7 +516,7 @@ get_srcdir()
 	    fi
 	    ;;
 	glibc*)
-	    srcdir="${srcdir}${branch:+${branch}}${revision:+${revision}}"
+	    local srcdir="${srcdir}${branch:+${branch}}${revision:+${revision}}"
 	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
@@ -574,7 +579,7 @@ create_release_tag()
 	# is long enough as it is...
 	local rtag="`echo ${rtag} | sed -e 's:-linaro~linaro:~linaro:'`"
     else
-	local version="`echo $1 | sed -e 's:[a-z\./-]*::' -e 's:-branch::'`"
+	local version="`echo $1 | sed -e 's:[a-z\./-]*::' -e 's:-branch::' -e 's:^_::' | tr '_' '.' `"
 	local tool="`get_toolname $1`"
 	if test x"${version}" = x; then
 	    local version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
