@@ -150,6 +150,15 @@ else
     fixme "${in} returned ${out}"
 fi
 
+in="git://git@staging.git.linaro.org/toolchain/binutils.git/2.4-branch"
+out="`get_toolname ${in}`"
+if test ${out} = "binutils"; then
+    pass "get_toolname: git branch with user name"
+else
+    fail "get_toolname: git branch with user name"
+    fixme "${in} returned ${out}"
+fi
+
 in="eglibc.git/linaro_eglibc-2_18"
 out="`get_toolname ${in}`"
 if test ${out} = "eglibc"; then
