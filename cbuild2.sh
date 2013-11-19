@@ -167,7 +167,7 @@ usage()
     # Format this section with 75 columns.
     cat << EOF
   ${cbuild2} [''|
-	     [--build [<package>|all|''] [--ccache] [--check]
+	     [--build [<package>|all] [--ccache] [--check]
              [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
 	     [--fetch <url>] [--force] [--host <host_triple>] [--help]
 	     [--list] [--manifest <manifest_file>] [--parallel] [--release]
@@ -218,7 +218,7 @@ OPTIONS
 
   ''		Specifying no options will display synopsis information.
 
-  --build [<package>|all|'']
+  --build [<package>|all]
 
 		<package>
 			Build the specific package as specified by the
@@ -407,7 +407,12 @@ while test $# -gt 0; do
                 error "A '=' is invalid after --build.  A space is expected."
                 exit 1;
             fi
-	    if test x"$2" != x"all"; then
+	    if test x"$2" = x; then
+		error "--build requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit
+	    elif test x"$2" != x"all"; then
 		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 		tool=`get_toolname $2`
 		url="`get_source $2`"
