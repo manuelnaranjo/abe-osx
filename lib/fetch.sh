@@ -124,7 +124,7 @@ fetch_http()
 	    # NOTE: the timeout is short, and we only try twice to access the
 	    # remote host. This is to improve performance when offline, or
 	    # the remote host is offline.
-	    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=1 --tries=2 --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
+	    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
 	    if test ! -s ${local_snapshots}/${getfile}; then
 		warning "downloaded file ${getfile} has zero data!"
 		return 1
