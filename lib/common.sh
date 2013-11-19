@@ -288,7 +288,7 @@ get_toolname()
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	local tool="`echo $1 | sed -e 's:git@::' -e 's:/linaro::' -e 's:-[0-9].*::' -e 's:\.git/.*::'`"
+	local tool="`echo $1 | sed -e 's:git@::' -e 's:\.git/.*::' -e 's:-[0-9].*::'`"
 	local tool="`basename ${tool}`"
     else
 	local tool="`echo $1 | sed -e 's:git@::' -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
