@@ -126,7 +126,7 @@ get_URL()
 	    error "Component \"${node}\" not found in ${srcs} file!"
 	    return 1
 	fi
-	local url="`grep "^${node}" ${srcs} | sed -e 's:^.*\t::'`"
+	local url="`grep "^${node}" ${srcs} | sed -e 's:^.*[ \t]::'`"
 	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
 
 	return 0
@@ -288,7 +288,7 @@ get_toolname()
 	return 1
     fi
     if test `echo $1 | grep -c "lp:"` -eq 0; then
-	local tool="`echo $1 | sed -e 's:git@::' -e 's:\.git/.*::' -e 's:-[0-9].*::'`"
+	local tool="`echo $1 | sed -e 's:/git@:/:' -e 's:\.git[@/].*::' -e 's:-[0-9].*::'`"
 	local tool="`basename ${tool}`"
     else
 	local tool="`echo $1 | sed -e 's:git@::' -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"

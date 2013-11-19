@@ -39,6 +39,7 @@ checkout()
     fi
 
     # returns tool.git-branch-revision or tool.git-branch or tool.git-revision
+    local srcdir=
     srcdir="`get_srcdir $1`"
 
     case $1 in
