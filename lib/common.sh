@@ -493,11 +493,11 @@ get_srcdir()
 	# Some URLs have a user@ in them, so we have to be careful which token
 	# we parse.
 	local revision=
-	local hasrevision="`echo $1 | grep -c \.git/`"
-	if test "`echo $1 | grep -c '@'`" -eq 2 -a ${hasrevision} -eq 1; then
+	local hasrevision="`echo $1 | grep -c '\.git.*@'`"
+	if test "`echo $1 | awk -F "@" '{ print NF }'`" -eq 3 -a ${hasrevision} -eq 1; then
 	    local revision="@`echo $1 | cut -d '@' -f 3`"
 	fi
-	if test "`echo $1 | grep -c '@'`" -eq 1 -a ${hasrevision} -eq 1; then
+	if test "`echo $1 |  awk -F "@" '{ print NF }'`" -eq 2 -a ${hasrevision} -eq 1; then
 	    local revision="@`echo $1 | cut -d '@' -f 2`"
 	fi    
     fi
@@ -566,7 +566,7 @@ create_release_tag()
 	fi    
 	
 	local srcdir="`get_srcdir ${version}`"
-	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
+	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
 	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
 	

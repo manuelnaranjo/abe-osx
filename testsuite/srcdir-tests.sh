@@ -5,7 +5,7 @@ echo "============= get_srcdir() tests ================"
 # FIXME: Note these following test cases only PASS if you have the source
 # directories created already.
 if test -d ${local_snapshots}/gcc.git; then
-    in="git://git.linaro.org/toolchain/gcc.git"
+    in="git://git@staging.git.linaro.org/toolchain/gcc.git"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git"; then
 	pass "get_srcdir: git repository"
@@ -37,7 +37,7 @@ if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch; then
 	fixme "get_srcdir returned ${out}"
     fi
 
-    in="git://git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
+    in="git://git@staging.git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git-linaro-4.8-branch/gcc-4_8-branch"; then
 	pass "get_srcdir: git repository URL with branch"
@@ -51,7 +51,7 @@ else
 fi
 
 if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch@123456; then
-    in="git://git.linaro.org/toolchain/gcc.git/linaro-4.8-branch@123456"
+    in="git://git@git.linaro.org/toolchain/gcc.git/linaro-4.8-branch@123456"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git-linaro-4.8-branch@123456/gcc-4_8-branch"; then
 	pass "get_srcdir: git repository with branch and commit"
