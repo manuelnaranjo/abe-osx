@@ -25,20 +25,20 @@ checkout()
     local branch=
     local revision=
     if test `echo $1 | grep -c "\.git/"` -gt 0; then
-	# In git a revision always coincides with a specific branch.
-	# If a revision is present with a branch name the revision
-	# is what is used and the branch is just used to name
-	# the directory.
         local branch="`basename $1`"
         local branch="`echo $branch | cut -d '@' -f 1`"
-	if test `echo $1 | grep -c '@'` -gt 0; then
-	    local revision="`echo $1 | cut -d '@' -f 2`"
-	fi
-    elif test `echo $1 | grep -c "\.git@"` -gt 0; then
-	local revision=`echo $1 | cut -d '@' -f 2`
     fi
 
-    # returns tool.git-branch-revision or tool.git-branch or tool.git-revision
+    # Some URLs have a user@ in them, so we have to be careful which token
+    # we parse.
+    local hasrevision="`echo $1 | grep -c '\.git.*@'`"
+    local numats="`echo $1 | awk -F "@" '{ print NF }'`"
+    if test ${hasrevision} -eq 1 -a ${numats} -eq 3; then
+	local revision="`echo $1 | cut -d '@' -f 3`"
+    elif test ${hasrevision} -eq 1 -a ${numats} -eq 2; then
+	local revision="`echo $1 | cut -d '@' -f 2`"
+    fi 
+
     local srcdir=
     srcdir="`get_srcdir $1`"
 
@@ -58,7 +58,7 @@ checkout()
 		fi
 	    fi
 	    ;;
-	svn*|http*)
+	svn*)
 	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
 		local dir="`dirname $1`"
@@ -80,7 +80,7 @@ checkout()
 		fi
 	    fi
 	    ;;
-	git*)
+	git*|http*)
 	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 		notice "Updating sources for $1 in ${srcdir}"
 		# A revision represents a snapshot in time so it doesn't need to
@@ -107,9 +107,19 @@ checkout()
 
 		    # If revision is set only use ${branch} for naming.
 		    if test x"${revision}" != x; then
+			notice "Creating git workdir for revision ${revision}"
 			dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir}"
+			if test $? -gt 0; then
+			    error "Couldn't create git workdir ${srcdir}"
+			    return 1
+			fi
+
 			# Check out detached head state at ${revision}.
 			dryrun "(cd ${srcdir} && git checkout ${revision})"
+			if test $? -gt 0; then
+			    error "Couldn't checkout ${revision}"
+			    return 1
+			fi
 			# Create a [branch_]revision working branch.
 			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
 		    elif test x"${branch}" != x; then
@@ -125,7 +135,7 @@ checkout()
 	    ;;
     esac
 
-    if test $? -gt 1; then
+    if test $? -gt 0; then
 	error "Couldn't checkout $1 !"
 	return 1
     fi

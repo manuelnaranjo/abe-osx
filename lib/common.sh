@@ -494,12 +494,12 @@ get_srcdir()
 	# we parse.
 	local revision=
 	local hasrevision="`echo $1 | grep -c '\.git.*@'`"
-	if test "`echo $1 | awk -F "@" '{ print NF }'`" -eq 3 -a ${hasrevision} -eq 1; then
-	    local revision="@`echo $1 | cut -d '@' -f 3`"
-	fi
-	if test "`echo $1 |  awk -F "@" '{ print NF }'`" -eq 2 -a ${hasrevision} -eq 1; then
-	    local revision="@`echo $1 | cut -d '@' -f 2`"
-	fi    
+        local numats="`echo $1 | awk -F "@" '{ print NF }'`"
+	if test ${hasrevision} -eq 1 -a ${numats} -eq 3; then
+	    local revision="`echo $1 | cut -d '@' -f 3`"
+	elif test ${hasrevision} -eq 1 -a ${numats} -eq 2; then
+	    local revision="`echo $1 | cut -d '@' -f 2`"
+	fi 
     fi
     
     local srcdir="${local_snapshots}/${dir}"
