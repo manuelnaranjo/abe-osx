@@ -4,7 +4,7 @@
 # command line options.
 
 # Start by assuming it's a native build
-build="`${topdir}/config.guess`"
+build="${BUILDHOST}"
 target=${build}
 host=${target}
 

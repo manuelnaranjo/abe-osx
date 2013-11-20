@@ -1,11 +1,9 @@
 # This stores often used information on this build system
 
-build=@BUILDHOST@
 dbuser=@DBUSER@
 dbpasswd=@DBPASSWD@
 dbhost=@DBPASSWD@
 
-sources=@SOURCES@
 local_snapshots=@LOCAL_SNAPSHOTS@
 remote_snapshots=@REMOTE_SNAPSHOTS@
 cbuild_top=@CBUILD_TOP@
@@ -22,15 +20,12 @@ sysroots=@SYSROOTS@
 cpus=@CPUS@
 kernel=@KERNEL@
 build_arch=@BUILD_ARCH@
+host=@BUILDHOST@
 hostname=@HOSTNAME@
 distribution=@DISTRIBUTION@
 
 # various configure time flags
 enable_ssh=@ENABLE_SSH@
 
-curl_bin=@CURL@
 wget_bin=@WGET@
-scp_bin=@SCP@
-rsync_bin=@RSYNC@
-
 bash_shell=@BASH@
