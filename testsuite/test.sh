@@ -512,16 +512,17 @@ else
     fixme "get_source returned ${out}"
 fi
 
-in="git://git.linaro.org/toolchain/foo.git"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "get_source: full url with <repo>.git with no matching source.conf entry should fail."
-else
-    fail "get_source: full url with <repo>.git with no matching source.conf entry should fail."
-    fixme "get_source returned ${out}"
-fi
-
+# These aren't valid if testing from a build directory.
 if test ! -e "${PWD}/host.conf"; then
+    in="git://git.linaro.org/toolchain/foo.git"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x""; then
+	pass "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+    else
+	fail "get_source: full url with <repo>.git with no matching source.conf entry should fail."
+	fixme "get_source returned ${out}"
+    fi
+
     in="nomatch.git"
     out="`get_source ${in} 2>/dev/null`"
     if test x"${out}" = x""; then
@@ -559,40 +560,42 @@ else
     fixme "get_source returned ${out}"
 fi
 
-in="foo.git"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo"; then
-    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
-else
-    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
-    fixme "get_source returned ${out}"
-fi
+if test ! -e "${PWD}/host.conf"; then
+    in="foo.git"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x"git://testingrepository/foo"; then
+	pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+    else
+	fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo."
+	fixme "get_source returned ${out}"
+    fi
 
-in="foo.git/bar"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo bar"; then
-    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
-else
-    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
-    fixme "get_source returned ${out}"
-fi
+    in="foo.git/bar"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x"git://testingrepository/foo bar"; then
+	pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+    else
+	fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch."
+	fixme "get_source returned ${out}"
+    fi
 
-in="foo.git/bar@rev"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo bar rev"; then
-    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
-else
-    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
-    fixme "get_source returned ${out}"
-fi
+    in="foo.git/bar@rev"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x"git://testingrepository/foo bar rev"; then
+	pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+    else
+	fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with branch and revision."
+	fixme "get_source returned ${out}"
+    fi
 
-in="foo.git@rev"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo rev"; then
-    pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
-else
-    fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
-    fixme "get_source returned ${out}"
+    in="foo.git@rev"
+    out="`get_source ${in} 2>/dev/null`"
+    if test x"${out}" = x"git://testingrepository/foo rev"; then
+	pass "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
+    else
+	fail "get_source: ${sources_conf}:${in} matching non .git suffixed repo with revision."
+	fixme "get_source returned ${out}"
+    fi
 fi
 
 latest=''
@@ -633,6 +636,8 @@ else
     fail "create_release_tag: repository with branch and revision"
     fixme "create_release_tag returned ${out}"
 fi
+
+ #gcc-linaro~gcc-4.8-branch-20131119
 
 branch=
 revision=
@@ -695,7 +700,6 @@ test_checkout ()
 	return 1
     fi
 }
-
 package="newlib.git"
 branch=
 revision=
@@ -722,6 +726,60 @@ package="newlib.git"
 branch="linaro_newlib-branch"
 revision="71a86aef245be6fd9cc"
 test_checkout
+
+in="newlib.git"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git"; then
+    pass "get_srcdir: <repo>.git"
+else
+    fail "get_srcdir: <repo>.git"
+    fixme "get_srcdir returned ${out}"
+fi
+
+in="newlib.git@12345"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git@12345"; then
+    pass "get_srcdir: <repo>.git@<revision>"
+else
+    fail "get_srcdir: <repo>.git@<revision>"
+    fixme "get_srcdir returned ${out}"
+fi
+
+in="newlib.git/branch"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git-branch"; then
+    pass "get_srcdir: <repo>.git/<branch>"
+else
+    fail "get_srcdir: <repo>.git/<branch>"
+    fixme "get_srcdir returned ${out}"
+fi
+
+in="newlib.git/branch@12345"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git-branch@12345"; then
+    pass "get_srcdir: <repo>.git/<branch>@<revision>"
+else
+    fail "get_srcdir: <repo>.git/<branch>@<revision>"
+    fixme "get_srcdir returned ${out}"
+fi
+
+in="git://git@staging.git.linaro.org/toolchain/newlib.git"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git"; then
+    pass "get_srcdir: <user>@<repo>.git"
+else
+    fail "get_srcdir: <user>@<repo>.git"
+    fixme "get_srcdir returned ${out}"
+fi
+
+in="git://git@staging.git.linaro.org/toolchain/newlib.git@12345"
+out="`get_srcdir $in | grep -v TRACE`"
+if test x"${out}" = x"${local_snapshots}/newlib.git@12345"; then
+    pass "get_srcdir: <user>@<repo>.git@<revision>"
+else
+    fail "get_srcdir: <user>@<repo>.git@<revision>"
+    fixme "get_srcdir returned ${out}"
+fi
 
 # ----------------------------------------------------------------------------------
 # print the total of test results
