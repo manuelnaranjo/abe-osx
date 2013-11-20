@@ -247,7 +247,7 @@ AC_SUBST(LIBC)
 KERNEL="`uname -r`"
 AC_SUBST(KERNEL)
 BUILDHOST="`${srcdir}/config.guess`"
-BUILD_ARCH="`uname -p`"
+BUILD_ARCH="`uname -m`"
 if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
    BUILD_ARCH=i486
    BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
