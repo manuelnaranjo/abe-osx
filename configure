@@ -586,6 +586,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 DISTRIBUTION
 HOSTNAME
+BUILDHOST
 BUILD_ARCH
 KERNEL
 LIBC
@@ -593,7 +594,6 @@ CPUS
 DBHOST
 DBPASSWD
 DBUSER
-BUILDHOST
 NEWWORKDIR
 DEJAGNU
 LIBTOOL
@@ -613,10 +613,6 @@ FLEX
 BASH
 CCACHE
 WGET
-target_os
-target_vendor
-target_cpu
-target
 host_os
 host_vendor
 host_cpu
@@ -1300,7 +1296,6 @@ _ACEOF
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
-  --target=TARGET   configure for building compilers for TARGET [HOST]
 _ACEOF
 fi
 
@@ -3136,45 +3131,6 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking target system type" >&5
-$as_echo_n "checking target system type... " >&6; }
-if ${ac_cv_target+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$target_alias" = x; then
-  ac_cv_target=$ac_cv_host
-else
-  ac_cv_target=`$SHELL "$ac_aux_dir/config.sub" $target_alias` ||
-    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $target_alias failed" "$LINENO" 5
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_target" >&5
-$as_echo "$ac_cv_target" >&6; }
-case $ac_cv_target in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical target" "$LINENO" 5;;
-esac
-target=$ac_cv_target
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_target
-shift
-target_cpu=$1
-target_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-target_os=$*
-IFS=$ac_save_IFS
-case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
-
-
-# The aliases save the names the user supplied, while $host etc.
-# will get canonicalized.
-test -n "$target_alias" &&
-  test "$program_prefix$program_suffix$program_transform_name" = \
-    NONENONEs,x,x, &&
-  program_prefix=${target_alias}-
 
 missing=
 # Extract the first word of "wget", so it can be a program name with args.
@@ -3353,8 +3309,8 @@ fi
 
 
 if test x"${FLEX}" = x; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'flex' to run configure properly!" >&5
-$as_echo "$as_me: WARNING: You need 'flex' to run configure properly!" >&2;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'flex' to run configure  GCC properly!" >&5
+$as_echo "$as_me: WARNING: You need 'flex' to run configure  GCC properly!" >&2;}
    missing="${missing} flex"
 fi
 
@@ -3399,8 +3355,8 @@ fi
 
 
 if test x"${BISON}" = x; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'bison' to run configure properly!" >&5
-$as_echo "$as_me: WARNING: You need 'bison' to run configure properly!" >&2;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'bison' to run configure  GCC properly!" >&5
+$as_echo "$as_me: WARNING: You need 'bison' to run configure  GCC properly!" >&2;}
    missing="${missing} bison"
 fi
 
@@ -3445,8 +3401,8 @@ fi
 
 
 if test x"${AUTOGEN}" = x; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'autogen' to run configure properly!" >&5
-$as_echo "$as_me: WARNING: You need 'autogen' to run configure properly!" >&2;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'autogen' to run configure for GCC properly!" >&5
+$as_echo "$as_me: WARNING: You need 'autogen' to run configure for GCC properly!" >&2;}
    missing="${missing} autogen"
 fi
 
@@ -3497,55 +3453,9 @@ _ACEOF
 fi
 
 if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'libncurses' to run configure for GDB properly!" >&5
+$as_echo "$as_me: WARNING: You need 'libncurses' to run configure for GDB properly!" >&2;}
    missing="${missing} ncurses"
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for unctrl in -ltermcap" >&5
-$as_echo_n "checking for unctrl in -ltermcap... " >&6; }
-if ${ac_cv_lib_termcap_unctrl+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ltermcap  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char unctrl ();
-int
-main ()
-{
-return unctrl ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_termcap_unctrl=yes
-else
-  ac_cv_lib_termcap_unctrl=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_termcap_unctrl" >&5
-$as_echo "$ac_cv_lib_termcap_unctrl" >&6; }
-if test "x$ac_cv_lib_termcap_unctrl" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTERMCAP 1
-_ACEOF
-
-  LIBS="-ltermcap $LIBS"
-
-fi
-
-if test x${ac_cv_lib_termcap_unctrl} != x"yes"; then
-   missing="${missing} termcap"
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gzread in -lz" >&5
 $as_echo_n "checking for gzread in -lz... " >&6; }
@@ -3992,8 +3902,6 @@ $as_echo "$as_me: WARNING: You need to install git-new-workdir to use GIT!" >&2;
    missing="${missing} git-new-workdir"
 fi
 
-BUILDHOST=${build}
-
 DBUSER=${dbuser}
 
 DBPASSWD=${dbpasswd}
@@ -4007,7 +3915,13 @@ LIBC="`getconf GNU_LIBC_VERSION`"
 
 KERNEL="`uname -r`"
 
+BUILDHOST="`${srcdir}/config.guess`"
 BUILD_ARCH="`uname -p`"
+if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
+   BUILD_ARCH=i486
+   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
+fi
+
 
 HOSTNAME="`uname -n`"
 
