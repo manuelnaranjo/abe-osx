@@ -20,7 +20,6 @@ fi
 AC_PROG_INSTALL
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
 
 missing=
 AC_PATH_PROG(WGET, wget)
@@ -42,30 +41,27 @@ fi
 
 AC_PATH_PROG(FLEX, flex)
 if test x"${FLEX}" = x; then
-   AC_MSG_WARN([You need 'flex' to run configure properly!])
+   AC_MSG_WARN([You need 'flex' to run configure  GCC properly!])
    missing="${missing} flex"
 fi
 
 AC_PATH_PROG(BISON, bison)
 if test x"${BISON}" = x; then
-   AC_MSG_WARN([You need 'bison' to run configure properly!])
+   AC_MSG_WARN([You need 'bison' to run configure  GCC properly!])
    missing="${missing} bison"
 fi
 
 AC_PATH_PROG(AUTOGEN, autogen)
 if test x"${AUTOGEN}" = x; then
-   AC_MSG_WARN([You need 'autogen' to run configure properly!])
+   AC_MSG_WARN([You need 'autogen' to run configure for GCC properly!])
    missing="${missing} autogen"
 fi
 
 dnl Building GDB requires ncurses and termcap
 AC_CHECK_LIB(ncurses, doupdate)
 if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
    missing="${missing} ncurses"
-fi
-AC_CHECK_LIB(termcap, unctrl)
-if test x${ac_cv_lib_termcap_unctrl} != x"yes"; then
-   missing="${missing} termcap"
 fi
 AC_CHECK_LIB(z, gzread)
 
@@ -237,8 +233,6 @@ if test x"${NEWWORKDIR}" = x; then
 fi
 
 dnl Get and store often used information on this build machine
-BUILDHOST=${build}
-AC_SUBST(BUILDHOST)
 DBUSER=${dbuser}
 AC_SUBST(DBUSER)
 DBPASSWD=${dbpasswd}
@@ -252,8 +246,14 @@ LIBC="`getconf GNU_LIBC_VERSION`"
 AC_SUBST(LIBC)
 KERNEL="`uname -r`"
 AC_SUBST(KERNEL)
+BUILDHOST="`${srcdir}/config.guess`"
 BUILD_ARCH="`uname -p`"
+if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
+   BUILD_ARCH=i486
+   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
+fi
 AC_SUBST(BUILD_ARCH)
+AC_SUBST(BUILDHOST)
 HOSTNAME="`uname -n`"
 AC_SUBST(HOSTNAME)
 DISTRIBUTION="`lsb_release -sc`"
