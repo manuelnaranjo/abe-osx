@@ -4,9 +4,9 @@
 # command line options.
 
 # Start by assuming it's a native build
-build="${BUILDHOST}"
-target=${build}
-host=${target}
+build="${build}"
+host="${build}"
+target="${host}"
 
 gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
