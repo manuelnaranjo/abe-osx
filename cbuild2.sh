@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# load commonly used functions
-cbuild="`which $0`"
-topdir="`dirname ${cbuild}`"
-cbuild2="`basename $0`"
-
-. "${topdir}/lib/common.sh" || exit 1
-
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     warning "no host.conf file!  Did you run configure?"
 fi
+
+# load commonly used functions
+cbuild="`which $0`"
+topdir="`dirname ${cbuild}`"
+cbuild2="`basename $0`"
+
+. "${topdir}/lib/common.sh" || exit 1
 
 # this is used to launch builds of dependant components
 command_line_arguments=$*
