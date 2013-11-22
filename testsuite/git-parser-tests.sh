@@ -20,7 +20,11 @@ test_parser()
     local errmatch=$4
     local ret=
     local out=
-    out="`get_git_${feature} ${in} 2>/dev/null`"
+    if test x"${debug}" = x"yes"; then
+	out="`get_git_${feature} ${in}`"
+    else
+	out="`get_git_${feature} ${in} 2>/dev/null`"
+    fi
     ret=$?
     if test x"${out}" = x"${match}"; then
         pass "get_git_${feature} ${in} = '${match}'"
@@ -31,9 +35,10 @@ test_parser()
 
     if test x"${errmatch}" != x; then
 	if test x"${errmatch}" = x"${ret}"; then
-	    pass "get_git_${feature} ${in}: expected err "
+	    pass "get_git_${feature} ${in} expected return value '${errmatch}'"
 	else
-	    fail "get_git_${feature} ${in}: expected err "
+	    fail "get_git_${feature} ${in} expected return value '${errmatch}'"
+            fixme "'get_git_${feature} ${in}' expected return value '${errmatch}' got '${ret}'"
 	fi
     fi
 
@@ -60,7 +65,10 @@ test_parser user "${in}" "${match}" "${errmatch}"
 
 in="git://user@address.com/directory/repo.git/branch"
 match="user"
+errmatch=0
 test_parser user "${in}" "${match}" "${errmatch}"
+
+errmatch=
 
 in="git://user@address.com/directory@/repo.git/branch@12345"
 match="user"
@@ -68,7 +76,10 @@ test_parser user "${in}" "${match}" "${errmatch}"
 
 in="git://address.com/directory@/repo.git/branch@12345"
 match=''
+errmatch=1
 test_parser user "${in}" "${match}" "${errmatch}"
+
+errmatch=
 
 in="git://address.com/directory@/repo.git/branch"
 match=''
@@ -80,9 +91,10 @@ test_parser user "${in}" "${match}" "${errmatch}"
 match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='git://address.com/directory@/repo.git'
+errmatch=1
 test_parser url "${in}" "${match}" "${errmatch}"
 
-
+errmatch=
 
 # Sadly this works.
 in="git://address.com@/directory@/repo.git/branch"
@@ -91,8 +103,10 @@ test_parser user "${in}" "${match}" "${errmatch}"
 match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='git://address.com@/directory@/repo.git'
+errmatch=1
 test_parser url "${in}" "${match}" "${errmatch}"
 
+errmatch=
 
 in="http://address.com/directory@/repo.git/branch"
 match=''
@@ -102,7 +116,10 @@ test_parser service "${in}" "${match}" "${errmatch}"
 match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='http://address.com/directory@/repo.git'
+errmatch=1
 test_parser url "${in}" "${match}" "${errmatch}"
+
+errmatch=
 
 in="http://firstname.lastname@address.com/directory@/repo.git/branch"
 match='http'
@@ -118,7 +135,10 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='http://firstname.lastname@address.com/directory@/repo.git'
+errmatch=1
 test_parser url "${in}" "${match}" "${errmatch}"
+
+errmatch=
 
 in="http://firstname.lastname@address.com/directory/repo.git/branch@12334677"
 match='http'
@@ -169,7 +189,10 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='http://firstname.lastname@address.com/directory/repo'
+errmatch=0
 test_parser url "${in}" "${match}" "${errmatch}"
+
+errmatch=
 
 in="http://firstname.lastname@address.com/directory/@12334677"
 match='http'
@@ -201,7 +224,11 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
 test_parser tool "${in}" "${match}" "${errmatch}"
 match='http://firstname.lastname@address.com/direc@tory'
+errmatch=1
 test_parser url "${in}" "${match}" "${errmatch}"
+
+# Reset
+errmatch=
 
 in="http://@12334677"
 match='http'
@@ -276,4 +303,60 @@ test_parser url "${in}" "${match}" "${errmatch}"
 match=''
 errmatch=1
 test_parser foo "${in}" "${match}" "${errmatch}"
+
+errmatch=
+in="repo.git/funky_branch-name@12334677"
+match=''
+test_parser service "${in}" "${match}" "${errmatch}"
+match=''
+test_parser user "${in}" "${match}" "${errmatch}"
+match='12334677'
+test_parser revision "${in}" "${match}" "${errmatch}"
+match='funky_branch-name'
+test_parser branch "${in}" "${match}" "${errmatch}"
+match='repo.git'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match='repo'
+test_parser tool "${in}" "${match}" "${errmatch}"
+match=''
+test_parser url "${in}" "${match}" "${errmatch}"
+
+errmatch=
+in="repo/funky_branch-name@12334677"
+match=''
+test_parser service "${in}" "${match}" "${errmatch}"
+match=''
+test_parser user "${in}" "${match}" "${errmatch}"
+match='12334677'
+test_parser revision "${in}" "${match}" "${errmatch}"
+match=''
+test_parser branch "${in}" "${match}" "${errmatch}"
+match='funky_branch-name'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match='funky_branch-name'
+test_parser tool "${in}" "${match}" "${errmatch}"
+match=''
+test_parser url "${in}" "${match}" "${errmatch}"
+
+errmatch=
+in="repo@12334677"
+match=''
+test_parser service "${in}" "${match}" "${errmatch}"
+match=''
+test_parser user "${in}" "${match}" "${errmatch}"
+match='12334677'
+test_parser revision "${in}" "${match}" "${errmatch}"
+match=''
+test_parser branch "${in}" "${match}" "${errmatch}"
+match='repo'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match='repo'
+test_parser tool "${in}" "${match}" "${errmatch}"
+match=''
+test_parser url "${in}" "${match}" "${errmatch}"
+
+
+
+
+
 

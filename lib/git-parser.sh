@@ -19,7 +19,8 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo ${in} | sed -e 's#\(^git\)://.*#\1#;s#\(^http\)://.*#\1#'`"
+    #local service="`echo ${in} | sed -e 's#\(^git\)://.*#\1#;s#\(^http\)://.*#\1#'`"
+    local service="`echo ${in} | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p'`"
 
     if test x"${service}" = x; then
 	error "Malformed input.  No service defined."
@@ -76,7 +77,9 @@ git_parser()
     fi
 
     # If there's a branch then ${base} doesn't include ${repo}
-    if test x"${branch}" = x; then
+    if test x"${service}" = x; then
+	local url=
+    elif test x"${branch}" = x; then
 	local url="`echo ${in} | sed -n "s#^\(.*\)/${base}#\1${repo:+/${repo}}#p"`"
     else
 	local url="`echo ${in} | sed -n "s#^\(.*\)/${base}#\1#p"`"
