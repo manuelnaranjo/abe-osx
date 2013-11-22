@@ -52,27 +52,27 @@ if test x"${tarballs}" = xtrue; then
     tarballs=--tarballs
 fi
 
-# Toolchain_cloud is an EC2 instance that is used to build all cross
-# compilers.
-if test x"${NODE_NAME}" = x"toolchain_cloud"; then
-    # if build_type is true, then this is a cross build. For cross builds we
-    # build a native GCC, and then use that to compile the cross compiler to
-    # bootstrap. Since it's just used to build the cross compiler, we
-    # don't bother to run 'make check'.
-    if test x"${bootstrap}" = xtrue; then
-        $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --disable-bootstrap --build all
-    fi
+# For coss build. For cross builds we build a native GCC, and then use
+# that to compile the cross compiler to bootstrap. Since it's just
+# used to build the cross compiler, we don't bother to run 'make check'.
+if test x"${bootstrap}" = xtrue; then
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --build all
+fi
 
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
+# Now we build the cross compiler, for a native compiler this becomes
+# the stage2 bootstrap build.
+$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
 
-    # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
-    # machine.
-    if test x"${canadian}" = xtrue; then
-        $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+# Canadian Crosses are a win32 hosted cross toolchain built on a Linux
+# machine.
+if test x"${canadian}" = xtrue; then
+    distro="`lsb_release -sc`"
+    # Ubuntu Lucid uses an older version of Mingw32
+    if test x"${distro}" = x"lucid"; then
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i586-mingw32msvc --target ${target} --build all
+    else
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
     fi
-else
-    # Native builds bootstrap and run tests.
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --build all
 fi
 
 ls -F $WORKSPACE/cbuildv2/snapshots
