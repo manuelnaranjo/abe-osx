@@ -20,7 +20,7 @@ sysroots=@SYSROOTS@
 cpus=@CPUS@
 kernel=@KERNEL@
 build_arch=@BUILD_ARCH@
-host=@BUILDHOST@
+build=@BUILDHOST@
 hostname=@HOSTNAME@
 distribution=@DISTRIBUTION@
 
