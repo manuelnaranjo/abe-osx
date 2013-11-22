@@ -1266,6 +1266,7 @@ else
     fixme "get_srcdir returned ${out}"
 fi
 
+. testsuite/git-parser-tests.sh
 # ----------------------------------------------------------------------------------
 # print the total of test results
 totals
