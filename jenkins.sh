@@ -72,7 +72,7 @@ if test x"${NODE_NAME}" = x"toolchain_cloud"; then
     fi
 else
     # Native builds bootstrap and run tests.
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --bootstrap --build all
+    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} --build all
 fi
 
 ls -F $WORKSPACE/cbuildv2/snapshots
