@@ -1,0 +1,37 @@
+set hostname [get_local_hostname]
+
+case "$target_triplet" in { 
+    { "arm*-*-*eabi*"} {
+	case "$hostname" in {
+	    { "linaro.*" } {
+		set target_list { arm-linux }
+	    }
+	    { "tcwgbuild*" } {
+		set target_list { arm-chromebook }
+	    }
+	    { "tcwgchromebook*" } {
+		set target_list { unix }
+	    }
+	};			# end of case hostname
+    };				# end of arm-ebi
+    
+    { "arm*-*-elf*"} { 
+	global SIM
+	# CPU and sysroot are set through the environment
+	set SIM "qemu-arm"
+	set target_list { "arm-qemu" } 
+    }
+    
+    { "aarch64*-*-*gnu*"} {
+	set target_list { aarch64-fv8 }
+    }
+
+    { "aarch64*-*-elf*" } {
+	set target_list { "aarch64-none-elf-foundation" }
+	# Because of the way the Foundation model is invoked we have to
+	# wrap it in an invoke script.
+	global SIM
+	set SIM "invoke-foundation-v8-bare-metal.sh"
+    }
+}
+
