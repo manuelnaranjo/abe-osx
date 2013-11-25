@@ -66,18 +66,6 @@ fi
 # the stage2 bootstrap build.
 $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
 
-# Canadian Crosses are a win32 hosted cross toolchain built on a Linux
-# machine.
-if test x"${canadian}" = xtrue; then
-    distro="`lsb_release -sc`"
-    # Ubuntu Lucid uses an older version of Mingw32
-    if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i586-mingw32msvc --target ${target} --build all
-    else
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
-    fi
-fi
-
 ls -F $WORKSPACE/cbuildv2/snapshots
 sums="`find $WORKSPACE -name \*.sum`"
 
@@ -100,3 +88,16 @@ else
 fi
 #cat ${junits}
 #rm ${junits}
+
+# Canadian Crosses are a win32 hosted cross toolchain built on a Linux
+# machine.
+if test x"${canadian}" = xtrue; then
+    distro="`lsb_release -sc`"
+    # Ubuntu Lucid uses an older version of Mingw32
+    if test x"${distro}" = x"lucid"; then
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i586-mingw32msvc --target ${target} --build all
+    else
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+    fi
+fi
+
