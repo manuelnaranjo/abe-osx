@@ -433,12 +433,13 @@ make_check()
     fi
     notice "Making check in ${builddir}"
 
-    if test x"$2" != x; then
-	make_check_installed
+#    if test x"$2" != x; then
+#	make_check_installed
 #	return 0
-    fi
+#    fi
 
     # load the config file for Linaro build farms
+    local srcdir="`get_srcdir $1`"
     export DEJAGNU=${srcdir}/config/linaro.exp
 
     dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
