@@ -1,0 +1,39 @@
+These are the config files DejaGnu uses to access the Linaro build
+farm. When the DEJAGNU environment variables is set to
+cbuild2/config/linaro.exp, then cbuild2/config/boards is prefixed to
+the directory lookup paths. The top level sub directory is the shorter
+nodename of the system's hostname, for example tcwgbuild01.
+
+In each of these sub directories, are the baseboard files used to tell
+the testing framework how to access the target platform. Currently all
+of our targets we can SSH to, which makes these files very simple. All
+each file has to do is specify the hostname of the target. All the
+real work is handled by the 'arm-linux' baseboard support in DejaGnu.
+
+If you want to use your local build farm, then create the hostname
+directory (ie... 'myfoo`), and in the 'myfoo' sub directory, change
+the hostname in the appropriate config file. If you want to create a
+new target, just copy 'arm-chromebook', and edit the hostname
+setting. Ports are specified in the hostname setting using ':' and
+then the port number. To change which targets DejaGnu tries to use,
+edit the 'config/linaro.exp', and change the target_list. The names in
+the target list are used to lookup the proper board file, so if the
+'barfood' target is in the list 'set target_list { barfood }', then
+the board file 'config/board/$nodename/barfoo.exp' is used to get the
+hostname of the target.
+
+Current build machines in the Linaro build farm are:
+x86_64: tcwgbuild01-tcwgbuild06
+i686: tcwgbuild01-tcwgbuild06 (in a chroot)
+
+SSH access to these machines from outside the TCWG subnet is:
+validation.linaro.org port ports 41001-41006
+
+Chromebooks:
+armv7: tcwgchromebook01-tcwgchromebook06
+
+SSH access to these chromebooks from outside the TCWG subnet is:
+validation.linaro.org port ports 40001-40006
+
+You need to have a valid Linaro account to have SSH access to these
+machines.
