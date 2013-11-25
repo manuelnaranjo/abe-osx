@@ -439,8 +439,7 @@ make_check()
 #    fi
 
     # load the config file for Linaro build farms
-    local srcdir="`get_srcdir $1`"
-    export DEJAGNU=${srcdir}/config/linaro.exp
+    export DEJAGNU=${topdir}/config/linaro.exp
 
     dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     
