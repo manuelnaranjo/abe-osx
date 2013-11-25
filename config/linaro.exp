@@ -2,7 +2,8 @@
 
 case "$target_triplet" in { 
     { "arm*-*-*eabi*"} {
-	set target_list { arm-odroidU2 arm-odroidXU arm-chromebook }
+#	set target_list { arm-chromebook arm-odroidU2 arm-odroidXU }
+	set target_list { arm-chromebook }
     }
     
     { "arm*-*-elf*"} { 
