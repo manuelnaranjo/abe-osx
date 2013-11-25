@@ -23,6 +23,9 @@ if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
 fi
 
+# Remove the previous build
+rm -fr _build
+
 # Create a build directory
 mkdir -p _build
 
@@ -85,15 +88,10 @@ else
     echo "Bummer, no test results yet..."
 fi
 
-# if test $? -eq 0; then
-#     if test x"${runtests}" = xtrue; then
-# 	sums="`find -name \*.sum`"
-# 	for i in ${sums}; do
-# 	    name="`echo $i | cut -d '.' -f 1`"
-# 	    ../sum2junit.sh $i
-# 	done
-# 	junits="`find -name *.junit`"
-# 	cat ${junits}
-# 	rm ${junits}
-#     fi
-# fi
+for i in ${sums}; do
+    name="`echo $i | cut -d '.' -f 1`"
+    ../sum2junit.sh $i
+done
+junits="`find -name *.junit`"
+cat ${junits}
+rm ${junits}
