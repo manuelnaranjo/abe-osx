@@ -93,5 +93,10 @@ for i in ${sums}; do
     ../sum2junit.sh $i
 done
 junits="`find -name *.junit`"
-cat ${junits}
-rm ${junits}
+if test x"${junits}" != x; then
+    echo "Found junit files finally!!!"
+else
+    echo "Bummer, no junit files yet..."
+fi
+#cat ${junits}
+#rm ${junits}
