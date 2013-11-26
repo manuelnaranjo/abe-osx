@@ -84,7 +84,6 @@ git_parser()
     local in=$2
 
     local service=
-    local hasrevision=
     local revision=
     local numfields=
     local numats=
@@ -97,75 +96,114 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo ${in} | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p'`"
+    local service="`echo "${in}" | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p'`"
 
-    # This will only find a 'username' if it follows the <service>://
-    # and precededs the first . and or / in the url.  Yes you could
+    # This will only find a username if it follows the <service>://
+    # and precededs the first / in the url.  Yes you could
     # get away with http://www<user>@.foo.com/.
-    local user="`echo ${in} | sed -n "s;^${service}://\([^/]*\)@.*;\1;p"`"
+    local user="`echo "${in}" | sed -n "s;^${service}://\([^/]*\)@.*;\1;p"`"
 
-    local hasrevision="`basename ${in}`"
-    hasrevision="`echo ${hasrevision} | grep -c '@'`"
+    # This will only find a revision if it is a sequence of
+    # alphanumerical characters following the last @ in the line.
+    local revision="`echo "${in}" | sed -n 's/.*@\([[:alnum:]]*$\)/\1/p'`"
 
-    # Use these to look for malformed input strings.
-    local numfields="`echo ${in} | awk -F "@" '{ print NF }'`"
-    local numats="`expr ${numfields} - 1`"
+    local hasdotgit="`echo "${in}" | grep -c "\.git"`"
+    local hastilde="`echo "${in}" | grep -c '\~'`"
 
-    # Bounds check to look for malformed input strings with @ in it.
-    if test ${hasrevision} -eq 0 -a x"${user}" != x -a ${numats} -gt 1; then
-	error "Malformed input. Spurious '@' detected."
-	err=1
-    elif test ${hasrevision} -eq 0 -a x"${user}" = x -a ${numats} -gt 0; then
-	error "Malformed input. Spurious '@' detected."
-	err=1
-    elif test ${hasrevision} -eq 1 -a x"${user}" = x -a ${numats} -gt 1; then
-	error "Malformed input. Spurious '@' detected."
-	err=1
-    elif test ${hasrevision} -eq 1 -a x"${user}" != x -a ${numats} -gt 2; then
-	error "Malformed input. Spurious '@' detected."
-	err=1
-    fi
+    # Strip out the <service>::// part.
+    local noservice="`echo "${in}" | sed -e "s#^${service}://##"`"
 
-    local revision="`basename ${in}`"
-    local revision="`echo ${revision} | sed -n 's#.*@\([[:alnum:]]*\)#\1#p'`"
-
-    local hasdotgit="`echo ${in} | grep -c "\.git"`"
-
-    local base="`basename ${in}`"
+    local secondbase=
     if test ${hasdotgit} -gt 0; then
-        if test "`echo ${base} | grep -c "\.git"`" -gt 0; then
-	    # No branch if <repo>.git appears in base
-	    local branch=
-	    local repo="`echo ${base} | cut -d '@' -f '1'`"
+	local secondbase="`echo "${noservice}" | sed -e 's#.*\([/].*.git\)#\1#' -e 's#^/##' -e 's#@[[:alnum:]|@]*$##'`"
+	local repo="`echo ${secondbase} | sed -e 's#\(.*\.git\).*#\1#' -e 's#.*/##'`"
+
+	if test ${hastilde} -gt 0; then
+	    local branch="`echo "${secondbase}" | sed -n 's#.*~\(.*\)$#\1#p'`"
+	    if test "`echo ${branch} | grep -c "^/"`" -gt 0; then
+		error "Malformed input.  Superfluous / after ~. Stripping."
+		err=1
+		local branch="`echo "${branch}" | sed -e 's#^/##'`"
+	    fi 
 	else
-	    local branch="`echo ${base} | cut -d '@' -f '1'`"
-	    local repo="`echo ${in} | sed -e "s#${base}##"`"
-	    local repo="`basename ${repo}`"
+	    local branch="`echo ${secondbase} | sed -e 's#.*\.git##' -e 's#^[/]##' -e 's#@[[:alnum:]|@]*$##'`"
 	fi
-    else
-	# If there is no .git suffix, then we can't support a 'branch'.
+    elif test ${hastilde} -gt 0 -a ${hasdotgit} -lt 1; then
+	local secondbase="`echo "${noservice}" | sed -e "s#[^/]*/##" -e 's#@[[:alnum:]|@]*$##'`"
+	local branch="`echo "${secondbase}" | sed -n 's#.*~\(.*\)$#\1#p'`"
+	if test "`echo ${branch} | grep -c "^/"`" -gt 0; then
+	    error "Malformed input.  Superfluous / after ~. Stripping."
+	    err=1
+	    local branch="`echo "${branch}" | sed -e 's#^/##'`"
+	fi 
+
+	local repo="`echo ${secondbase} | sed -e 's#\(.*\)~.*#\1#' -e 's#.*/##'`"
+	# Strip trailing trash introduced by erroneous inputs.	
+	local repo="`echo ${repo} | sed -e  's#[[:punct:]]*$##'`"
+    else # no .git and no tilde for branches
+	# Strip off any trailing @<foo> sequences, even erroneous ones.
+	local secondbase="`echo "${noservice}" | sed -e "s#[^/]*/##" -e 's#@[[:alnum:]|@]*$##'`"
+
+	# If there's not <repo>.git then we can't possibly determine what's 
+	# a branch vs. what's part of the url vs. what's a repository.  We
+	# can only assume it's a repository.
 	local branch=
-	local repo="`echo ${base} | cut -d '@' -f '1'`"
+
+	# The repo name is the content right of the rightmost /
+	local repo="`echo ${secondbase} | sed 's#.*/##'`"
     fi
 
-    # If there's a branch then ${base} doesn't include ${repo}
-    if test x"${service}" = x; then
-	local url=
-    elif test x"${branch}" = x; then
-	local url="`echo ${in} | sed -n "s#^\(.*\)/${base}#\1${repo:+/${repo}}#p"`"
+    # Strip trailing trash from the branch left by erroneous inputs.
+    local branch="`echo ${branch} | sed -e 's#[[:punct:]]*$##'`"
+
+    # The url is everything to the left of, and including the repo name itself.
+    # Don't pick up any possibly superfluous @<blah> information, and filter
+    # out any tildes.
+    #local url="`echo ${in} | sed -n "s#\(.*${repo}\).*#\1#p" | sed -e 's#@[[:alnum:]|@]*$##'`"
+    local url="`echo ${in} | sed -n "s#\(.*${repo}\).*#\1#p"`"
+
+    # Strip trailing @ symbols from the url.
+    local url="`echo ${url} | sed -e 's#@[[:alnum:]|@]*$##'`"
+
+    # Strip trailing trash from the url, except leave the http|git://
+    if test x"`echo ${url} | grep -e "^${service}://"`" != x; then
+	local url="`echo ${url} | sed -e "s#^${service}://##"`"
+	local url="`echo ${url} | sed -e 's#[[:punct:]]*$##'`"
+	local url="${service}://${url}"
     else
-	local url="`echo ${in} | sed -n "s#^\(.*\)/${base}#\1#p"`"
+	# If http|git:// isn't the last thing on the line
+	#  just clean up the trailing trash.
+	local url="`echo ${url} | sed -e 's#[[:punct:]]*$##'`"
     fi
 
     if test x"${repo}" != x; then
 	tool="`echo ${repo} | sed -e "s#\.git##"`"
     fi
 
+    local validats=0
+    if test x"${revision}" != x; then
+        validats="`expr ${validats} + 1`"
+    fi
+    if test x"${user}" != x; then
+        validats="`expr ${validats} + 1`"
+    fi
+
+    local numats=0
+    # This counts the number of fields separated by the @ symbols
+    numats=`echo ${in} | awk -F "@" '{ print NF }'`
+    # Minus one is the number of @ symbols.   
+    numats="`expr ${numats} - 1`"
+    if test ${numats} -gt ${validats}; then
+	superfluousats="`expr ${numats} - ${validats}`"
+	error "Malformed input.  Found ${superfluousats} superfluous '@' symbols. NUMATS: ${numats}   VALIDATS: ${validats}"
+	err=1
+    fi
+
     if test x"${url}" = x; then
-	error "Malformed input. Missing url."
+	error "Malformed input. No url found."
 	err=1
     elif test x"${repo}" = x; then
-	error "Malformed input. Missing repo."
+	error "Malformed input. No repo found."
 	err=1
     fi
 
