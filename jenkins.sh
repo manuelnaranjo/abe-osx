@@ -66,28 +66,32 @@ fi
 # the stage2 bootstrap build.
 $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
 
+# List the files in snapshots, since we usually produce tarballs in
+# this directory
 ls -F $WORKSPACE/cbuildv2/snapshots
-sums="`find $WORKSPACE -name \*.sum`"
 
-# This will go away when make check produces something
+# If 'make check' works, we get .sum files with the results. These we
+# convert to JUNIT format, which is what Jenkins wants it's results
+# in. We then cat them to the console, as that seems to be the only
+# way to get the results into Jenkins.
+sums="`find $WORKSPACE -name \*.sum`"
 if test x"${sums}" != x; then
     echo "Found test results finally!!!"
+    for i in ${sums}; do
+	name="`echo $i | cut -d '.' -f 1`"
+	../sum2junit.sh $i
+    done
+    junits="`find $WORKSPACE -name *.junit`"
+    if test x"${junits}" != x; then
+	echo "Found junit files finally!!!"
+	cat ${junits}
+	rm ${junits}
+    else
+	echo "Bummer, no junit files yet..."
+    fi
 else
     echo "Bummer, no test results yet..."
 fi
-
-for i in ${sums}; do
-    name="`echo $i | cut -d '.' -f 1`"
-    ../sum2junit.sh $i
-done
-junits="`find -name *.junit`"
-if test x"${junits}" != x; then
-    echo "Found junit files finally!!!"
-else
-    echo "Bummer, no junit files yet..."
-fi
-#cat ${junits}
-#rm ${junits}
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
