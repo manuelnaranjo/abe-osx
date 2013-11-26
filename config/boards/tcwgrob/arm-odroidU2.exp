@@ -1,3 +1,7 @@
 load_generic_config "arm-linux"
 
 set_board_info hostname odroidU2
+
+# Name of the computer whose socket will be used, if required.
+set_board_info sockethost "odroidU2:"
+
