@@ -239,7 +239,7 @@ edit_changelogs()
 
     # Get all the ChangeLog files.
     local clogs="`find $1 -name ChangeLog`"
-    local uptool="`echo ${tool} | tr "[:lower:]" "[:upper:]"`"
+    #local uptool="`echo ${tool} | tr "[:lower:]" "[:upper:]"`"
     # For a dryrun, don't actually edit any ChangeLog files.
     if test x"${dryrun}" = x"no"; then
 	for i in ${clogs}; do
