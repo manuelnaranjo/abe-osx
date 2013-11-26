@@ -732,7 +732,7 @@ while test $# -gt 0; do
 			    exit 1
 			fi
 			# Continue to process individually.
-			;;&
+			;;
 		    eglibc)
 			clibrary="eglibc"
 			eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
