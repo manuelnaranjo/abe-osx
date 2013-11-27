@@ -2,50 +2,50 @@
 
 # Configure a source directory
 # $1 - the directory to configure
-# $2 - which gcc stage to build
+# $2 - [OPTIONAL] which gcc stage to build 
 configure_build()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
+    local tool="`get_git_tool $1`"
+#    local tool="`get_toolname ${tool}`"
+
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to configure.
     if test x"${tool}" = x"linux"; then
 	return 0
     fi
 
-    local builddir="`get_builddir $1 $2`"
-    if test "`echo $1 | grep -c '@'`" -gt 0; then
-	local revision="`echo $1 | cut -d '@' -f 2`"
-    else
-	local revision=""
-    fi
+    # The git parser functions shall return valid results for all
+    # services, especially once we have a URL.
 
-    # git repositories might have a branch name designated with a slash.
-    # Change the / to a - in the stamp name, otherwise stamp creation
-    # will fail because the shell thinks the part before the / is a directory
-    # name.
-    local file="`echo ${file} | sed -e 's:/:-:'`"
-    local stamp="stamp-configure-${file}${2:+-$2}"
+    local url=
+    url="`get_git_url ${gitinfo}`"
+
+    local tag=
+    tag="`get_git_tag ${gitinfo}`"
+
+    local srcdir=
+    srcdir="`get_srcdir ${gitinfo}`"
+
+    local stamp=
+    stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
+
+    local builddir="`get_builddir ${gitinfo} $2`"
     # Don't look for the stamp in the builddir because it's in builddir's
     # parent directory.
     local stampdir="`dirname ${builddir}`"
 
-    if test ${stampdir}/${stamp} -nt ${local_snapshots}/${file}  -a x"${force}" = xno; then
-	fixme "${stamp} is newer than $1, so not configuring $1"
-	return 0
-    else
-	# FIXME: Don't output a message that implies that there is a stamp if
-	# this is the first time through and one doesn't exist.
-	fixme "${stamp} is not newer than $1, so configuring $1"
-    fi    
+    #check_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" ${stamp} ${srcdir}
+    check_stamp "${stampdir}" ${stamp} ${srcdir}
+    if test $? -eq 0; then
+	return 0 
+    fi
 
     if test ! -d "${builddir}"; then
 	notice "${builddir} doesn't exist, so creating it"
 	mkdir -p ${builddir}
     fi
-
-    local srcdir="`get_srcdir $1`"
 
     if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
 	warning "No configure script in ${srcdir}!"
@@ -71,7 +71,8 @@ configure_build()
 
     # Extract the toolchain component name, stripping off the linaro
     # part if it exists as it's not used for the config file name.
-    tool="`get_toolname $1 | sed -e 's:-linaro::'`"
+    tool="`get_git_tool $1`"
+    tool="`get_toolname ${tool} | sed -e 's:-linaro::'`"
 
     # Load the default config file for this component if it exists.
     default_configure_flags=""
@@ -93,7 +94,11 @@ configure_build()
 	    echo "target=${target}" > ${builddir}/${tool}.conf
 	    cat ${topdir}/config/${tool}.conf >> ${builddir}/${tool}.conf
 	fi
+    else
+	error "No ${topdir}/config/${tool}.conf file for ${tool}."
+	exit 1
     fi
+  
 
     # See if this component depends on other components. They then need to be
     # built first.
@@ -201,7 +206,8 @@ configure_build()
 	default_configure_flags=
     fi
 
-    touch ${stampdir}/${stamp}
+    #touch ${stampdir}/${stamp}
+    create_stamp "${stampdir}" "${stamp}"
 
     return 0
 }

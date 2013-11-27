@@ -44,6 +44,7 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
+    local builds_ret=
     # build each component
     for i in ${builds}; do
 	notice "Building all, current component $i"
@@ -56,10 +57,14 @@ build_all()
 	case $i in
 	    infrastructure)
 		infrastructure
+		builds_ret=$?
 		;;
 	    # Build stage 1 of GCC, which is a limited C compiler used to compile
 	    # the C library.
 	    libc)
+		# Bug in glibc with parallel builds.
+		local save_flags=${make_flags}
+		make_flags="-j 1"
 		if test x"${clibrary}" = x"eglibc"; then
 		    build ${eglibc_version}
 		elif  test x"${clibrary}" = x"glibc"; then
@@ -70,28 +75,31 @@ build_all()
 		    error "\${clibrary}=${clibrary} not supported."
 		    return 1
 		fi
-		if test $? -gt 0; then
-		    error "Couldn't build ${clibrary}!"
-		    return 1
-		fi
+		builds_ret=$?
+		make_flags="${save_flags}"
 		;;
 	    stage1)
 		build ${gcc_version} stage1
+		builds_ret=$?
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
 		build ${gcc_version} stage2
+		builds_ret=$?
 		;;
 	    gdb)
 		build ${gdb_version}
+		builds_ret=$?
 		;;
 	    # Build anything not GCC or infrastructure
 	    *)
 		build ${binutils_version}
+		builds_ret=$?
 		;;
 	esac
-	if test $? -gt 0; then
-	    error "Couldn't build all!"
+	#if test $? -gt 0; then
+	if test ${builds_ret} -gt 0; then
+	    error "Failed building $i."
 	    return 1
 	fi
     done
@@ -125,85 +133,61 @@ build()
 	error "No matching source found for \"$1\"."
 	return 1
     fi
-    local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
-    if test `echo ${gitinfo} | wc -w` -gt 1; then
-	local branch="/`echo ${gitinfo} | cut -d ' ' -f 2`"
+
+    # The git parser functions shall return valid results for all
+    # services, especially once we have a URL.
+
+    local url=
+    url="`get_git_url ${gitinfo}`"
+
+    local tag=
+    tag="`get_git_tag ${gitinfo}`"
+
+    local srcdir=
+    srcdir="`get_srcdir ${gitinfo}`"
+
+    local stamp=
+    stamp="`get_stamp_name build ${gitinfo} ${2:+$2}`"
+
+    local builddir="`get_builddir ${gitinfo} $2`"
+    # Don't look for the stamp in the builddir because it's in builddir's
+    # parent directory.
+    local stampdir="`dirname ${builddir}`"
+
+    #check_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" ${stamp} ${srcdir}
+    check_stamp "${stampdir}" ${stamp} ${srcdir}
+    if test $? -eq 0; then
+	return 0 
     fi
-    if test `echo ${gitinfo} | wc -w` -gt 2; then
-	local revision="@`echo ${gitinfo} | cut -d ' ' -f 3`"
-    fi
-    # if test `echo ${url} | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then 
-    # 	local url="`echo ${tmp} | cut -d ' ' -f 1`"
-    # 	local branch="`echo ${tmp} | cut -d ' ' -f 2`"
-    # fi
-    local tag="${url}${branch}${revision}"
 
-    # git repositories might have a branch name designated with a slash.
-    # Change the / to a - in the stamp name, otherwise stamp creation
-    # will fail because the shell thinks the part before the / is a directory
-    # name.
-    local stamp="`echo ${file} | sed -e 's:/:-:'`"
-    local stamp="stamp-build-${stamp}${2:+-$2}"
-
-    # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/${host}/${target}/${stamp} -nt ${local_snapshots}/${url} -a x"${force}" = xno -a x"$2" != x"stage2"; then
-     	fixme "${stamp} is newer than ${url}, so not building ${file}"
-	return 0
-    else
-     	fixme "${stamp} is not newer than ${url}, so building ${file}"
-    fi    
+    notice "Building ${tag}${2:+ $2}"
     
-    notice "Building ${tag}"
-
-    # if test $? -gt 0; then
-    # 	return 1
-    # fi
-    # Get the list of other components that need to be built first.
-    # if test x"${nodepends}" = xno; then
-    # 	local components="`dependencies ${tool}`"
-    # 	for i in ${components}; do
-    # 	    installed $i
-    # 	        # Build and install the component if it's not installed already
-    # 	    if test $? -gt 0 -o x"${force}" = xyes; then
-    # 		    # preserve the current shell environment to avoid contamination
-    # 		rm -f $1.env
-    # 		set 2>&1 | grep "^[a-z_A-Z-]*=" > $1.env
-    # 		build $i
-    # 		. $1.env
-    # 		rm -f $1.env
-    # 	    fi
-    # 	done
-    # fi
-    
-    if test `echo ${url} | egrep -c "^bzr|^svn|^git|^lp|\.git"` -gt 0; then	
-	# Don't checkout
+    if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
+	# Don't checkout for stage2 gcc, otherwise it'll do an unnecessary pull.
 	# if test x"$2" != x"stage2"; then
-	    checkout ${tag}
+	    notice "Checking out ${gitinfo}"
+	    checkout ${gitinfo}
 	    if test $? -gt 0; then
 		return 1
 	    fi
-	    # change_branch ${tag}
-	    # if test $? -gt 0; then
-	    # 	return 1
-	    # fi
 	#fi
     else
 	if test x"$2" != x"stage2"; then
-	    fetch ${url}
+	    fetch ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${url}"
+		error "Couldn't fetch tarball ${gitinfo}"
 		return 1
 	    fi
-	    extract ${url}
+	    extract ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${url}"
+		error "Couldn't extract tarball ${gitinfo}"
 		return 1
 	    fi
 	fi
     fi
 
-    notice "Configuring ${url}${branch}..."
-    configure_build ${tag} $2
+    notice "Configuring ${gitinfo}${2:+ $2}..."
+    configure_build ${gitinfo} $2
     if test $? -gt 0; then
 	error "Configure of $1 failed!"
 	return $?
@@ -211,26 +195,26 @@ build()
     
     # Clean the build directories when forced
     if test x"${force}" = xyes; then
-	make_clean ${tag} $2
+	make_clean ${gitinfo} $2
 	if test $? -gt 0; then
 	    return 1
 	fi
     fi
     
     # Finally compile and install the libaries
-    make_all ${tag} $2
+    make_all ${gitinfo} $2
     if test $? -gt 0; then
 	return 1
     fi
 
     # Build the documentation.
-    make_docs ${tag} $2
+    make_docs ${gitinfo} $2
     if test $? -gt 0; then
 	return 1
     fi
 
 #    if test x"${install}" = x"yes"; then    
-	make_install ${tag} $2
+	make_install ${gitinfo} $2
 	if test $? -gt 0; then
 	    return 1
 	fi
@@ -243,22 +227,25 @@ build()
     if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
 	dryrun "(hello_world)"
 	if test $? -gt 0; then
-	    error "Hello World test failed for ${url}..."
+	    error "Hello World test failed for ${gitinfo}..."
 	    #return 1
 	else
-	    notice "Hello World test succeeded for ${url}..."
+	    notice "Hello World test succeeded for ${gitinfo}..."
 	fi
     fi
 
-    touch ${local_builds}/${host}/${target}/${stamp}
-    notice "Done building ${tag}..."
+    #create_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" "${stamp}"
+    #create_stamp "${local_builds}/${host}/${target}" "${stamp}"
+    create_stamp "${stampdir}" "${stamp}"
+
+    notice "Done building ${gitiinfo}..."
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes; then
 	if test x"$2" != x"stage1"; then
-	    notice "Starting test run for ${url}"
-	    make_check ${url} stage2
+	    notice "Starting test run for ${gitinfo}"
+	    make_check ${gitinfo} stage2
 	    if test $? -gt 0; then
 		return 1
 	    fi
@@ -279,6 +266,7 @@ make_all()
 	return 0
     fi
 
+    # FIXME: This should be a URL 
     builddir="`get_builddir $1 $2`"
     notice "Making all in ${builddir}"
 
@@ -309,7 +297,8 @@ make_install()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
+    local tool="`get_git_tool $1`"
+    local tool="`get_toolname ${tool}`"
     if test x"${tool}" = x"linux"; then
      	local srcdir="`get_srcdir $1`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
@@ -350,6 +339,11 @@ make_install()
 	dryrun "make install ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
 
+    if test $? != "0"; then
+	warning "Make install failed!"
+	return 1
+    fi
+
     # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
     # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
     # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
@@ -357,11 +351,6 @@ make_install()
     # types.h instead of the one in the source tree to be a tiny bit less ugly.
     if test x"${tool}" = x"eglibc" -a `echo ${host} | grep -c mingw` -eq 1; then
 	sed -i -e '/typedef __caddr_t caddr_t/d' ${sysroots}/usr/include/sys/types.h
-    fi
-
-    if test $? != "0"; then
-	warning "Make install failed!"
-	return 1
     fi
 
     return 0

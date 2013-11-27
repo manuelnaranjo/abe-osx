@@ -58,11 +58,11 @@ fetch()
     fi
 
     # If the tarball hasn't changed, then don't fetch anything
-    if test -e ${local_snapshots}/${md5file} -a ${local_builds}/stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
-     	fixme "stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
+    if test -e ${local_snapshots}/${md5file} -a ${local_snapshots}/${dir}stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
+     	fixme "${dir}stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
 	return 0
     else
-     	fixme "stamp-fetch-${file} is not newer than ${md5file}, so fetching ${md5file}"
+     	fixme "${dir}stamp-fetch-${file} is not newer than ${md5file}, so fetching ${md5file}"
     fi
     
     # FIXME: Stash the md5sum for this tarball in the build directory. Compare
@@ -98,7 +98,7 @@ fetch()
 	return 1
     fi
 
-    touch ${local_builds}/stamp-fetch-${file}
+    touch ${local_snapshots}/${dir}stamp-fetch-${file}
 
     return 0
 }
@@ -225,7 +225,7 @@ extract()
 #    fi
 
     # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_builds}/${dir}stamp-extract-${file} -nt ${local_snapshots}/${dir}${file} -a x"${force}" = xno; then
+    if test ${local_snapshots}/${dir}stamp-extract-${file} -nt ${local_snapshots}/${dir}${file} -a x"${force}" = xno; then
      	fixme "${dir}stamp-extract-${file} is newer than ${file}, so not extracting ${file}"
 	return 0
     else
@@ -254,7 +254,7 @@ extract()
 	return 0
     else
 	local taropts="${taropt}xf"
-	tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}
+	dryrun "tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}"
     fi
 
     # FIXME: this is hopefully is temporary hack for tarballs where the directory
@@ -272,7 +272,7 @@ extract()
 	fi
     fi
 
-    touch ${local_builds}/stamp-extract-${file} 
+    touch ${local_snapshots}/${dir}stamp-extract-${file} 
 
     return 0
 }

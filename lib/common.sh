@@ -15,6 +15,7 @@
 . "${topdir}/lib/package.sh" || exit 1
 . "${topdir}/lib/testcode.sh" || exit 1
 . "${topdir}/lib/git-parser.sh" || exit 1
+. "${topdir}/lib/stamp.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -92,51 +93,70 @@ notice()
 }
 
 # Get the URL to checkout out development sources.
-# $1 - The toolchain component to get the source URL for, which must be
-# unique in the source.conf file.
 #
-# returns a string that represents the full URL for git, and optionally
-# a branch and revision number. These are returned as a string with the
-# fields separated by spaces, so the calling function can more easily
-# parse the data. As URLs have embedded slashes, and slashes are also used
-# for branches, spaces work better.
+# $1 - The toolchain component identifier.
+#
+# Returns a string that represents the full URL for an svn, lp, or git service
+# that matches the identifier in the sources.conf file.
+# 
+# [Optional] Return a branch and revision number for git if tagged
+# onto the identifier. e.g., get_URL repo.git~multi/slash/branch@12345
+# will return a matching url in sources.conf such as:
+#
+# http://staging.linaro.org/git/toolchain/repo.git~multi/slash/branch@12345
+#
+# If get_URL is passed an identifier that already contains a URL it will fail.
+#
 get_URL()
 {
 #    trace "$*"
 
+    if test "`echo $1 | grep -c "\.tar.*$"`" -gt 0; then
+	error "not supported for .tar.* files."
+	return 1
+    fi
+
+    # It makes no sense to call get_URL if you already have the URL.
+    local service=
+    service="`get_git_service $1`"
+    if test x"${service}" != x; then
+	error "Input already contains a url."
+	return 1
+    fi
+
+    # Use the git parser functions to retrieve information about the
+    # input parameters.  The git parser will always return the 'repo'
+    # for an identifier as long as it follows some semblance of sanity.
+    local node=
+    node="`get_git_repo $1`"
+
+    # Optional elements for git repositories.
+    local branch=
+    branch="`get_git_branch $1`"
+    local revision=
+    revision="`get_git_revision $1`"
+   
     local srcs="${sources_conf}"
-    # account for <repo>.git/<branch>@<revision> and
-    # account for <repo>.git@<revision>
-    local node="`echo $1 | cut -d '/' -f 1 | cut -d '@' -f 1`"
-    local branch="`echo $1 | cut -d '/' -f 2 | cut -d '@' -f 1`"
-    if test x"${branch}" = x"${node}"; then
-	local branch=
-    fi
-    if test "`echo $1 | grep -c '@'`" -eq 1; then
-	local revision="`echo $1 | cut -d '@' -f 2`"
-    else
-	local revision=
-    fi
-    
     if test -e ${srcs}; then
 	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
 	    error "Need unique component and version to get URL!"
 	    return 1
 	fi
-	if test "`grep -c "^${node}" ${srcs}`" -lt 1; then
+	# We don't want to match on partial matches
+	# (hence looking for a trailing space or \t).
+	if test "`grep -c "^${node} " ${srcs}`" -lt 1 -a "`grep -Pc "^${node}\t" ${srcs}`" -lt 1; then
 	    error "Component \"${node}\" not found in ${srcs} file!"
 	    return 1
 	fi
 	local url="`grep "^${node}" ${srcs} | sed -e 's:^.*[ \t]::'`"
-	echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
+	echo "${url}${branch:+~${branch}}${revision:+@${revision}}"
 
 	return 0
     else
 	error "No config file for repository sources!"
-	return 1
     fi
 
-    return 0
+    return 1
 }
 
 # display a list of matching URLS we know about. This is how you can see the
@@ -169,45 +189,55 @@ list_URL()
 # $1 - the path to fixup
 normalize_path()
 {
-#    trace "$*"
+# FIXME: ban non-service or tarball inputs.
+
+    local process=
+    if test "`echo $1 | egrep -c "^git://|^http://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
+	# If the input is an identifier (not a service) then process \.git
+	# identifiers as git URLs
+	process="`get_URL $1`"
+    else
+	process=$1
+    fi
 
     local branch=""
-    case $1 in
+    case ${process} in
 	lp*)
-	    local node="`echo $1 | sed -e 's@lp:@@' -e 's:/:_:'`"
+	    local node="`echo ${process} | sed -e 's@lp:@@' -e 's:/:_:'`"
 	    ;;
 	bzr*)
-	    local node="`echo $1 | sed -e 's:^.*branch/::'`"
+	    local node="`echo ${process} | sed -e 's:^.*branch/::'`"
 	    local node="`echo ${node} | sed -e 's:/:_:'`"
 	    ;;
-	git*)
-	    local node="`echo $1 | sed -e 's@^.*/git/@@' -e 's:\.git.*:.git:'`"
-	    local node="`basename ${node}`"
-	    local branch="`echo $1 | sed -e "s:^.*${node}::" | tr -d '/'`"
-	    if test x"${branch}" != x; then
-		branch="-${branch}"
+	git*|http*)
+            if test "`echo ${process} | grep -c "\.tar"`" -gt 0 -o "`echo ${process} | grep -c "\.tgz"`" -gt 0; then
+                local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
+	    else
+		local node=
+		node="`get_git_repo ${process}`"
+
+		local branch=
+		branch="`get_git_branch ${process}`"
+
+		# Multi-path branches should have forward slashes replaced with dashes.
+		branch="`echo ${branch} | sed 's:/:-:g'`"
+
+		local revision=
+		revision="`get_git_revision ${process}`"
 	    fi
 	    ;;
 	svn*)
-	    local node="`echo $1 | sed -e 's@^.*/svn/@@'`"
+	    local node="`echo ${process} | sed -e 's@^.*/svn/@@'`"
 	    local node="`basename ${node}`"
-	    ;;
-	http*)
-	    local node="`echo $1 | sed -e 's@^.*/http/@@'`"
-	    local node="`basename ${node}`"
-	    if test x"${node}" = x"trunk"; then
-		local node="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::' `"
-		local node="`basename ${node}`"
-	    else
-		local node="`basename $1 | sed -e 's:\.tar.*::'`"
-	    fi
 	    ;;
 	*)
-	    local node="`echo $1 | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
+	    fixme "normalize_path should only be called with a URL or a tarball name, not a sources.conf identifier."
+	    # FIXME: This shouldn't be handled here.
+	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
 	    ;;
     esac
 
-    echo ${node}${branch}
+    echo ${node}${branch:+~${branch}}${revision:+@${revision}}
 
     return 0
 }
@@ -218,33 +248,16 @@ normalize_path()
 # $1 - The full URL to the source tree as returned by get_URL()
 get_builddir()
 {
-#    trace "$*"
-
-    local branch=""
-
-    local tag="`create_release_tag $1`"
-
+    # We should be more strict but this works with identifiers
+    # as well because we might be passed a tar file.
     local dir="`normalize_path $1`"
-#    local branch="`echo $1 | sed -e "s:^.*${dir}::" | cut -d '@' -f 1 | tr -d '/'`"
-#    if test `echo ${dir} | grep -c 'infrastructure/'` -eq 0; then
-    if test `echo ${dir} | grep -c '/'` -gt 0; then
-	local branch="`echo ${dir2} | cut -d '/' -f 2 | cut -d '@' -f 1 | tr -d '/'`"
-	if test x"${branch}" != x; then
-	    local branch="~${branch}"
-	fi
-    fi
-    #local dir="`echo ${dir} | cut -d '/' -f 1`"
-    # BUILD_TAG, BUILD_ID, and BUILD_NUMBER are set by Jenkins, and have valued
-    # like these:
-    # BUILD_ID 2013-09-02_20-23-02
-    # BUILD_NUMBER 1077
-    # BUILD_TAG	jenkins-cbuild-1077
+
     echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
 
     return 0
 }
 
-# Source a bourne shell config file so we can access it's variables.
+# Source a bourne shell config file so we can access its variables.
 #
 # $1 - the tool component that the config file needs to be sourced
 source_config()
@@ -354,8 +367,9 @@ find_snapshot()
 
 # Get the full path or URL to checkout or download sources of a toolchain
 # component.
+# This is the kitchen sink of function.
 #
-# $1 - A toolchain component to search for, which should be something like
+# $1 - 
 #      binutils, gcc, glibc, newlib, etc...
 #
 # returns ${url} as a string with either a single string that is the tarball
@@ -369,8 +383,9 @@ get_source()
 	error "get_source() called without an argument!"
 	return 1
     fi
-    # If a full URL isn't passed as an argument, assume we want a
-    # tarball snapshot
+
+    # If a full URL or git repo identifier isn't passed as an argument,
+    # assume we want a tarball snapshot
     if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
         local snapshot
 	snapshot=`find_snapshot $1`
@@ -418,11 +433,10 @@ get_source()
 	    return 0
 	fi
     else
-	# This leg captures direct urls that don't end in .git.  This include
-	# svn directories and git repositories that don't end in .git.
-	# Unfortunately this means that <repo>@<revision> isn't
-	# supported.
-	if test `echo $1 | egrep -c "\.git"` -eq 0; then
+	# This leg captures direct urls that don't start or end in .git.
+	# This include svn directories and git identifiers that start with http://.
+	if test `echo $1 | egrep -c "\.git"` -eq 0 -a `echo $1 | egrep -c "^git"` -eq 0; then
+	#if test `echo $1 | egrep -c "\.git"` -eq 0; then
 	    local url=$1
 	    echo "${url}"
 	    return 0
@@ -433,21 +447,49 @@ get_source()
     # toolchain component from the sources.conf file.
     # If passed a full URL, use that to checkout the sources
     if test x"${url}" = x; then
-	# get_URL() returns a string with the parsed fields separated by spaces.
-	# These fields are 'git URL' 'git branch' 'git revision'.
-	local gitinfo="`get_URL $1`"
-	local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
-	if test `echo ${gitinfo} | wc -w` -gt 1; then
-	    local branch="`echo ${gitinfo} | cut -d ' ' -f 2`"
+
+	local service=
+	service="`get_git_service $1`"
+
+	# This might be a full URL or just an identifier.  Use the
+	# service field to determine this.
+	local gitinfo=
+	if test x"${service}" = x; then
+	    # Just an identifier, so get the full git info.
+	    local gitinfo="`get_URL $1`"
+	    if test x"${gitinfo}" = x; then
+		error "$1 not a valid sources.conf identifier."
+		return 1;
+	    fi
 	else
-	    branch=
+	    # Full URL
+	    local gitinfo="$1"
 	fi
-	if test `echo ${gitinfo} | wc -w` -gt 2; then
-	    local revision="`echo ${gitinfo} | cut -d ' ' -f 3`"
-	fi
-	if test $? -gt 0; then
+
+	local url=
+	local url_ret=
+	url="`get_git_url ${gitinfo}`"
+	url_ret=$?
+	local branch=
+	branch="`get_git_branch ${gitinfo}`"
+	local revision=
+	revision="`get_git_revision ${gitinfo}`"
+
+#
+#	local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
+#	if test `echo ${gitinfo} | wc -w` -gt 1; then
+#	    local branch="`echo ${gitinfo} | cut -d ' ' -f 2`"
+#	else
+#	    branch=
+#	fi
+#	if test `echo ${gitinfo} | wc -w` -gt 2; then
+#	    local revision="`echo ${gitinfo} | cut -d ' ' -f 3`"
+#	fi
+
+	#if test $? -gt 0; then
+	if test ${url_ret} -gt 0; then
 	    if test x"${interactive}" = x"yes"; then
-	     	notice "Pick a unique URL from this list: "
+	     	notice "Pick a unique URL (by identifier) from this list: "
 		list_URL $3
 		for i in ${url}; do
 		    echo "\t$i" 1>&2
@@ -469,38 +511,61 @@ get_source()
 	return 1
     fi
 
-    echo "${url}${branch:+ ${branch}}${revision:+ ${revision}}"
+    echo "${url}${branch:+~${branch}}${revision:+@${revision}}"
 
     return 0
 }
 
 # Get the proper source directory
-# $1 - The component name, which is a git URL or a tarball
+# $1 - The component name, which is one of the following:
 # 
-# returns the fully qualified srcdir
+#   A git, http, svn, lp URL
+#   A repository identifier mapping an entry in sources.conf
+#   A tarball
+# 
+# Returns the fully qualified srcdir
 get_srcdir()
 {
 #    trace "$*"
     
-    local tool="`get_toolname $1`"
     if test `echo $1 | grep -c "\.tar"` -gt 0; then
 	# tarballs have no branch or revision
 	local dir="`echo $1 | sed -e 's:\.tar.*::'`"
     else
-	local dir="`echo $1 | sed -e "s:^.*/${tool}.git:${tool}.git:" -e 's:/:-:'`"
-	if test `echo $1 | grep -c "\.git/"` -gt 0; then
-	    local branch="~`basename $1`"
+	local process=$1
+
+	# The git parser will return results for all valid services.
+	local service=
+	service="`get_git_service ${process}`"
+
+	# The git parser functions are most reliable when called with
+	# a full URL and this verifies that a repo identifier has a
+	# valid sources.conf entry.
+	if test x"${service}" = x; then
+	    local process=
+	    process="`get_URL $1`"
+	    if test $? -gt 0; then 
+		error "get_srcdir called with invalid input."
+		return 1
+	    fi
 	fi
-	# Some URLs have a user@ in them, so we have to be careful which token
-	# we parse.
+
+	local tool=
+	tool="`get_git_tool ${process}`"
+
+	local repo=
+	repo="`get_git_repo ${process}`"
+
+	local branch=
+	branch="`get_git_branch ${process}`"
+
+	# Multi-path branches should have / replaces with dashes.
+	branch="`echo ${branch} | sed 's:/:-:g'`"
+
 	local revision=
-	local hasrevision="`echo $1 | grep -c '\.git.*@'`"
-        local numats="`echo $1 | awk -F "@" '{ print NF }'`"
-	if test ${hasrevision} -eq 1 -a ${numats} -eq 3; then
-	    local revision="`echo $1 | cut -d '@' -f 3`"
-	elif test ${hasrevision} -eq 1 -a ${numats} -eq 2; then
-	    local revision="`echo $1 | cut -d '@' -f 2`"
-	fi 
+	revision="`get_git_revision ${process}`"
+
+	local dir=${repo}${branch:+~${branch}}${revision:+@${revision}}
     fi
     
     local srcdir="${local_snapshots}/${dir}"
@@ -508,33 +573,34 @@ get_srcdir()
     # Some components have non-standard directory layouts.
     case ${tool} in
 	gcc*)
+# FIXME: How does this work with current g.l.o gcc sources?
+
+	    # The Linaro gcc git branches are git repositories converted from
+	    # bzr so they have goofy directory layouts which include the branch
+	    # as a directory inside the source directory.
 	    local newdir="`echo ${srcdir} | sed -e 's:\.git-linaro::' | tr '.' '_'`"
 	    local newdir="`basename ${newdir}`"
+	    # If the top level file doesn't yet exist then the user is asking
+	    # where to put the source.  If it does exist then they're asking
+	    # where the actual source is located.
 	    if test ! -e ${srcdir}/config.sub; then
+		# Fixme!
 		if test -e ${srcdir}/${newdir}${revision}/config.sub; then
 		    local srcdir="${srcdir}/${newdir}${revision}"
 		fi
 	    fi
 	    ;;
-	glibc*)
-	    local srcdir="${srcdir}${branch:+${branch}}${revision:+${revision}}"
-	    ;;
 	eglibc*)
             # Eglibc has no top level configure script, it's in the libc
 	    # subdirectory.
-	    if test ! -d "${srcdir}${branch}${revision}/libc"; then
-		# If the directory does not yet exist the caller wants to know
-		# where to put the eglibc sources.
-		local srcdir="${srcdir}${branch}${revision}"
-	    else
+	    if test -d "${srcdir}/libc"; then
 	    	# If the directory already exists the caller wants to know
 		# where the sources are.
-		local srcdir="${srcdir}${branch}${revision}/libc"
+		local srcdir="${srcdir}/libc"
 	    fi
+	    # Else if the directory does not yet exist the caller wants to know
+	    # where to put the eglibc sources.
 	    ;;
-#	binutils*)
-#	    local srcdir="${srcdir}${branch}${revision}"
-#	    ;;
 	*)
 	    ;;
     esac

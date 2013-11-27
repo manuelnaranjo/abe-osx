@@ -97,3 +97,159 @@ if test -d ${local_snapshots}/gcc-linaro-4.7-2013.09; then
 else
     untested "get_srcdir: with tarball"
 fi
+
+echo "============= additional get_srcdir () tests ================"
+# Some of these are redundant with those in srcdir_tests but since
+# already have cbuild2.git checked out we might as well test them here.
+testing="get_srcdir: <repo>.git"
+in="cbuild2.git"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git@<revision>"
+in="cbuild2.git@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git/<branch>"
+in="cbuild2.git/branch"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git/<branch>@<revision>"
+in="cbuild2.git/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git~<branch>@<revision>"
+in="cbuild2.git~branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git/<multi/part/branch>@<revision>"
+in="cbuild2.git/multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git~<multi/part/branch>@<revision>"
+in="cbuild2.git~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+
+# 
+testing="get_srcdir: invalid identifier shouldn't return anything."
+in="cbuild2~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x""; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>~<multi/part/branch>@<revision>"
+in="git://git.linaro.org/people/rsavoye/cbuild2~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2~multi-part-branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: <repo>.git~<multi/part/branch>@<revision>"
+in="cbuild2.git~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: http://<user>@<url>/<repo>.git"
+in="http://git@staging.git.linaro.org/git/toolchain/cbuild2.git"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: http://<user>@<url>/<repo>.git@<revision>"
+in="http://git@staging.git.linaro.org/git/toolchain/cbuild2.git@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cbuild2.git@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: eglibc special case"
+in="eglibc.git~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/eglibc.git~multi-part-branch@12345"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+mkdir -p "${local_snapshots}/eglibc.git~multi-part-branch@12345/libc"
+testing="get_srcdir: eglibc special case once /libc directory exists"
+in="eglibc.git~multi/part/branch@12345"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/eglibc.git~multi-part-branch@12345/libc"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi
+
+testing="get_srcdir: launchpad URL." 
+in="lp:cortex-strings"
+out="`get_srcdir $in`"
+if test x"${out}" = x"${local_snapshots}/cortex-strings"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_srcdir returned ${out}"
+fi

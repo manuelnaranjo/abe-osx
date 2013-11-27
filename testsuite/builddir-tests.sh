@@ -39,21 +39,54 @@ else
 fi
 
 in="git://git.linaro.org/toolchain/binutils.git"
-out="`get_builddir ${in}binutils-2_18-branch@654321`"
-if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils.git-binutils-2_18-branch@654321"; then
+out="`get_builddir ${in}~binutils-2_18-branch@654321`"
+match="${local_builds}/${build}/x86_64-linux-gnu/binutils.git~binutils-2_18-branch@654321"
+if test x"${out}" = x"${match}"; then
+    pass "get_builddir: git repository with branch and commit"
+else
+    fail "get_builddir: git repository with branch and commit"
+    fixme "${in} returned '${out}' expected '${match}'"
+fi
+
+in="git://git.linaro.org/toolchain/binutils.git"
+out="`get_builddir ${in}~binutils-2_18-branch/foo/bar@654321`"
+match="${local_builds}/${build}/x86_64-linux-gnu/binutils.git~binutils-2_18-branch-foo-bar@654321"
+if test x"${out}" = x"${match}"; then
+    pass "get_builddir: git repository with branch and commit"
+else
+    fail "get_builddir: git repository with branch and commit"
+    fixme "${in} returned '${out}' expected '${match}'"
+fi
+
+
+in="git://git.linaro.org/toolchain/binutils.git"
+out="`get_builddir ${in}/binutils-2_18-branch@654321`"
+match="${local_builds}/${build}/x86_64-linux-gnu/binutils.git~binutils-2_18-branch@654321"
+if test x"${out}" = x"${match}"; then
+    pass "get_builddir: git repository with branch and commit"
+else
+    fail "get_builddir: git repository with branch and commit"
+    fixme "${in} returned '${out}' expected '${match}'"
+fi
+
+in="git://git.linaro.org/toolchain/binutils.git"
+out="`get_builddir ${in}/binutils-2_18-branch/foo/bar@654321`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils.git~binutils-2_18-branch-foo-bar@654321"; then
     pass "get_builddir: git repository with branch and commit"
 else
     fail "get_builddir: git repository with branch and commit"
     fixme "${in} returned ${out}"
 fi
 
+
+
 in="gcc.git/linaro-4.8-branch"
 out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc.git-linaro-4.8-branch"; then
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc.git~linaro-4.8-branch"; then
     pass "get_builddir: git repository with branch, no URL"
 else
     fail "get_builddir: git repository with branch, no URL"
-    fixme "get_buildir returned ${out}"
+    fixme "get_builddir returned ${out}"
 fi
 
 in="infrastructure/gmp-5.1.2.tar.xz"
@@ -64,4 +97,3 @@ else
     fail "get_builddir: tarball in subdirectory"
     fixme "${in} returned ${out}"
 fi
-

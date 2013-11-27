@@ -13,7 +13,8 @@
 usegit=no
 
 # This gets the source tree from a remote host
-# $1 - The URL used for getting the sources
+# $1 - This should be a service:// qualified URL.  If you just
+#       have a git identifier call get_URL first.
 checkout()
 {
     if test x"$1" = x; then
@@ -21,23 +22,21 @@ checkout()
 	return 1
     fi
 
-    local tool="`get_toolname $1`"
-    local branch=
-    local revision=
-    if test `echo $1 | grep -c "\.git/"` -gt 0; then
-        local branch="`basename $1`"
-        local branch="`echo $branch | cut -d '@' -f 1`"
+    local service=
+    service="`get_git_service $1`"
+    if test x"${service}" = x ; then
+	error "Proper url required."
+	return 1
     fi
 
-    # Some URLs have a user@ in them, so we have to be careful which token
-    # we parse.
-    local hasrevision="`echo $1 | grep -c '\.git.*@'`"
-    local numats="`echo $1 | awk -F "@" '{ print NF }'`"
-    if test ${hasrevision} -eq 1 -a ${numats} -eq 3; then
-	local revision="`echo $1 | cut -d '@' -f 3`"
-    elif test ${hasrevision} -eq 1 -a ${numats} -eq 2; then
-	local revision="`echo $1 | cut -d '@' -f 2`"
-    fi 
+    local tool=
+    tool="`get_git_tool $1`"
+    local url=
+    url="`get_git_url $1`"
+    local branch=
+    branch="`get_git_branch $1`"
+    local revision=
+    revision="`get_git_revision $1`"
 
     local srcdir=
     srcdir="`get_srcdir $1`"
@@ -101,8 +100,9 @@ checkout()
 		    if test ! -d ${local_snapshots}/${tool}.git; then
 			# Strip off the "[/<branchname>][@<revision>]" from $1 to
 			# get the repo address
-			local repo="`echo $1 | sed -e "s:\(^.*/${tool}.git\).*:\1:"`"
-			dryrun "git clone ${repo} ${local_snapshots}/${tool}.git"
+			#local repo="`echo $1 | sed -e "s:\(^.*/${tool}.git\).*:\1:"`"
+			#dryrun "git clone ${repo} ${local_snapshots}/${tool}.git"
+			dryrun "git clone ${url} ${local_snapshots}/${tool}.git"
 		    fi
 
 		    # If revision is set only use ${branch} for naming.

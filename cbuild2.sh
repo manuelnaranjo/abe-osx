@@ -422,14 +422,14 @@ while test $# -gt 0; do
 		error "Build process failed after ${time} minutes"
 		exit
 	    elif test x"$2" != x"all"; then
-		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-		tool=`get_toolname $2`
-		url="`get_source $2`"
-		if test $? -gt 0; then
+#		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
+#		tool=`get_toolname $2`
+		gitinfo="`get_source $2`"
+		if test x"${gitinfo}" = x; then
 		    error "Couldn't find the source for $2"
 		    exit 1
 		else
-		    build ${url}
+		    build ${gitinfo}
 		fi
 	    else
 		build_all
@@ -732,18 +732,22 @@ while test $# -gt 0; do
 			    exit 1
 			fi
 			# Continue to process individually.
-			;;&
-		    eglibc)
-			clibrary="eglibc"
-			eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
-			;;
-		    glibc)
-			clibrary="glibc"
-			glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
-			;;
-		    n*|newlib)
-			clibrary="newlib"
-			newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
+			case ${name} in
+			    eglibc)
+				clibrary="eglibc"
+				eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
+				;;
+			    glibc)
+				clibrary="glibc"
+				glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
+				;;
+			    n*|newlib)
+				clibrary="newlib"
+				newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
+				;;
+			    *)
+				;;
+			esac
 			;;
 		    *)
 			;;

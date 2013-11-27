@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# NOTICE: This service is most reliable when passed a full URL (including
+#         service identifier, e.g., lp:, svn://, http://, git://).
+#
 # The get_git_<part> functions all operate on the same premise:
 #
 #    When given a string that represents a git url or git repository
@@ -96,7 +99,95 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo "${in}" | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p'`"
+    local service="`echo "${in}" | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p;s#\(^svn\)://.*#\1#p;s#\(^lp\):[/]*.*#\1#p'`"
+
+    # Do this early because this is called often and we don't need all that
+    # other parsing in this case.
+    if test x"${part}" = x"service"; then
+	echo ${service}
+	return 0
+    fi
+
+    # Just bail out early if this is a launch pad service. 
+    if test x"${service}" = x"lp"; then
+	case ${part} in
+#	    service)
+#		echo "${service}"
+#		;;
+	    repo)
+		local repo=""
+		repo="`echo ${in} | sed -e "s#lp:[/]*##" -e 's:/.*::'`"
+		echo "${repo}"
+		;;
+	    url)
+		echo "${in}"
+		;;
+	    tool)
+		# Strip service information and any trailing information.
+		local tool="`echo ${in} | sed -e 's/lp://' -e 's:/.*::'`"
+		echo ${tool}
+		;;
+	    *)
+		;;
+	esac
+	return 0
+    fi
+
+    # Just bail out early if this is an svn service. 
+    if test x"${service}" = x"svn"; then
+	case ${part} in
+#	    service)
+#		echo "${service}"
+#		;;
+	    repo)
+		local repo=""
+		repo="`basename ${in}`"
+		echo "${repo}"
+		;;
+	    url)
+		echo "${in}"
+		;;
+	    tool)
+		# Strip any trailing branch information.
+		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
+		# Strip service information.
+		tool="`basename ${tool}`"
+		echo ${tool}
+		;;
+	    *)
+		;;
+	esac
+	return 0
+    fi
+
+    # This is tarball and it is unique
+    if test x"${service}" = x -a "`echo ${in} | egrep -c "\.tar"`" -gt 0; then
+	case ${part} in
+#	    service)
+#		echo "${service}"
+#		;;
+	    repo)
+		local repo=""
+		repo="`basename ${in}`"
+		repo="`echo ${repo} | sed -e 's:-[0-9].*::'`"
+	echo "REPO: ${repo}" 1>&2
+		echo "${repo}"
+		;;
+	    url)
+		echo "${in}"
+		;;
+	    tool)
+		# Strip any trailing branch information.
+		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
+		# Strip service information.
+		tool="`basename ${tool}`"
+		echo ${tool}
+		;;
+	    *)
+		;;
+	esac
+	return 0
+    fi
 
     # This will only find a username if it follows the <service>://
     # and precededs the first / in the url.  Yes you could
@@ -129,8 +220,22 @@ git_parser()
 	    local branch="`echo ${secondbase} | sed -e 's#.*\.git##' -e 's#^[/]##' -e 's#@[[:alnum:]|@]*$##'`"
 	fi
     elif test ${hastilde} -gt 0 -a ${hasdotgit} -lt 1; then
-	local secondbase="`echo "${noservice}" | sed -e "s#[^/]*/##" -e 's#@[[:alnum:]|@]*$##'`"
+	# If the service is part of the designator then we have to strip
+	# up to the leading /
+	if test x"${service}" != x; then
+	    local secondbase="`echo "${noservice}" | sed -e "s#[^/]*/##"`"
+	else
+	    # Otherwise we process it as if the repo is the leftmost
+	    # element.
+	    local secondbase=${in}
+	fi
+
+	# We've already processed the revision so strip that (and any trailing
+	# @ symbols) off.
+	local secondbase="`echo "${secondbase}" | sed -e 's#@[[:alnum:]|@]*$##'`"
+
 	local branch="`echo "${secondbase}" | sed -n 's#.*~\(.*\)$#\1#p'`"
+	
 	if test "`echo ${branch} | grep -c "^/"`" -gt 0; then
 	    error "Malformed input.  Superfluous / after ~. Stripping."
 	    err=1
@@ -138,6 +243,7 @@ git_parser()
 	fi 
 
 	local repo="`echo ${secondbase} | sed -e 's#\(.*\)~.*#\1#' -e 's#.*/##'`"
+
 	# Strip trailing trash introduced by erroneous inputs.	
 	local repo="`echo ${repo} | sed -e  's#[[:punct:]]*$##'`"
     else # no .git and no tilde for branches
@@ -311,5 +417,30 @@ get_git_revision()
     out="`git_parser revision ${in}`"
     ret=$?
     echo "${out}"
+    return ${ret}
+}
+
+get_git_tag()
+{
+    local in=$1
+    local ret=
+    local out=
+    local repo=
+    local branch=
+    local revision=
+    repo="`git_parser repo ${in}`"
+    ret=$?
+    if test x"${repo}" = x; then
+	error "repository name required for meaningful response."
+	return ${ret}
+    fi
+
+    branch="`git_parser branch ${in}`"
+
+    # Multi-path branches should have forward slashes replaced with dashes.
+    branch="`echo ${branch} | sed 's:/:-:g'`"
+
+    revision="`git_parser revision ${in}`"
+    echo "${repo}${branch:+~${branch}}${revision:+@${revision}}"
     return ${ret}
 }
