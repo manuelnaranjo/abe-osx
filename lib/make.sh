@@ -282,6 +282,12 @@ make_all()
     builddir="`get_builddir $1 $2`"
     notice "Making all in ${builddir}"
 
+    # FIXME: see if the users wants multiple make jobs, which we ignore for
+    # native ARM or AARCH64 as the hardware can't handle the load, and usually
+    # don't have enough memory either.
+    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
+     	make_flags="${make_flags} -j ${cpus}"
+    fi
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi
@@ -308,6 +314,12 @@ make_all()
 make_install()
 {
     trace "$*"
+
+    # see if the users wants multiple make jobs, which we ignore for native
+    # ARM or AARCH64 as the hardware can't handle the load.
+    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
+     	make_flags="${make_flags} -j ${cpus}"
+    fi
 
     local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
@@ -438,8 +450,16 @@ make_check()
 #	return 0
 #    fi
 
+    # see if the users wants multiple make jobs, which we ignore for native
+    # ARM or AARCH64 as the hardware can't handle the load.
+    if test x"${parallel}" = x"yes" -a "`echo ${build} | egrep -c 'arm|aarch64'`" -eq 0; then
+     	make_flags="${make_flags} -j ${cpus}"
+    fi
+
     # load the config file for Linaro build farms
-    export DEJAGNU=${topdir}/config/linaro.exp
+    if test x"${DEJAGNU}" = x; then
+	export DEJAGNU=${topdir}/config/linaro.exp
+    fi
 
     dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     

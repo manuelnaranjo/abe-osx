@@ -514,7 +514,7 @@ while test $# -gt 0; do
 	    nodepends=yes
 	    ;;
 	--parallel|-par*)			# parallel
-            make_flags="-j ${cpus}"
+	    parallel=yes
             ;;
 	--release|-r*)
             release=$2
