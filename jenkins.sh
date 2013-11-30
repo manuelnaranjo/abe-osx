@@ -79,7 +79,7 @@ if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
 	name="`echo $i | cut -d '.' -f 1`"
-	../sum2junit.sh $i
+	../sum2junit.sh $i $WORKSPACE/cbuildv2/
     done
     junits="`find $WORKSPACE -name *.junit`"
     if test x"${junits}" != x; then
