@@ -68,7 +68,7 @@ $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${check} ${release}
 
 # List the files in snapshots, since we usually produce tarballs in
 # this directory
-ls -F $WORKSPACE/cbuildv2/snapshots
+ls -F $WORKSPACE/cbuildv2/snapshots/*.xz
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -79,9 +79,9 @@ if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
 	name="`echo $i | cut -d '.' -f 1`"
-	../sum2junit.sh $i $WORKSPACE/cbuildv2/
+	../sum2junit.sh $WORKSPACE/cbuildv2/$i.junit
     done
-    junits="`find $WORKSPACE -name *.junit`"
+    junits="`find $WORKSPACE/cbuildv2/ -name *.junit`"
     if test x"${junits}" != x; then
 	echo "Found junit files finally!!!"
 	cat ${junits}
