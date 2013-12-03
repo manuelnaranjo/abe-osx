@@ -12,23 +12,7 @@ fetch()
 	local file="`basename $1`"
     fi
 
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"./"; then
-	local dir=""
-    fi
-
-    # first, see if there is a working network connection, because
-    # without one, downloading files won't work.
-    # ping -c 1 cbuild.validation.linaro.org
-    # if test $? -eq 0; then
-    # 	network=yes
-    # else
-    # 	warning "No network connection! Downloading files disabled."
-    # 	network=no
-    # 	return 1
-    # fi
-
-    # The md5sums file is handled differently, as it's used to find all
+    # The md5sums file is a special case as it's used to find all
     # the other names of the tarballs for remote downloading.
     if test x"$1" = x"md5sums"; then
 	# Move the existing file to force a fresh copy to be downloaded.
@@ -43,38 +27,46 @@ fetch()
 	return $?
     fi
 
+    # This will be ${local_snapshots} or ${local_snapshots}/infrastructure.
+    local srcdir=
+    srcdir="`get_srcdir $1`"
+
+    local stamp=
+    stamp="`get_stamp_name fetch $1`"
+
+    # Fetch stamps go into srcdir's parent directory.
+    local stampdir="`dirname ${srcdir}`"
+
     # We can grab the full file name by searching for it in the md5sums file.
     # This is better than guessing, which we do anyway if for some reason the
-    # file isn't listed in the md5sums file.
+    # file isn't listed in the md5sums file.  This might be prepended with the
+    # 'infrastructure/' directory name if it's an infrastructure file.
     local md5file="`grep ${file} ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
     if test x"${md5file}" = x; then
 	error "${file} not in md5sum!"
 	return 1
     fi
-    if test x"${file}" != x; then
-	local getfile="${md5file}"
+
+    if test -e "${local_snapshots}/${md5file}"; then 
+    	# If the tarball hasn't changed, then don't fetch anything
+	check_stamp "${stampdir}" ${stamp} ${local_snapshots}/${md5file} fetch ${force}
+	if test $? -eq 0; then
+	    return 0 
+	fi
     else
-	local getfile=${dir}${file}.tar.xz
+	notice "${local_snapshots}/${md5file} does not exist.  Downloading."
     fi
 
-    # If the tarball hasn't changed, then don't fetch anything
-    if test -e ${local_snapshots}/${md5file} -a ${local_snapshots}/${dir}stamp-fetch-${file} -nt ${local_snapshots}/${md5file} -a x"${force}" = xno; then
-     	fixme "${dir}stamp-fetch-${file} is newer than ${md5file}, so not fetching ${md5file}"
-	return 0
-    else
-     	fixme "${dir}stamp-fetch-${file} is not newer than ${md5file}, so fetching ${md5file}"
-    fi
-    
     # FIXME: Stash the md5sum for this tarball in the build directory. Compare
     # the current one we just got with the stored one to determine if we should
     # download it.
     if test x"$2" = x; then
-#	notice "Using default fetching protocol 'http'"
 	local protocol=http
     else
 	local protocol=$2
     fi
 
+    local getfile="${md5file}"
     # download the file
     fetch_${protocol} ${getfile}
     if test $? -gt 0; then
@@ -93,12 +85,12 @@ fetch()
 	return 1
     fi
 
-    check_md5sum ${getfile}
+    dryrun "check_md5sum ${getfile}"
     if test $? -gt 0; then
 	return 1
     fi
 
-    touch ${local_snapshots}/${dir}stamp-fetch-${file}
+    create_stamp "${stampdir}" "${stamp}"
 
     return 0
 }
@@ -125,7 +117,7 @@ fetch_http()
 	    # remote host. This is to improve performance when offline, or
 	    # the remote host is offline.
 	    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
-	    if test ! -s ${local_snapshots}/${getfile}; then
+	    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
 		warning "downloaded file ${getfile} has zero data!"
 		return 1
 	    fi
@@ -204,15 +196,10 @@ check_md5sum()
 # decompress and untar a fetched tarball
 extract()
 {
-    trace "$*"
+#    trace "$*"
 
     local extractor=
     local taropt=
-
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"./"; then
-	local dir=""
-    fi
 
     if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
 	local file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
@@ -220,18 +207,24 @@ extract()
 	local file="`echo $1 | cut -d '/' -f 2`"
     fi
 
-#    if test ! -d ${local_snapshots}/${dir}; then
-#	mkdir -fp ${local_snapshots}/${dir}
-#    fi
+    local srcdir=
+    srcdir="`get_srcdir $1`"
 
-    # If the tarball hasn't changed, then don't fetch anything
-    if test ${local_snapshots}/${dir}stamp-extract-${file} -nt ${local_snapshots}/${dir}${file} -a x"${force}" = xno; then
-     	fixme "${dir}stamp-extract-${file} is newer than ${file}, so not extracting ${file}"
-	return 0
-    else
-     	fixme "${dir}stamp-extract-${file} is not newer than ${file}, so extracting ${file}"
-    fi    
-    
+    local stamp=
+    stamp="`get_stamp_name extract $1`"
+
+    # Extract stamps go into srcdir
+    local stampdir="`dirname ${srcdir}`"
+
+    # Name of the downloaded tarball.
+    local tarball="`dirname ${srcdir}`/${file}"
+
+    # If the tarball hasn't changed, then we don't need to extract anything.
+    check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
+    if test $? -eq 0; then
+	return 0 
+    fi
+
     # Figure out how to decompress a tarball
     case "${file}" in
 	*.xz)
@@ -249,31 +242,36 @@ extract()
 	*) ;;
     esac
 
-    if test -d `echo ${local_snapshots}/${dir}${file} | sed -e 's:.tar.*::'` -a x"${force}" = xno; then
-	notice "${local_snapshots}/${file} is already extracted!"
-	return 0
-    else
-	local taropts="${taropt}xf"
-	dryrun "tar ${taropts} ${local_snapshots}/${dir}${file} -C ${local_snapshots}/${dir}"
+    if test -d ${srcdir} -a x"${force}" = xno; then
+	notice "${srcdir} already exists. Removing to extract newer version!"
+	dryrun "rm -rf ${srcdir}"
     fi
 
-    # FIXME: this is hopefully is temporary hack for tarballs where the directory
-    # name versions doesn't match the tarball version. This means it's missing the
-    # -linaro-VERSION.YYYY.MM part.
+    local taropts="${taropt}xf"
+    notice "Extracting ${srcdir} from ${tarball}."
+    dryrun "tar ${taropts} ${tarball} -C `dirname ${srcdir}`"
+
+    # FIXME: this is hopefully a temporary hack for tarballs where the
+    # directory name versions doesn't match the tarball version. This means
+    # it's missing the -linaro-VERSION.YYYY.MM part.
     local name="`echo ${file} | sed -e 's:.tar\..*::'`"
-    if test ! -d ${local_snapshots}/${dir}${name}; then
+
+    # dryrun has to skip this step otherwise execution will always drop into
+    # this leg.
+    if test x"${dryrun}" != xyes -a ! -d ${srcdir}; then
 	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
-	if test ! -d ${local_snapshots}/${name}; then
-	    warning "Making a symbolic link for nonstandard directory name!"
-	    ln -sf ${local_snapshots}/${dir2} ${local_snapshots}/${name}
+	if test ! -d ${srcdir}; then
+	    dir2="`dirname ${srcdir}`/${dir2}"
+	    warning "${tarball} didn't extract to ${srcdir} as expected!"
+	    notice "Making a symbolic link from ${dir2} to ${srcdir}!"
+	    dryrun "ln -sf ${dir2} ${srcdir}"
 	else
-	    error "${dir} doesn't seem to exist!"
+	    error "${srcdir} already exists!"
 	    return 1
 	fi
     fi
 
-    touch ${local_snapshots}/${dir}stamp-extract-${file} 
-
+    create_stamp "${stampdir}" "${stamp}"
     return 0
 }
 

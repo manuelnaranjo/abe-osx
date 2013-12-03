@@ -25,7 +25,7 @@ checkout()
     local service=
     service="`get_git_service $1`"
     if test x"${service}" = x ; then
-	error "Proper url required."
+	error "A proper url is required. Call get_URL first."
 	return 1
     fi
 

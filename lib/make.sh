@@ -44,7 +44,7 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
-    local builds_ret=
+    local build_all_ret=
     # build each component
     for i in ${builds}; do
 	notice "Building all, current component $i"
@@ -57,14 +57,11 @@ build_all()
 	case $i in
 	    infrastructure)
 		infrastructure
-		builds_ret=$?
+		build_all_ret=$?
 		;;
 	    # Build stage 1 of GCC, which is a limited C compiler used to compile
 	    # the C library.
 	    libc)
-		# Bug in glibc with parallel builds.
-		local save_flags=${make_flags}
-		make_flags="-j 1"
 		if test x"${clibrary}" = x"eglibc"; then
 		    build ${eglibc_version}
 		elif  test x"${clibrary}" = x"glibc"; then
@@ -75,30 +72,29 @@ build_all()
 		    error "\${clibrary}=${clibrary} not supported."
 		    return 1
 		fi
-		builds_ret=$?
-		make_flags="${save_flags}"
+		build_all_ret=$?
 		;;
 	    stage1)
 		build ${gcc_version} stage1
-		builds_ret=$?
+		build_all_ret=$?
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
 		build ${gcc_version} stage2
-		builds_ret=$?
+		build_all_ret=$?
 		;;
 	    gdb)
 		build ${gdb_version}
-		builds_ret=$?
+		build_all_ret=$?
 		;;
 	    # Build anything not GCC or infrastructure
 	    *)
 		build ${binutils_version}
-		builds_ret=$?
+		build_all_ret=$?
 		;;
 	esac
 	#if test $? -gt 0; then
-	if test ${builds_ret} -gt 0; then
+	if test ${build_all_ret} -gt 0; then
 	    error "Failed building $i."
 	    return 1
 	fi
@@ -127,7 +123,7 @@ build()
 {
     trace "$*"
 
-    local file="`echo $1 | sed -e 's:\.tar.*::'`"
+    # gitinfo contains the service://url~branch@revision
     local gitinfo="`get_source $1`"
     if test -z "${gitinfo}"; then
 	error "No matching source found for \"$1\"."
@@ -137,9 +133,9 @@ build()
     # The git parser functions shall return valid results for all
     # services, especially once we have a URL.
 
-    local url=
-    url="`get_git_url ${gitinfo}`"
-
+    # tag is a sanitized string that's only used for naming and information
+    # because it can't be reparsed by the parser (since '/' characters are
+    # converted to '-' characters in branch names.
     local tag=
     tag="`get_git_tag ${gitinfo}`"
 
@@ -150,12 +146,11 @@ build()
     stamp="`get_stamp_name build ${gitinfo} ${2:+$2}`"
 
     local builddir="`get_builddir ${gitinfo} $2`"
-    # Don't look for the stamp in the builddir because it's in builddir's
-    # parent directory.
+
+    # The stamp is in the buildir's parent directory.
     local stampdir="`dirname ${builddir}`"
 
-    #check_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" ${stamp} ${srcdir}
-    check_stamp "${stampdir}" ${stamp} ${srcdir}
+    check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
     if test $? -eq 0; then
 	return 0 
     fi
@@ -164,8 +159,7 @@ build()
     
     if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
 	# Don't checkout for stage2 gcc, otherwise it'll do an unnecessary pull.
-	# if test x"$2" != x"stage2"; then
-	    notice "Checking out ${gitinfo}"
+	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo}
 	    if test $? -gt 0; then
 		return 1
@@ -186,7 +180,7 @@ build()
 	fi
     fi
 
-    notice "Configuring ${gitinfo}${2:+ $2}..."
+    notice "Configuring ${tag}${2:+ $2}"
     configure_build ${gitinfo} $2
     if test $? -gt 0; then
 	error "Configure of $1 failed!"
@@ -213,15 +207,10 @@ build()
 	return 1
     fi
 
-#    if test x"${install}" = x"yes"; then    
-	make_install ${gitinfo} $2
-	if test $? -gt 0; then
-	    return 1
-	fi
-#    else
-#	notice "make installed disabled by user action."
-#	return 0
-#    fi
+    make_install ${gitinfo} $2
+    if test $? -gt 0; then
+	return 1
+    fi
 
     # See if we can compile and link a simple test case.
     if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
@@ -234,18 +223,16 @@ build()
 	fi
     fi
 
-    #create_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" "${stamp}"
-    #create_stamp "${local_builds}/${host}/${target}" "${stamp}"
     create_stamp "${stampdir}" "${stamp}"
 
-    notice "Done building ${gitiinfo}..."
+    notice "Done building ${tag}${2:+ $2}"
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes; then
 	if test x"$2" != x"stage1"; then
-	    notice "Starting test run for ${gitinfo}"
-	    make_check ${gitinfo} stage2
+	    notice "Starting test run for ${tag}${2:+ $2}"
+	    dryrun "make_check ${gitinfo} stage2"
 	    if test $? -gt 0; then
 		return 1
 	    fi
@@ -277,7 +264,10 @@ make_all()
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
+    local makeret=
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+    makeret=$?
+
     # Make sure the make.log file is in place before grepping or the -gt
     # statement is ill formed.  There is not make.log in a dryrun.
     if test -e "${builddir}/make.log"; then
@@ -285,7 +275,7 @@ make_all()
            error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
        fi
     fi
-    if test $? -gt 0; then
+    if test ${makeret} -gt 0; then
 	warning "Make had failures!"
 	return 1
     fi
@@ -417,9 +407,8 @@ make_check()
     trace "$*"
 
     local tool="`get_toolname $1`"
-    if test x"${builddir}" = x; then
-	local builddir="`get_builddir $1 $2`"
-    fi
+    local builddir="`get_builddir $1 $2`"
+
     notice "Making check in ${builddir}"
 
 #    if test x"$2" != x; then
@@ -468,14 +457,20 @@ make_docs()
 	    # the diststuff target isn't supported by all the subdirectories,
 	    # so we build both doc targets and ignore the error.
 	    dryrun "make SHELL=${bash_shell} ${make_flags}  -w -C ${builddir} info man diststuff 2>&1 | tee -a ${builddir}/make.log"
-	    return 0
+	    return $?
 	    ;;
 	*gcc*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
-	    return 0
+	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} html info man 2>&1 | tee -a ${builddir}/make.log"
+	    return $?
 	    ;;
 	*linux*)
 	    # no docs to install for this component
+	    ;;
+	*libc*) # including eglibc
+	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info dvi pdf html 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info html 2>&1 | tee -a ${builddir}/make.log"
+	    return $?
 	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/make.log"

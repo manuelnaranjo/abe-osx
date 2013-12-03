@@ -1103,6 +1103,37 @@ fi
 
 latest=${saved_latest}
 
+testing="get_source: git direct url with a ~ branch designation."
+in="git://git.linaro.org/toolchain/eglibc.git~branch@1234567"
+if test x"${debug}" = x"yes"; then
+    out="`get_source ${in}`"
+else
+    out="`get_source ${in} 2>/dev/null`"
+fi
+if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_source returned ${out}"
+fi
+
+testing="get_source: git direct url with a ~ branch designation."
+in="git://git.savannah.gnu.org/dejagnu.git~linaro"
+if test x"${debug}" = x"yes"; then
+    out="`get_source ${in}`"
+else
+    out="`get_source ${in} 2>/dev/null`"
+fi
+if test x"${out}" = x"git://git.savannah.gnu.org/dejagnu.git~linaro"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_source returned ${out}"
+fi
+
+
+
+
 # ----------------------------------------------------------------------------------
 
 echo "========= create_release_tag() tests ============"

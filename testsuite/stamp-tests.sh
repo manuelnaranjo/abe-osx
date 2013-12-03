@@ -58,61 +58,65 @@ test_get_stamp_name()
 
 errmatch=0
 in="configure gcc.git"
-match="stamp-configure-gcc.git"
+match="gcc.git-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure infrastructure/mpc-1.0.1.tar.xz"
-match="stamp-configure-mpc-1.0.1"
+match="mpc-1.0.1-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git stage2"
-match="stamp-configure-gcc.git-stage2"
+match="gcc.git-stage2-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git~bzr/custom_branch"
-match="stamp-configure-gcc.git~bzr-custom_branch"
+match="gcc.git~bzr-custom_branch-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git~bzr/custom_branch stage2"
-match="stamp-configure-gcc.git~bzr-custom_branch-stage2"
+match="gcc.git~bzr-custom_branch-stage2-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git@1234567"
-match="stamp-configure-gcc.git@1234567"
+match="gcc.git@1234567-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git@1234567 stage2"
-match="stamp-configure-gcc.git@1234567-stage2"
+match="gcc.git@1234567-stage2-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git~bzr/custom_branch@1234567"
-match="stamp-configure-gcc.git~bzr-custom_branch@1234567"
+match="gcc.git~bzr-custom_branch@1234567-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc.git~bzr/custom_branch@1234567 stage2"
-match="stamp-configure-gcc.git~bzr-custom_branch@1234567-stage2"
+match="gcc.git~bzr-custom_branch@1234567-stage2-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="configure gcc-4.8-foo-bar_fiddle.diddle.tar.bz2"
-match="stamp-configure-gcc-4.8-foo-bar_fiddle.diddle"
+match="gcc-4.8-foo-bar_fiddle.diddle-configure.stamp"
+test_get_stamp_name "${in}" "${match}" "${errmatch}"
+
+in="build infrastructure/linux-linaro-3.11-rc6-2013.08.tar.bz2"
+match="linux-linaro-3.11-rc6-2013.08-build.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 errmatch=0
 in="configure http://staging.git.linaro.org/git/toolchain/gcc.git"
-match="stamp-configure-gcc.git"
+match="gcc.git-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 
 in="build gcc.git"
-match="stamp-build-gcc.git"
+match="gcc.git-build.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="fetch mpc.1.4.tar.gz"
-match="stamp-fetch-mpc.1.4"
+match="mpc.1.4-fetch.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 in="extract mpc.1.4.tar.gz"
-match="stamp-extract-mpc.1.4"
+match="mpc.1.4-extract.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 errmatch=1
@@ -227,7 +231,7 @@ if test -d ${local_builds} -a ! -e "${PWD}/host.conf"; then
     # the stamp so that the modifications times differ.
     sleep 1
 
-    in="${local_builds} ${stamp_name} ${check_dir}"
+    in="${local_builds} ${stamp_name} ${check_dir} configure no"
     ret=1
     test_check_stamp "${testing}" "${in}" "${ret}"
 else
@@ -246,7 +250,7 @@ fi
 
 testing="check_stamp: Check a just created stamp."
 if test -d ${local_builds} -a ! -e "${PWD}/host.conf"; then
-    in="${local_builds} ${stamp_name} ${check_dir}"
+    in="${local_builds} ${stamp_name} ${check_dir} configure no"
     ret=0
     test_check_stamp "${testing}" "${in}" "${ret}"
 else
@@ -265,7 +269,7 @@ if test -d ${local_builds} -a ! -e "${PWD}/host.conf"; then
 
     mkdir -p ${check_dir}
 
-    in="${local_builds} ${stamp_name} ${check_dir}"
+    in="${local_builds} ${stamp_name} ${check_dir} configure no"
     ret=1
     test_check_stamp "${testing}" "${in}" "${ret}"
 else
@@ -275,7 +279,7 @@ fi
 testing="check_stamp: Check a bogus check file."
 if test -d ${local_builds} -a ! -e "${PWD}/host.conf"; then
 
-    in="${local_builds} ${stamp_name} ${local_builds}/bogusfile"
+    in="${local_builds} ${stamp_name} ${local_builds}/bogusfile configure no"
     ret=255
     test_check_stamp "${testing}" "${in}" "${ret}"
 else

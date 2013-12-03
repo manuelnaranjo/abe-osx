@@ -7,7 +7,9 @@ configure_build()
 {
     trace "$*"
 
-    local tool="`get_git_tool $1`"
+    local gitinfo="`get_source $1`"
+
+    local tool="`get_git_tool ${gitinfo}`"
 #    local tool="`get_toolname ${tool}`"
 
     # Linux isn't a build project, we only need the headers via the existing
@@ -36,14 +38,13 @@ configure_build()
     # parent directory.
     local stampdir="`dirname ${builddir}`"
 
-    #check_stamp "${local_builds}/${host}/${target}${dir:+/${dir}}" ${stamp} ${srcdir}
-    check_stamp "${stampdir}" ${stamp} ${srcdir}
+    check_stamp "${stampdir}" ${stamp} ${srcdir} configure ${force}
     if test $? -eq 0; then
 	return 0 
     fi
 
     if test ! -d "${builddir}"; then
-	notice "${builddir} doesn't exist, so creating it"
+	notice "The build directory '${builddir}' doesn't exist, so creating it"
 	mkdir -p ${builddir}
     fi
 
@@ -205,6 +206,8 @@ configure_build()
 	# unset this to avoid problems later
 	default_configure_flags=
     fi
+
+    notice "Done configuring ${gitinfo}"
 
     #touch ${stampdir}/${stamp}
     create_stamp "${stampdir}" "${stamp}"

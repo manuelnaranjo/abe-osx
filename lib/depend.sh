@@ -182,26 +182,23 @@ infrastructure()
      	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
     done
 
-    # First fetch and extract all the tarballs listed in the md5sums file
-#    for i in ${files}; do
-#	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
-#	    continue
-#	fi
-#	fetch_http $i
-#	extract $i
-#    done
-
     # Store the current value so we can reset it ater we're done.
     local nodep=${nodepends}
 
     # Turn off dependency checking, as everything is handled here.
     nodepends=yes
+    local buildret=
     for i in ${files}; do
 	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
 	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
 	    continue
 	fi
 	build ${name}
+	buildret=$?
+	if test ${buildret} -gt 0; then
+	    error "Building ${name} failed."
+	    return 1
+	fi
     done
 
     # Reset to the stored value

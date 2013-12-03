@@ -31,6 +31,19 @@
 #       The branch designation that follows the repository, e.g.,
 #       binutils.git/branch
 #
+#   get_git_tag
+#	Return a sanitized string of repository concatenated with optional
+#	branch and revision information. The branch name has all '/'
+#	characters converted to '-' characters. 
+#
+#       WARNING: A git tag is not parseable by the git parser.  It's a one
+#		 way translation to be used for naming entities only. 
+#
+#	For example, calling get_git_tag with the following:
+#	    git://foo.com/repo.git~multi/slash/branch
+#	Will return the following:
+#	    repo.git~multi-slash-branch as the 'tag'.
+#
 #   get_git_revision
 #       The revision designation that follows the repository, e.g.,
 #       binutils.git@12345
@@ -111,9 +124,6 @@ git_parser()
     # Just bail out early if this is a launch pad service. 
     if test x"${service}" = x"lp"; then
 	case ${part} in
-#	    service)
-#		echo "${service}"
-#		;;
 	    repo)
 		local repo=""
 		repo="`echo ${in} | sed -e "s#lp:[/]*##" -e 's:/.*::'`"
@@ -136,9 +146,6 @@ git_parser()
     # Just bail out early if this is an svn service. 
     if test x"${service}" = x"svn"; then
 	case ${part} in
-#	    service)
-#		echo "${service}"
-#		;;
 	    repo)
 		local repo=""
 		repo="`basename ${in}`"
@@ -163,14 +170,10 @@ git_parser()
     # This is tarball and it is unique
     if test x"${service}" = x -a "`echo ${in} | egrep -c "\.tar"`" -gt 0; then
 	case ${part} in
-#	    service)
-#		echo "${service}"
-#		;;
 	    repo)
 		local repo=""
 		repo="`basename ${in}`"
 		repo="`echo ${repo} | sed -e 's:-[0-9].*::'`"
-	echo "REPO: ${repo}" 1>&2
 		echo "${repo}"
 		;;
 	    url)
@@ -179,6 +182,8 @@ git_parser()
 	    tool)
 		# Strip any trailing branch information.
 		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
+		# Strip off any -linaro tags.
+		tool="`echo ${tool} | sed -e 's:-linaro::'`"
 		# Strip service information.
 		tool="`basename ${tool}`"
 		echo ${tool}
@@ -435,7 +440,7 @@ get_git_tag()
 	return ${ret}
     fi
 
-    branch="`git_parser branch ${in}`"
+    branch="`get_git_branch ${in}`"
 
     # Multi-path branches should have forward slashes replaced with dashes.
     branch="`echo ${branch} | sed 's:/:-:g'`"

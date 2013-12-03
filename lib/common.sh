@@ -384,6 +384,7 @@ get_source()
 	return 1
     fi
 
+    local url=
     # If a full URL or git repo identifier isn't passed as an argument,
     # assume we want a tarball snapshot
     if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then

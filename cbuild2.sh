@@ -280,9 +280,9 @@ OPTIONS
 
   --parallel	Set the make flags for parallel builds.
 
-  --release
+  --release <name>
 		The build system will package the resulting toolchain as a
-		release.
+		release with the 'name' prefix.
 
   --set		{libc}={glibc|eglibc|newlib}
 
@@ -654,6 +654,7 @@ while test $# -gt 0; do
 		# Checkout sources from a repository
 		checkout|ch*)
 		    checkout ${url}
+		    shift
 		    ;;
 		install|i*)
 		    make_install ${url}

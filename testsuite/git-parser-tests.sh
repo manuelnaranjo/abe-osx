@@ -968,3 +968,16 @@ match='repo.git@1234567'
 test_parser tag "${in}" "${match}" "${errmatch}"
 
 errmatch=
+in="git://git.savannah.gnu.org/dejagnu.git~linaro"
+match='dejagnu.git'
+test_parser repo "${in}" "${match}" "${errmatch}"
+
+match='linaro'
+test_parser branch "${in}" "${match}" "${errmatch}"
+
+errmatch=0
+# This will strip the superflous / in between ~ and multi
+in="infrastructure/linux-linaro-3.11-rc6-2013.08.tar.bz2"
+match='linux'
+test_parser tool "${in}" "${match}" "${errmatch}"
+

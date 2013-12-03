@@ -33,7 +33,8 @@ get_stamp_name()
 	fi
     fi
 
-    local stamp_name="stamp-${stamptype}-${name_fragment}${suffix:+-${suffix}}"
+    #local stamp_name="stamp-${stamptype}-${name_fragment}${suffix:+-${suffix}}"
+    local stamp_name="${name_fragment}${suffix:+-${suffix}}-${stamptype}.stamp"
     echo "${stamp_name}"
     return 0
 }
@@ -90,25 +91,27 @@ check_stamp()
     local stamp_loc=$1
     local stamp_name=$2
     local compare_file=$3
-    local local_force=$4
+    local stamp_type=$4
+    local local_force=$5
 
     if test ! -e "${compare_file}"; then
-	error "File to test stamp against doesn't exist."
+	fixme "Compare file '${compare_file}' does not exist."
 	return 255
     fi
 
     # Strip trailing slashes from the location directory.
     stamp_loc="`echo ${stamp_loc} | sed 's#/*$##'`"
 
-    if test ${compare_file} -nt ${stamp_loc}/${stamp_name} -a x"${force}" = xno; then
+    notice "Checking for ${stamp_loc}/${stamp_name}"
+    if test ${compare_file} -nt ${stamp_loc}/${stamp_name} -a x"${local_force}" = xno; then
         if test ! -e "${stamp_loc}/${stamp_name}"; then
-	    notice "${stamp_loc}/${stamp_name} does not yet exist so continuing...."
+	    notice "${stamp_loc}/${stamp_name} does not yet exist${stamp_type:+, ${stamp_type}ing..}."
 	else
-	    notice "${stamp_loc}/${stamp_name} (`stat -c %Y ${stamp_loc}/${stamp_name}`) is newer than ${compare_file} (`stat -c %Y ${compare_file}`)"
+	    notice "${compare_file} (`stat -c %Y ${compare_file}`) is newer than ${stamp_loc}/${stamp_name} (`stat -c %Y ${stamp_loc}/${stamp_name}`)${stamp_type:+, ${stamp_type}ing..}."
 	fi
 	return 1
     else
-     	notice "${stamp_loc}/${stamp_name} (`stat -c %Y ${stamp_loc}/${stamp_name}`) is newer than ${compare_file} (`stat -c %Y ${compare_file}`)"
+     	notice "${stamp_loc}/${stamp_name} (`stat -c %Y ${stamp_loc}/${stamp_name}`) is newer than ${compare_file} (`stat -c %Y ${compare_file}`).  Nothing to be done."
     fi    
     return 0
 }
