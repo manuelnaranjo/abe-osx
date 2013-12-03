@@ -280,9 +280,10 @@ OPTIONS
 
   --parallel	Set the make flags for parallel builds.
 
-  --release <name>
+  --release [<name>]
 		The build system will package the resulting toolchain as a
-		release with the 'name' prefix.
+		release with the 'name' prefix if it is supplied.  Otherwise
+		a release name will be chosen automatically.
 
   --set		{libc}={glibc|eglibc|newlib}
 
@@ -514,7 +515,7 @@ while test $# -gt 0; do
 	    nodepends=yes
 	    ;;
 	--parallel|-par*)			# parallel
-            make_flags="-j ${cpus}"
+	    parallel=yes
             ;;
 	--release|-r*)
             release=$2
@@ -702,7 +703,7 @@ while test $# -gt 0; do
 	    usage
 	    echo "Run \"${cbuild2} --help\" for detailed usage information."
 	    exit 0
-	      ;;
+	    ;;
 	*)
 	    if test `echo $1 | grep -c =` -gt 0; then
 		name="`echo $1 | cut -d '=' -f 1`"

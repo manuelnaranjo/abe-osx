@@ -33,7 +33,6 @@ launchpad_id=
 svn_id=
 
 # config values for the build machine
-cpus=
 libc_version=
 kernel=
 build_arch=
@@ -57,6 +56,7 @@ fi
 clobber=no
 force=no
 interactive=no
+parallel=no
 nodepends=no
 verbose=1
 network=""

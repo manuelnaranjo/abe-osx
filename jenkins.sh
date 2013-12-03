@@ -48,11 +48,11 @@ $CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
-    runtest=--check
+    check=--check
 fi
 
 if test x"${tarballs}" = xtrue; then
-    tarballs=--tarballs
+    release=--tarballs
 fi
 
 # For coss build. For cross builds we build a native GCC, and then use
@@ -64,11 +64,11 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${runtest} ${tarballs} --target ${target} --build all
+$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
 
 # List the files in snapshots, since we usually produce tarballs in
 # this directory
-ls -F $WORKSPACE/cbuildv2/snapshots
+ls -F $WORKSPACE/cbuildv2/snapshots/*.xz
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -78,10 +78,10 @@ sums="`find $WORKSPACE -name \*.sum`"
 if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
-	name="`echo $i | cut -d '.' -f 1`"
-	../sum2junit.sh $i
+	name="`basename $i`
+	../sum2junit.sh $i $WORKSPACE/cbuildv2/${name}.junit
     done
-    junits="`find $WORKSPACE -name *.junit`"
+    junits="`find $WORKSPACE/cbuildv2/ -name *.junit`"
     if test x"${junits}" != x; then
 	echo "Found junit files finally!!!"
 	cat ${junits}
