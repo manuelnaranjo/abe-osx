@@ -27,10 +27,13 @@ sanitize()
     # the files left from random file editors we don't want.
     local edits="`find $1/ -name \*~ -o -name \.\#\* -o -name \*.bak -o -name x`"
 
-    if test "`git status $1 | grep -c "nothing to commit, working directory clean"`" -gt 0; then
+    pushd ./ >/dev/null
+    cd $1
+    if test "`git status | grep -c "nothing to commit, working directory clean"`" -gt 0; then
 	error "uncommited files in $1! Commit files before releasing."
 	#return 1
     fi
+    popd >/dev/null
 
     if test x"${edits}" != x; then
 	rm -fr ${edits}
