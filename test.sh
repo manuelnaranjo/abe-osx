@@ -182,6 +182,11 @@ cb_commands="--drnasdfa"
 match="Command not recognized"
 test_failure "${cb_commands}" "${match}"
 
+# Test for expected failure for removed deprecated feature --dostep.
+cb_commands="--dostep"
+match="Command not recognized"
+test_failure "${cb_commands}" "${match}"
+
 cb_commands="--target=foo"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
