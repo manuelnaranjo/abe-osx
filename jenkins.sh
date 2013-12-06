@@ -74,11 +74,11 @@ ls -F $WORKSPACE/cbuildv2/snapshots/*.xz
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
 # way to get the results into Jenkins.
-sums="`find $WORKSPACE -name \*.sum`"
+sums="`find $WORKSPACE -name *.sum`"
 if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
-	name="`basename $i`
+	name="`basename $i`"
 	../sum2junit.sh $i $WORKSPACE/cbuildv2/${name}.junit
     done
     junits="`find $WORKSPACE/cbuildv2/ -name *.junit`"
@@ -95,7 +95,7 @@ fi
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
-if test x"${canadian}" = xtrue; then
+if test x"${canadian}" = x"true"; then
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
