@@ -24,6 +24,9 @@ manifest=
 # might not be sufficient and can be overridden at the command
 # line.
 wget_timeout=1
+wget_quiet=
+# Try something like "dot:mega"
+wget_progress_style=
 
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no

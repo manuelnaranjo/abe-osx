@@ -188,6 +188,11 @@ git_parser()
 		tool="`basename ${tool}`"
 		echo ${tool}
 		;;
+	    tag)
+		local tag=
+		tag="`echo ${in} | sed -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
+		echo ${tag}
+		;;
 	    *)
 		;;
 	esac

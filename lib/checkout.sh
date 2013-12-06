@@ -4,13 +4,148 @@
 # This does a checkout from a source code repository
 #
 
-# svn+ssh://rsavoye@gcc.gnu.org/svn/gcc/branches/linaro/gcc-4_8-branch
-# eglibc ssh://robert.savoye@git.linaro.org/srv/git.linaro.org/git/toolchain/eglibc.git
-# newlib-linaro ssh://robert.savoye@git.linaro.org/srv/git.linaro.org/git/toolchain/newlib.git
-
 # It's optional to use git-bzr-ng or git-svn to work on the remote sources,
 # but we also want to work with the native source code control system.
 usegit=no
+
+checkout_infrastructure()
+{
+    trace "$*"
+
+    source_config infrastructure
+
+    if test x"${depends}" = x; then
+	error "No dependencies listed for infrastructure libraries!"
+	return 1
+    fi
+
+    # This shouldn't happen, but it's nice for regression verification.
+    if test ! -e ${local_snapshots}/md5sums; then
+	error "Missing ${local_snapshots}/md5sums file needed for infrastructure libraries."
+	return 1
+    fi
+
+    # We have to grep each dependency separately to preserve the order, as
+    # some libraries depend on other libraries being bult first. Egrep
+    # unfortunately sorts the files, which screws up the order.
+    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+    for i in ${depends}; do
+     	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+    done
+
+
+    for i in ${files}; do
+	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
+        local gitinfo=
+	gitinfo="`get_source ${name}`"
+	if test -z "${gitinfo}"; then
+	    error "No matching source found for \"${name}\"."
+	    return 1
+	fi
+
+	# Some infrastructure packages (like dejagnu) come from a git repo.
+	local service=
+	service="`get_git_service ${gitinfo}`"
+	if test x"${service}" != x; then
+	    local checkout_ret=
+	    checkout ${gitinfo}
+	    checkout_ret=$?
+	    if test ${checkout_ret} -gt 0; then
+		error "Failed checkout out of ${name}."
+		return 1
+	    fi
+	else
+	    fetch ${gitinfo}
+	    if test $? -gt 0; then
+		error "Couldn't fetch tarball ${gitinfo}"
+		return 1
+	    fi
+	    extract ${gitinfo}
+	    if test $? -gt 0; then
+		error "Couldn't extract tarball ${gitinfo}"
+		return 1
+	    fi
+	fi
+    done
+    return 0
+}
+
+# This is similar to make_all except it _just_ gathers sources trees and does
+# nothing else.
+checkout_all()
+{
+    local packages=
+    packages="binutils libc gcc gdb"
+
+    # See if specific component versions were specified at runtime
+    if test x"${gcc_version}" = x; then
+	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${binutils_version}" = x; then
+	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${eglibc_version}" = x; then
+	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${newlib_version}" = x; then
+	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${glibc_version}" = x; then
+	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
+    fi
+    if test x"${gdb_version}" = x; then
+	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+    fi
+
+    checkout_infrastructure
+    if test $? -gt 0; then
+	return 1
+    fi
+
+    for i in ${packages}; do
+	local package=
+	case $i in
+	    gdb)
+		package=${gdb_version}
+		;;
+	    binutils)
+		package=${binutils_version}
+		;;
+	    gcc)
+		package=${gcc_version}
+		;;
+	    libc)
+		if test x"${clibrary}" = x"eglibc"; then
+		    package=${eglibc_version}
+		elif  test x"${clibrary}" = x"glibc"; then
+		    package=${glibc_version}
+		elif test x"${clibrary}" = x"newlib"; then
+		    package=${newlib_version}
+		else
+		    error "\${clibrary}=${clibrary} not supported."
+		    return 1
+		fi
+		;;
+	    *)
+		;;
+	esac
+
+    	local gitinfo="`get_source ${package}`"
+	local checkout_ret=
+	checkout ${gitinfo}
+	checkout_ret=$?
+
+	if test ${checkout_ret} -gt 0; then
+	    error "Failed checkout out of $i."
+	    return 1
+	fi
+    done
+
+    notice "Checkout all took ${SECONDS} seconds"
+
+    return 0
+}
+
 
 # This gets the source tree from a remote host
 # $1 - This should be a service:// qualified URL.  If you just

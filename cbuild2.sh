@@ -167,7 +167,8 @@ usage()
     # Format this section with 75 columns.
     cat << EOF
   ${cbuild2} [''| [--timeout <value>]
-             [--build [<package>|all] [--ccache] [--check]
+             [[--build [<package>|all]|[--checkout <package>|all]]
+             [--ccache] [--check]
              [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--manifest <manifest_file>] [--parallel] [--release]
@@ -230,11 +231,24 @@ OPTIONS
 			Build the entire toolchain.
 		''
 			If there are not options build the entire toolchain.
+
+  --ccache	Use ccache when building packages.
+
   --check
 		Run make check on packages.  For cross builds this will run
 		the tests on native hardware.
 
-  --ccache	Use ccache when building packages.
+  --checkout <package>[~branch][@revision]|all
+
+               <package>[~branch][@revision]
+                       This will checkout the package designated by the
+                       <package> source.conf identifier with an optional
+                       branch and/or revision designation.
+
+               all
+                       This will checkout all of the sources for a
+                       complete build as specified by the config/ .conf
+                       files.
 
   --disable	{boostrap|tarball|install}
 
@@ -442,8 +456,41 @@ while test $# -gt 0; do
 	    fi	    
 	    shift
 	    ;;
-	--check|-ch*)
+	--check|-check)
 	    runtests=yes
+	    ;;
+	--checkout*|-checkout*)
+            if test `echo $1 | grep -c "\-checkout=" ` -gt 0; then
+                error "A '=' is invalid after --checkout.  A space is expected."
+                exit 1;
+            fi
+	    if test x"$2" = x -o "`echo $2 | grep -c "\-\-"`" -gt 0; then
+		error "--checkout requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Checkout process failed after ${time} minutes"
+		exit
+	    elif test x"$2" != x"all"; then
+		url="`get_source $2`"
+		if test $? -gt 0; then
+		    error "Couldn't find the source for $2"
+		    exit 1
+		fi
+
+		checkout ${url}
+		if test $? -gt 0; then
+		    time="`expr ${SECONDS} / 60`"
+		    error "Checkout process failed after ${time} minutes"
+		    exit 1
+		fi
+	    else
+		checkout_all
+		if test $? -gt 0; then
+		    time="`expr ${SECONDS} / 60`"
+		    error "Checkout process failed after ${time} minutes"
+		    exit 1
+		fi
+	    fi
+	    shift # Shift off the 'all' or the package identifier.
 	    ;;
 	--host|-h*)
 	    host=$2

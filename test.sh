@@ -210,6 +210,26 @@ cb_commands="--build=all"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
+cb_commands="--checkout=all"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--checkout --foo"
+match="requires a directive"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout glibc.git"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout=glibc.git"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout all"
+match=''
+test_pass "${cb_commands}" "${match}"
+
 libc="glibc"
 target="aarch64-none-elf"
 cb_commands="--target ${target} --set libc=${libc}"
@@ -272,9 +292,6 @@ target="aarch64-none-elf"
 cb_commands="--target ${target} newlib=newlib.git"
 match=''
 test_pass "${cb_commands}" "${match}"
-
-
-
 
 tmpdir=`dirname ${local_snapshots}`
 

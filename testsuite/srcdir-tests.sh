@@ -175,7 +175,7 @@ fi
 # 
 testing="get_srcdir: invalid identifier shouldn't return anything."
 in="cbuild2~multi/part/branch@12345"
-out="`get_srcdir $in`"
+out="`get_srcdir $in 2>/dev/null`"
 if test x"${out}" = x""; then
     pass "${testing}"
 else
