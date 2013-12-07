@@ -53,8 +53,13 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-	eval $1
-	return $?
+	eval $1 && touch /tmp/$$.tmp
+	if test -e /tmp/$$.tmp; then
+	    rm -f /tmp/$$.tmp
+	    return 0
+	else
+	    return 1
+	fi
     fi
 
     return 0
