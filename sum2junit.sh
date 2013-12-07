@@ -14,8 +14,8 @@ else
 fi
 
 # Where to put the output file
-if test x"$2" = x; then
-  outfile=${outfile}
+if test x"$2" != x; then
+  outfile=$2
 else
   outfile="/tmp/${outfile}"
 fi
