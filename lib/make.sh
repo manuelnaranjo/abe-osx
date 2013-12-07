@@ -254,25 +254,40 @@ make_all()
     fi
 
     # FIXME: This should be a URL 
-    builddir="`get_builddir $1 $2`"
+    local builddir="`get_builddir $1 $2`"
     notice "Making all in ${builddir}"
 
     # FIXME: see if the users wants multiple make jobs, which we ignore for
     # native ARM or AARCH64 as the hardware can't handle the load, and usually
     # don't have enough memory either.
     if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
-     	make_flags="${make_flags} -j ${cpus}"
+     	local make_flags="${make_flags} -j ${cpus}"
     fi
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
-     	make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
+     	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi
  
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
+
+    # Binutils runs configure when 'make' is first run. We can't define
+    # LDFLAGS here, as it breaks configure. So we forcibly configure
+    # everything first, then build it to avoid problems.
+    # FIXME: use the static_link value from the config file
+    if test `echo ${tool} | egrep -c binutils` -gt 0; then
+	local makeret=
+	dryrun "make SHELL=${bash_shell} configure-host ${make_flags} -w -C ${builddir} 2>&1 | tee -a ${builddir}/configure.log"
+     	local make_flags="${make_flags} LDFLAGS='-all-static -static -lstdc++'"
+	local makeret=$?
+    fi
+    if test `echo ${tool} | egrep -c gcc` -gt 0; then
+     	local make_flags="${make_flags} LDFLAGS='-static -lstdc++'"	
+    fi
+
     local makeret=
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    makeret=$?
+    local makeret=$?
 
     # Make sure the make.log file is in place before grepping or the -gt
     # statement is ill formed.  There is not make.log in a dryrun.
@@ -475,13 +490,21 @@ make_docs()
     case $1 in
 	*binutils*)
 	    # the diststuff target isn't supported by all the subdirectories,
-	    # so we build both doc targets and ignore the error.
-	    dryrun "make SHELL=${bash_shell} ${make_flags}  -w -C ${builddir} info man diststuff 2>&1 | tee -a ${builddir}/make.log"
+	    # so we build both all targets and ignore the error.
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/bfd diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/ld diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gas diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gprof diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    return $?
+	    ;;
+	*gdb*)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/make.log"
 	    return $?
 	    ;;
 	*gcc*)
 	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} html info man 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/make.log"
 	    return $?
 	    ;;
 	*linux*)
