@@ -13,11 +13,11 @@ regenerate_checksums()
 
     local reldir=$1
 
-    local tag="`create_release_tag $1`"
+    local tag="`basename $1`"
 
     cat <<EOF > ${reldir}/MD5SUMS
 # This file contains the MD5 checksums of the files in the 
-# gcc-linaro-${tag}.tar.xz tarball.
+# ${tag}.tar.xz tarball.
 #
 # Besides verifying that all files in the tarball were correctly expanded,
 # it also can be used to determine if any files have changed since the
@@ -27,11 +27,10 @@ regenerate_checksums()
 # md5sum -c MD5SUMS | grep -v "OK$"
 EOF
 
-    rm -f ${reldir}/MD5SUMS
-    touch ${reldir}/MD5SUMS
-    
-    find ${reldir}/ -type f | grep -v MD5SUMS | sort > /tmp/md5sums
-    md5sum `cat /tmp/md5sums` 2>&1 | sed -e 's:/tmp/::' >> ${reldir}/MD5SUMS
+    find ${reldir}/ -type f | grep -v MD5SUMS | LC_ALL=C sort > /tmp/md5sums.$$
+    xargs md5sum < /tmp/md5sums.$$ 2>&1 | sed -e "s:${reldir}/::" >> ${reldir}/MD5SUMS
+    rm -f /tmp/md5sums.$$
+
 #    for i in `cat /tmp/md5sums`; do
 #	md5sum $i 2>&1 | sed -e 's:/tmp/::' >> ${reldir}/MD5SUMS
 #    done
@@ -110,14 +109,17 @@ release_gcc_src()
     local srcdir="`get_srcdir ${gcc_version}`"
     local builddir="`get_builddir ${gcc_version} stage2`"
     local tag="`create_release_tag ${gcc_version}`"
+    local version="`create_release_version ${gcc_version}`"
     local destdir=/tmp/${tag}
 
-    install_gcc_docs ${destdir} ${srcdir} ${builddir}
+    dryrun "mkdir -p ${destdir}"
 
     # Update the GCC version
     rm -f ${destdir}/gcc/LINARO-VERSION
-    echo "${tag}" > ${destdir}/gcc/LINARO-VERSION
-
+    echo "${version}" > ${destdir}/gcc/LINARO-VERSION
+    
+    install_gcc_docs ${destdir} ${srcdir} ${builddir}
+ 
     if test x"${release}" = x;then
 	edit_changelogs ${srcdir} ${tag}
     else
@@ -138,6 +140,8 @@ release_gcc_src()
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    dryrun "rm -f /tmp/${tag}"
 
     return 0
 }
@@ -250,7 +254,7 @@ edit_changelogs()
 	    fi
      	    echo "${date}  ${fullname}  <${email}>" >> $i.linaro
      	    echo "" >> $i.linaro 
-            echo "        ${uptool} Linaro $2 released." >> $i.linaro
+	    echo "     ${uptool} Linaro $2 released." >> $i.linaro
      	    echo "" >> $i.linaro
      	    cat /tmp/ChangeLog.linaro >> $i.linaro
      	    rm -f /tmp/ChangeLog.linaro

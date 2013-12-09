@@ -186,7 +186,7 @@ binary_toolchain()
     dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
 
     manifest
-    cp /tmp/manifest.txt ${destdir}
+    mv /tmp/manifest.txt ${destdir}
 
     # install in alternate directory so it's easier to build the tarball
     # dryrun "make install SHELL=${bash_shell} ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
