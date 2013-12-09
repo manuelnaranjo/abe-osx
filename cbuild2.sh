@@ -309,7 +309,13 @@ OPTIONS
   		Use an alternate snapshots file as specified by <url>.
 
   --tarball
-  		Build tarballs after a successful build.
+  		Build source and binary tarballs after a successful build.
+
+  --tarsrc
+  		Build source tarballs after a successful build.
+
+  --tarbin
+  		Build binary tarballs after a successful build.
 
   --target	[<target_triple>|'']
 
@@ -579,8 +585,15 @@ while test $# -gt 0; do
             set_snapshots ${url}
 	    shift
             ;;
-	--tarball*|-tarb*)
-	    tarballs=yes
+	--tarball*|-tarba*)
+	    tarsrc=yes
+	    tarbin=yes
+	    ;;
+	--tarbin*|-tarbi*)
+	    tarbin=yes
+	    ;;
+	--tarsrc*|-tars*)
+	    tarsrc=yes
 	    ;;
 	--targ*|-targ*)			# target
 	    if test `echo $1 | grep -c "\-ta.*=" ` -gt 0; then

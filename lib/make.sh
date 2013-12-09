@@ -102,11 +102,13 @@ build_all()
 
     notice "Build took ${SECONDS} seconds"
     
-    if test x"${tarballs}" = x"yes"; then
+    if test x"${tarsrc}" = x"yes"; then
         release_binutils_src 
         release_gdb_src
         release_gcc_src
+    fi
 
+    if test x"${tarbin}" = x"yes"; then
         binary_sysroot
         binary_gdb
         binary_toolchain
