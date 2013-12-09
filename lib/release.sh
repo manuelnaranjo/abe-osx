@@ -343,8 +343,8 @@ sysroot_install_script()
     local script=$1/INSTALL-SYSROOT.sh
     local tag="`basename $1`"
 
+    local sysroot="`${target}-gcc -print-sysroot`"
     if test ! -e ${script}; then
-    # Create the usual Hello World! test case
 	cat <<EOF > ${script}
 #!/bin/sh
 
@@ -362,7 +362,7 @@ fi
 
 # If it doesn't already exist, link to the sysroot path GCC will be using
 if test ! -d /opt/linaro/${tag}; then
-  ln -sf  \${PWD} /opt/linaro/sysroot-eglibc.git-${target}
+  ln -sf  \${PWD} ${sysroot}
 fi
 EOF
     fi
