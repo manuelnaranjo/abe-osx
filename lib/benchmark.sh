@@ -1,80 +1,178 @@
-bench_run ()
+
+#!/bin/sh
+
+#
+# $1 benchamark name coremark, etc
+#
+
+BZIP2BENCH=1
+COREMARK=2
+LIBAVBENCH=3
+GMPBENCH=4
+GNUGO=5
+SKIBENCH=6
+VORBISBENCH=7
+BENCHNT=8
+SKIABENCH=9
+DENBENCH=10
+EEMBC=11
+EEMBC_OFFICE=12
+SPEC2000=13
+
+
+bench_init()
 {
-  local builddir="`get_builddir $1`"
-
-  local tool="`get_toolname $1`"
-  local runlog="${builddir}/run-${tool}.log"
-  local cmd="`grep ^benchcmd= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-  local count="`grep ^benchcount= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-
-  if test x"${cmd}" = x; then
-    error "No benchcmd for ${tool}"
-    return 1
+  if test x"$1" = x; then
+    echo "bench_init  requires benchmark name as parameter"
+    retuen 0
   fi
-  if test x"${count}" = x; then
-    warning "No benchcount for ${tool}, defaulting to 5"
-    count=5
-  fi
-
-  dryrun "rm -f ${runlog}"
-  if test $? -gt 0; then
-    error "Failed to delete old runlog ${runlog}"
-    return 1
-  fi
-
-  for i in `seq 1 "${count}"`; do
-    dryrun "eval \"${cmd}\" 2>&1 | tee -a ${runlog}"
-    if test $? -gt 0; then
-      error "${cmd} failed"
-      return 1
-    fi
-    dryrun "echo -e \"\nRun $i::\" | tee -a ${runlog}"
-    bench_log "${tool}" "${runlog}" "${builddir}"
-    if test $? -gt 0; then
-      error "Logging failed for ${tool}"
-      return 1
-    fi
-    dryrun "echo -e \"\n\" | tee -a ${runlog}"
-  done
+  case $1 in
+    coremark)
+      echo "Coremark"
+      coremark_init 
+      return $COREMARK
+      ;;
+  esac
 
   return 0
 }
 
-bench_log ()
+#
+# $1 is the benchmark ID
+#
+clean()
 {
-  local tool="$1"
-  local out_log="$2"
-  local builddir="$3"
+  if test x"$1" = x; then
+    error "clean  requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      clean
+      ;;
+  esac
+}
 
-  local in_log="`grep ^benchlog= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-  if test x"${in_log}" = x; then
-    error "No benchlog in ${1}.conf"
+#
+# $1 is the benchmark ID
+#
+
+#
+# $1 is the benchmark ID
+#
+build()
+{
+  if test x"$1" = x; then
+    error "build  requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_build
+      ;;
+  esac
+}
+
+#
+# $1 is the benchmark ID
+#
+build_with_pgo()
+{
+  if test x"$1" = x; then
+    error "build_with_pgo  requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_build_with_pgo
+      ;;
+  esac
+}
+ 
+#
+# $1 is the benchmark ID
+#
+run()
+{
+  if test x"$1" = x; then
+    error "run requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_run
+      ;;
+  esac
+}
+
+#
+# $1 is the benchmark ID
+#
+install()
+{
+  if test x"$1" = x; then
+    error "install requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_install
+      ;;
+  esac
+}
+
+#
+# $1 is the benchmark ID
+#
+testsuit()
+{
+  if test x"$1" = x; then
+    error "testsuite requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_testsuite
+      ;;
+  esac
+}
+
+#
+# $1 is the benchmark ID
+#
+extract()
+{
+  if test x"$1" = x; then
+    error "extract  requires benchmark ID as parameter"
+  fi
+  case $1 in
+    $COREMARK)
+      coremark_extract
+      ;;
+  esac
+}
+
+set_gcc_to_runwith ()
+{
+  if test x"$1" = x; then
+    error "set_gcc_to_runwith called without an argument!"
     return 1
   fi
-
-  for log in ${in_log}; do
-    dryrun "cat ${builddir}/${log} | tee -a ${out_log}"
-    if test $? -gt 0; then
-      error "Could not tee log ${log} to ${out_log}"
-      return 1
-    fi
-  done
-
-  return 0
+  dir=$1
+  if test -d $dir/bin; then
+    #
+    # Set the environment for a gcc-binary based build
+    #
+    export PATH=$dir/bin:$PATH
+    export LD_LIBRARY_PATH=$dir/lib32:$dir/lib
+    # Work around multiarch library paths
+    export LIBRARY_PATH=/usr/lib/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)
+  else
+    error "runwith gcc directory doesnot have bin directory!"
+  fi
 }
 
 dump_host_info ()
 {
-  echo "GCCVERSION=`${CROSS_COMPILE}gcc --version | head -n1`"
-  echo "GXXVERSION=`${CROSS_COMPILE}g++ --version | head -n1`"
-  echo "DATE=`date +%Y-%m-%d`"
-  echo "ARCH=`uname -m`"
-  echo "CPU=`grep -E "^(model name|Processor)" /proc/cpuinfo | head -n1 | tr -s [:space:] | awk -F: '{print $2;}'`"
-  echo "OS=`lsb_release -sd`"
-  echo "TOPDIR=`pwd`"
-  echo "date:`date --rfc-3339=seconds -u`"
+  echo date:
+  date --rfc-3339=seconds -u
   echo
-  echo "uname:`uname -a`"
+  echo uname:
+  uname -a
   echo
   echo lsb_release:
   lsb_release -a
@@ -82,9 +180,11 @@ dump_host_info ()
   echo /proc/version:
   cat /proc/version
   echo
-  echo "gcc: `dpkg -s gcc | grep ^Version`"
+  echo gcc:
+  dpkg -s gcc | grep ^Version
   gcc --version
-  echo "as: `dpkg -s binutils | grep ^Version`"
+  echo as:
+  dpkg -s binutils | grep ^Version
   as --version
   echo
   echo ldd:
@@ -108,6 +208,9 @@ dump_host_info ()
   dpkg -s libc6 | grep ^Version
   echo PATH:
   echo $PATH
+  echo
+  echo df:
+  echo `df -h / /scratch`
   echo
   echo cpufreq-info:
   echo `cpufreq-info`
