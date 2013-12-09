@@ -162,7 +162,7 @@ build()
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo}
 	    if test $? -gt 0; then
-		return 1
+		warning "Sources not updated, network error!"
 	    fi
 	#fi
     else
@@ -246,7 +246,8 @@ make_all()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
+    local tool="`get_git_tool $1`"
+
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to compile.
     if test x"${tool}" = x"linux"; then
@@ -311,11 +312,10 @@ make_install()
     # see if the users wants multiple make jobs, which we ignore for native
     # ARM or AARCH64 as the hardware can't handle the load.
     if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
-     	make_flags="${make_flags} -j ${cpus}"
+     	local make_flags="${make_flags} -j ${cpus}"
     fi
 
     local tool="`get_git_tool $1`"
-    local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
      	local srcdir="`get_srcdir $1`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
@@ -329,8 +329,8 @@ make_install()
     local builddir="`get_builddir $1 $2`"
     notice "Making install in ${builddir}"
 
-    if test x"${tool}" = x"eglibc" -o x"${tool}" = x"glibc"; then
-	make_flags=" install_root=${sysroots} ${make_flags}"
+    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
+	local make_flags=" install_root=${sysroots} ${make_flags}"
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -339,7 +339,7 @@ make_install()
     if test x"${tool}" = x"newlib"; then
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
-	make_flags=" tooldir=${sysroots}/usr/"
+	local make_flags=" tooldir=${sysroots}/usr/"
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
