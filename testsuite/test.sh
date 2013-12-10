@@ -150,7 +150,7 @@ else
 fi
 
 # ----------------------------------------------------------------------------------
-testing="get_toolname: bzr branch"
+testing="get_toolname: bzr <repo> -linaro/<branch>"
 in="lp:gdb-linaro/7.5"
 out="`get_toolname ${in}`"
 if test ${out} = "gdb"; then
@@ -190,23 +190,24 @@ else
     fixme "${in} returned ${out}"
 fi
 
-testing="get_toolname: git://<repo>[no .git suffix]@<revision> isn't supported."
+testing="get_toolname: git://<repo>[no .git suffix]@<revision>."
+# This works, but please don't do this.
 in="git://git.linaro.org/toolchain/binutils@12345"
 out="`get_toolname ${in}`"
-if test ${out} != "binutils"; then
+match="binutils"
+if test x"${out}" = x"${match}"; then
     pass "${testing}"
 else
     fail "${testing}"
-    fixme "${in} returned ${out}"
+    fixme "${in} returned ${out} but expected ${match}"
 fi
-
 
 # ----------------------------------------------------------------------------------
 # Test git:// git combinations
 testing="get_toolname: git://<repo>.git"
 in="git://git.linaro.org/toolchain/binutils.git"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -216,7 +217,7 @@ fi
 testing="get_toolname: git://<repo>.git/<branch>"
 in="git://git.linaro.org/toolchain/binutils.git/2.4-branch"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -226,7 +227,7 @@ fi
 testing="get_toolname: git://<repo>.git/<branch>@<revision>"
 in="git://git.linaro.org/toolchain/binutils.git/2.4-branch@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -236,7 +237,7 @@ fi
 testing="get_toolname: git://<repo>.git@<revision>"
 in="git://git.linaro.org/toolchain/binutils.git@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -247,7 +248,7 @@ fi
 testing="get_toolname: http://<repo>.git"
 in="http://staging.git.linaro.org/git/toolchain/binutils.git"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -257,7 +258,7 @@ fi
 testing="get_toolname: http://<repo>.git/<branch>"
 in="http://staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -267,7 +268,7 @@ fi
 testing="get_toolname: http://<repo>.git/<branch>@<revision>"
 in="http://staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -277,7 +278,7 @@ fi
 testing="get_toolname: http://<repo>.git@<revision>"
 in="http://staging.git.linaro.org/git/toolchain/binutils.git@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -289,7 +290,7 @@ fi
 testing="get_toolname: http://<user>@<repo>.git"
 in="http://git@staging.git.linaro.org/git/toolchain/binutils.git"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -299,7 +300,7 @@ fi
 testing="get_toolname: http://<user>@<repo>.git/<branch>"
 in="http://git@staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -309,7 +310,7 @@ fi
 testing="get_toolname: http://<user>@<repo>.git/<branch>@<revision>"
 in="http://git@staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -319,7 +320,7 @@ fi
 testing="get_toolname: http://<user>@<repo>.git@<revision>"
 in="http://git@staging.git.linaro.org/git/toolchain/binutils.git@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
+if test x"${out}" = x"binutils"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -330,7 +331,7 @@ fi
 testing="get_toolname: sources.conf identifier <repo>.git"
 in="eglibc.git"
 out="`get_toolname ${in}`"
-if test ${out} = "eglibc"; then
+if test x"${out}" = x"eglibc"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -340,7 +341,7 @@ fi
 testing="get_toolname: sources.conf identifier <repo>.git/<branch>"
 in="eglibc.git/linaro_eglibc-2_18"
 out="`get_toolname ${in}`"
-if test ${out} = "eglibc"; then
+if test x"${out}" = x"eglibc"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -350,7 +351,7 @@ fi
 testing="get_toolname: sources.conf identifier <repo>.git/<branch>@<revision>"
 in="eglibc.git/linaro_eglibc-2_18@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "eglibc"; then
+if test x"${out}" = x"eglibc"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -360,12 +361,46 @@ fi
 testing="get_toolname: sources.conf identifier <repo>.git@<revision>"
 in="eglibc.git@12345"
 out="`get_toolname ${in}`"
-if test ${out} = "eglibc"; then
+if test x"${out}" = x"eglibc"; then
     pass "${testing}"
 else
     fail "${testing}"
     fixme "${in} returned ${out}"
 fi
+
+testing="get_toolname: combined binutils-gdb repository with gdb branch"
+in="binutils-gdb.git/gdb_7_6-branch"
+out="`get_toolname ${in}`"
+match="gdb"
+if test x"${out}" = x"${match}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out} expected ${match}"
+fi
+
+testing="get_toolname: combined binutils-gdb repository with binutils branch"
+in="binutils-gdb.git/binutils-2_24"
+out="`get_toolname ${in}`"
+match="binutils"
+if test x"${out}" = x"${match}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out} but expected ${match}"
+fi
+
+testing="get_toolname: svn archive with /trunk trailing designator"
+in="http://llvm.org/svn/llvm-project/cfe/trunk"
+out="`get_toolname ${in}`"
+match="cfe"
+if test x"${out}" = x"${match}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out} but expected ${match}"
+fi
+
 # ----------------------------------------------------------------------------------
 echo "============= fetch() tests ================"
 out="`fetch md5sums 2>/dev/null`"

@@ -92,7 +92,7 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
 in="http://address.com/directory/repo.git"
-match='http'
+match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
@@ -123,7 +123,7 @@ match='svn'
 test_parser service "${in}" "${match}" "${errmatch}"
 match="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
 test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc-4_7-branch'
+match='gcc'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
@@ -156,23 +156,10 @@ match='cortex-strings'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
 test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
+match='foo'
 test_parser branch "${in}" "${match}" "${errmatch}"
 match='cortex-strings'
 test_parser tool "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="lp:/cortex-strings"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:/cortex-strings'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
 in="cortex-strings"
@@ -334,7 +321,7 @@ test_parser user "${in}" "${match}" "${errmatch}"
 
 # Test with different service
 in="http://user@address.com/directory/repo.git/branch"
-match='http'
+match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 match='user'
 test_parser user "${in}" "${match}" "${errmatch}"
@@ -426,7 +413,7 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 # This one will bail early even though it's malformed so the error case won't be set.
 errmatch=0
 in="http://firstname.lastname@address.com/directory@/repo.git/branch"
-match='http'
+match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 errmatch=1
 match='firstname.lastname'
@@ -434,6 +421,10 @@ test_parser user "${in}" "${match}" "${errmatch}"
 
 # No repo!  This will use the non .git suffixed code path.
 in="http://firstname.lastname@address.com/directory/@1234567"
+errmatch=0
+match='http'
+test_parser service "${in}" "${match}" "${errmatch}"
+errmatch=1
 match=''
 test_parser repo "${in}" "${match}" "${errmatch}"
 match='http://firstname.lastname@address.com/directory'
@@ -483,6 +474,8 @@ test_parser url "${in}" "${match}" "${errmatch}"
 errmatch=0
 # Trash but we have a valid repo and revision.
 in="http://firstname.lastname@address.com/directory/repo.git~~@1234567"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
@@ -493,6 +486,8 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 # Trash but we have a valid repo and revision.
 errmatch=0
 in="http://firstname.lastname@address.com/directory/repo.git///~~@1234567"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
@@ -507,6 +502,8 @@ test_parser url "${in}" "${match}" "${errmatch}"
 errmatch=0
 # We can't tell that this is an erroneous case so it shouldn't error.
 in="http://git.address.com/directory/repo.git/branch~uhoh@1234567"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match='http://git.address.com/directory/repo.git'
@@ -523,6 +520,10 @@ test_parser branch "${in}" "${match}" "${errmatch}"
 # chars so this generates an error.
 errmatch=1
 in="http://firstname.lastname@address.com/directory@@@@1234567"
+errmatch=0
+match='http'
+test_parser service "${in}" "${match}" "${errmatch}"
+errmatch=1
 match='directory'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match='1234567'
@@ -597,6 +598,8 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 
 errmatch=0
 in="http://repo.git@1234567"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='http://repo.git'
 test_parser url "${in}" "${match}" "${errmatch}"
 match='repo.git'
@@ -612,6 +615,8 @@ test_parser url "${in}" "${match}" "${errmatch}"
 in="http://repo.git/branch@12334677"
 match='http://repo.git'
 test_parser url "${in}" "${match}" "${errmatch}"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match='branch'
@@ -624,6 +629,8 @@ test_parser tool "${in}" "${match}" "${errmatch}"
 in="http://repo.git~branch@12334677"
 match='http://repo.git'
 test_parser url "${in}" "${match}" "${errmatch}"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match='branch'
@@ -659,7 +666,7 @@ test_parser tool "${in}" "${match}" "${errmatch}"
 
 # Try it with numeric urls.
 in="http://firstname.lastname@127.0.0.1/directory/repo.git"
-match='http'
+match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 match='firstname.lastname'
 test_parser user "${in}" "${match}" "${errmatch}"
@@ -840,6 +847,8 @@ match='1234567'
 test_parser revision "${in}" "${match}" "${errmatch}"
 match='user.name'
 test_parser user "${in}" "${match}" "${errmatch}"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 
 in="http://user.name@git.linaro.org/git/toolchain/repo.git@1234~67"
 match=''
@@ -873,10 +882,14 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 in="http://user.name@git.linaro.org/git/toolchain/repo@12345@67"
 match='repo'
 test_parser repo "${in}" "${match}" "${errmatch}"
+match='http'
+test_parser service "${in}" "${match}" "${errmatch}"
 
 in="http://user.name@git.linaro.org/git/toolchain/repo.git/multi/part/branch-name@12345@67"
 match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
+match='git'
+test_parser service "${in}" "${match}" "${errmatch}"
 match='multi/part/branch-name'
 test_parser branch "${in}" "${match}" "${errmatch}"
 
@@ -981,3 +994,55 @@ in="infrastructure/linux-linaro-3.11-rc6-2013.08.tar.bz2"
 match='linux'
 test_parser tool "${in}" "${match}" "${errmatch}"
 
+errmatch=0
+in="git://git.linaro.org/toolchain/binutils-gdb.git/gdb_7_6-branch"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"
+
+errmatch=0
+in="http://cbuild.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
+match='gdb'
+test_parser repo "${in}" "${match}" "${errmatch}"
+
+# This is just goofy, and if the system doesn't know the service it's
+# just going to guess.
+in="gcc-linaro-4.6"
+match=''
+test_parser service "${in}" "${match}" "${errmatch}"
+match='gcc-linaro-4.6'
+test_parser url "${in}" "${match}" "${errmatch}"
+match='gcc-linaro-4.6'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match=''
+test_parser revision "${in}" "${match}" "${errmatch}"
+match=''
+test_parser branch "${in}" "${match}" "${errmatch}"
+
+in="lp:gcc-linaro/4.6"
+match='lp'
+test_parser service "${in}" "${match}" "${errmatch}"
+match='lp:gcc-linaro/4.6'
+test_parser url "${in}" "${match}" "${errmatch}"
+match='gcc-linaro'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match='gcc'
+test_parser tool "${in}" "${match}" "${errmatch}"
+match=''
+test_parser revision "${in}" "${match}" "${errmatch}"
+match='4.6'
+test_parser branch "${in}" "${match}" "${errmatch}"
+
+
+in="http://llvm.org/svn/llvm-project/cfe/trunk"
+match='svn'
+test_parser service "${in}" "${match}" "${errmatch}"
+match='http://llvm.org/svn/llvm-project/cfe/trunk'
+test_parser url "${in}" "${match}" "${errmatch}"
+match='cfe'
+test_parser repo "${in}" "${match}" "${errmatch}"
+match='cfe'
+test_parser tool "${in}" "${match}" "${errmatch}"
+match=''
+test_parser revision "${in}" "${match}" "${errmatch}"
+match=''
+test_parser branch "${in}" "${match}" "${errmatch}"

@@ -4,7 +4,7 @@
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    warning "no host.conf file!  Did you run configure?"
+    echo "WARNING: no host.conf file!  Did you run configure?" 1>&2
 fi
 
 # load commonly used functions
@@ -305,8 +305,8 @@ OPTIONS
 		setting overrides the default.  Specifying a libc
 		other than newlib on baremetal targets is an error.
 
-  --snapshots	<url>
-  		Use an alternate snapshots file as specified by <url>.
+  --snapshots	/path/to/alternative/local_snapshots/directory
+  		Use an alternative path to a local snapshots directory. 
 
   --tarball
   		Build source and binary tarballs after a successful build.
@@ -581,8 +581,18 @@ while test $# -gt 0; do
 	    fi
 	    shift
 	    ;;
-	--snapshots|-s)
-            set_snapshots ${url}
+	--snap*|-snap*)
+	    if test `echo $1 | grep -c "\-snapshots.*=" ` -gt 0; then
+		error "A '=' is invalid after --snapshots.  A space is expected."
+		exit 1;
+	    fi
+	    if test x"$2" = x; then
+		error "--snapshots requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit 1
+	    fi
+            local_snapshots=$2
 	    shift
             ;;
 	--tarball*|-tarba*)
@@ -604,7 +614,7 @@ while test $# -gt 0; do
 		error "--target requires a directive.  See --usage for details.' "
 		time="`expr ${SECONDS} / 60`"
 		error "Build process failed after ${time} minutes"
-		exit
+		exit 1
 	    fi
 
 	    target=$2
@@ -635,7 +645,7 @@ while test $# -gt 0; do
 		error "--timeout requires a directive.  See --usage for details.' "
 		time="`expr ${SECONDS} / 60`"
 		error "Build process failed after ${time} minutes"
-		exit
+		exit 1
 	    elif test $2 -lt 11; then
 		wget_timeout=$2
 	    else

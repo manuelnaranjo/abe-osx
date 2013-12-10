@@ -291,6 +291,7 @@ source_config()
 	    return 0
 	fi
     fi
+    error "Couldn't find ${topdir}/config/${conf}"
     
     return 1
 }
@@ -306,19 +307,19 @@ get_toolname()
 	error "No toolchain component name argument!"
 	return 1
     fi
-    if test `echo $1 | grep -c "lp:"` -eq 0; then
-	local tool="`echo $1 | sed -e 's:/git@:/:' -e 's:\.git[@/].*::' -e 's:-[0-9].*::'`"
-	local tool="`basename ${tool}`"
-    else
-	local tool="`echo $1 | sed -e 's:git@::' -e 's/lp://' -e 's:/.*::' -e 's:\.git.*::'`"
-    fi
-    if test `echo $1 | grep -c "trunk"` -eq 1; then
-	local tool="`echo $1 | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
-	local tool="`basename ${tool}`"
+
+    local tool=
+    tool="`get_git_tool $1`"
+
+    # binutils and gdb are special.  They share a repository and the tool is
+    # designated by the branch.
+    if test x"${tool}" = x"binutils-gdb"; then
+	local branch=
+	branch="`get_git_branch $1`"
+	tool="`echo ${branch} | sed -e 's:binutils.*:binutils:' -e 's:gdb.*:gdb:'`"
     fi
 
-    echo ${tool} | sed -e 's:-linaro::' -e 's:\.git::'
-
+    echo ${tool}
     return 0
 }
 
@@ -557,7 +558,7 @@ get_srcdir()
 	fi
 
 	local tool=
-	tool="`get_git_tool ${process}`"
+	tool="`get_toolname ${process}`"
 
 	local repo=
 	repo="`get_git_repo ${process}`"

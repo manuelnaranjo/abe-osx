@@ -26,7 +26,8 @@ fi
 
 usage()
 {
-    echo "  ${testcbuild2} [--debug] [--snapshots <path/to/snapshots/md5sums>]"
+    echo "  ${testcbuild2} [--debug|-v]"
+    echo "                 [--md5sums <path/to/alternative/snapshots/md5sums>]"
     echo ""
     echo "  ${testcbuild2} is the cbuild2 frontend command conformance test."
     echo ""
@@ -37,14 +38,22 @@ passes=0
 
 pass()
 {
-    echo "PASS: '$1'"
+    local testlineno=$1
+    if test x"${debug}" = x"yes"; then
+	echo -n "($testlineno) " 1>&2
+    fi
+    echo "PASS: '$2'"
     passes="`expr ${passes} + 1`"
 }
 
 failures=0
 fail()
 {
-    echo "FAIL: '$1'"
+    local testlineno=$1
+    if test x"${debug}" = x"yes"; then
+	echo -n "($testlineno) " 1>&2
+    fi
+    echo "FAIL: '$2'"
     failures="`expr ${failures} + 1`"
 }
 
@@ -60,12 +69,13 @@ totals()
 
 cbtest()
 {
-     case "$1" in
-	 *$2*)
-             pass "$3"
+     local testlineno=$1
+     case "$2" in
+	 *$3*)
+             pass ${testlineno} "$4"
              ;;
          *)
-             fail "$3"
+             fail ${testlineno} "$4"
              ;;
      esac
 }
@@ -78,21 +88,21 @@ while test $# -gt 0; do
 	    usage
 	    exit 1
 	    ;;
-	--deb*|-deb)
+	--deb*|-deb|-v)
 	    debug="yes"
 	    ;;
-	--snap*|-snap*)
-	    if test `echo $1 | grep -c "\-snap.*="` -gt 0; then
-		error "A '=' is invalid after --snapshots. A space is expected."
+	--md5*|-md5*)
+	    if test `echo $1 | grep -c "\-md5.*="` -gt 0; then
+		error "A '=' is invalid after --md5sums. A space is expected."
 		exit 1;
 	    fi
 	    if test -z $2; then
-		error "--snapshots requires a path to an md5sums file."
+		error "--md5sums requires a path to an md5sums file."
 		exit 1;
 	    fi 
 	    md5sums=$2
 	    if test ! -e "$md5sums"; then
-		error "Path to snapshots/md5sums is invalid."
+		error "Path to md5sums is invalid."
 		exit 1;
 	    fi
 	    echo "Copying ${md5sums} to ${local_snapshots} for snapshots file."
@@ -118,40 +128,26 @@ fi
 
 test_failure()
 {
+    local testlineno=$BASH_LINENO
     local cb_commands=$1
     local match=$2
     local out=
 
-    if test x"${debug}" != x; then
-	set -x
-    fi
-
     out="`./cbuild2.sh ${cb_commands} 2>&1 | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:'`"
-
-    if test x"${debug}" != x; then
-	set +x
-    fi
-    cbtest "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
+    cbtest ${testlineno} "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
 }
 
 test_pass()
 {
+    local testlineno=$BASH_LINENO
     local cb_commands=$1
     local match=$2
     local out=
 
-    if test x"${debug}" != x; then
-	set -x
-    fi
-
     # Continue to search for error so we don't get false positives.
     out="`./cbuild2.sh ${cb_commands} 2>&1 | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:'`"
 
-    if test x"${debug}" != x; then
-	set +x
-    fi
-
-    cbtest "${out}" "${match}" "VALID ${cb_commands}"
+    cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
 cb_commands="--dry-run"
@@ -223,15 +219,15 @@ cb_commands="--checkout --foo"
 match="requires a directive"
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout glibc.git"
+cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout glibc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout=glibc.git"
+cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout=glibc.git"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-linxu-none-gnueabihf --checkout all"
+cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
@@ -268,6 +264,22 @@ test_pass "${cb_commands}" "${match}"
 target="aarch64-none-elf"
 libc="newlib"
 cb_commands="--target ${target} --set libc=${libc}"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--snapshots"
+match='requires a directive'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--snapshots=foo/bar --build all"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--snapshots=foo/bar --build all"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --snapshots ${local_snapshots} --build all"
 match=''
 test_pass "${cb_commands}" "${match}"
 

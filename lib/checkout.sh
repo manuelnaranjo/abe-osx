@@ -8,6 +8,7 @@
 # but we also want to work with the native source code control system.
 usegit=no
 
+# This is used by cbuild2.sh --checkout all but not by --build
 checkout_infrastructure()
 {
     trace "$*"
@@ -164,8 +165,11 @@ checkout()
 	return 1
     fi
 
+    local repo=
+    repo="`get_git_repo $1`"
+
     local tool=
-    tool="`get_git_tool $1`"
+    tool="`get_toolname $1`"
     local url=
     url="`get_git_url $1`"
     local branch=
@@ -232,18 +236,16 @@ checkout()
 		if test x"${branch}" = x -a x"${revision}" = x; then
 		    dryrun "git clone $1 ${srcdir}"
 		else
-		    if test ! -d ${local_snapshots}/${tool}.git; then
+		    if test ! -d ${local_snapshots}/${repo}; then
 			# Strip off the "[/<branchname>][@<revision>]" from $1 to
 			# get the repo address
-			#local repo="`echo $1 | sed -e "s:\(^.*/${tool}.git\).*:\1:"`"
-			#dryrun "git clone ${repo} ${local_snapshots}/${tool}.git"
-			dryrun "git clone ${url} ${local_snapshots}/${tool}.git"
+			dryrun "git clone ${url} ${local_snapshots}/${repo}"
 		    fi
 
 		    # If revision is set only use ${branch} for naming.
 		    if test x"${revision}" != x; then
 			notice "Creating git workdir for revision ${revision}"
-			dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
 			if test $? -gt 0; then
 			    error "Couldn't create git workdir ${srcdir}"
 			    return 1
@@ -259,7 +261,7 @@ checkout()
 			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
 		    elif test x"${branch}" != x; then
 			# If there's no revision we checkout a specific branch.
-			dryrun "git-new-workdir ${local_snapshots}/${tool}.git ${srcdir}${branch:+ ${branch}}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		    # We don't need a new-workdir if there's no designated
 		    # branch or revision.

@@ -114,9 +114,18 @@ git_parser()
 
     local service="`echo "${in}" | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p;s#\(^svn\)://.*#\1#p;s#\(^lp\):[/]*.*#\1#p'`"
 
+    # An http service with /svn in the url is actually an svn service.
+    if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\/svn"`" -gt 0; then
+	service="svn"
+    fi
+
     # Do this early because this is called often and we don't need all that
     # other parsing in this case.
     if test x"${part}" = x"service"; then
+	# An http service with .git in the url is actually a git service.
+	if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\.git"`" -gt 0; then
+	    service="git"
+	fi
 	echo ${service}
 	return 0
     fi
@@ -129,12 +138,26 @@ git_parser()
 		repo="`echo ${in} | sed -e "s#lp:[/]*##" -e 's:/.*::'`"
 		echo "${repo}"
 		;;
+	    branch)
+		local hastilde="`echo "${in}" | grep -c '\~'`"
+		local hasslash="`echo "${in}" | grep -c '\/'`"
+		if test ${hastilde} -gt 0; then
+		    # Grab everything to the right of the ~
+		    branch="`echo ${in} | sed -e 's:.*~\(.*\):\1:'`"
+		elif test ${hasslash} -gt 0; then
+		    branch="`basename ${in}`"
+		fi
+		echo ${branch}
+		# otherwise there's no branch.
+		;;	
 	    url)
 		echo "${in}"
 		;;
 	    tool)
-		# Strip service information and any trailing information.
+		# Strip service information and any trailing branch information.
 		local tool="`echo ${in} | sed -e 's/lp://' -e 's:/.*::'`"
+		# Strip superflous -linaro tags
+		local tool="`echo ${tool} | sed -e 's:-linaro::'`"
 		echo ${tool}
 		;;
 	    *)
@@ -144,22 +167,17 @@ git_parser()
     fi
 
     # Just bail out early if this is an svn service. 
+    # This _should_ capture http://<foo>/svn
     if test x"${service}" = x"svn"; then
 	case ${part} in
-	    repo)
-		local repo=""
-		repo="`basename ${in}`"
+	    repo|tool)
+		# Strip any trailing branch information.
+		local repo="`echo ${in} | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
+		repo="`basename ${repo}`"
 		echo "${repo}"
 		;;
 	    url)
 		echo "${in}"
-		;;
-	    tool)
-		# Strip any trailing branch information.
-		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
-		# Strip service information.
-		tool="`basename ${tool}`"
-		echo ${tool}
 		;;
 	    *)
 		;;
@@ -168,7 +186,7 @@ git_parser()
     fi
 
     # This is tarball and it is unique
-    if test x"${service}" = x -a "`echo ${in} | egrep -c "\.tar"`" -gt 0; then
+    if test "`echo ${in} | egrep -c "\.tar"`" -gt 0; then
 	case ${part} in
 	    repo)
 		local repo=""
@@ -200,7 +218,7 @@ git_parser()
     fi
 
     # This will only find a username if it follows the <service>://
-    # and precededs the first / in the url.  Yes you could
+    # and precedes the first / in the url.  Yes you could
     # get away with http://www<user>@.foo.com/.
     local user="`echo "${in}" | sed -n "s;^${service}://\([^/]*\)@.*;\1;p"`"
 
@@ -452,5 +470,5 @@ get_git_tag()
 
     revision="`git_parser revision ${in}`"
     echo "${repo}${branch:+~${branch}}${revision:+@${revision}}"
-    return ${ret}
+    return 0
 }

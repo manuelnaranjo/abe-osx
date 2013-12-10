@@ -248,7 +248,7 @@ make_all()
 {
     trace "$*"
 
-    local tool="`get_git_tool $1`"
+    local tool="`get_toolname $1`"
 
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to compile.
@@ -278,6 +278,7 @@ make_all()
     # LDFLAGS here, as it breaks configure. So we forcibly configure
     # everything first, then build it to avoid problems.
     # FIXME: use the static_link value from the config file
+
     if test `echo ${tool} | egrep -c binutils` -gt 0; then
 	local makeret=
 	dryrun "make SHELL=${bash_shell} configure-host ${make_flags} -w -C ${builddir} 2>&1 | tee -a ${builddir}/configure.log"
@@ -317,7 +318,7 @@ make_install()
      	local make_flags="${make_flags} -j ${cpus}"
     fi
 
-    local tool="`get_git_tool $1`"
+    local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
      	local srcdir="`get_srcdir $1`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then

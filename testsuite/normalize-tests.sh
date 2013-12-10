@@ -58,6 +58,17 @@ else
     fixme "${in} returned ${out}"
 fi
 
+testing="normalize_path: full git url with ~ branch"
+in="http://staging.git.linaro.org/git/toolchain/gcc.git/linaro-4.8-branch"
+out="`normalize_path ${in}`"
+if test x"${out}" = x"gcc.git~linaro-4.8-branch"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out}"
+fi
+
+
 in="gdb-7.6~20121001+git3e2e76a.tar"
 out="`normalize_path ${in}`"
 if test x"${out}" = x"gdb-7.6~20121001@3e2e76a"; then
@@ -102,3 +113,15 @@ else
     fail "normalize_path: bzr branch"
     fixme "${in} returned ${out}"
 fi
+
+in="binutils-gdb.git/gdb_7_6-branch"
+out="`normalize_path ${in}`"
+match="binutils-gdb.git~gdb_7_6-branch"
+if test x"${out}" = x"${match}"; then
+    pass "normalize_path: new binutils-gdb repository"
+else
+    fail "normalize_path: new binutils-gdb repository"
+    fixme "${in} returned ${out} but expected ${match}"
+fi
+
+

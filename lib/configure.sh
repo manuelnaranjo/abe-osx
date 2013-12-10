@@ -9,8 +9,7 @@ configure_build()
 
     local gitinfo="`get_source $1`"
 
-    local tool="`get_git_tool ${gitinfo}`"
-#    local tool="`get_toolname ${tool}`"
+    local tool="`get_toolname ${gitinfo}`"
 
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to configure.
@@ -72,8 +71,7 @@ configure_build()
 
     # Extract the toolchain component name, stripping off the linaro
     # part if it exists as it's not used for the config file name.
-    tool="`get_git_tool $1`"
-    tool="`get_toolname ${tool} | sed -e 's:-linaro::'`"
+    tool="`get_toolname $1`"
 
     # Load the default config file for this component if it exists.
     default_configure_flags=""
