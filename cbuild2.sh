@@ -133,11 +133,6 @@ get_build_machine_info()
     fi
 }
 
-dispatch()
-{
-    echo "Dispatching LAVA build on $1..."
-}
-
 # Takes no arguments. Dumps all the important config data
 dump()
 {
@@ -537,10 +532,6 @@ while test $# -gt 0; do
             ;;
 	--db-passwd)
             set_dbpasswd ${url}
-	    shift
-            ;;
-	--dispatch)
-            dispatch ${url}
 	    shift
             ;;
 	--dry*|-dry*)
