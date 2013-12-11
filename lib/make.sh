@@ -274,21 +274,6 @@ make_all()
 	export CONFIG_SHELL=${bash_shell}
     fi
 
-    # Binutils runs configure when 'make' is first run. We can't define
-    # LDFLAGS here, as it breaks configure. So we forcibly configure
-    # everything first, then build it to avoid problems.
-    # FIXME: use the static_link value from the config file
-
-    if test `echo ${tool} | egrep -c binutils` -gt 0; then
-	local makeret=
-	dryrun "make SHELL=${bash_shell} configure-host ${make_flags} -w -C ${builddir} 2>&1 | tee -a ${builddir}/configure.log"
-     	local make_flags="${make_flags} LDFLAGS='-all-static -static -lstdc++'"
-	local makeret=$?
-    fi
-    if test `echo ${tool} | egrep -c gcc` -gt 0; then
-     	local make_flags="${make_flags} LDFLAGS='-static -lstdc++'"	
-    fi
-
     local makeret=
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
     local makeret=$?
