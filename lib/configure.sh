@@ -199,7 +199,7 @@ configure_build()
 	if test x"${release}" != x;then
             case ${tool} in
 		gcc*)
-                    default_configure_flags=`echo "${default_configure_flags} | sed -e 's/--with-pkgversion=.* //'`
+                    default_configure_flags=`echo "${default_configure_flags}" | sed -e 's/--with-pkgversion=.* //'`
                     ;;
             esac
 	fi

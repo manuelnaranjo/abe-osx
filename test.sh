@@ -237,6 +237,22 @@ cb_commands="--target ${target} --set libc=${libc}"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
+cb_commands="--set=libc=glibc"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--set"
+match="requires a directive"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--release=foobar"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--release"
+match="requires a directive"
+test_failure "${cb_commands}" "${match}"
+
 target="aarch64-none-elf"
 libc="foo"
 cb_commands="--target ${target} --set libc=${libc}"
