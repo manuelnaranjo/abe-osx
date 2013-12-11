@@ -7,6 +7,7 @@ dbhost=@DBPASSWD@
 local_snapshots=@LOCAL_SNAPSHOTS@
 remote_snapshots=@REMOTE_SNAPSHOTS@
 cbuild_top=@CBUILD_TOP@
+cbuild_path=@CBUILD_PATH@
 
 sources_conf=@SOURCES_CONF@
 

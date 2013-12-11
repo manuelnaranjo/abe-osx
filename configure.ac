@@ -141,6 +141,9 @@ fi
 SOURCES_CONF="${srcdir}/config/sources.conf"
 AC_SUBST(SOURCES_CONF)
 
+CBUILD_PATH=${srcdir}
+AC_SUBST(CBUILD_PATH)
+
 dnl The top of the cbuild tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),

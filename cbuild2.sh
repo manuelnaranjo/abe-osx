@@ -9,7 +9,7 @@ fi
 
 # load commonly used functions
 cbuild="`which $0`"
-topdir="`dirname ${cbuild}`"
+topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
 . "${topdir}/lib/common.sh" || exit 1
