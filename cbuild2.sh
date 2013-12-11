@@ -81,6 +81,34 @@ set_package()
     return 1
 }
 
+build_failure()
+{
+    time="`expr ${SECONDS} / 60`"
+    error "Build process failed after ${time} minutes"
+    exit 1
+}
+
+# Switches that require a following directive need to make sure they don't
+# parse the -- of the following switch.
+check_directive()
+{
+    switch=$1
+    long=$2
+    short=$3
+    directive=$4
+
+    if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
+	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
+    elif test x"$directive" = x; then
+	error "--${long} requires a directive.  See --usage for details.' "
+	build_failure
+    elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
+	error "--${long} requires a directive.  ${cbuild2} found the next -- switch.  See --usage for details.' "
+    else
+	return 0
+    fi
+    build_failure
+}
 
 # This gets a list from a remote server of the available tarballs. We use HTTP
 # instead of SSH so it's more accessible to those behind nasty firewalls.
@@ -427,31 +455,25 @@ while test $# -gt 0; do
     # or git
     case "$1" in
 	--bu*|-bu*)			# build
-            if test `echo $1 | grep -c "\-bu.*=" ` -gt 0; then
-                error "A '=' is invalid after --build.  A space is expected."
-                exit 1;
-            fi
-	    if test x"$2" = x; then
-		error "--build requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit
-	    elif test x"$2" != x"all"; then
-#		version="`echo $2 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
-#		tool=`get_toolname $2`
+	    check_directive $1 build bu $2
+	    if test x"$2" != x"all"; then
 		gitinfo="`get_source $2`"
 		if test x"${gitinfo}" = x; then
 		    error "Couldn't find the source for $2"
-		    exit 1
+		    build_failure
 		else
 		    build ${gitinfo}
+		    if test $? -gt 0; then
+			error "Building ${gitinfo} failed."
+			build_failure
+		    fi
+
 		fi
 	    else
 		build_all
 		if test $? -gt 0; then
-		    time="`expr ${SECONDS} / 60`"
-		    error "Build process failed after ${time} minutes"
-		    exit 1
+		    error "Build all failed."
+		    build_failure
 		fi
 	    fi	    
 	    shift
@@ -460,16 +482,8 @@ while test $# -gt 0; do
 	    runtests=yes
 	    ;;
 	--checkout*|-checkout*)
-            if test `echo $1 | grep -c "\-checkout=" ` -gt 0; then
-                error "A '=' is invalid after --checkout.  A space is expected."
-                exit 1;
-            fi
-	    if test x"$2" = x -o "`echo $2 | grep -c "\-\-"`" -gt 0; then
-		error "--checkout requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Checkout process failed after ${time} minutes"
-		exit
-	    elif test x"$2" != x"all"; then
+	    check_directive $1 checkout "checkout" $2
+	    if test x"$2" != x"all"; then
 		url="`get_source $2`"
 		if test $? -gt 0; then
 		    error "Couldn't find the source for $2"
@@ -557,31 +571,13 @@ while test $# -gt 0; do
 	--parallel|-par*)			# parallel
 	    parallel=yes
             ;;
-	--release*|-r*)
-	    if test `echo $1 | grep -c "\-r.*=" ` -gt 0; then
-		error "A '=' is invalid after --release.  A space is expected."
-		exit 1;
-	    fi
-	    if test x"$2" = x; then
-		error "--release requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit 1
-	    fi
+	--rel*|-rel*)
+	    check_directive $1 release "rel" $2
             release=$2
 	    shift
             ;;
 	--set*|-set*)
-	    if test `echo $1 | grep -c "\-set.*=" ` -gt 0; then
-		error "A '=' is invalid after --set.  A space is expected."
-		exit 1;
-	    fi
-	    if test x"$2" = x; then
-		error "--set requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit 1
-	    fi
+	    check_directive $1 set "set" $2
 	    set_package $2
 	    if test $? -gt 0; then
 		exit 1
@@ -589,16 +585,7 @@ while test $# -gt 0; do
 	    shift
 	    ;;
 	--snap*|-snap*)
-	    if test `echo $1 | grep -c "\-snapshots.*=" ` -gt 0; then
-		error "A '=' is invalid after --snapshots.  A space is expected."
-		exit 1;
-	    fi
-	    if test x"$2" = x; then
-		error "--snapshots requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit 1
-	    fi
+	    check_directive $1 snapshots snap $2
             local_snapshots=$2
 	    shift
             ;;
@@ -613,17 +600,7 @@ while test $# -gt 0; do
 	    tarsrc=yes
 	    ;;
 	--targ*|-targ*)			# target
-	    if test `echo $1 | grep -c "\-ta.*=" ` -gt 0; then
-		error "A '=' is invalid after --target.  A space is expected."
-		exit 1;
-	    fi
-	    if test x"$2" = x; then
-		error "--target requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit 1
-	    fi
-
+	    check_directive $1 target targ $2
 	    target=$2
 	    sysroots=${sysroots}/${target}
 
@@ -644,16 +621,8 @@ while test $# -gt 0; do
 	    testcode
 	    ;;
        --time*|-time*)
-	    if test `echo $1 | grep -c "\-time.*=" ` -gt 0; then
-		error "A '=' is invalid after --timeout.  A space is expected."
-		exit 1;
-	    fi
-	    if test x"$2" = x; then
-		error "--timeout requires a directive.  See --usage for details.' "
-		time="`expr ${SECONDS} / 60`"
-		error "Build process failed after ${time} minutes"
-		exit 1
-	    elif test $2 -lt 11; then
+	    check_directive $1 timeout time $2
+	    if test $2 -lt 11; then
 		wget_timeout=$2
 	    else
 		# FIXME: Range check for non-numerical values.

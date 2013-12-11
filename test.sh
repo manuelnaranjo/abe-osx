@@ -224,13 +224,40 @@ cb_commands="--build=all"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
+cb_commands="--dryrun --build --foobar"
+match="found the next"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --build"
+match="requires a directive"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--checkout"
+match="requires a directive"
+test_failure "${cb_commands}" "${match}"
+
 cb_commands="--checkout=all"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--checkout --foo"
-match="requires a directive"
+cb_commands="--checkout --all"
+match="found the next"
 test_failure "${cb_commands}" "${match}"
+
+cb_commands="--checkout --foo"
+match="found the next"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --checkout all"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --checkout gcc.git"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+
+
 
 cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout glibc.git"
 match=''
@@ -300,8 +327,8 @@ cb_commands="--snapshots"
 match='requires a directive'
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--snapshots=foo/bar --build all"
-match="A space is expected"
+cb_commands="--snapshots --sooboo"
+match='found the next'
 test_failure "${cb_commands}" "${match}"
 
 cb_commands="--snapshots=foo/bar --build all"
@@ -311,6 +338,26 @@ test_failure "${cb_commands}" "${match}"
 cb_commands="--dryrun --snapshots ${local_snapshots} --build all"
 match=''
 test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --build gcc.git"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
+match="Couldn't find the source for"
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--set"
+match='requires a directive'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--set --foobar"
+match='found the next'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--set=libc=glibc"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
 
 cb_commands="--set gcc=meh"
 match="'gcc' is not a supported package"
