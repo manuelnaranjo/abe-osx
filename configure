@@ -604,6 +604,7 @@ REMOTE_SNAPSHOTS
 LOCAL_BUILDS
 LOCAL_SNAPSHOTS
 SYSROOTS
+CBUILD_PATH
 SOURCES_CONF
 CBUILD_TOP
 BUILDDATE
@@ -3508,6 +3509,9 @@ $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" 
 fi
 
 SOURCES_CONF="${srcdir}/config/sources.conf"
+
+
+CBUILD_PATH=${srcdir}
 
 
 
