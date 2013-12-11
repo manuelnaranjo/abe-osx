@@ -4,6 +4,19 @@ testcbuild2="`basename $0`"
 
 # The directory where the script lives.
 topdir="`dirname $0`"
+cbuild2="`realpath $0`"
+topdir="`dirname ${cbuild2}`"
+export cbuild_path=${topdir}
+
+# We need a host.conf file to squelch cbuild2 error messages.
+created_host_conf=
+if test ! -e "${PWD}/host.conf"; then
+    echo "Creating temporary host.conf file as ${PWD}/host.conf"
+    echo "cbuild_path=${cbuild_path}" > ${PWD}/host.conf
+    # source the host.conf file to get the values exported.
+    . ${PWD}/host.conf
+    created_host_conf="yes"
+fi
 
 # Source common.sh for some common utilities.
 . ${topdir}/lib/common.sh || exit 1
@@ -337,6 +350,11 @@ elif test -d "${tmpdir}/snapshots" -a ${failures} -lt 1; then
     echo ""
     echo "${testcbuild2} finished with no unexpected failures. Removing ${tmpdir}"
     rm -rf ${tmpdir}
+fi
+
+if test x"$created_host_conf" = x"yes"; then
+    echo "Removing temporary ${PWD}/host.conf file."
+    rm ${PWD}/host.conf
 fi
 
 # ----------------------------------------------------------------------------------
