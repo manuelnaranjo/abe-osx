@@ -289,10 +289,9 @@ OPTIONS
 
   --parallel	Set the make flags for parallel builds.
 
-  --release [<name>]
+  --release <name>
 		The build system will package the resulting toolchain as a
-		release with the 'name' prefix if it is supplied.  Otherwise
-		a release name will be chosen automatically.
+		release with the 'name' prefix.
 
   --set		{libc}={glibc|eglibc|newlib}
 
@@ -558,7 +557,17 @@ while test $# -gt 0; do
 	--parallel|-par*)			# parallel
 	    parallel=yes
             ;;
-	--release|-r*)
+	--release*|-r*)
+	    if test `echo $1 | grep -c "\-r.*=" ` -gt 0; then
+		error "A '=' is invalid after --release.  A space is expected."
+		exit 1;
+	    fi
+	    if test x"$2" = x; then
+		error "--release requires a directive.  See --usage for details.' "
+		time="`expr ${SECONDS} / 60`"
+		error "Build process failed after ${time} minutes"
+		exit 1
+	    fi
             release=$2
 	    shift
             ;;
