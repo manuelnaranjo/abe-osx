@@ -497,9 +497,6 @@ while test $# -gt 0; do
 	    host=$2
 	    shift
 	    ;;
-	--srcdir|-sr*)
-	    notice "fixme:"
-	    ;;
 	--manifest|-m*)
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
