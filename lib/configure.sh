@@ -195,13 +195,13 @@ configure_build()
 	    export CONFIG_SHELL=${bash_shell}
 	fi
        # In release mode, use default pkgversion for GCC.
-	if test x"${release}" != x;then
-            case ${tool} in
-		gcc*)
-                    default_configure_flags=`echo "${default_configure_flags}" | sed -e 's/--with-pkgversion=.* //'`
-                    ;;
-            esac
-	fi
+#	if test x"${release}" != x;then
+#            case ${tool} in
+#		gcc*)
+#                    default_configure_flags=`echo "${default_configure_flags}" | sed -e 's/--with-pkgversion=.* //'`
+#                    ;;
+#            esac
+#	fi
 
 	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
 	if test $? -gt 0; then
