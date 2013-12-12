@@ -487,21 +487,19 @@ while test $# -gt 0; do
 		url="`get_source $2`"
 		if test $? -gt 0; then
 		    error "Couldn't find the source for $2"
-		    exit 1
+		    build_failure
 		fi
 
 		checkout ${url}
 		if test $? -gt 0; then
-		    time="`expr ${SECONDS} / 60`"
-		    error "Checkout process failed after ${time} minutes"
-		    exit 1
+		    error "--checkout ${url} failed."
+		    build_failure
 		fi
 	    else
 		checkout_all
 		if test $? -gt 0; then
-		    time="`expr ${SECONDS} / 60`"
-		    error "Checkout process failed after ${time} minutes"
-		    exit 1
+		    error "--checkout all failed."
+		    build_failure
 		fi
 	    fi
 	    shift # Shift off the 'all' or the package identifier.
@@ -580,7 +578,9 @@ while test $# -gt 0; do
 	    check_directive $1 set "set" $2
 	    set_package $2
 	    if test $? -gt 0; then
-		exit 1
+		# The failure particular reason is output within the
+		# set_package function.
+		build_failure
 	    fi
 	    shift
 	    ;;
@@ -697,7 +697,7 @@ while test $# -gt 0; do
 			# Only allow valid combinations of target and clibrary.
 			crosscheck_clibrary_target ${name} ${target}
 			if test $? -gt 0; then
-			    exit 1
+			    build_failure
 			fi
 			# Continue to process individually.
 			case ${name} in
@@ -722,7 +722,7 @@ while test $# -gt 0; do
 		esac
 	    else
 		error "$1: Command not recognized."
-		exit 1
+		build_failure
 	    fi
             ;;
     esac
