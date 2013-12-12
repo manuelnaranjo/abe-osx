@@ -159,7 +159,6 @@ test_pass()
 
     # Continue to search for error so we don't get false positives.
     out="`./cbuild2.sh ${cb_commands} 2>&1 | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:'`"
-
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
