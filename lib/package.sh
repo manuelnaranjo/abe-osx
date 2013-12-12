@@ -236,7 +236,7 @@ binary_toolchain()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 
-    # dryrun "rm -fr /tmp/${tag} ${destdir}"
+    dryrun "rm -fr /tmp/${tag} ${destdir}"
     return 0
 }
 
