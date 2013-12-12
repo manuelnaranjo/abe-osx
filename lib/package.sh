@@ -181,31 +181,28 @@ binary_toolchain()
     local builddir="`get_builddir ${gcc_version} stage2`"
 
     # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} DESTDIR=${destdir} -w -i -k"
+    local make_flags="${make_flags} DESTDIR=${destdir} -w"
 
     if test x"${gcc_static}" = x"yes"; then
 	# If the default is a statically linked GCC, we only have to relink
 	# the executables,
         # GCC executables we want to relink
-	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross"
-	for i in ${bins}; do
-            dryrun "rm -f ${builddir}/$i"
-	done
-	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-static -C ${builddir}"
+	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
+	dryrun "cd ${builddir} && rm ${bins}"
+	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
+	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
 	# Install the documentation too
 	dryrun "make install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
     else
 	# If the default is a dynamically linked GCC, we have to recompile everything
-	dryrun "make clean all install SHELL=${bash_shell} ${make_flags} -C ${builddir}" #  LDFLAGS=-static
+	dryrun "make clean all install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
     fi
 
     local builddir="`get_builddir ${binutils_version}`"
     if test x"${binutils_static}" = x"yes"; then
         # Binutils executables we want to relink
-	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
-	for i in ${bins}; do
-            dryrun "rm -f ${builddir}/$i"
-	done
+	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
+	dryrun "cd ${builddir} && rm ${bins}"
 	# If the default is a statically linked binutils, we only have to relink
 	# the excutables,
 	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
