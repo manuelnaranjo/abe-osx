@@ -210,7 +210,7 @@ binary_toolchain()
 	dryrun "make clean install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
     fi
 
-    # Install the documentation too. The different componenets unfortunately 
+    # Install the documentation too. The different components unfortunately 
     # install differently, so just do the right thing.
     dryrun "make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/bfd "
     dryrun "make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/ld "
@@ -226,10 +226,12 @@ binary_toolchain()
     manifest
     mv /tmp/manifest.txt ${destdir}/manifest.txt
 
-    dryrun "ln -sfnT ${destdir}/${local_builds}/destdir/${host} /tmp/${tag}"
+    local installdir="`find ${destdir} -name ${target}-gcc`"
+    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
+    dryrun "ln -sfnT ${installdir} /tmp/${tag}"
 
     # make the tarball from the tree we just created.
-    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}"
+    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
