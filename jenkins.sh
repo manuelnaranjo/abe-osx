@@ -30,7 +30,9 @@ if test x"${reuse}" != x"true"; then
 fi
 
 # Create a build directory
-mkdir -p _build
+if test ! -d _build; then
+    mkdir -p _build
+fi
 
 # Use the newly created build directory
 cd _build
@@ -54,8 +56,12 @@ if test x"${runtests}" = xtrue; then
     check=--check
 fi
 
-if test x"${tarballs}" = xtrue; then
-    release=--tarballs
+release=
+if test x"${tarsrc}" = xtrue; then
+    release="--tarsrc"
+fi
+if test x"${tarbin}" = xtrue; then
+    release="${release} --tarsrc "
 fi
 
 # For coss build. For cross builds we build a native GCC, and then use
@@ -102,9 +108,9 @@ if test x"${canadian}" = x"true"; then
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i586-mingw32msvc --target ${target} --build all
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc --target ${target} --build all
     else
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${tarballs} --host=i686-w64-mingw32 --target ${target} --build all
+	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 --target ${target} --build all
     fi
 fi
 
