@@ -23,8 +23,11 @@ if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-# Remove the previous build
-rm -fr _build
+# Remove the previous build if specified, default to reusing the existing
+# build directory.
+if test x"${reuse}" != x"true"; then
+    rm -fr _build
+fi
 
 # Create a build directory
 mkdir -p _build
