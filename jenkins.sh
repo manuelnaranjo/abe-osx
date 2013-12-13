@@ -85,7 +85,7 @@ if test x"${sums}" != x; then
     if test x"${junits}" != x; then
 	echo "Found junit files finally!!!"
 	cat ${junits}
-	rm ${junits}
+	#rm ${junits}
     else
 	echo "Bummer, no junit files yet..."
     fi
