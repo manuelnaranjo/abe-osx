@@ -114,3 +114,5 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
+touch $WORKSPACE/cbuildv2/*.junit
+
