@@ -93,8 +93,6 @@ if test x"${sums}" != x; then
     junits="`find $WORKSPACE/cbuildv2/ -name *.junit`"
     if test x"${junits}" != x; then
 	echo "Found junit files finally!!!"
-	cat ${junits}
-	#rm ${junits}
     else
 	echo "Bummer, no junit files yet..."
     fi
