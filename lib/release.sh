@@ -132,6 +132,9 @@ release_gcc_src()
     sanitize ${srcdir}
 
     # make a link with the correct name for the tarball's source directory
+    if test -d /tmp/${tag}; then
+	rm -f /tmp/${tag}
+    fi
     dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
     
     exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
@@ -141,7 +144,7 @@ release_gcc_src()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
 
-    dryrun "rm -f /tmp/${tag} ${destdir}"
+    dryrun "rm -fr /tmp/${tag} ${destdir}"
 
     return 0
 }
