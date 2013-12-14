@@ -110,60 +110,59 @@ release_gcc_src()
     local builddir="`get_builddir ${gcc_version} stage2`"
     local tag="`create_release_tag ${gcc_version}`"
     local version="`create_release_version ${gcc_version}`"
-    local destdir=/tmp/${tag}
+    local destdir=/tmp/linaro.$$/${tag}
 
     dryrun "mkdir -p ${destdir}"
 
+    dryrun "rsync --exclude .git -ar ${srcdir} ${destdir}"
+    
     # Update the GCC version
     rm -f ${destdir}/gcc/LINARO-VERSION
     echo "${version}" > ${destdir}/gcc/LINARO-VERSION
     
-    install_gcc_docs ${destdir} ${srcdir} ${builddir}
- 
     if test x"${release}" = x;then
-	edit_changelogs ${srcdir} ${tag}
+	edit_changelogs ${destdir} ${tag}
     else
-	edit_changelogs ${srcdir} ${release}
+	edit_changelogs ${destdir} ${release}
     fi    
     
     dryrun "regenerate_checksums ${destdir}"
 
     # Remove extra files left over from any development hacking
-    sanitize ${srcdir}
+    sanitize ${destdir}
 
-    # make a link with the correct name for the tarball's source directory
-    if test -d /tmp/${tag}; then
-	rm -f /tmp/${tag}
-    fi
-    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
-    
-    exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
+    # Install the docs
+    install_gcc_docs ${destdir} ${builddir} 
+
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
 
-    dryrun "rm -fr /tmp/${tag} ${destdir}"
+#    dryrun -fr /tmp/linaro.$$
 
     return 0
 }
 
-# At release time, we build additional docs
+# At release time, we build additional docs. We do this after the main GCC
+# sources have been tarred, and append these to the tarball to avoid contaminating
+# the source directory.
 # $1 - 
 install_gcc_docs()
 {
     trace "$*"
 
     local destdir=$1
-    local srcdir=$2
-    local builddir=$3
+    local srcdir=$1
+    local builddir=$2
 
-    if test ! -d ${destdir}; then
-	dryrun "ln -sfnT ${srcdir} ${destdir}"
-    fi
-
-    # Create the html docs for the INSTALL directory
+    # The destination directory for GCC is a symbolic link. For the docs we
+    # create a similar directory structure to install the docs into.
+#    if test ! -d ${destdir}/${srcdir}; then
+#	dryrun "mkdir -p ${destdir}/${srcdir}"
+#    fi
 
     # the GCC script needs these two values to work.
     SOURCEDIR=${srcdir}/gcc/doc
@@ -171,25 +170,23 @@ install_gcc_docs()
     dryrun ". ${srcdir}/gcc/doc/install.texi2html"
 
     # Create .gmo files from .po files.
-    for i in `find ${srcdir} -name '*.po' -type f -print`; do
+    for i in `find ${destdir} -name '*.po' -type f -print`; do
         dryrun "msgfmt -o `echo $i | sed -e 's/\.po$/.gmo/'` $i"
     done
 
     # Make a man alias instead of copying the entire man page for G++
     if test ! -e ${builddir}/g++.1; then
-	dryrun "echo ".so man1/gcc.1" > ${builddir}/gcc/doc/g++.1"
+	dryrun "echo ".so man1/gcc.1" > ${destdir}/gcc/doc/g++.1"
     fi
 
     # Copy all the info files and man pages into the release directory
     local docs="`find ${builddir}/ -name \*.info -o -name \*.1 -o -name \*.7 | sed -e "s:${builddir}/::"`"
     for i in ${docs}; do
-	local dir="${destdir}/`dirname $i`"
-	if test ! -d ${dir}; then
-	    dryrun "mkdir -p ${dir}"
-	fi
-      	dryrun "cp -f ${builddir}/$i ${destdir}/$i"
+      	dryrun "cp -fv ${builddir}/$i ${destdir}/gcc/doc"
     done
-    
+
+    dryrun "rm -fr ${destdir}/${target}"
+
     return 0
 }
 
