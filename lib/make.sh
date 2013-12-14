@@ -495,8 +495,8 @@ make_docs()
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/make.log"
 	    return $?
 	    ;;
-	*linux*)
-	    # no docs to install for this component
+	*linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*)
+	    # the regular make install handles all the docs.
 	    ;;
 	*libc*) # including eglibc
 	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info dvi pdf html 2>&1 | tee -a ${builddir}/make.log"
