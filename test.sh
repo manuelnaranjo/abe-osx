@@ -410,6 +410,40 @@ test_pass "${cb_commands}" "${match}"
 
 tmpdir=`dirname ${local_snapshots}`
 
+target="aarch64-none-elf"
+cb_commands="--target ${target} --set libc=glibc"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--set libc=glibc --target ${target}"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--set libc=newlibv --target ${target}"
+match=''
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--target ${target} --set libc=newlib"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+# The same as previous but with other commands mixed in.
+target="aarch64-none-elf"
+cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+# The same as previous but with other commands mixed in.
+target="arm-none-linux-gnueabihf"
+cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+
+
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.
 if test x"${tmpdir}" = x"/tmp"; then
