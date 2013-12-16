@@ -1,0 +1,125 @@
+
+#!/bin/sh
+# Number of iterations for each sub-benchmark.  Calibrated so that
+# each run takes about 10 s on a Cortex-A9
+fps_bitmap_565_scale=200
+fps_bitmap_565_noscale=200
+fps_bitmap_X888_scale=340
+fps_bitmap_X888_noscale=300
+fps_bitmap_8888_scale=200
+fps_bitmap_8888_noscale=180
+fps_blend=700
+fps_fill=4800
+repeatTile_index8=14
+repeatTile_4444=12
+repeatTile_565=14
+repeatTile_8888=14
+bitmap_index8=6
+bitmap_index8_A=10
+bitmap_4444=6
+bitmap_4444_A=10
+bitmap_565=10
+bitmap_8888=6
+bitmap_8888_A=10
+polygon=20
+lines=80
+points=240
+rrects3=140
+rrects1=40
+ovals3=160
+ovals1=50
+rects3=80
+rects1=20
+
+# Names of all of the sub-benchmarks
+ALL_NAMES='fps_bitmap_565_scale fps_bitmap_565_noscale fps_bitmap_X888_scale \
+	fps_bitmap_X888_noscale fps_bitmap_8888_scale fps_bitmap_8888_noscale \
+	fps_blend fps_fill repeatTile_index8 \
+	repeatTile_4444 repeatTile_565 repeatTile_8888 \
+	bitmap_index8 bitmap_index8_A bitmap_4444 \
+	bitmap_4444_A bitmap_565 bitmap_8888 \
+	bitmap_8888_A polygon lines \
+	points rrects3 rrects1 \
+	ovals3 ovals1 rects3 \
+	rects1'
+
+init=false
+SKIABENCH_SUITE=skiabench
+
+SKIABENCH_SKIABENCH_SUITE="`grep ^SKIABENCH_SUITE= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_CCAT="`grep ^CCAT= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+SKIABENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/skiabench.conf \
+  | cut -d '=' -f 2`"
+
+
+
+
+skiabench_init()
+{
+  init=true
+}
+
+skiabench_run ()
+{
+  echo "skiabench run"
+  for i in $(seq 1 $SKIABENCH_RUNS); do
+    echo Run $i:: >> $SKIABENCH_RUN_LOG;
+    time -o $SKIABENCH_BUILD_LOG -a $MAKE -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
+  done
+}
+
+skiabench_clean()
+{
+  echo "skiabench clean"
+}
+
+skiabench_build_with_pgo ()
+{
+  echo "skiabench build with pgo"
+}
+
+skiabench_build ()
+{
+  echo "skiabench build"
+  make -s $SKIABENCH_PARALLEL -C $SKIABENCH_SUITE/skia-* CFLAGS="$VCFLAGS" CFLAGS_SSE2= bench > $SKIABENCH_BUILD_LOG 2>&1
+}
+
+
+skiabench_install ()
+{
+  echo "skiabench install"
+  ln -s $PWD/$SKIABENCH_SUITE/skia-*/out $SKIABENCH_SUITE/install
+}
+
+skiabench_testsuite ()
+{
+  echo "skiabench testsuite"
+}
+
+skiabench_extract ()
+{
+  echo "skiabench extract"
+  rm -rf $SKIABENCH_SUITE
+  mkdir -p $SKIABENCH_SUITE
+  get_becnhmark  "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
+  local FILE=`ls $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz`
+  echo "tar xaf $FILE $SKIABENCH_SUITE"
+  tar xaf $FILE -C $SKIABENCH_SUITE
+  rm $FILE
+}
+
+

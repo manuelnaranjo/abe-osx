@@ -5,6 +5,7 @@
 # $1 benchamark name coremark, etc
 #
 
+
 BZIP2BENCH=1
 COREMARK=2
 LIBAVBENCH=3
@@ -17,20 +18,59 @@ SKIABENCH=9
 DENBENCH=10
 EEMBC=11
 EEMBC_OFFICE=12
-SPEC2000=13
+SPEC2K=13
+
+TIME=time
 
 
 bench_init()
 {
   if test x"$1" = x; then
-    echo "bench_init  requires benchmark name as parameter"
+    echo "bench_init requires benchmark name as parameter"
     retuen 0
   fi
   case $1 in
     coremark)
       echo "Coremark"
-      coremark_init 
+      coremark_init
       return $COREMARK
+      ;;
+    libavbench)
+      echo "Libavbench"
+      libavbench_init
+      return $LIBAVBENCH
+      ;;
+    gmpbench)
+      echo "Gmpbench"
+      gmpbench_init
+      return $GMPBENCH
+      ;;
+    gnugo)
+      echo "Gnugo"
+      gnugo_init
+      return $GNUGO
+      ;;
+    skiabench)
+      echo "Skiabench"
+      skiabench_init
+      return $SKIABENCH
+      ;;
+    denbench)
+      denbench_init
+      return $DENBENCH
+      ;;
+    eembc)
+      eembc_init
+      return $EEMBC
+      ;;
+    eembc_office)
+      eembc_office_init
+      return $EEMBC_OFFICE
+      ;;
+    spec2k)
+      echo "Spec2k"
+      spec2k_init
+      return $SPEC2K
       ;;
   esac
 
@@ -43,12 +83,39 @@ bench_init()
 clean()
 {
   if test x"$1" = x; then
-    error "clean  requires benchmark ID as parameter"
+    error "clean requires benchmark ID as parameter"
   fi
   case $1 in
     $COREMARK)
-      clean
+      coremark_clean
       ;;
+    $LIBAVBENCH)
+      libavbench_clean
+      ;;
+    $GMPBENCH)
+      gmpbench_clean
+      ;;
+    $GNUGO)
+      gnugo_clean
+      ;;
+    $SKIABENCH)
+      skiabench_clean
+      ;;
+    $DEBENCH)
+      denbench_clean
+      ;;
+    $EEMBC)
+      eembc_clean
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_clean
+      ;;
+    $SPEC2K)
+      spec2k_clean
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -68,6 +135,33 @@ build()
     $COREMARK)
       coremark_build
       ;;
+    $LIBAVBENCH)
+      libavbench_build
+      ;;
+    $GMPBENCH)
+      gmpbench_build
+      ;;
+    $GNUGO)
+      gnugo_build
+      ;;
+    $SKIABENCH)
+      skiabench_build
+      ;;
+    $DEBENCH)
+      denbench_build
+      ;;
+    $EEMBC)
+      eembc_build
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_build
+      ;;
+    $SPEC2K)
+      spec2k_build
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -83,9 +177,36 @@ build_with_pgo()
     $COREMARK)
       coremark_build_with_pgo
       ;;
+    $LIBAVBENCH)
+      libavbench_build_with_pgo
+      ;;
+    $GMPBENCH)
+      gmpbench_build_with_pgo
+      ;;
+    $GNUGO)
+      gnugo_build_with_pgo
+      ;;
+    $SKIABENCH)
+      skiabench_build_with_pgo
+      ;;
+    $DEBENCH)
+      denbench_build_with_pgo
+      ;;
+    $EEMBC)
+      eembc_build_with_pgo
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_build_with_pgo
+      ;;
+    $SPEC2K)
+      spec2k_build_with_pgo
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
- 
+
 #
 # $1 is the benchmark ID
 #
@@ -98,6 +219,33 @@ run()
     $COREMARK)
       coremark_run
       ;;
+    $LIBAVBENCH)
+      libavbench_run
+      ;;
+    $GMPBENCH)
+      gmpbench_run
+      ;;
+    $GNUGO)
+      gnugo_run
+      ;;
+    $SKIABENCH)
+      skiabench_run
+      ;;
+    $DEBENCH)
+      denbench_run
+      ;;
+    $EEMBC)
+      eembc_run
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_run
+      ;;
+    $SPEC2K)
+      spec2k_run
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -113,6 +261,33 @@ install()
     $COREMARK)
       coremark_install
       ;;
+    $LIBAVBENCH)
+      libavbench_install
+      ;;
+    $GMPBENCH)
+      gmpbench_install
+      ;;
+    $GNUGO)
+      gnugo_install
+      ;;
+    $SKIABENCH)
+      skiabench_install
+      ;;
+    $DEBENCH)
+      denbench_install
+      ;;
+    $EEMBC)
+      eembc_install
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_install
+      ;;
+    $SPEC2K)
+      spec2k_install
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -128,6 +303,33 @@ testsuit()
     $COREMARK)
       coremark_testsuite
       ;;
+    $LIBAVBENCH)
+      libavbench_testsuite
+      ;;
+    $GMPBENCH)
+      gmpbench_testsuite
+      ;;
+    $GNUGO)
+      gnugo_testsuite
+      ;;
+    $SKIABENCH)
+      skiabench_testsuite
+      ;;
+    $DEBENCH)
+      denbench_testsuite
+      ;;
+    $EEMBC)
+      eembc_testsuite
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_testsuite
+      ;;
+    $SPEC2K)
+      spec2k_testsuite
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -143,6 +345,33 @@ extract()
     $COREMARK)
       coremark_extract
       ;;
+    $LIBAVBENCH)
+      libavbench_extract
+      ;;
+    $GMPBENCH)
+      gmpbench_extract
+      ;;
+    $GNUGO)
+      gnugo_extract
+      ;;
+    $SKIABENCH)
+      skiabench_extract
+      ;;
+    $DEBENCH)
+      denbench_extract
+      ;;
+    $EEMBC)
+      eembc_extract
+      ;;
+    $EEMBC_OFFICE)
+      eembc_office_extract
+      ;;
+    $SPEC2K)
+      spec2k_extract
+      ;;
+    *)
+      error "unknown ID"
+      exit -1
   esac
 }
 
@@ -166,8 +395,23 @@ set_gcc_to_runwith ()
   fi
 }
 
+get_becnhmark ()
+{
+  if test x$1 != x; then
+    echo "fetching $1 into $2"
+    cp $1 $2/
+  fi
+}
+
 dump_host_info ()
 {
+  GCCVERSION = $(shell $(CROSS_COMPILE)gcc --version | head -n1)
+  GXXVERSION = $(shell $(CROSS_COMPILE)g++ --version | head -n1)
+  DATE = $(shell date +%Y-%m-%d)
+  ARCH = $(shell uname -m)
+  CPU = $(shell grep -E "^(model name|Processor)" /proc/cpuinfo | head -n1 | tr -s [:space:] | awk -F: '{print $$2;}')
+  OS = $(shell lsb_release -sd)
+  TOPDIR = $(shell pwd)
   echo date:
   date --rfc-3339=seconds -u
   echo
