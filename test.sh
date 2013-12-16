@@ -82,15 +82,23 @@ totals()
 
 cbtest()
 {
-     local testlineno=$1
-     case "$2" in
-	 *$3*)
-             pass ${testlineno} "$4"
-             ;;
-         *)
-             fail ${testlineno} "$4"
-             ;;
-     esac
+    local testlineno=$1
+    if test x"${debug}" = x"yes"; then
+	echo "($testlineno) out: $2" 1>&2
+    fi
+
+    case "$2" in
+	*$3*)
+	    pass ${testlineno} "$4"
+	    ;;
+	*)
+	    fail ${testlineno} "$4"
+	    ;;
+    esac
+
+    if test x"${debug}" = x"yes"; then
+	echo "-----------" 1>&2
+    fi
 }
 
 m5sums=
@@ -345,6 +353,21 @@ test_pass "${cb_commands}" "${match}"
 cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
 match="Couldn't find the source for"
 test_failure "${cb_commands}" "${match}"
+
+# This tests that --build can go before --target and --target is still processed correctly.
+cb_commands="--dryrun --build all --target arm-none-linux-gnueabihf --dump"
+match='arm-none-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+# This tests that --checkout can go before --target and --target is still processed correctly.
+cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
+match='arm-none-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+# This tests that --checkout and --build can be run together.
+cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
+match=''
+test_pass "${cb_commands}" "${match}"
 
 cb_commands="--set"
 match='requires a directive'
