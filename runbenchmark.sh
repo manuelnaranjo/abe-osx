@@ -6,8 +6,23 @@ script="`which $0`"
 topdir="`dirname ${script}`"
 app="`basename $0`"
 
+SRC_PATH=/home/kugan/Downloads/
+PASSWORD_FILE=/home/kugan/password
+CCAT="ccrypt -k $PASSWORD_FILE -c"
+VBUILD=benchmark
+
+
 . "${topdir}/lib/common.sh" || exit 1
+. "${topdir}/lib/libavbench.sh" || exit 1
+. "${topdir}/lib/gmpbench.sh" || exit 1
 . "${topdir}/lib/coremark.sh" || exit 1
+. "${topdir}/lib/gnugo.sh" || exit 1
+. "${topdir}/lib/spec2k.sh" || exit 1
+. "${topdir}/lib/denbench.sh" || exit 1
+. "${topdir}/lib/eembc.sh" || exit 1
+. "${topdir}/lib/eembc_office.sh" || exit 1
+. "${topdir}/lib/nbench.sh" || exit 1
+. "${topdir}/lib/skiabench.sh" || exit 1
 . "${topdir}/lib/benchmark.sh" || exit 1
 
 usage()
@@ -22,7 +37,7 @@ usage()
   [-d, --dir-to-build=directory]
   [-C, --additional-cflags]
   [-L, --aditional-lflags]
-  EOF
+EOF
   return 0
 }
 
@@ -91,6 +106,7 @@ EOF
     return 0
 }
 
+extract=true
 clean=true
 build=true
 run=true
@@ -104,15 +120,18 @@ do
       exit 0
       ;;
     -b | --build)
+      extract=false
       run=false
       shift
       ;;
     -c | --clean)
+      extract=false
       run=false
       build=false
       shift
       ;;
     -r | --run)
+      extract=false
       clean=false
       build=false
       shift
@@ -122,11 +141,11 @@ do
       shift
       ;;
     -C=* | --additional-cflags=*)
-      CFLAGS=${1#*=}
+      XCFLAGS=${1#*=}
       shift
       ;;
     -L=* | --aditional-lflags=*)
-      LFLAGS=${1#*=}
+      XLFLAGS=${1#*=}
       shift
       ;;
     --file=*)
@@ -160,12 +179,14 @@ do
     error "Unrecognized benchmark name $b"
   fi
 
+  if $extract; then
+    echo "Extract benchmark $b"
+    extract $ctx
+  fi
+
   if $clean; then
     echo "Clean benchmark $b"
     clean $ctx
-  else
-    echo "Extract benchmark $b"
-    extract $ctx
   fi
 
   if $build; then
