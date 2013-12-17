@@ -102,6 +102,12 @@ check_stamp()
     # Strip trailing slashes from the location directory.
     stamp_loc="`echo ${stamp_loc} | sed 's#/*$##'`"
 
+    # stamp_type is only used for an informational message and we want to make
+    # the resultant message grammatically correct.
+    if test x"${stamp_type}" = x"configure"; then
+       stamp_type="configur"
+    fi
+
     notice "Checking for ${stamp_loc}/${stamp_name}"
     if test ${compare_file} -nt ${stamp_loc}/${stamp_name} -a x"${local_force}" = xno; then
         if test ! -e "${stamp_loc}/${stamp_name}"; then

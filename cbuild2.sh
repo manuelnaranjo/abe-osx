@@ -448,6 +448,9 @@ wget_timeout=10
 fetch md5sums
 wget_timeout=${timeout_save}
 
+do_checkout=
+do_build=
+
 # Process the multiple command line arguments
 while test $# -gt 0; do
     # Get a URL for the source code for this toolchain component. The
@@ -456,26 +459,11 @@ while test $# -gt 0; do
     case "$1" in
 	--bu*|-bu*)			# build
 	    check_directive $1 build bu $2
-	    if test x"$2" != x"all"; then
-		gitinfo="`get_source $2`"
-		if test x"${gitinfo}" = x; then
-		    error "Couldn't find the source for $2"
-		    build_failure
-		else
-		    build ${gitinfo}
-		    if test $? -gt 0; then
-			error "Building ${gitinfo} failed."
-			build_failure
-		    fi
+   
+	    # Save and process this after all other elements have been processed.
+	    do_build="$2"
 
-		fi
-	    else
-		build_all
-		if test $? -gt 0; then
-		    error "Build all failed."
-		    build_failure
-		fi
-	    fi	    
+	    # Shift off the 'all' or the package identifier.
 	    shift
 	    ;;
 	--check|-check)
@@ -483,26 +471,11 @@ while test $# -gt 0; do
 	    ;;
 	--checkout*|-checkout*)
 	    check_directive $1 checkout "checkout" $2
-	    if test x"$2" != x"all"; then
-		url="`get_source $2`"
-		if test $? -gt 0; then
-		    error "Couldn't find the source for $2"
-		    build_failure
-		fi
+	    # Save and process this after all other elements have been processed.
+	    do_checkout="$2"
 
-		checkout ${url}
-		if test $? -gt 0; then
-		    error "--checkout ${url} failed."
-		    build_failure
-		fi
-	    else
-		checkout_all
-		if test $? -gt 0; then
-		    error "--checkout all failed."
-		    build_failure
-		fi
-	    fi
-	    shift # Shift off the 'all' or the package identifier.
+	    # Shift off the 'all' or the package identifier.
+	    shift
 	    ;;
 	--host|-h*)
 	    host=$2
@@ -576,6 +549,18 @@ while test $# -gt 0; do
             ;;
 	--set*|-set*)
 	    check_directive $1 set "set" $2
+
+	    # Test if --target follows the --set command put --set and it's
+	    # directive on to the back of the inputs.  This is because clibrary
+	    # validity depends on the target.
+	    if test "`echo $@ | grep -c "\-targ.*"`" -gt 0; then
+		# Push $1 and $2 onto the back of the inputs for later processing.
+		set -- $@ $1 $2
+		# Shift off them off the front.
+		shift 2;
+		continue;
+	    fi
+
 	    set_package $2
 	    if test $? -gt 0; then
 		# The failure particular reason is output within the
@@ -601,6 +586,7 @@ while test $# -gt 0; do
 	    ;;
 	--targ*|-targ*)			# target
 	    check_directive $1 target targ $2
+
 	    target=$2
 	    sysroots=${sysroots}/${target}
 
@@ -730,6 +716,52 @@ while test $# -gt 0; do
 	shift
     fi
 done
+
+
+if test ! -z ${do_checkout}; then
+    if test x"${do_checkout}" != x"all"; then
+	url="`get_source ${do_checkout}`"
+	if test $? -gt 0; then
+	    error "Couldn't find the source for ${do_checkout}"
+	    build_failure
+	fi
+
+	checkout ${url}
+	if test $? -gt 0; then
+	    error "--checkout ${url} failed."
+	    build_failure
+	fi
+    else
+	checkout_all
+	if test $? -gt 0; then
+	    error "--checkout all failed."
+	    build_failure
+	fi
+    fi
+fi
+
+if test ! -z ${do_build}; then
+    if test x"${do_build}" != x"all"; then
+	gitinfo="`get_source ${do_build}`"
+	if test x"${gitinfo}" = x; then
+	    error "Couldn't find the source for ${do_build}"
+	    build_failure
+	else
+	    build ${gitinfo}
+	    if test $? -gt 0; then
+		error "Building ${gitinfo} failed."
+		build_failure
+	    fi
+
+	fi
+    else
+	build_all
+	if test $? -gt 0; then
+	    error "Build all failed."
+	    build_failure
+	fi
+    fi	 
+fi
 
 time="`expr ${SECONDS} / 60`"
 notice "Complete build process took ${time} minutes"

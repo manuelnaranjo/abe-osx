@@ -82,15 +82,23 @@ totals()
 
 cbtest()
 {
-     local testlineno=$1
-     case "$2" in
-	 *$3*)
-             pass ${testlineno} "$4"
-             ;;
-         *)
-             fail ${testlineno} "$4"
-             ;;
-     esac
+    local testlineno=$1
+    if test x"${debug}" = x"yes"; then
+	echo "($testlineno) out: $2" 1>&2
+    fi
+
+    case "$2" in
+	*$3*)
+	    pass ${testlineno} "$4"
+	    ;;
+	*)
+	    fail ${testlineno} "$4"
+	    ;;
+    esac
+
+    if test x"${debug}" = x"yes"; then
+	echo "-----------" 1>&2
+    fi
 }
 
 m5sums=
@@ -346,6 +354,21 @@ cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
 match="Couldn't find the source for"
 test_failure "${cb_commands}" "${match}"
 
+# This tests that --build can go before --target and --target is still processed correctly.
+cb_commands="--dryrun --build all --target arm-none-linux-gnueabihf --dump"
+match='arm-none-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+# This tests that --checkout can go before --target and --target is still processed correctly.
+cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
+match='arm-none-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+# This tests that --checkout and --build can be run together.
+cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
+match=''
+test_pass "${cb_commands}" "${match}"
+
 cb_commands="--set"
 match='requires a directive'
 test_failure "${cb_commands}" "${match}"
@@ -386,6 +409,40 @@ match=''
 test_pass "${cb_commands}" "${match}"
 
 tmpdir=`dirname ${local_snapshots}`
+
+target="aarch64-none-elf"
+cb_commands="--target ${target} --set libc=glibc"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--set libc=glibc --target ${target}"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--set libc=newlibv --target ${target}"
+match=''
+test_failure "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+cb_commands="--target ${target} --set libc=newlib"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+# The same as previous but with other commands mixed in.
+target="aarch64-none-elf"
+cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
+match="crosscheck_clibrary_target"
+test_failure "${cb_commands}" "${match}"
+
+# The same as previous but with other commands mixed in.
+target="arm-none-linux-gnueabihf"
+cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
+match=''
+test_pass "${cb_commands}" "${match}"
+
+
 
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.
