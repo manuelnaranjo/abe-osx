@@ -141,7 +141,7 @@ release_gcc_src()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
 
-    dryrun -fr /tmp/linaro.$$
+    dryrun "rm -fr /tmp/linaro.$$"
 
     return 0
 }
