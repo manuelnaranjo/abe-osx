@@ -79,6 +79,9 @@ $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${check} ${release}
 # this directory
 ls -F $WORKSPACE/cbuildv2/snapshots/*.xz
 
+# Remove any leftover junit files
+rm $WORKSPACE/cbuildv2/*.junit
+
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
