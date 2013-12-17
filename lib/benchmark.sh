@@ -22,6 +22,10 @@ SPEC2K=13
 
 TIME=time
 
+_coremark_init=false
+_eembc_init=false
+_eembc_office_init=false
+_spec2k_init=false
 
 bench_init()
 {
@@ -122,10 +126,6 @@ clean()
 #
 # $1 is the benchmark ID
 #
-
-#
-# $1 is the benchmark ID
-#
 build()
 {
   if test x"$1" = x; then
@@ -133,31 +133,76 @@ build()
   fi
   case $1 in
     $COREMARK)
-      coremark_build
+      if test $_coremark_init; then
+	coremark_build
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_build
+      if test $_libavbench_init; then
+	libavbench_build
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_build
+      if test $_coremark_init; then
+	gmpbench_build
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_build
+      if test $_coremark_init; then
+	gnugo_build
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_build
+      if test $_coremark_init; then
+	skiabench_build
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_build
+      if test $_denbench_init; then
+	denbench_build
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_build
+      if test $_ceembc_init; then
+	eembc_build
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_build
+      if test $_eembc_office_init; then
+	eembc_office_build
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_build
+      if test $_spec2k_init; then
+	spec2k_build
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
@@ -175,35 +220,81 @@ build_with_pgo()
   fi
   case $1 in
     $COREMARK)
-      coremark_build_with_pgo
+      if test $_coremark_init; then
+	coremark_build_with_pgo
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_build_with_pgo
+      if test $_libavbench_init; then
+	libavbench_build_with_pgo
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_build_with_pgo
+      if test $_coremark_init; then
+	gmpbench_build_with_pgo
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_build_with_pgo
+      if test $_coremark_init; then
+	gnugo_build_with_pgo
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_build_with_pgo
+      if test $_coremark_init; then
+	skiabench_build_with_pgo
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_build_with_pgo
+      if test $_denbench_init; then
+	denbench_build_with_pgo
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_build_with_pgo
+      if test $_ceembc_init; then
+	eembc_build_with_pgo
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_build_with_pgo
+      if test $_eembc_office_init; then
+	eembc_office_build_with_pgo
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_build_with_pgo
+      if test $_spec2k_init; then
+	spec2k_build_with_pgo
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
       exit -1
+      ;;
   esac
 }
 
@@ -217,35 +308,81 @@ run()
   fi
   case $1 in
     $COREMARK)
-      coremark_run
+      if test $_coremark_init; then
+	coremark_run
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_run
+      if test $_libavbench_init; then
+	libavbench_run
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_run
+      if test $_coremark_init; then
+	gmpbench_run
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_run
+      if test $_coremark_init; then
+	gnugo_run
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_run
+      if test $_coremark_init; then
+	skiabench_run
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_run
+      if test $_denbench_init; then
+	denbench_run
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_run
+      if test $_ceembc_init; then
+	eembc_run
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_run
+      if test $_eembc_office_init; then
+	eembc_office_run
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_run
+      if test $_spec2k_init; then
+	spec2k_run
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
       exit -1
+      ;;
   esac
 }
 
@@ -259,35 +396,81 @@ install()
   fi
   case $1 in
     $COREMARK)
-      coremark_install
+      if test $_coremark_init; then
+	coremark_install
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_install
+      if test $_libavbench_init; then
+	libavbench_install
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_install
+      if test $_coremark_init; then
+	gmpbench_install
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_install
+      if test $_coremark_init; then
+	gnugo_install
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_install
+      if test $_coremark_init; then
+	skiabench_install
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_install
+      if test $_denbench_init; then
+	denbench_install
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_install
+      if test $_ceembc_init; then
+	eembc_install
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_install
+      if test $_eembc_office_init; then
+	eembc_office_install
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_install
+      if test $_spec2k_init; then
+	spec2k_install
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
       exit -1
+      ;;
   esac
 }
 
@@ -301,35 +484,81 @@ testsuit()
   fi
   case $1 in
     $COREMARK)
-      coremark_testsuite
+      if test $_coremark_init; then
+	coremark_testsuite
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_testsuite
+      if test $_libavbench_init; then
+	libavbench_testsuite
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_testsuite
+      if test $_coremark_init; then
+	gmpbench_testsuite
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_testsuite
+      if test $_coremark_init; then
+	gnugo_testsuite
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_testsuite
+      if test $_coremark_init; then
+	skiabench_testsuite
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_testsuite
+      if test $_denbench_init; then
+	denbench_testsuite
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_testsuite
+      if test $_ceembc_init; then
+	eembc_testsuite
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_testsuite
+      if test $_eembc_office_init; then
+	eembc_office_testsuite
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_testsuite
+      if test $_spec2k_init; then
+	spec2k_testsuite
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
       exit -1
+      ;;
   esac
 }
 
@@ -343,35 +572,81 @@ extract()
   fi
   case $1 in
     $COREMARK)
-      coremark_extract
+      if test $_coremark_init; then
+	coremark_extract
+      else
+	error "coremark init not called"
+	exit
+      fi
       ;;
     $LIBAVBENCH)
-      libavbench_extract
+      if test $_libavbench_init; then
+	libavbench_extract
+      else
+	error "libavbench init not called"
+	exit
+      fi
       ;;
     $GMPBENCH)
-      gmpbench_extract
+      if test $_coremark_init; then
+	gmpbench_extract
+      else
+	error "gmpbench init not called"
+	exit
+      fi
       ;;
     $GNUGO)
-      gnugo_extract
+      if test $_coremark_init; then
+	gnugo_extract
+      else
+	error "gnugo init not called"
+	exit
+      fi
       ;;
     $SKIABENCH)
-      skiabench_extract
+      if test $_coremark_init; then
+	skiabench_extract
+      else
+	error "skiabench init not called"
+	exit
+      fi
       ;;
     $DEBENCH)
-      denbench_extract
+      if test $_denbench_init; then
+	denbench_extract
+      else
+	error "denbench init not called"
+	exit
+      fi
       ;;
     $EEMBC)
-      eembc_extract
+      if test $_ceembc_init; then
+	eembc_extract
+      else
+	error "eembc init not called"
+	exit
+      fi
       ;;
     $EEMBC_OFFICE)
-      eembc_office_extract
+      if test $_eembc_office_init; then
+	eembc_office_extract
+      else
+	error "eembc office init not called"
+	exit
+      fi
       ;;
     $SPEC2K)
-      spec2k_extract
+      if test $_spec2k_init; then
+	spec2k_extract
+      else
+	error "spec2k init not called"
+	exit
+      fi
       ;;
     *)
       error "unknown ID"
       exit -1
+      ;;
   esac
 }
 

@@ -6,13 +6,8 @@ script="`which $0`"
 topdir="`dirname ${script}`"
 app="`basename $0`"
 
-SRC_PATH=/home/kugan/Downloads/
-PASSWORD_FILE=/home/kugan/password
-CCAT="ccrypt -k $PASSWORD_FILE -c"
-VBUILD=benchmark
-
-
 . "${topdir}/lib/common.sh" || exit 1
+. "${topdir}/lib/benchmark_common.sh" || exit 1
 . "${topdir}/lib/libavbench.sh" || exit 1
 . "${topdir}/lib/gmpbench.sh" || exit 1
 . "${topdir}/lib/coremark.sh" || exit 1
@@ -111,6 +106,7 @@ clean=true
 build=true
 run=true
 
+
 while :
 do
   case $1 in
@@ -198,5 +194,4 @@ do
     echo "Run benchmark $b"
     run $ctx
   fi
-
 done

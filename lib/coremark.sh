@@ -1,35 +1,39 @@
 
 #!/bin/sh
 
-init=false
-COREMARK_SUITE=coremark
-COREMARK=
-
-COREMARK_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_PARALEL="`grep ^PARELLEL= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_CCAT="`grep ^CCAT= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
-COREMARK_TARBALL="`grep ^TARBALL= ${topdir}/config/coremark.conf \
-  | cut -d '=' -f 2`"
 
 coremark_init()
 {
-  init=true
+  coremark_init=true
+  COREMARK_SUITE=coremark
+
+  COREMARK_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  COREMARK_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  COREMARK_PARALLEL="`grep ^PARALLEL= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  COREMARK_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  COREMARK_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  COREMARK_TARBALL="`grep ^TARBALL= ${topdir}/config/coremark.conf \
+    | cut -d '=' -f 2`"
+  if test "x$COREMARK_BENCH_RUNS" = x; then
+    COREMARK_BENCH_RUNS=1
+  fi
+  if test "x$COREMARK_PARALLEL" = x; then
+    COREMARK_PARALLEL=1
+  fi
+  if test "x$COREMARK_TARBALL" = x; then
+    error "TARBALL not defined in coremark.conf"
+    exit
+  fi
+
 }
 
 coremark_run ()
 {
-  if test $init = false; then
-    error "init not  called"
-  fi
   local COREMARK=`ls coremark`
   echo "Note: All results are estimates." >> $COREMARK_RUN_LOG
   for i in $(seq 1 $COREMARK_BENCH_RUNS)
@@ -50,9 +54,6 @@ coremark_clean()
 
 coremark_build_with_pgo ()
 {
-  if test $init = false; then
-    error "init not  called"
-  fi
   echo PORT_CFLAGS=$VCFLAGS >> $COREMARK_SUITE/$COREMARK_BUILD_LOG
   echo XCFLAGS=$XCFLAGS >> $COREMARK_SUIYE/$COREMARK_BUILD_LOG
   local COREMARK=`ls coremark`
@@ -68,9 +69,6 @@ coremark_build_with_pgo ()
 
 coremark_build ()
 {
-  if test $init = false; then
-    error "init not  called"
-  fi
   echo "on build"
   echo PORT_CFLAGS=$VCFLAGS >> $COREMARK_BUILD_LOG
   echo XCFLAGS=$XCFLAGS >> $COREMARK_BUILD_LOG
@@ -83,31 +81,22 @@ coremark_build ()
 
 coremark_install ()
 {
-  if test $init = false; then
-    error "init not  called"
-  fi
   echo "FIXME: Implement it"
 }
 
 coremark_testsuite ()
 {
-  if test $init = false; then
-    error "init not  called"
-  fi
   echo "FIXME: Implement it"
 }
 
 coremark_extract ()
 {
   echo "extract"
-  if test $init = false; then
-    error "init not  called"
-  fi
   rm -rf $COREMARK_SUITE
   mkdir -p $COREMARK_SUITE
   get_becnhmark  "$SRC_PATH/$COREMARK_TARBALL*.cpt" $COREMARK_SUITE
   sync
-  local FILE=`ls $COREMARK_SUITE*/$COREMARK_TARBALL*`
+  local FILE=`ls $COREMARK_SUITE/$COREMARK_TARBALL*`
   $CCAT $FILE | gunzip | tar xaf - -C $COREMARK_SUITE
   rm $FILE
 }
