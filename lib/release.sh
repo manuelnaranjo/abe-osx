@@ -112,9 +112,9 @@ release_gcc_src()
     local version="`create_release_version ${gcc_version}`"
     local destdir=/tmp/linaro.$$/${tag}
 
-    dryrun "mkdir -p ${destdir}"
+    dryrun "mkdir -p ${destdir}/gcc/doc"
 
-    dryrun "rsync --exclude .git -ar ${srcdir} ${destdir}"
+    dryrun "rsync --exclude .git -ar ${srcdir}/* ${destdir}"
     
     # Update the GCC version
     rm -f ${destdir}/gcc/LINARO-VERSION
@@ -141,7 +141,7 @@ release_gcc_src()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
 
-#    dryrun -fr /tmp/linaro.$$
+    dryrun -fr /tmp/linaro.$$
 
     return 0
 }
@@ -185,7 +185,7 @@ install_gcc_docs()
       	dryrun "cp -fv ${builddir}/$i ${destdir}/gcc/doc"
     done
 
-    dryrun "rm -fr ${destdir}/${target}"
+#    dryrun "rm -fr ${destdir}/${target}"
 
     return 0
 }
