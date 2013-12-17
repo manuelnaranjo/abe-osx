@@ -1,7 +1,4 @@
 
-#!/bin/sh
-
-
 coremark_init()
 {
   coremark_init=true
@@ -19,17 +16,23 @@ coremark_init()
     | cut -d '=' -f 2`"
   COREMARK_TARBALL="`grep ^TARBALL= ${topdir}/config/coremark.conf \
     | cut -d '=' -f 2`"
+
   if test "x$COREMARK_BENCH_RUNS" = x; then
     COREMARK_BENCH_RUNS=1
   fi
   if test "x$COREMARK_PARALLEL" = x; then
     COREMARK_PARALLEL=1
   fi
+  if test "x$COREMARK_BUILD_LOG" = x; then
+    COREMARK_BUILD_LOG=coremark_build_log.txt
+  fi
+  if test "x$COREMARK_RUN_LOG" = x; then
+    COREMARK_RUN_LOG=coremark_run_log.txt
+  fi
   if test "x$COREMARK_TARBALL" = x; then
     error "TARBALL not defined in coremark.conf"
     exit
   fi
-
 }
 
 coremark_run ()
@@ -43,7 +46,6 @@ coremark_run ()
     make -C $COREMARK_SUITE/$COREMARK -s rerun UNAME=`uname`
     cat $COREMARK_SUITE/$COREMARK/*.log >> $COREMARK_RUN_LOG
   done
-  exit
 }
 
 coremark_clean()
@@ -69,7 +71,6 @@ coremark_build_with_pgo ()
 
 coremark_build ()
 {
-  echo "on build"
   echo PORT_CFLAGS=$VCFLAGS >> $COREMARK_BUILD_LOG
   echo XCFLAGS=$XCFLAGS >> $COREMARK_BUILD_LOG
   local COREMARK=`ls coremark`
@@ -91,14 +92,12 @@ coremark_testsuite ()
 
 coremark_extract ()
 {
-  echo "extract"
   rm -rf $COREMARK_SUITE
   mkdir -p $COREMARK_SUITE
+  check_pattern "$SRC_PATH/$COREMARK_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$COREMARK_TARBALL*.cpt" $COREMARK_SUITE
-  sync
-  local FILE=`ls $COREMARK_SUITE/$COREMARK_TARBALL*`
-  $CCAT $FILE | gunzip | tar xaf - -C $COREMARK_SUITE
-  rm $FILE
+  $CCAT $COREMARK_SUITE/$COREMARK_TARBALL*.cpt | gunzip | tar xaf - -C $COREMARK_SUITE
+  rm $COREMARK_SUITE/$COREMARK_TARBALL*.cpt
 }
 
 

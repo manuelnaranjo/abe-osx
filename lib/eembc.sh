@@ -2,47 +2,62 @@
 
 #!/bin/sh
 
-init=false
-EEMBC_VBUILD="`grep ^VBUILD= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_SUITE="`grep ^SUITE= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_CCAT="`grep ^CCAT= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
-EEMBC_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc.conf \
-  | cut -d '=' -f 2`"
 
 eembc_init()
 {
-  init=true
+  _eembc_init=true
+  EEMBC_SUITE=eembc
+  EEMBC_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_TARBALL="`grep ^TARBALL= ${topdir}/config/eembc.conf \
+    | cut -d '=' -f 2`"
+
+
+  if test "x$EEMBC_BENCH_RUNS" = x; then
+    EEMBC_BENCH_RUNS=1
+  fi
+  if test "x$EEMBC_PARALLEL" = x; then
+    EEMBC_PARALLEL=1
+  fi
+  if test "x$EEMBC_BUILD_LOG" = x; then
+    EEMBC_BUILD_LOG=eembc_build_log.txt
+  fi
+  if test "x$EEMBC_RUN_LOG" = x; then
+    EEMBC_RUN_LOG=eembc_run_log.txt
+  fi
+  if test "x$EEMBC_TARBALL" = x; then
+    error "TARBALL not defined in eembc.conf"
+    exit
+  fi
+
+
 }
 
 eembc_run ()
 {
   echo "eembc run"
-  echo "Note: All results are estimates." >> $(STEP).txt
+  echo "Note: All results are estimates." >> $EEMBC_RUN_LOG
   for i in $(seq 1 $BENCH_RUNS); do
-    echo -e \\nRun $$i:: >> $(STEP).txt;
-    make -C $(VBUILD)/eembc-linaro-* -s rerun $(MAKE_EXTRAS);
-    cat `find $(VBUILD) -name "gcc_time*.log"` >> $(STEP).txt;
+    echo -e \\nRun $$i:: >> $EEMBC_RUN_LOG;
+    make -C $EEMBC_SUITE/eembc-linaro-* -s rerun $MAKE_EXTRAS;
+    cat `find $EEMBC_SUITE -name "gcc_time*.log"` >> $EEMBC_RUN_LOG;
   done
 }
 
 eembc_build ()
 {
   echo "eembc build"
-  echo COMPILER_FLAGS=$(VCFLAGS) >> $(STEP).txt 2>&1
-  make -k $(PARALLEL) -C $(VBUILD)/eembc-linaro-* $(TARGET) $(MAKE_EXTRAS) >> $(STEP).txt 2>&1
+  echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
+  local SRCDIR=`ls $EEMBC_SUITE`
+  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/$SRC_DIR $TARGET $MAKE_EXTRAS >> $EEMBC_BUILD_LOG 2>&1
 }
 
 eembc_clean ()
@@ -59,14 +74,15 @@ eembc_build_with_pgo ()
 eembc_install ()
 {
   echo "eembc install"
-  rm -rf $(VBUILD)/install
-  mkdir $(VBUILD)/install
-  cd $(VBUILD)
+  rm -rf $EEMBC_SUITE/install
+  mkdir $EEMBC_SUITE/install
+  pushd $EEMBC_SUITE
   for i in eembc-linaro-*/*; do
     if [ -d $$i/gcc/bin ];
 	then ln -fs ../$i/gcc/bin install/`basename $$i`;
     fi
   done
+  popd
 }
 
 eembc_testsuite ()
@@ -77,9 +93,13 @@ eembc_testsuite ()
 eembc_extract ()
 {
   echo "eembc extract"
-  rm -rf $VBUILD
-  mkdir -p $VBUILD
-  $CCAT eembc-linaro-v1*.tar* | tar xjf - -C $EEMBC_VBUILD
+  rm -rf $EEMBC_SUITE
+  mkdir -p $EEMBC_SUITE
+  check_pattern "$SRC_PATH/$EEMBC_TARBALL*.cpt"
+  get_becnhmark  "$SRC_PATH/$EEMBC_TARBALL*.cpt" $EEMBC_SUITE
+  local FILE=`ls $EEMBC_SUITE/$EEMBC_TARBALL*.cpt`
+  $CCAT $FILE | tar xjf - -C $EEMBC_SUITE
+  rm $FILE
 }
 
 

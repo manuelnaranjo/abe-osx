@@ -1,48 +1,57 @@
 
-#!/bin/sh
-
-init=false
-GMPBENCH_SUITE=gmpbench
-
-GMPBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_CCAT="`grep ^CCAT= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-GMPBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/gmpbench.conf \
-  | cut -d '=' -f 2`"
-
 gmpbench_init()
 {
-  init=true
+  _gmpbench_init=true
+  GMPBENCH_SUITE=gmpbench
+  GMPBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+  GMPBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+  GMPBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+  GMPBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+  GMPBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+  GMPBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/gmpbench.conf \
+    | cut -d '=' -f 2`"
+
+  if test "x$GMPBENCH_BENCH_RUNS" = x; then
+    GMPBENCH_BENCH_RUNS=1
+  fi
+  if test "x$GMPBENCH_PARALLEL" = x; then
+    GMPBENCH_PARALLEL=1
+  fi
+  if test "x$GMPBENCH_BUILD_LOG" = x; then
+    GMPBENCH_BUILD_LOG=gmpbench_build_log.txt
+  fi
+  if test "x$GMPBENCH_RUN_LOG" = x; then
+    GMPBENCH_RUN_LOG=gmpbench_run_log.txt
+  fi
+  if test "x$GMPBENCH_TARBALL" = x; then
+    error "TARBALL not defined in gmpbench.conf"
+    exit
+  fi
 }
 
 gmpbench_run ()
 {
-  echo "gmpbench run"
   PATH=$PWD:$PATH
   ABI=$ABI
   CFLAGS="$GMPBENCH_VCFLAGS"
+  pushd $GMPBENCH_SUITE/gmp*
   ./runbench >> $GMPBENCH_RUN_LOG 2>&1
+  popd
 }
 
 gmpbench_build ()
 {
   echo "gmpbench build"
-  local SRC_DIR=`ls $GMPBENCH_SUITE`
   echo $CONFIGURE_FLAGS > $GMPBENCH_BUILD_LOG
   echo CFLAGS=$GMPBENCH_VCFLAGS >> $GMPBENCH_BUILD_LOG
-  cd $GMPBENCH_SUITE/$SRC_DIR
-  gcc -o gexpr $SRC_PATH/gexpr.c -lm
+  check_pattern "$SRC_PATH/gexpr.c"
+  get_becnhmark  "$SRC_PATH/gexpr.c" $GMPBENCH_SUITE
+  gcc -o $GMPBENCH_SUITE/gexpr $GMPBENCH_SUITE/gexpr.c -lm
 }
 
 gmpbench_clean ()
@@ -68,13 +77,12 @@ gmpbench_testsuite ()
 
 gmpbench_extract ()
 {
-  echo "gmpbench extract"
   rm -rf $GMPBENCH_SUITE
   mkdir -p $GMPBENCH_SUITE
+  check_pattern "$SRC_PATH/$GMPBENCH_TARBALL*.tar.bz2"
   get_becnhmark  "$SRC_PATH/$GMPBENCH_TARBALL*.tar.bz2" $GMPBENCH_SUITE
-  local FILE=`ls $GMPBENCH_SUITE/$GMPBENCH_TARBALL*.tar.bz2`
-  tar xaf $FILE -C $GMPBENCH_SUITE
-  rm -f $FILE
+  tar xaf $GMPBENCH_SUITE/$GMPBENCH_TARBALL*.tar.bz2 -C $GMPBENCH_SUITE
+  rm -f $GMPBENCH_SUITE/$GMPBENCH_TARBALL*.tar.bz2
 }
 
 

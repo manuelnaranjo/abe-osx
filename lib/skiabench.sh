@@ -43,34 +43,43 @@ ALL_NAMES='fps_bitmap_565_scale fps_bitmap_565_noscale fps_bitmap_X888_scale \
 	ovals3 ovals1 rects3 \
 	rects1'
 
-init=false
-SKIABENCH_SUITE=skiabench
-
-SKIABENCH_SKIABENCH_SUITE="`grep ^SKIABENCH_SUITE= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_CCAT="`grep ^CCAT= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-SKIABENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/skiabench.conf \
-  | cut -d '=' -f 2`"
-
-
-
 
 skiabench_init()
 {
-  init=true
+  _skiabench_init=true
+  SKIABENCH_SUITE=skiabench
+
+  SKIABENCH_SKIABENCH_SUITE="`grep ^SKIABENCH_SUITE= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+  SKIABENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/skiabench.conf \
+    | cut -d '=' -f 2`"
+
+  if test "x$SKIABENCH_BENCH_RUNS" = x; then
+    SKIABENCH_BENCH_RUNS=1
+  fi
+  if test "x$SKIABENCH_PARALLEL" = x; then
+    SKIABENCH_PARALLEL=1
+  fi
+  if test "x$SKIABENCH_BUILD_LOG" = x; then
+    SKIABENCH_BUILD_LOG=skiabench_build_log.txt
+  fi
+  if test "x$SKIABENCH_RUN_LOG" = x; then
+    SKIABENCH_RUN_LOG=skiabench_run_log.txt
+  fi
+  if test "x$SKIABENCH_TARBALL" = x; then
+    error "TARBALL not defined in skiabench.conf"
+    exit
+  fi
 }
 
 skiabench_run ()
@@ -78,7 +87,8 @@ skiabench_run ()
   echo "skiabench run"
   for i in $(seq 1 $SKIABENCH_RUNS); do
     echo Run $i:: >> $SKIABENCH_RUN_LOG;
-    time -o $SKIABENCH_BUILD_LOG -a $MAKE -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
+    echo "time -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;"
+    time -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
   done
 }
 

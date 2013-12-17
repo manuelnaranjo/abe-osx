@@ -1,11 +1,6 @@
 
 #!/bin/sh
 
-#
-# $1 benchamark name coremark, etc
-#
-
-
 BZIP2BENCH=1
 COREMARK=2
 LIBAVBENCH=3
@@ -23,9 +18,27 @@ SPEC2K=13
 TIME=time
 
 _coremark_init=false
+_libavbench_init=false;
+_gmpbench_init=false;
+_gnugo_init=false
+_skiabench_init=false
+_denbench_init=false
 _eembc_init=false
 _eembc_office_init=false
 _spec2k_init=false
+
+check_pattern()
+{
+  COUNT=`ls $1| wc -l`
+  if test $COUNT = 0; then
+    error "pattern $1 does not match any file"
+    exit
+  fi
+  if test $COUNT != 1; then
+    error "pattern $1  matches more than one file"
+    exit
+  fi
+}
 
 bench_init()
 {
@@ -35,27 +48,22 @@ bench_init()
   fi
   case $1 in
     coremark)
-      echo "Coremark"
       coremark_init
       return $COREMARK
       ;;
     libavbench)
-      echo "Libavbench"
       libavbench_init
       return $LIBAVBENCH
       ;;
     gmpbench)
-      echo "Gmpbench"
       gmpbench_init
       return $GMPBENCH
       ;;
     gnugo)
-      echo "Gnugo"
       gnugo_init
       return $GNUGO
       ;;
     skiabench)
-      echo "Skiabench"
       skiabench_init
       return $SKIABENCH
       ;;
@@ -72,7 +80,6 @@ bench_init()
       return $EEMBC_OFFICE
       ;;
     spec2k)
-      echo "Spec2k"
       spec2k_init
       return $SPEC2K
       ;;
@@ -105,7 +112,7 @@ clean()
     $SKIABENCH)
       skiabench_clean
       ;;
-    $DEBENCH)
+    $DENBENCH)
       denbench_clean
       ;;
     $EEMBC)
@@ -149,7 +156,7 @@ build()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_build
       else
 	error "gmpbench init not called"
@@ -157,7 +164,7 @@ build()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_build
       else
 	error "gnugo init not called"
@@ -165,14 +172,14 @@ build()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_build
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_build
       else
@@ -181,7 +188,7 @@ build()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_build
       else
 	error "eembc init not called"
@@ -236,7 +243,7 @@ build_with_pgo()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_build_with_pgo
       else
 	error "gmpbench init not called"
@@ -244,7 +251,7 @@ build_with_pgo()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_build_with_pgo
       else
 	error "gnugo init not called"
@@ -252,14 +259,14 @@ build_with_pgo()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_build_with_pgo
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_build_with_pgo
       else
@@ -268,7 +275,7 @@ build_with_pgo()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_build_with_pgo
       else
 	error "eembc init not called"
@@ -324,7 +331,7 @@ run()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_run
       else
 	error "gmpbench init not called"
@@ -332,7 +339,7 @@ run()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_run
       else
 	error "gnugo init not called"
@@ -340,14 +347,14 @@ run()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_run
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_run
       else
@@ -356,7 +363,7 @@ run()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_run
       else
 	error "eembc init not called"
@@ -412,7 +419,7 @@ install()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_install
       else
 	error "gmpbench init not called"
@@ -420,7 +427,7 @@ install()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_install
       else
 	error "gnugo init not called"
@@ -428,14 +435,14 @@ install()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_install
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_install
       else
@@ -444,7 +451,7 @@ install()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_install
       else
 	error "eembc init not called"
@@ -500,7 +507,7 @@ testsuit()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_testsuite
       else
 	error "gmpbench init not called"
@@ -508,7 +515,7 @@ testsuit()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_testsuite
       else
 	error "gnugo init not called"
@@ -516,14 +523,14 @@ testsuit()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_testsuite
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_testsuite
       else
@@ -532,7 +539,7 @@ testsuit()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_testsuite
       else
 	error "eembc init not called"
@@ -588,7 +595,7 @@ extract()
       fi
       ;;
     $GMPBENCH)
-      if test $_coremark_init; then
+      if test $_gmpbench_init; then
 	gmpbench_extract
       else
 	error "gmpbench init not called"
@@ -596,7 +603,7 @@ extract()
       fi
       ;;
     $GNUGO)
-      if test $_coremark_init; then
+      if test $_gnugo_init; then
 	gnugo_extract
       else
 	error "gnugo init not called"
@@ -604,14 +611,14 @@ extract()
       fi
       ;;
     $SKIABENCH)
-      if test $_coremark_init; then
+      if test $_skiabench_init; then
 	skiabench_extract
       else
 	error "skiabench init not called"
 	exit
       fi
       ;;
-    $DEBENCH)
+    $DENBENCH)
       if test $_denbench_init; then
 	denbench_extract
       else
@@ -620,7 +627,7 @@ extract()
       fi
       ;;
     $EEMBC)
-      if test $_ceembc_init; then
+      if test $_eembc_init; then
 	eembc_extract
       else
 	error "eembc init not called"

@@ -1,52 +1,65 @@
 #!/bin/sh
 
-init=false
-GNUGO_SUITE=gnugo
-
-GNUGO_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_PARALEL="`grep ^PARELLEL= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_CCAT="`grep ^CCAT= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
-GNUGO_TARBALL="`grep ^TARBALL= ${topdir}/config/gnugo.conf \
-  | cut -d '=' -f 2`"
 
 gnugo_init()
 {
-  init=true
+  _gnugo_init=true
+  GNUGO_SUITE=gnugo
+
+  GNUGO_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+  GNUGO_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+  GNUGO_PARALEL="`grep ^PARELLEL= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+  GNUGO_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+  GNUGO_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+  GNUGO_TARBALL="`grep ^TARBALL= ${topdir}/config/gnugo.conf \
+    | cut -d '=' -f 2`"
+
+
+  if test "x$GNUGO_BENCH_RUNS" = x; then
+    GNUGO_BENCH_RUNS=1
+  fi
+  if test "x$GNUGO_PARALLEL" = x; then
+    GNUGO_PARALLEL=1
+  fi
+  if test "x$GNUGO_BUILD_LOG" = x; then
+    GNUGO_BUILD_LOG=gnugo_build_log.txt
+  fi
+  if test "x$GNUGO_RUN_LOG" = x; then
+    GNUGO_RUN_LOG=gnugo_run_log.txt
+  fi
+  if test "x$GNUGO_TARBALL" = x; then
+    error "TARBALL not defined in gnugo.conf"
+    exit
+  fi
 }
 
 gnugo_run ()
 {
   echo "gnugo run"
-  cd $GNUGO_SUITE/gnugo-*/regression
+  pushd $GNUGO_SUITE/gnugo-*/regression
   for i in $(seq 1 $GNUGO_BENCH_RUNS); do
     echo -e \\nRun $i:: >> $GNUGO_RUN_LOG;
     $TIME -o ../../../$GNUGO_RUN_LOG -a ../../../$GNUGO_SUITE/install/bin/gnugo --quiet --mode gtp\
       --gtp-input viking.tst;
   done
-  cd ../../..
+  popd
 }
 
 gnugo_build ()
 {
   echo "gnugo build"
   mkdir -p $GNUGO_SUITE/build
-  cd $GNUGO_SUITE/build
+  pushd $GNUGO_SUITE/build
   CFLAGS="$VCFLAGS" LDFLAGS="$VLDFLAGS" ../gnugo-*/configure --prefix=$PWD/../install >> $GNUGO_BUILD_LOG 2>&1
   echo $PWD
   make >> $GNUGO_BUILD_LOG 2>&1
   make install >> $GNUGO_BUILD_LOG 2>&1
-  cd ../..
+  popd
 }
 
 gnugo_clean ()

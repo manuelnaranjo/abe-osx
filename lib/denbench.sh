@@ -2,29 +2,43 @@
 
 #!/bin/sh
 
-init=false
-DENBENCH_VBUILD="`grep ^VBUILD= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_SUITE="`grep ^SUITE= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_CCAT="`grep ^CCAT= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-DENBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/denbench.conf \
-  | cut -d '=' -f 2`"
-
 denbench_init()
 {
-  init=true
+  _denbench_init=true
+  DENBENCH_SUITE=denbench
+  DENBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_CCAT="`grep ^CCAT= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+  DENBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/denbench.conf \
+    | cut -d '=' -f 2`"
+
+  if test "x$DENBENCH_BENCH_RUNS" = x; then
+    DENBENCH_BENCH_RUNS=1
+  fi
+  if test "x$DENBENCH_PARALLEL" = x; then
+    DENBENCH_PARALLEL=1
+  fi
+  if test "x$DENBENCH_BUILD_LOG" = x; then
+    DENBENCH_BUILD_LOG=denbench_build_log.txt
+  fi
+  if test "x$DENBENCH_RUN_LOG" = x; then
+    DENBENCH_RUN_LOG=denbench_run_log.txt
+  fi
+  if test "x$DENBENCH_TARBALL" = x; then
+    error "TARBALL not defined in denbench.conf"
+    exit
+  fi
 }
 
 denbench_run ()
@@ -70,10 +84,16 @@ denbench_testsuite ()
 denbench_extract ()
 {
   echo "denbench extract"
-  extract: $(TOPDIR)/files/$(SUITE)*bzr*.cpt
-	rm -rf $(VBUILD)
-	mkdir -p $(VBUILD)
-	$(CCAT) $^ | tar xjf - -C $(VBUILD)
+  rm -rf $DENBENCH_SUITE
+  mkdir -p $DENBENCH_SUITE
+  check_pattern "$SRC_PATH/$DENBENCH_TARBALL*.cpt"
+  get_becnhmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
+  sync
+  local FILE=`ls $DENBENCH_SUITE/$DENBENCH_TARBALL*`
+  echo $FILE
+  echo "$CCAT $FILE | gunzip | tar xjf - -C $DENBENCH_SUITE"
+  $CCAT $FILE | tar xJf - -C $DENBENCH_SUITE
+  rm $FILE
 }
 
 

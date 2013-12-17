@@ -2,47 +2,62 @@
 
 #!/bin/sh
 
-init=false
-EEMBC_OFFICE_EEMBC_OFFICE_VBUILD="`grep ^EEMBC_OFFICE_VBUILD= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_SUITE="`grep ^SUITE= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_CCAT="`grep ^CCAT= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
-EEMBC_OFFICE_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc_office.conf \
-  | cut -d '=' -f 2`"
 
 eembc_office_init()
 {
-  init=true
+  _eembc_office_init=true
+  EEMBC_OFFICE_SUITE=eembc_office
+  EEMBC_OFFICE_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_TARBALL="`grep ^TARBALL= ${topdir}/config/eembc_office.conf \
+    | cut -d '=' -f 2`"
+
+
+  if test "x$EEMBC_OFFICE_BENCH_RUNS" = x; then
+    EEMBC_OFFICE_BENCH_RUNS=1
+  fi
+  if test "x$EEMBC_OFFICE_PARALLEL" = x; then
+    EEMBC_OFFICE_PARALLEL=1
+  fi
+  if test "x$EEMBC_OFFICE_BUILD_LOG" = x; then
+    EEMBC_OFFICE_BUILD_LOG=eembc_office_build_log.txt
+  fi
+  if test "x$EEMBC_OFFICE_RUN_LOG" = x; then
+    EEMBC_OFFICE_RUN_LOG=eembc_office_run_log.txt
+  fi
+  if test "x$EEMBC_OFFICE_TARBALL" = x; then
+    error "TARBALL not defined in eembc_office.conf"
+    exit
+  fi
+
+
 }
 
 eembc_office_run ()
 {
   echo "eembc_office run"
   echo "Note: All results are estimates." >> $EEMBC_OFFICE_RUN_LOG
-  for i in $(seq 1 $EEMBC_OFFICE_BENCH_RUNS); do
+  for i in $(seq 1 $BENCH_RUNS); do
     echo -e \\nRun $i:: >> $EEMBC_OFFICE_RUN_LOG;
-    make -C $EEMBC_OFFICE_VBUILD/eembc* -s rerun $MAKE_EXTRAS;
-    cat `find $EEMBC_OFFICE_VBUILD -name "gcc_time*.log"` >> $EEMBC_OFFICE_RUN_LOG;
+    make -C $EEMBC_OFFICE_SUITE/eembc_office-linaro-* -s rerun $MAKE_EXTRAS;
+    cat `find $EEMBC_OFFICE_SUITE -name "gcc_time*.log"` >> $EEMBC_OFFICE_RUN_LOG;
   done
 }
 
 eembc_office_build ()
 {
   echo "eembc_office build"
-  echo COMPILER_FLAGS=$EEMBC_OFFICE_VCFLAGS >> $EEMBC_OFFICE_BUILD_LOG 2>&1
-  make -k $PARALLEL -C $EEMBC_OFFICE_VBUILD/eembc* $TARGET $MAKE_EXTRAS >> $EEMBC_OFFICE_BUILD_LOG 2>&1
+  echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_OFFICE_BUILD_LOG 2>&1
+  local SRCDIR=`ls $EEMBC_OFFICE_SUITE`
+  make -k $EEMBC_OFFICE_PARALLEL -C $EEMBC_OFFICE_SUITE/$SRC_DIR $TARGET $MAKE_EXTRAS >> $EEMBC_OFFICE_BUILD_LOG 2>&1
 }
 
 eembc_office_clean ()
@@ -59,13 +74,15 @@ eembc_office_build_with_pgo ()
 eembc_office_install ()
 {
   echo "eembc_office install"
-  #make -f $(TOPDIR)/lib/fetch.mk fetch F=$@ CONTEXT=snapshots/prebuilt
-  rm -rf $EEMBC_OFFICE_VBUILD/install
-  mkdir $EEMBC_OFFICE_VBUILD/install
-  cd $EEMBC_OFFICE_VBUILD
-  for i in eembc*/*/gcc/bin*; do
-    ln -fs ../$i install/`echo $i | awk -F/ '{print $$2}'`
+  rm -rf $EEMBC_OFFICE_SUITE/install
+  mkdir $EEMBC_OFFICE_SUITE/install
+  pushd $EEMBC_OFFICE_SUITE
+  for i in eembc_office-linaro-*/*; do
+    if [ -d $$i/gcc/bin ];
+	then ln -fs ../$i/gcc/bin install/`basename $$i`;
+    fi
   done
+  popd
 }
 
 eembc_office_testsuite ()
@@ -76,9 +93,13 @@ eembc_office_testsuite ()
 eembc_office_extract ()
 {
   echo "eembc_office extract"
-  rm -rf $EEMBC_OFFICE_VBUILD
-  mkdir -p $EEMBC_OFFICE_VBUILD
-  $CCAT eembc-office+bzr20.tar.xz.cpt | tar xJf - -C $EEMBC_OFFICE_VBUILD
+  rm -rf $EEMBC_OFFICE_SUITE
+  mkdir -p $EEMBC_OFFICE_SUITE
+  check_pattern "$SRC_PATH/$EEMBC_OFFICE_TARBALL*.cpt"
+  get_becnhmark  "$SRC_PATH/$EEMBC_OFFICE_TARBALL*.cpt" $EEMBC_OFFICE_SUITE
+  local FILE=`ls $EEMBC_OFFICE_SUITE/$EEMBC_OFFICE_TARBALL*.cpt`
+  $CCAT $FILE | tar xjf - -C $EEMBC_OFFICE_SUITE
+  rm $FILE
 }
 
 
