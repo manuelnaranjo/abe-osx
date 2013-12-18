@@ -55,7 +55,10 @@ release_binutils_src()
     fi
     local srcdir="`get_srcdir ${binutils_version}`"
     local builddir="`get_builddir ${binutils_version}`"
-    local tag="`create_release_tag ${binutils_version}`"
+    # The new combined repository for binutils has GDB too, so we strip that off.
+    local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::'`"
+
+    # For a release, we don't need the .git identifier.
     local destdir=/tmp/${tag}
 
     # make a link with the correct name for the tarball's source directory
@@ -97,7 +100,9 @@ release_binutils_src()
 }
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GCC/ReleaseProcess
-# $1 - 
+# The output file name looks like this: gcc-linaro-4.8-2013.11.tar.xz.
+# The date is set by the --release option to Cbuildv2. This function is
+# only called with --tarsrc or --tarball.
 release_gcc_src()
 {
     trace "$*"
@@ -108,17 +113,16 @@ release_gcc_src()
     fi
     local srcdir="`get_srcdir ${gcc_version}`"
     local builddir="`get_builddir ${gcc_version} stage2`"
-    local tag="`create_release_tag ${gcc_version}`"
-    local version="`create_release_version ${gcc_version}`"
+    local tag="`create_release_tag ${gcc_version} | sed -e 's:-linaro-::'`"
     local destdir=/tmp/linaro.$$/${tag}
 
     dryrun "mkdir -p ${destdir}/gcc/doc"
 
     dryrun "rsync --exclude .git -ar ${srcdir}/* ${destdir}"
     
-    # Update the GCC version
+    # Update the GCC version, which should look like "4.8-${release}/"
     rm -f ${destdir}/gcc/LINARO-VERSION
-    echo "${version}" > ${destdir}/gcc/LINARO-VERSION
+    echo "${tag}" | sed -e 's:^.*linaro-::' > ${destdir}/gcc/LINARO-VERSION
     
     if test x"${release}" = x;then
 	edit_changelogs ${destdir} ${tag}
@@ -273,13 +277,13 @@ release_gdb_src()
 	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
     local srcdir="`get_srcdir ${gdb_version}`"
-#    local builddir="`get_builddir ${gdb_version}`"
-    local tag="`create_release_tag ${gdb_version}`"
+    # The new combined repository for GDB has Binutils too, so we strip that off.
+    local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
     local destdir=/tmp/${tag}
 
     # Update the GDB version
     rm -f ${destdir}/gdb/LINARO-VERSION
-    echo "${tag}" > ${destdir}/gdb/LINARO-VERSION
+    echo "${tag}" | sed -e 's:^.*linaro-::' > ${destdir}/gdb/LINARO-VERSION
 
     if test x"${release}" = x;then
 	edit_changelogs ${srcdir} ${tag}
