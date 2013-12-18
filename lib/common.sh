@@ -675,7 +675,9 @@ create_release_tag()
     local branch=
     local revision=
 
-    local name="`echo ${version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
+    local rtag="`get_git_tag $1`"
+
+    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
 	
     if test x"${release}" = x; then
     # extract the branch from the version
@@ -704,6 +706,9 @@ create_release_tag()
 	    local version="`echo ${version} | sed -e 's:[a-z\./-]*::' -e 's:-branch::'`"
 	fi
 	local rtag="${name}-${version}-${release}"
+        # For a release, we don't need the .git~ identifier.
+	local rtag="`echo ${rtag} | sed -e 's:\.git~:-:'`"
+
     fi
 
     echo ${rtag}
