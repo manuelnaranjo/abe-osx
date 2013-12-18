@@ -66,7 +66,6 @@ spec2k_run ()
 
 spec2k_build ()
 {
-  echo "spec2k build"
   pushd $SPEC2k_SUITE/cpu2000/
   source shrc
   echo VCFLAGS=$SPEC2k_VCFLAGS >> $SPEC2k_BUILD_LOG 2>&1
@@ -76,7 +75,6 @@ spec2k_build ()
 
 spec2k_clean ()
 {
-  echo "spec2k clean"
   pushd $SPEC2k_SUITE/cpu2000/
   source shrc
   runspec $RUNSPECFLAGS -a nuke $SPEC2k_TESTS
@@ -111,7 +109,6 @@ spec2k_testsuite ()
 
 spec2k_extract ()
 {
-  echo "spec2k extract"
   # Extract SPEC
   rm -rf $SPEC2k_SUITE
   mkdir -p $SPEC2k_SUITE
@@ -128,19 +125,31 @@ spec2k_extract ()
       ;;
     *arm*)
       MACHINE=arm
+      BUILD_ARCH= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+      case $BUILD_ARCH in
+	*hf*)
+	  FLOAT_SUFFIX=hf
+	  ;;
+	*)
+	  ;;
+      esac
       ;;
     *)
      error "MACHINE=`uname -m` is not supported"
      ;;
   esac
-  check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX.tar*cpt"
-  get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX.tar*cpt" $SPEC2k_SUITE
-  local TOOL=`ls $SPEC2k_SUITE/cpu2000tools-*$MACHINE*.cpt`
-  $CCAT $TOOL | tar xJf - -C $SPEC2k_SUITE/cpu2000
-  #rm $FILE
-  #cp -alf $(LBUILD)/cpu2000* $(VBUILD)
-  #ln -sf $(VBUILD)/cpu2000* $(NICEBUILD)
   # Create the config file
+  check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt"
+  get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
+  $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
+  rm $SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt
+
+  # and the helper scripts
+  check_pattern "$SRC_PATH/spec2000-linaro*.tar*"
+  get_becnhmark  "spec2000-linaro*.tar*" $SPEC2k_SUITE
+  tar xaf $SPEC2k_SUITE/spec2000-linaro*.tar* -C $SPEC2k_SUITE/cpu2000* --strip-components=1
+  rm spec2000-linaro*.tar*
+
   pushd $SPEC2k_SUITE/cpu2000/
   sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/runspec > ./bin/runspec.new
   mv ./bin/runspec.new ./bin/runspec

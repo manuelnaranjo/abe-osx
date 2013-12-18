@@ -46,7 +46,7 @@ eembc_run ()
   echo "Note: All results are estimates." >> $EEMBC_RUN_LOG
   for i in $(seq 1 $BENCH_RUNS); do
     echo -e \\nRun $$i:: >> $EEMBC_RUN_LOG;
-    make -C $EEMBC_SUITE/eembc-linaro-* -s rerun $MAKE_EXTRAS;
+    make -C $EEMBC_SUITE/eembc-linaro-* -s rerun $MAKE_EXTRAS >> $EEMBC_RUN_LOG 2>&1;
     cat `find $EEMBC_SUITE -name "gcc_time*.log"` >> $EEMBC_RUN_LOG;
   done
 }
@@ -55,7 +55,7 @@ eembc_build ()
 {
   echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
   local SRCDIR=`ls $EEMBC_SUITE`
-  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/$SRC_DIR $TARGET $MAKE_EXTRAS >> $EEMBC_BUILD_LOG 2>&1
+  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/$SRC_DIR $TARGET COMPILER_FLAGS=$EEMBC_VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
 }
 
 eembc_clean ()

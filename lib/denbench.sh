@@ -39,17 +39,16 @@ denbench_run ()
   echo "denbench run"
   echo "Note: All results are estimates." >> $DENBENCH_RUN_LOG
   for i in $(seq 1 $DENBENCH_BENCH_RUNS); do
-    echo -e \\nRun $i:: >> $DENBENCH_RUN_LOG;
-    make -C $DENBENCH_SUITE/* -s rerun;
-    cat $DENBENCH_SUITE/consumer/*timev2.log >> $DENBENCH_RUN_LOG;
+    echo -e \\nRun $i:: >> $DENBENCH_RUN_LOG
+    make -C $DENBENCH_SUITE/* -s rerun >> $DENBENCH_RUN_LOG
+    cat $DENBENCH_SUITE/consumer/*timev2.log >> $DENBENCH_RUN_LOG
   done
 }
 
 denbench_build ()
 {
   echo VCFLAGS=$VCFLAGS >> $DENBENCH_BUILD_LOG 2>&1
-  make -C $DENBENCH_SUITE/*
-  COMPILER_FLAGS="$(VCFLAGS)" $(TARGET) >> $DENBENCH_BUILD_LOG 2>&1
+  make -C $DENBENCH_SUITE/* COMPILER_FLAGS=$DENBENCH_VCFLAGS build >> $DENBENCH_BUILD_LOG 2>&1
 }
 
 denbench_clean ()
@@ -79,9 +78,8 @@ denbench_extract ()
   mkdir -p $DENBENCH_SUITE
   check_pattern "$SRC_PATH/$DENBENCH_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
-  local FILE=`ls $DENBENCH_SUITE/$DENBENCH_TARBALL*`
-  $CCAT $FILE $DENBENCH_SUITE/$DENBENCH_TARBALL* | tar xJf - -C $DENBENCH_SUITE
-  rm $DENBENCH_SUITE/$DENBENCH_TARBALL*
+  $CCAT $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt | tar xJf - -C $DENBENCH_SUITE
+  rm -f $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt
 }
 
 

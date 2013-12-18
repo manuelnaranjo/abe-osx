@@ -86,11 +86,9 @@ skiabench_run ()
   echo "skiabench run"
   for i in $(seq 1 $SKIABENCH_RUNS); do
     echo Run $i:: >> $SKIABENCH_RUN_LOG;
-    echo "time -o $SKIABENCH_BUILD_LOG -a make -sf $SKIABENCH_SUTE/skia* run-all >> $SKIABENCH_RUN_LOG;"
     for j in $ALL_NAMES; do
-      echo $j
-      #$TIME -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
-      skia-*/out/bench/bench $RUN_FLAGS -repeat $(value $*) -match $j
+      echo $j >> $SKIABENCH_RUN_LOG;
+      $TIME -o $SKIABENCH_RUN_LOG -a $SKIABENCH_SUITE/skia-*/out/bench/bench $RUN_FLAGS -repeat "$`echo $j`" -match $j
     done
   done
 }
@@ -108,7 +106,7 @@ skiabench_build_with_pgo ()
 skiabench_build ()
 {
   echo "skiabench build"
-  make -s $SKIABENCH_PARALLEL -C $SKIABENCH_SUITE/skia-* CFLAGS="$SKIABENCH_VCFLAGS" CFLAGS_SSE2=bench > $SKIABENCH_BUILD_LOG 2>&1
+  make -s -j $SKIABENCH_PARALLEL -C $SKIABENCH_SUITE/skia-* CFLAGS="$SKIABENCH_VCFLAGS" bench > $SKIABENCH_BUILD_LOG 2>&1
 }
 
 
@@ -131,6 +129,9 @@ skiabench_extract ()
   get_becnhmark "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
   tar xaf $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz -C $SKIABENCH_SUITE
   rm -f $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz
+  local SRCDIR=`ls $SKIABENCH_SUITE`
+  sed -e s#gcc#g\+\+#g < $SKIABENCH_SUITE/$SRCDIR/Makefile > $SKIABENCH_SUITE/$SRCDIR/Makefile.new
+  mv $SKIABENCH_SUITE/$SRCDIR/Makefile.new $SKIABENCH_SUITE/$SRCDIR/Makefile
 }
 
 
