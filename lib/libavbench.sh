@@ -45,7 +45,6 @@ libavbench_init()
 
 libavbench_run ()
 {
-  echo "libavbench run"
   for f in $LBUILD/libavbench-data*/*; do
     echo >> $LIBAVBENCH_RUN_LOG;
     echo `basename $f`:: >> $LIBAVBENCH_RUN_LOG;
@@ -62,7 +61,6 @@ libavbench_run ()
 
 libavbench_build ()
 {
-  echo "libavbench build"
   make -C $LIBAVBENCH_SUITE/build/ >> $LIBAVBENCH_BUILD_LOG 2>&1
   make -C $LIBAVBENCH_SUITE/build/ install>> $LIBAVBENCH_BUILD_LOG 2>&1
 }
@@ -91,7 +89,6 @@ libavbench_testsuite ()
 
 libavbench_extract ()
 {
-  echo "libavbench extract"
   rm -rf $LIBAVBENCH_SUITE
   mkdir -p $LIBAVBENCH_SUITE
   check_pattern "$SRC_PATH/$LIBAVBENCH_TARBALL*.tar.xz"
@@ -102,7 +99,6 @@ libavbench_extract ()
   echo $CONFIGURE_FLAGS >> $LIBAVBENCH_BUILD_LOG
   mkdir -p $LIBAVBENCH_SUITE/build
   pushd $LIBAVBENCH_SUITE/build
-  echo ">>$SRC_DIR"
   ../libav*/configure --prefix=$PWD/../install $CONFIGURE_FLAGS  >> $LIBAVBENCH_BUILD_LOG 2>&1
   popd
   # Strip out any unwanted default flags

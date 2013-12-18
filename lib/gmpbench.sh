@@ -36,17 +36,16 @@ gmpbench_init()
 
 gmpbench_run ()
 {
-  PATH=$PWD:$PATH
+  PATH=$PWD/$GMPBENCH_SUITE:$PATH
   ABI=$ABI
   CFLAGS="$GMPBENCH_VCFLAGS"
   pushd $GMPBENCH_SUITE/gmp*
-  ./runbench >> $GMPBENCH_RUN_LOG 2>&1
+  ./runbench >> ../../$GMPBENCH_RUN_LOG 2>&1
   popd
 }
 
 gmpbench_build ()
 {
-  echo "gmpbench build"
   echo $CONFIGURE_FLAGS > $GMPBENCH_BUILD_LOG
   echo CFLAGS=$GMPBENCH_VCFLAGS >> $GMPBENCH_BUILD_LOG
   check_pattern "$SRC_PATH/gexpr.c"

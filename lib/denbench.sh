@@ -1,7 +1,4 @@
 
-
-#!/bin/sh
-
 denbench_init()
 {
   _denbench_init=true
@@ -11,10 +8,6 @@ denbench_init()
   DENBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/denbench.conf \
     | cut -d '=' -f 2`"
   DENBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_CCAT="`grep ^CCAT= ${topdir}/config/denbench.conf \
     | cut -d '=' -f 2`"
   DENBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/denbench.conf \
     | cut -d '=' -f 2`"
@@ -54,7 +47,6 @@ denbench_run ()
 
 denbench_build ()
 {
-  echo "denbench build"
   echo VCFLAGS=$VCFLAGS >> $DENBENCH_BUILD_LOG 2>&1
   make -C $DENBENCH_SUITE/*
   COMPILER_FLAGS="$(VCFLAGS)" $(TARGET) >> $DENBENCH_BUILD_LOG 2>&1
@@ -83,17 +75,13 @@ denbench_testsuite ()
 
 denbench_extract ()
 {
-  echo "denbench extract"
   rm -rf $DENBENCH_SUITE
   mkdir -p $DENBENCH_SUITE
   check_pattern "$SRC_PATH/$DENBENCH_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
-  sync
   local FILE=`ls $DENBENCH_SUITE/$DENBENCH_TARBALL*`
-  echo $FILE
-  echo "$CCAT $FILE | gunzip | tar xjf - -C $DENBENCH_SUITE"
-  $CCAT $FILE | tar xJf - -C $DENBENCH_SUITE
-  rm $FILE
+  $CCAT $FILE $DENBENCH_SUITE/$DENBENCH_TARBALL* | tar xJf - -C $DENBENCH_SUITE
+  rm $DENBENCH_SUITE/$DENBENCH_TARBALL*
 }
 
 

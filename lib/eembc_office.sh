@@ -1,8 +1,4 @@
 
-
-#!/bin/sh
-
-
 eembc_office_init()
 {
   _eembc_office_init=true
@@ -20,7 +16,6 @@ eembc_office_init()
   EEMBC_OFFICE_TARBALL="`grep ^TARBALL= ${topdir}/config/eembc_office.conf \
     | cut -d '=' -f 2`"
 
-
   if test "x$EEMBC_OFFICE_BENCH_RUNS" = x; then
     EEMBC_OFFICE_BENCH_RUNS=1
   fi
@@ -37,13 +32,10 @@ eembc_office_init()
     error "TARBALL not defined in eembc_office.conf"
     exit
   fi
-
-
 }
 
 eembc_office_run ()
 {
-  echo "eembc_office run"
   echo "Note: All results are estimates." >> $EEMBC_OFFICE_RUN_LOG
   for i in $(seq 1 $BENCH_RUNS); do
     echo -e \\nRun $i:: >> $EEMBC_OFFICE_RUN_LOG;
@@ -73,7 +65,6 @@ eembc_office_build_with_pgo ()
 
 eembc_office_install ()
 {
-  echo "eembc_office install"
   rm -rf $EEMBC_OFFICE_SUITE/install
   mkdir $EEMBC_OFFICE_SUITE/install
   pushd $EEMBC_OFFICE_SUITE
@@ -92,14 +83,12 @@ eembc_office_testsuite ()
 
 eembc_office_extract ()
 {
-  echo "eembc_office extract"
   rm -rf $EEMBC_OFFICE_SUITE
   mkdir -p $EEMBC_OFFICE_SUITE
   check_pattern "$SRC_PATH/$EEMBC_OFFICE_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$EEMBC_OFFICE_TARBALL*.cpt" $EEMBC_OFFICE_SUITE
-  local FILE=`ls $EEMBC_OFFICE_SUITE/$EEMBC_OFFICE_TARBALL*.cpt`
-  $CCAT $FILE | tar xjf - -C $EEMBC_OFFICE_SUITE
-  rm $FILE
+  $CCAT $EEMBC_OFFICE_SUITE/$EEMBC_OFFICE_TARBALL*.cpt | tar xjf - -C $EEMBC_OFFICE_SUITE
+  rm -f $EEMBC_OFFICE_SUITE/$EEMBC_OFFICE_TARBALL*.cpt
 }
 
 

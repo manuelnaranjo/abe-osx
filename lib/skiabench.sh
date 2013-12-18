@@ -1,5 +1,4 @@
 
-#!/bin/sh
 # Number of iterations for each sub-benchmark.  Calibrated so that
 # each run takes about 10 s on a Cortex-A9
 fps_bitmap_565_scale=200
@@ -87,8 +86,12 @@ skiabench_run ()
   echo "skiabench run"
   for i in $(seq 1 $SKIABENCH_RUNS); do
     echo Run $i:: >> $SKIABENCH_RUN_LOG;
-    echo "time -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;"
-    time -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
+    echo "time -o $SKIABENCH_BUILD_LOG -a make -sf $SKIABENCH_SUTE/skia* run-all >> $SKIABENCH_RUN_LOG;"
+    for j in $ALL_NAMES; do
+      echo $j
+      #$TIME -o $SKIABENCH_BUILD_LOG -a make -sf $CHILD run-all >> $SKIABENCH_RUN_LOG;
+      skia-*/out/bench/bench $RUN_FLAGS -repeat $(value $*) -match $j
+    done
   done
 }
 
@@ -105,7 +108,7 @@ skiabench_build_with_pgo ()
 skiabench_build ()
 {
   echo "skiabench build"
-  make -s $SKIABENCH_PARALLEL -C $SKIABENCH_SUITE/skia-* CFLAGS="$VCFLAGS" CFLAGS_SSE2= bench > $SKIABENCH_BUILD_LOG 2>&1
+  make -s $SKIABENCH_PARALLEL -C $SKIABENCH_SUITE/skia-* CFLAGS="$SKIABENCH_VCFLAGS" CFLAGS_SSE2=bench > $SKIABENCH_BUILD_LOG 2>&1
 }
 
 
@@ -122,14 +125,12 @@ skiabench_testsuite ()
 
 skiabench_extract ()
 {
-  echo "skiabench extract"
   rm -rf $SKIABENCH_SUITE
   mkdir -p $SKIABENCH_SUITE
-  get_becnhmark  "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
-  local FILE=`ls $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz`
-  echo "tar xaf $FILE $SKIABENCH_SUITE"
-  tar xaf $FILE -C $SKIABENCH_SUITE
-  rm $FILE
+  check_pattern "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz"
+  get_becnhmark "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
+  tar xaf $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz -C $SKIABENCH_SUITE
+  rm -f $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz
 }
 
 

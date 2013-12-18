@@ -43,7 +43,6 @@ eembc_init()
 
 eembc_run ()
 {
-  echo "eembc run"
   echo "Note: All results are estimates." >> $EEMBC_RUN_LOG
   for i in $(seq 1 $BENCH_RUNS); do
     echo -e \\nRun $$i:: >> $EEMBC_RUN_LOG;
@@ -54,7 +53,6 @@ eembc_run ()
 
 eembc_build ()
 {
-  echo "eembc build"
   echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
   local SRCDIR=`ls $EEMBC_SUITE`
   make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/$SRC_DIR $TARGET $MAKE_EXTRAS >> $EEMBC_BUILD_LOG 2>&1
@@ -73,7 +71,6 @@ eembc_build_with_pgo ()
 
 eembc_install ()
 {
-  echo "eembc install"
   rm -rf $EEMBC_SUITE/install
   mkdir $EEMBC_SUITE/install
   pushd $EEMBC_SUITE
@@ -92,14 +89,12 @@ eembc_testsuite ()
 
 eembc_extract ()
 {
-  echo "eembc extract"
   rm -rf $EEMBC_SUITE
   mkdir -p $EEMBC_SUITE
   check_pattern "$SRC_PATH/$EEMBC_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$EEMBC_TARBALL*.cpt" $EEMBC_SUITE
-  local FILE=`ls $EEMBC_SUITE/$EEMBC_TARBALL*.cpt`
-  $CCAT $FILE | tar xjf - -C $EEMBC_SUITE
-  rm $FILE
+  $CCAT $EEMBC_SUITE/$EEMBC_TARBALL*.cpt | tar xjf - -C $EEMBC_SUITE
+  rm $EEMBC_SUITE/$EEMBC_TARBALL*.cpt
 }
 
 

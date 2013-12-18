@@ -56,9 +56,8 @@ gnugo_build ()
   mkdir -p $GNUGO_SUITE/build
   pushd $GNUGO_SUITE/build
   CFLAGS="$VCFLAGS" LDFLAGS="$VLDFLAGS" ../gnugo-*/configure --prefix=$PWD/../install >> $GNUGO_BUILD_LOG 2>&1
-  echo $PWD
-  make >> $GNUGO_BUILD_LOG 2>&1
-  make install >> $GNUGO_BUILD_LOG 2>&1
+  make >> ../../$GNUGO_BUILD_LOG 2>&1
+  make install >> ../../$GNUGO_BUILD_LOG 2>&1
   popd
 }
 
@@ -88,10 +87,10 @@ gnugo_extract ()
   echo "gnugo extract"
   rm -rf $GNUGO_SUITE
   mkdir -p $GNUGO_SUITE
+  check_pattern "$SRC_PATH/$GNUGO_TARBALL*.tar.gz"
   get_becnhmark  "$SRC_PATH/$GNUGO_TARBALL*.tar.gz" $GNUGO_SUITE
-  local FILE=`ls $GNUGO_SUITE/$GNUGO_TARBALL*.tar.gz`
-  tar xaf $FILE -C $GNUGO_SUITE
-  rm -f $FILE
+  tar xaf $GNUGO_SUITE/$GNUGO_TARBALL*.tar.gz -C $GNUGO_SUITE
+  rm -f $GNUGO_SUITE/$GNUGO_TARBALL*.tar.gz
 }
 
 
