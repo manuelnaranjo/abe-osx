@@ -68,16 +68,20 @@ fi
 # that to compile the cross compiler to bootstrap. Since it's just
 # used to build the cross compiler, we don't bother to run 'make check'.
 if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} --build all
+    $CONFIG_SHELL ../cbuildv2/cbuild2.sh --nodepends --parallel ${change} --build all
 fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
+$CONFIG_SHELL ../cbuildv2/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
 
-# List the files in snapshots, since we usually produce tarballs in
-# this directory
-ls -F $WORKSPACE/cbuildv2/snapshots/*.xz
+# Create the BUILD-INFO file for Jenkins.
+cat << EOF > ${WORKSPACE}/cbuildv2/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
 
 # Remove any leftover junit files
 rm $WORKSPACE/cbuildv2/*.junit
@@ -91,7 +95,7 @@ if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
 	name="`basename $i`"
-	../sum2junit.sh $i $WORKSPACE/cbuildv2/${name}.junit
+	../cbuildv2/sum2junit.sh $i $WORKSPACE/cbuildv2/${name}.junit
     done
     junits="`find $WORKSPACE/cbuildv2/ -name *.junit`"
     if test x"${junits}" != x; then
@@ -106,12 +110,13 @@ fi
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
+    $CONFIG_SHELL ../cbuildv2/cbuild2.sh --nodepends --parallel ${change} --target ${target} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc --target ${target} --build all
+	$CONFIG_SHELL ../cbuildv2/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc --target ${target} --build all
     else
-	$CONFIG_SHELL ../cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 --target ${target} --build all
+	$CONFIG_SHELL ../cbuildv2/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 --target ${target} --build all
     fi
 fi
 
