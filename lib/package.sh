@@ -188,7 +188,7 @@ binary_toolchain()
 	# the executables,
         # GCC executables we want to relink
 	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
-	dryrun "cd ${builddir} && rm ${bins}"
+	dryrun "cd ${builddir} && rm -f ${bins}"
 	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
 	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
 	# Install the documentation too
