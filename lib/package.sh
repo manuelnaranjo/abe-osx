@@ -202,7 +202,7 @@ binary_toolchain()
     if test x"${binutils_static}" = x"yes"; then
         # Binutils executables we want to relink
 	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
-	dryrun "cd ${builddir} && rm ${bins}"
+	dryrun "cd ${builddir} && rm -f ${bins}"
 	# If the default is a statically linked binutils, we only have to relink
 	# the excutables,
 	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
