@@ -23,6 +23,11 @@ if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
 fi
 
+#if test x"${chroot}" = xtrue; then
+#    schroot -c lucid
+#    cd /linaro/
+#fi
+
 # Remove the previous build if specified, default to reusing the existing
 # build directory.
 if test x"${reuse}" != x"true"; then
@@ -49,7 +54,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ../configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
+$CONFIG_SHELL ../cbuildv2/configure --with-local-snapshots=$WORKSPACE/cbuildv2/snapshots
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
