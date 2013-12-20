@@ -2,7 +2,7 @@
 
 # Test the config parameters from the Jenkins Build Now page
 
-topspace=`dirname ${WORKSPACE}`
+topspace="`dirname ${WORKSPACE}`/shared"
 
 if test x"${tarsrc}" = xtrue; then
     release="--tarsrc"
@@ -59,7 +59,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${WORKSPACE}/configure --with-local-snapshots=${topspace}/shared/snapshots
+$CONFIG_SHELL ${topspace}/configure --with-local-snapshots=${topspace}/shared/snapshots
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
@@ -75,7 +75,7 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${WORKSPACE}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
+$CONFIG_SHELL ${topspace}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
