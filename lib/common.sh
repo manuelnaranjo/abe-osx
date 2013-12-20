@@ -681,10 +681,6 @@ create_release_tag()
 	
     if test x"${release}" = x; then
     # extract the branch from the version
-	if test "`echo $1 | grep -c "\.git/"`" -gt 0; then
-	    local branch="~`echo ${version} | cut -d '/' -f 2 | cut -d '@' -f 1`"
-	fi    
-	
 	local srcdir="`get_srcdir ${version}`"
 	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
 	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
@@ -693,11 +689,7 @@ create_release_tag()
 	local date="`date +%Y%m%d`"
 	
         # return the version string array
-	local rtag="${name}${branch}${revision}-${date}"
-        # when 'linaro' is part of the branch name, we get a duplicate
-	# identifier, which we remove to be less confusing, as the tag name 
-	# is long enough as it is...
-	local rtag="`echo ${rtag} | sed -e 's:-linaro~linaro:~linaro:'`"
+	local rtag="${rtag}${revision}-${date}"
     else
 	local version="`echo $1 | sed -e 's:[a-z\./-]*::' -e 's:-branch::' -e 's:^_::' | tr '_' '.' `"
 	local tool="`get_toolname $1`"
