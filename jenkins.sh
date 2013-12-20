@@ -36,12 +36,12 @@ fi
 # Remove the previous build if specified, default to reusing the existing
 # build directory.
 if test x"${reuse}" != x"true"; then
-    rm -fr ${topspace}/_build
+    rm -fr ${WORKSPACE}/_build
 fi
 
 # Create a build directory
-if test ! -d ${topspace}/_build; then
-    mkdir -p ${topspace}/_build
+if test ! -d ${WORKSPACE}/_build; then
+    mkdir -p ${WORKSPACE}/_build
 fi
 
 # Use the newly created build directory
