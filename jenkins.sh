@@ -5,6 +5,10 @@
 # The files in this directory are shared across all platforms 
 shared="`dirname ${WORKSPACE}`/shared"
 
+# This is the source directory for Cbuildv2. Jenkins specifies this
+# sub directory when it does a git clone or pull of Cbuildv2.
+cbuild_dir="${shared}/cbuildv2"
+
 if test x"${tarsrc}" = xtrue; then
     release="--tarsrc"
 fi
@@ -60,7 +64,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${shared}/configure --with-local-snapshots=${shared}/snapshots
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
@@ -71,12 +75,12 @@ fi
 # that to compile the cross compiler to bootstrap. Since it's just
 # used to build the cross compiler, we don't bother to run 'make check'.
 if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ${shared}/cbuild2.sh --nodepends --parallel ${change} --build all
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} --build all
 fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${shared}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -98,7 +102,7 @@ if test x"${sums}" != x; then
     echo "Found test results finally!!!"
     for i in ${sums}; do
 	name="`basename $i`"
-	${WORKSPACE}/sum2junit.sh $i $WORKSPACE/${name}.junit
+	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
     done
     junits="`find ${WORKSPACE} -name *.junit`"
     if test x"${junits}" != x; then
@@ -113,13 +117,13 @@ fi
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
-    $CONFIG_SHELL ${shared}/cbuild2.sh --nodepends --parallel ${change} --target ${target} --build all
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} --target ${target} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${shared}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc --target ${target} --build all
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc --target ${target} --build all
     else
-	$CONFIG_SHELL ${shared}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 --target ${target} --build all
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 --target ${target} --build all
     fi
 fi
 
