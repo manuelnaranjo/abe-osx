@@ -390,6 +390,20 @@ else
     fixme "${in} returned ${out} but expected ${match}"
 fi
 
+# The special casing for binutils-gdb.git was failing in this one.
+testing="get_toolname: combined binutils-gdb repository with linaro binutils branch"
+in="binutils-gdb.git/linaro_binutils-2_24_branch"
+out="`get_toolname ${in}`"
+match="binutils"
+if test x"${out}" = x"${match}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out} but expected ${match}"
+fi
+
+
+
 testing="get_toolname: svn archive with /trunk trailing designator"
 in="http://llvm.org/svn/llvm-project/cfe/trunk"
 out="`get_toolname ${in}`"

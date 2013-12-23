@@ -69,10 +69,6 @@ configure_build()
 #	host=${build}
 #    fi
 
-    # Extract the toolchain component name, stripping off the linaro
-    # part if it exists as it's not used for the config file name.
-    tool="`get_toolname $1`"
-
     # Load the default config file for this component if it exists.
     default_configure_flags=""
     stage1_flags=""

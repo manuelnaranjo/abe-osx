@@ -1046,3 +1046,19 @@ match=''
 test_parser revision "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git~linaro_binutils-2_24-branch"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git/linaro_binutils-2_24-branch"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"
+
+in="binutils-gdb.git~linaro_binutils-2_24-branch"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"
+
+in="binutils-gdb.git/linaro_binutils-2_24-branch"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"

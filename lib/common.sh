@@ -316,7 +316,7 @@ get_toolname()
     if test x"${tool}" = x"binutils-gdb"; then
 	local branch=
 	branch="`get_git_branch $1`"
-	tool="`echo ${branch} | sed -e 's:binutils.*:binutils:' -e 's:gdb.*:gdb:'`"
+	tool="`echo ${branch} | sed -e 's:.*binutils.*:binutils:' -e 's:.*gdb.*:gdb:'`"
     fi
 
     echo ${tool}
