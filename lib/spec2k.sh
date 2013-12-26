@@ -4,35 +4,30 @@ spec2k_init()
 {
   spec2k_init=true
   SPEC2k_SUITE=spec2k
-  SPEC2k_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_XCFLAGS="`grep ^XCFLAGS= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_PARALEL="`grep ^PARELLEL= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_CONFIG="`grep ^CONFIG= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_EXTENSION="`grep ^EXTENSION= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_ITERATIONS="`grep ^ITERATIONS= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_WORKLOAD="`grep ^WORKLOAD= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_TESTS="`grep ^TESTS= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
-  SPEC2k_TARBALL="`grep ^TARBALL= ${topdir}/config/spec2k.conf \
-    | cut -d '=' -f 2`"
+  SPEC2k_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_CONFIG="`grep ^CONFIG:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_EXTENSION="`grep ^EXTENSION:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_ITERATIONS="`grep ^ITERATIONS:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_WORKLOAD="`grep ^WORKLOAD:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_TESTS="`grep ^TESTS:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_TARBALL="`grep ^TARBALL:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
   if test "x$SPEC2k_BENCH_RUNS" = x; then
     SPEC2k_BENCH_RUNS=1
-  fi
-  if test "x$SPEC2k_PARALLEL" = x; then
-    SPEC2k_PARALLEL=1
   fi
   if test "x$SPEC2k_BUILD_LOG" = x; then
     SPEC2k_BUILD_LOG=spec2k_build_log.txt
@@ -54,11 +49,11 @@ spec2k_run ()
   source shrc
   runspec --I $RUNSPECFLAGS  $SPEC2k_TESTS
   for i in $SPEC2k_VBUILD/cpu2000*/result/C*.{asc,raw}; do
-    echo $i:: >> $SPEC2k_RUN_LOG.txt;
-    cat $i >> $SPEC2k_RUN_LOG.txt;
+    echo $i:: >> $SPEC2k_RUN_LOG;
+    cat $i >> $SPEC2k_RUN_LOG;
   done
   # Check to see if any errors happened in the run
-  if cat $SPEC2k_RUN_LOG.txt | grep -v reportable | grep errors > $SPEC2k_RUN_LOG.tmp; then
+  if cat $SPEC2k_RUN_LOG | grep -v reportable | grep errors > $SPEC2k_RUN_LOG.tmp; then
     mv $SPEC2k_RUN_LOG.tmp $SPEC2k_RUN_LOG-failed.txt;
   fi
   popd
@@ -112,8 +107,8 @@ spec2k_extract ()
   # Extract SPEC
   rm -rf $SPEC2k_SUITE
   mkdir -p $SPEC2k_SUITE
-  check_pattern "$SRC_PATH/$SPEC2k_TARBALL*-[1-3\.]*.cpt"
-  get_becnhmark "$SRC_PATH/$SPEC2k_TARBALL*-[1-3\.]*.cpt" $SPEC2k_SUITE
+  check_pattern "$SRC_PATH/$SPEC2k_TARBALL*.cpt"
+  get_becnhmark "$SRC_PATH/$SPEC2k_TARBALL*.cpt" $SPEC2k_SUITE
   local FILE=`ls $SPEC2k_SUITE*/$SPEC2k_TARBALL*.cpt`
   $CCAT $FILE | tar xJf - -C $SPEC2k_SUITE
   chmod -R +w $SPEC2k_SUITE
@@ -142,13 +137,13 @@ spec2k_extract ()
   check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt"
   get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
   $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
-  rm $SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt
+  rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt
 
   # and the helper scripts
-  check_pattern "$SRC_PATH/spec2000-linaro*.tar*"
-  get_becnhmark  "spec2000-linaro*.tar*" $SPEC2k_SUITE
-  tar xaf $SPEC2k_SUITE/spec2000-linaro*.tar* -C $SPEC2k_SUITE/cpu2000* --strip-components=1
-  rm spec2000-linaro*.tar*
+  check_pattern "$SRC_PATH/spec2000-*.tar*"
+  get_becnhmark  "$SRC_PATH/spec2000-*.tar*" $SPEC2k_SUITE
+  tar xaf $SPEC2k_SUITE/spec2000-*.tar* -C $SPEC2k_SUITE/cpu2000* --strip-components=1
+  rm $SPEC2k_SUITE/spec2000-*.tar*
 
   pushd $SPEC2k_SUITE/cpu2000/
   sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/runspec > ./bin/runspec.new

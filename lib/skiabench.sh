@@ -48,26 +48,21 @@ skiabench_init()
   _skiabench_init=true
   SKIABENCH_SUITE=skiabench
 
-  SKIABENCH_SKIABENCH_SUITE="`grep ^SKIABENCH_SUITE= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
-  SKIABENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/skiabench.conf \
-    | cut -d '=' -f 2`"
+  SKIABENCH_SKIABENCH_SUITE="`grep ^SKIABENCH_SUITE:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
+  SKIABENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
+  SKIABENCH_VCFLAGS="`grep ^VCFLAGS:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
+  SKIABENCH_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
+  SKIABENCH_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
+  SKIABENCH_TARBALL="`grep ^TARBALL:= ${topdir}/config/skiabench.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$SKIABENCH_BENCH_RUNS" = x; then
     SKIABENCH_BENCH_RUNS=1
-  fi
-  if test "x$SKIABENCH_PARALLEL" = x; then
-    SKIABENCH_PARALLEL=1
   fi
   if test "x$SKIABENCH_BUILD_LOG" = x; then
     SKIABENCH_BUILD_LOG=skiabench_build_log.txt

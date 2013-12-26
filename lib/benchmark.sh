@@ -1,6 +1,4 @@
 
-#!/bin/sh
-
 BZIP2BENCH=1
 COREMARK=2
 LIBAVBENCH=3
@@ -14,6 +12,7 @@ DENBENCH=10
 EEMBC=11
 EEMBC_OFFICE=12
 SPEC2K=13
+NBENCH=14
 
 TIME=time
 
@@ -26,6 +25,7 @@ _denbench_init=false
 _eembc_init=false
 _eembc_office_init=false
 _spec2k_init=false
+_nbench_init=false
 
 check_pattern()
 {
@@ -71,6 +71,10 @@ bench_init()
       denbench_init
       return $DENBENCH
       ;;
+    nbench)
+      nbench_init
+      return $NBENCH
+      ;;
     eembc)
       eembc_init
       return $EEMBC
@@ -84,6 +88,10 @@ bench_init()
       return $SPEC2K
       ;;
   esac
+  if test $? != 0 ; then
+    error "init failed"
+    exit
+  fi
 
   return 0
 }
@@ -115,6 +123,9 @@ clean()
     $DENBENCH)
       denbench_clean
       ;;
+    $NBENCH)
+      nbench_clean
+      ;;
     $EEMBC)
       eembc_clean
       ;;
@@ -128,6 +139,10 @@ clean()
       error "unknown ID"
       exit -1
   esac
+  if test $? != 0 ; then
+    error "clean failed"
+    exit
+  fi
 }
 
 #
@@ -187,6 +202,14 @@ build()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_build
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_build
@@ -215,6 +238,10 @@ build()
       error "unknown ID"
       exit -1
   esac
+  if test $? != 0 ; then
+    error "build failed"
+    exit
+  fi
 }
 
 #
@@ -274,6 +301,14 @@ build_with_pgo()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_build_with_pgo
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_build_with_pgo
@@ -303,6 +338,10 @@ build_with_pgo()
       exit -1
       ;;
   esac
+  if test $? != 0 ; then
+    error "build with pgo failed"
+    exit
+  fi
 }
 
 #
@@ -362,6 +401,14 @@ run()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_run
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_run
@@ -391,6 +438,10 @@ run()
       exit -1
       ;;
   esac
+  if test $? != 0 ; then
+    error "run failed"
+    exit
+  fi
 }
 
 #
@@ -450,6 +501,14 @@ install()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_install
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_install
@@ -479,6 +538,10 @@ install()
       exit -1
       ;;
   esac
+  if test $? != 0 ; then
+    error "install failed"
+    exit
+  fi
 }
 
 #
@@ -538,6 +601,14 @@ testsuit()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_testsuite
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_testsuite
@@ -567,6 +638,10 @@ testsuit()
       exit -1
       ;;
   esac
+  if test $? != 0 ; then
+    error "testsuite failed"
+    exit
+  fi
 }
 
 #
@@ -626,6 +701,14 @@ extract()
 	exit
       fi
       ;;
+    $NBENCH)
+      if test $_nbench_init; then
+	nbench_extract
+      else
+	error "nbench init not called"
+	exit
+      fi
+      ;;
     $EEMBC)
       if test $_eembc_init; then
 	eembc_extract
@@ -655,6 +738,10 @@ extract()
       exit -1
       ;;
   esac
+  if test $? != 0 ; then
+    error "extract failed"
+    exit
+  fi
 }
 
 set_gcc_to_runwith ()

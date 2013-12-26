@@ -1,40 +1,47 @@
 
-
-#!/bin/sh
-
-init=false
-NBENCH_VBUILD="`grep ^VBUILD= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_SUITE="`grep ^SUITE= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_PASSWOD_FILE="`grep ^PASSWORD_FILE= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_CCAT="`grep ^CCAT= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-NBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/nbench.conf \
-  | cut -d '=' -f 2`"
-
 nbench_init()
 {
-  init=true
+  _nbench_init=true
+  NBENCH_SUITE=nbench
+  NBENCH_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/nbench.conf \
+    | awk -F":=" '{print $2}'`"
+  NBENCH_VCFLAGS="`grep ^VCFLAGS:= ${topdir}/config/nbench.conf \
+    | awk -F":=" '{print $2}'`"
+  NBENCH_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/nbench.conf \
+    | awk -F":=" '{print $2}'`"
+  NBENCH_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/nbench.conf \
+    | awk -F":=" '{print $2}'`"
+  NBENCH_TARBALL="`grep ^TARBALL:= ${topdir}/config/nbench.conf \
+    | awk -F":=" '{print $2}'`"
+
+  if test "x$NBENCH_BENCH_RUNS" = x; then
+    NBENCH_BENCH_RUNS=1
+  fi
+  if test "x$NBENCH_BUILD_LOG" = x; then
+    NBENCH_BUILD_LOG=nbench_build_log.txt
+  fi
+  if test "x$NBENCH_RUN_LOG" = x; then
+    NBENCH_RUN_LOG=nbench_run_log.txt
+  fi
+  if test "x$NBENCH_TARBALL" = x; then
+    error "TARBALL not defined in nbench.conf"
+    exit
+  fi
 }
+
 
 nbench_run ()
 {
-  echo "nbench run"
+  for i in $(seq 1 $NBENCH_BENCH_RUNS); do
+    pushd $NBENCH_SUITE/nbench*
+    ./nbench >> $NBENCH_RUN_LOG 2>&1;
+  done
 }
 
 nbench_build ()
 {
-  echo "nbench build"
+  echo CFLAGS=$NBENCH_VCFLAGS > $NBENCH_BUILD_LOG
+  make -k -C $NBENCH_SUITE/nbench-* CFLAGS="$NBENCH_VCFLAGS" > $NBENCH_BUILD_LOG 2>&1
 }
 
 nbench_clean ()
@@ -61,6 +68,13 @@ nbench_testsuite ()
 nbench_extract ()
 {
   echo "nbench extract"
+  rm -rf $NBENCH_SUITE
+  mkdir -p $NBENCH_SUITE
+  check_pattern "$SRC_PATH/$NBENCH_TARBALL*.tar.*z"
+  get_becnhmark  $SRC_PATH/$NBENCH_TARBALL*.tar.*z $NBENCH_SUITE
+  tar xaf $NBENCH_SUITE/$NBENCH_TARBALL*.tar.*z -C $NBENCH_SUITE
+  rm $SRC_PATH/$NBENCH_TARBALL*.tar.*z
+  #cat $(TOPDIR)/files/$(SUITE)/*.patch | patch -p1 -d $(VBUILD)/$(SUITE)-*
 }
 
 

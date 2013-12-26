@@ -3,24 +3,19 @@ eembc_office_init()
 {
   _eembc_office_init=true
   EEMBC_OFFICE_SUITE=eembc_office
-  EEMBC_OFFICE_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_OFFICE_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_OFFICE_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_OFFICE_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_OFFICE_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_OFFICE_TARBALL="`grep ^TARBALL= ${topdir}/config/eembc_office.conf \
-    | cut -d '=' -f 2`"
+  EEMBC_OFFICE_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/eembc_office.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_OFFICE_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/eembc_office.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_OFFICE_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/eembc_office.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_OFFICE_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/eembc_office.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_OFFICE_TARBALL="`grep ^TARBALL:= ${topdir}/config/eembc_office.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$EEMBC_OFFICE_BENCH_RUNS" = x; then
     EEMBC_OFFICE_BENCH_RUNS=1
-  fi
-  if test "x$EEMBC_OFFICE_PARALLEL" = x; then
-    EEMBC_OFFICE_PARALLEL=1
   fi
   if test "x$EEMBC_OFFICE_BUILD_LOG" = x; then
     EEMBC_OFFICE_BUILD_LOG=eembc_office_build_log.txt

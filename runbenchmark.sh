@@ -164,6 +164,10 @@ done
 if test x"$list" = x; then
   error "Benchmark list is empty"
 fi
+if test x"$list" = xall; then
+  list=coremark,gmpbench,gnugo,skiabench,denbench,eembc,spec2k,nbench,libavbench,eembc_office
+#  list=coremark,libavbench,gmpbench,gnugo,skiabench,denbench,eembc,eembc_office,spec2k,nbench
+fi
 
 for b in ${list//,/ };
 do

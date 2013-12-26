@@ -3,24 +3,19 @@ denbench_init()
 {
   _denbench_init=true
   DENBENCH_SUITE=denbench
-  DENBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
-  DENBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/denbench.conf \
-    | cut -d '=' -f 2`"
+  DENBENCH_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/denbench.conf \
+    | awk -F":=" '{print $2}'`"
+  DENBENCH_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/denbench.conf \
+    | awk -F":=" '{print $2}'`"
+  DENBENCH_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/denbench.conf \
+    | awk -F":=" '{print $2}'`"
+  DENBENCH_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/denbench.conf \
+    | awk -F":=" '{print $2}'`"
+  DENBENCH_TARBALL="`grep ^TARBALL:= ${topdir}/config/denbench.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$DENBENCH_BENCH_RUNS" = x; then
     DENBENCH_BENCH_RUNS=1
-  fi
-  if test "x$DENBENCH_PARALLEL" = x; then
-    DENBENCH_PARALLEL=1
   fi
   if test "x$DENBENCH_BUILD_LOG" = x; then
     DENBENCH_BUILD_LOG=denbench_build_log.txt
@@ -41,7 +36,7 @@ denbench_run ()
   for i in $(seq 1 $DENBENCH_BENCH_RUNS); do
     echo -e \\nRun $i:: >> $DENBENCH_RUN_LOG
     make -C $DENBENCH_SUITE/* -s rerun >> $DENBENCH_RUN_LOG
-    cat $DENBENCH_SUITE/consumer/*timev2.log >> $DENBENCH_RUN_LOG
+    cat $DENBENCH_SUITE/denbench*/consumer/*timev2.log >> $DENBENCH_RUN_LOG
   done
 }
 
@@ -78,7 +73,7 @@ denbench_extract ()
   mkdir -p $DENBENCH_SUITE
   check_pattern "$SRC_PATH/$DENBENCH_TARBALL*.cpt"
   get_becnhmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
-  $CCAT $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt | tar xJf - -C $DENBENCH_SUITE
+  $CCAT $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt | tar xjf - -C $DENBENCH_SUITE
   rm -f $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt
 }
 

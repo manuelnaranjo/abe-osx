@@ -1,4 +1,10 @@
 
 SRC_PATH=/home/kugan/Downloads
 PASSWORD_FILE=/home/kugan/password
+
+MACHINE=`uname -m`
+TOP=`pwd`
+NPROCESSORS=`getconf _NPROCESSORS_ONLN`
+PARALLEL="-j$NPROCESSORS"
+CHECK_PARALLEL=$PARALLEL
 CCAT="ccrypt -k $PASSWORD_FILE -c"

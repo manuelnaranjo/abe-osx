@@ -1,35 +1,27 @@
 
-
-#!/bin/sh
-
 libavbench_init()
 {
   _libavbench_init=true
   LIBAVBENCH_SUITE=libavbench
   LBUILD=$LIBAVBENCH_SUITE/$LIBAVBENCH_SUITE
 
-  LIBAVBENCH_LIBAVBENCH_SUITE="`grep ^VBUILD= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_LIBAVBENCH_SUITE="`grep ^SUITE= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
-  LIBAVBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/libavbench.conf \
-    | cut -d '=' -f 2`"
+  LIBAVBENCH_LIBAVBENCH_SUITE="`grep ^VBUILD:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_LIBAVBENCH_SUITE="`grep ^SUITE:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_VCFLAGS="`grep ^VCFLAGS:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
+  LIBAVBENCH_TARBALL="`grep ^TARBALL:= ${topdir}/config/libavbench.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$LIBAVBENCH_BENCH_RUNS" = x; then
     LIBAVBENCH_BENCH_RUNS=1
-  fi
-  if test "x$LIBAVBENCH_PARALLEL" = x; then
-    LIBAVBENCH_PARALLEL=1
   fi
   if test "x$LIBAVBENCH_BUILD_LOG" = x; then
     LIBAVBENCH_BUILD_LOG=libavbench_build_log.txt

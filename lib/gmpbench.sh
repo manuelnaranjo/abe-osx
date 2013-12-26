@@ -3,24 +3,19 @@ gmpbench_init()
 {
   _gmpbench_init=true
   GMPBENCH_SUITE=gmpbench
-  GMPBENCH_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
-  GMPBENCH_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
-  GMPBENCH_PARALEL="`grep ^PARELLEL= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
-  GMPBENCH_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
-  GMPBENCH_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
-  GMPBENCH_TARBALL="`grep ^TARBALL= ${topdir}/config/gmpbench.conf \
-    | cut -d '=' -f 2`"
+  GMPBENCH_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/gmpbench.conf \
+    | awk -F":=" '{print $2}'`"
+  GMPBENCH_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/gmpbench.conf \
+    | awk -F":=" '{print $2}'`"
+  GMPBENCH_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/gmpbench.conf \
+    | awk -F":=" '{print $2}'`"
+  GMPBENCH_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/gmpbench.conf \
+    | awk -F":=" '{print $2}'`"
+  GMPBENCH_TARBALL="`grep ^TARBALL:= ${topdir}/config/gmpbench.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$GMPBENCH_BENCH_RUNS" = x; then
     GMPBENCH_BENCH_RUNS=1
-  fi
-  if test "x$GMPBENCH_PARALLEL" = x; then
-    GMPBENCH_PARALLEL=1
   fi
   if test "x$GMPBENCH_BUILD_LOG" = x; then
     GMPBENCH_BUILD_LOG=gmpbench_build_log.txt

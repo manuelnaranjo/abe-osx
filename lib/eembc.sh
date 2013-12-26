@@ -1,31 +1,21 @@
 
-
-#!/bin/sh
-
-
 eembc_init()
 {
   _eembc_init=true
   EEMBC_SUITE=eembc
-  EEMBC_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_PARALEL="`grep ^PARELLEL= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-  EEMBC_TARBALL="`grep ^TARBALL= ${topdir}/config/eembc.conf \
-    | cut -d '=' -f 2`"
-
+  EEMBC_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/eembc.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/eembc.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/eembc.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/eembc.conf \
+    | awk -F":=" '{print $2}'`"
+  EEMBC_TARBALL="`grep ^TARBALL:= ${topdir}/config/eembc.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$EEMBC_BENCH_RUNS" = x; then
     EEMBC_BENCH_RUNS=1
-  fi
-  if test "x$EEMBC_PARALLEL" = x; then
-    EEMBC_PARALLEL=1
   fi
   if test "x$EEMBC_BUILD_LOG" = x; then
     EEMBC_BUILD_LOG=eembc_build_log.txt
@@ -54,8 +44,7 @@ eembc_run ()
 eembc_build ()
 {
   echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
-  local SRCDIR=`ls $EEMBC_SUITE`
-  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/$SRC_DIR $TARGET COMPILER_FLAGS=$EEMBC_VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
+  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/eembc* build COMPILER_FLAGS=$EEMBC_VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
 }
 
 eembc_clean ()

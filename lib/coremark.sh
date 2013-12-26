@@ -4,24 +4,21 @@ coremark_init()
   coremark_init=true
   COREMARK_SUITE=coremark
 
-  COREMARK_BENCH_RUNS="`grep ^BENCH_RUNS= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
-  COREMARK_VCFLAGS="`grep ^VFLAGS= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
-  COREMARK_PARALLEL="`grep ^PARALLEL= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
-  COREMARK_BUILD_LOG="`grep ^BUILD_LOG= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
-  COREMARK_RUN_LOG="`grep ^RUN_LOG= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
-  COREMARK_TARBALL="`grep ^TARBALL= ${topdir}/config/coremark.conf \
-    | cut -d '=' -f 2`"
+  COREMARK_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
+  COREMARK_VCFLAGS="`grep ^VCFLAGS:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
+  COREMARK_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
+  COREMARK_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
+  COREMARK_RUN_LOG="`grep ^RUN_LOG:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
+  COREMARK_TARBALL="`grep ^TARBALL:= ${topdir}/config/coremark.conf \
+    | awk -F":=" '{print $2}'`"
 
   if test "x$COREMARK_BENCH_RUNS" = x; then
     COREMARK_BENCH_RUNS=1
-  fi
-  if test "x$COREMARK_PARALLEL" = x; then
-    COREMARK_PARALLEL=1
   fi
   if test "x$COREMARK_BUILD_LOG" = x; then
     COREMARK_BUILD_LOG=coremark_build_log.txt
@@ -33,6 +30,8 @@ coremark_init()
     error "TARBALL not defined in coremark.conf"
     exit
   fi
+
+  COREMARK_XCFLAGS="$COREMARK_XCFLAGS $XCFLAGS"
 }
 
 coremark_run ()
@@ -56,27 +55,27 @@ coremark_clean()
 
 coremark_build_with_pgo ()
 {
-  echo PORT_CFLAGS=$VCFLAGS >> $COREMARK_SUITE/$COREMARK_BUILD_LOG
-  echo XCFLAGS=$XCFLAGS >> $COREMARK_SUIYE/$COREMARK_BUILD_LOG
+  echo PORT_CFLAGS=$COREMARK_VCFLAGS >> $COREMARK_SUITE/$COREMARK_BUILD_LOG
+  echo XCFLAGS=$COREMARK_XCFLAGS >> $COREMARK_SUIYE/$COREMARK_BUILD_LOG
   local COREMARK=`ls coremark`
   # readme.txt sets what the training run should be
   make -C $COREMARK_SUITE/$COREMARK $PARALLEL run3.log REBUILD=1 \
-    UNAME=`uname` PORT_CFLAGS="$VCFLAGS" XCFLAGS="$XCFLAGS -fprofile-generate \
+    UNAME=`uname` PORT_CFLAGS="$COREMARK_VCFLAGS" XCFLAGS="$COREMARK_XCFLAGS -fprofile-generate \
     -DTOTAL_DATA_SIZE=1200 -DPROFILE_RUN=1" >> $COREMARK_BUILD_LOG 2>&1
   make -C $COREMARK_SUITE/$COREMARK -s clean UNAME=`uname`
   make -C $COREMARK_SUITE/$COREMARK $PARALLEL load UNAME=`uname`\
-    PORT_CFLAGS="$VCFLAGS" XCFLAGS="$XCFLAGS \
+    PORT_CFLAGS="$COREMARK_VCFLAGS" XCFLAGS="$COREMARK_XCFLAGS \
     -fprofile-use" >> $COREMARK_BUILD_LOG 2>&1
 }
 
 coremark_build ()
 {
-  echo PORT_CFLAGS=$VCFLAGS >> $COREMARK_BUILD_LOG
-  echo XCFLAGS=$XCFLAGS >> $COREMARK_BUILD_LOG
+  echo PORT_CFLAGS=$COREAMRK_VCFLAGS >> $COREMARK_BUILD_LOG
+  echo XCFLAGS=$COREMARK_XCFLAGS >> $COREMARK_BUILD_LOG
   local COREMARK=`ls coremark`
   make -C $COREMARK_SUITE/$COREMARK -s clean UNAME=`uname`
   make -C $COREMARK_SUITE/$COREMARK $PARALLEL load UNAME=`uname` \
-    PORT_CFLAGS="$VCFLAGS" XCFLAGS="$XCFLAGS" >> $COREMARK_BUILD_LOG 2>&1
+    PORT_CFLAGS="$COREMARK_VCFLAGS" XCFLAGS="$COREMARK_XCFLAGS" >> $COREMARK_BUILD_LOG 2>&1
 }
 
 
