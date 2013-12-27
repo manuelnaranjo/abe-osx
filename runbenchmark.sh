@@ -165,7 +165,7 @@ if test x"$list" = x; then
   error "Benchmark list is empty"
 fi
 if test x"$list" = xall; then
-  list=coremark,gmpbench,gnugo,skiabench,denbench,eembc,spec2k,nbench,libavbench,eembc_office
+  list=coremark,gmpbench,gnugo,skiabench,denbench,eembc,spec2k,libavbench,eembc_office,nbench
 #  list=coremark,libavbench,gmpbench,gnugo,skiabench,denbench,eembc,eembc_office,spec2k,nbench
 fi
 

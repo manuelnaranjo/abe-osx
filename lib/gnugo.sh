@@ -28,6 +28,7 @@ gnugo_init()
     error "TARBALL not defined in gnugo.conf"
     exit
   fi
+  GNUGO_VCFLAGS="-O2 $GNUGO_VCFLAGS $XCFLAGS"
 }
 
 gnugo_run ()
@@ -47,7 +48,7 @@ gnugo_build ()
   echo "gnugo build"
   mkdir -p $GNUGO_SUITE/build
   pushd $GNUGO_SUITE/build
-  CFLAGS="$VCFLAGS" LDFLAGS="$VLDFLAGS" ../gnugo-*/configure --prefix=$PWD/../install >> $GNUGO_BUILD_LOG 2>&1
+  CFLAGS="$GNUGO_VCFLAGS" LDFLAGS="$XLFLAGS" ../gnugo-*/configure --prefix=$PWD/../install >> $GNUGO_BUILD_LOG 2>&1
   make >> ../../$GNUGO_BUILD_LOG 2>&1
   make install >> ../../$GNUGO_BUILD_LOG 2>&1
   popd

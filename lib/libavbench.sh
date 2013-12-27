@@ -33,6 +33,11 @@ libavbench_init()
     error "TARBALL not defined in libavbench.conf"
     exit
   fi
+
+  LIBAVBENCH_VCFLAGS="-O3 $LIBAVBENCH_VCFLAGS $XCFLAGS"
+  DISABLE_ASM="--disable-asm"
+  REMOVE_CFLAGS=-fno-tree-vectorize
+  CONFIGURE_FLAGS="--disable-pthreads --optflags=$LIBAVBENCH_VCFLAGS $DISABLE_ASM"
 }
 
 libavbench_run ()
@@ -42,8 +47,6 @@ libavbench_run ()
     echo `basename $f`:: >> $LIBAVBENCH_RUN_LOG;
     cat $f > /dev/null;
     for i in $(seq 1 $LIBAVBENCH_BENCH_RUNS); do
-      echo "time -o -a $LIBAVBENCH_RUN_LOG -a $LIBAVBENCH_SUITE/install/bin/ffmpeg -benchmark \
-      -loglevel quiet -i $f -f null -y /dev/null > $LIBAVBENCH_SUITE/benchmark.tmp"
       time -o -a $LIBAVBENCH_RUN_LOG -a $LIBAVBENCH_SUITE/install/bin/ffmpeg -benchmark \
       -loglevel quiet -i $f -f null -y /dev/null > $LIBAVBENCH_SUITE/benchmark.tmp
       cat $LIBAVBENCH_SUITE/benchmark.tmp >> $LIBAVBENCH_RUN_LOG

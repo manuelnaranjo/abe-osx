@@ -27,6 +27,7 @@ nbench_init()
     error "TARBALL not defined in nbench.conf"
     exit
   fi
+  NBENCH_VCFLAGS="-O2 -static $NBENCH_VCFLAGS $XCFLAGS"
 }
 
 

@@ -74,6 +74,7 @@ skiabench_init()
     error "TARBALL not defined in skiabench.conf"
     exit
   fi
+  SKIABENCH_VCFLAGS="-O2  $SKIABENCH_VCFLAGS $XCFLAGS"
 }
 
 skiabench_run ()

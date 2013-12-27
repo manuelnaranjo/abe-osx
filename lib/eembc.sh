@@ -28,7 +28,7 @@ eembc_init()
     exit
   fi
 
-
+  EEMBC_VCFLAGS="-O2 -DNDEBUG -DHOST_EXAMPLE_CODE=1 $EEMBC_VCFLAGS $XCFLAGS"
 }
 
 eembc_run ()
@@ -43,8 +43,8 @@ eembc_run ()
 
 eembc_build ()
 {
-  echo COMPILER_FLAGS=$VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
-  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/eembc* build COMPILER_FLAGS=$EEMBC_VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
+  echo COMPILER_FLAGS=$EEMBC_VCFLAGS >> $EEMBC_BUILD_LOG 2>&1
+  make -k $EEMBC_PARALLEL -C $EEMBC_SUITE/eembc* build COMPILER_FLAGS="$EEMBC_VCFLAGS" >> $EEMBC_BUILD_LOG 2>&1
 }
 
 eembc_clean ()

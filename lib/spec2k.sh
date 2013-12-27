@@ -4,8 +4,6 @@ spec2k_init()
 {
   spec2k_init=true
   SPEC2k_SUITE=spec2k
-  SPEC2k_BENCH_RUNS="`grep ^BENCH_RUNS:= ${topdir}/config/spec2k.conf \
-    | awk -F":=" '{print $2}'`"
   SPEC2k_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
   SPEC2k_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/spec2k.conf \
@@ -26,9 +24,6 @@ spec2k_init()
     | awk -F":=" '{print $2}'`"
   SPEC2k_TARBALL="`grep ^TARBALL:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
-  if test "x$SPEC2k_BENCH_RUNS" = x; then
-    SPEC2k_BENCH_RUNS=1
-  fi
   if test "x$SPEC2k_BUILD_LOG" = x; then
     SPEC2k_BUILD_LOG=spec2k_build_log.txt
   fi
@@ -39,7 +34,7 @@ spec2k_init()
     error "TARBALL not defined in spec2k.conf"
     exit
   fi
-
+  SPEC2k_VCFLAGS="-O2 -fno-common $SPEC2k_VCFLAGS $XCFLAGS"
   RUNSPECFLAGS="-c $SPEC2k_CONFIG -e $SPEC2k_EXTENSION -n $SPEC2k_ITERATIONS -i $SPEC2k_WORKLOAD"
 }
 
