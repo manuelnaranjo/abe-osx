@@ -75,8 +75,8 @@ OPTIONS
   -l, --list-of-benchmarks=benchmark1,benchmark2..
 	       Specify the list of benchmarks to run,
 
-  -t, --gcc-binary-tarball=tarball
-               Spevify the precompiled gcc tarball to use for
+  -p, --gcc-binary-path=path
+               Spevify the precompiled gcc path to use for
 	       compiling benchmarks.
 
   -d, --dir-to-build=directory
@@ -143,6 +143,10 @@ do
       XLFLAGS=${1#*=}
       shift
       ;;
+    -p=* | --gcc-binary-path)
+      GCC_PATH=${1#*=}
+      shift
+      ;;
     --file=*)
       file=${1#*=}        # Delete everything up till "="
       shift
@@ -152,7 +156,7 @@ do
       break
       ;;
     -*)
-      echo "WARN: Unknown option (ignored): $1" >&2
+      warn "Unknown option (ignored): $1" >&2
       shift
       ;;
     *)  # no more options. Stop while loop
@@ -168,6 +172,12 @@ if test x"$list" = xall; then
   list=coremark,gmpbench,gnugo,skiabench,denbench,eembc,spec2k,libavbench,eembc_office,nbench
 #  list=coremark,libavbench,gmpbench,gnugo,skiabench,denbench,eembc,eembc_office,spec2k,nbench
 fi
+
+if test "x$GCC_PATH" != x; then
+  set_gcc_to_runwith "$GCC_PATH" 
+fi
+
+dump_host_info  > host.txt
 
 for b in ${list//,/ };
 do

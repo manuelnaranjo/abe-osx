@@ -761,6 +761,7 @@ set_gcc_to_runwith ()
     export LIBRARY_PATH=/usr/lib/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)
   else
     error "runwith gcc directory doesnot have bin directory!"
+    exit -1
   fi
 }
 
@@ -774,18 +775,16 @@ get_becnhmark ()
 
 dump_host_info ()
 {
-  GCCVERSION = $(shell $(CROSS_COMPILE)gcc --version | head -n1)
-  GXXVERSION = $(shell $(CROSS_COMPILE)g++ --version | head -n1)
-  DATE = $(shell date +%Y-%m-%d)
-  ARCH = $(shell uname -m)
-  CPU = $(shell grep -E "^(model name|Processor)" /proc/cpuinfo | head -n1 | tr -s [:space:] | awk -F: '{print $$2;}')
-  OS = $(shell lsb_release -sd)
-  TOPDIR = $(shell pwd)
-  echo date:
-  date --rfc-3339=seconds -u
+  echo "GCCVERSION=`${CROSS_COMPILE}gcc --version | head -n1`"
+  echo "GXXVERSION=`${CROSS_COMPILE}g++ --version | head -n1`"
+  echo "DATE=`date +%Y-%m-%d`"
+  echo "ARCH=`uname -m`"
+  echo "CPU=`grep -E "^(model name|Processor)" /proc/cpuinfo | head -n1 | tr -s [:space:] | awk -F: '{print $2;}'`"
+  echo "OS=`lsb_release -sd`"
+  echo "TOPDIR=`pwd`"
+  echo "date:`date --rfc-3339=seconds -u`"
   echo
-  echo uname:
-  uname -a
+  echo "uname:`uname -a`"
   echo
   echo lsb_release:
   lsb_release -a
@@ -793,11 +792,9 @@ dump_host_info ()
   echo /proc/version:
   cat /proc/version
   echo
-  echo gcc:
-  dpkg -s gcc | grep ^Version
+  echo "gcc: `dpkg -s gcc | grep ^Version`"
   gcc --version
-  echo as:
-  dpkg -s binutils | grep ^Version
+  echo "as: `dpkg -s binutils | grep ^Version`"
   as --version
   echo
   echo ldd:
@@ -821,9 +818,6 @@ dump_host_info ()
   dpkg -s libc6 | grep ^Version
   echo PATH:
   echo $PATH
-  echo
-  echo df:
-  echo `df -h / /scratch`
   echo
   echo cpufreq-info:
   echo `cpufreq-info`
