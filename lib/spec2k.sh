@@ -115,7 +115,7 @@ spec2k_extract ()
       ;;
     *arm*)
       MACHINE=arm
-      BUILD_ARCH= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+      BUILD_ARCH=`dpkg-architecture -qDEB_BUILD_ARCH`
       case $BUILD_ARCH in
 	*hf*)
 	  FLOAT_SUFFIX=hf
@@ -129,10 +129,10 @@ spec2k_extract ()
      ;;
   esac
   # Create the config file
-  check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt"
-  get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
+  check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt"
+  get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
   $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
-  rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE$FLOAT_SUFFIX*.tar*cpt
+  rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt
 
   # and the helper scripts
   check_pattern "$SRC_PATH/spec2000-*.tar*"
