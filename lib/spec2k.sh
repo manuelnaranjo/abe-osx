@@ -42,14 +42,16 @@ spec2k_run ()
 {
   pushd $SPEC2k_SUITE/cpu2000/
   source shrc
+  echo "runspec --I $RUNSPECFLAGS  $SPEC2k_TESTS"
   runspec --I $RUNSPECFLAGS  $SPEC2k_TESTS
-  for i in $SPEC2k_VBUILD/cpu2000*/result/C*.{asc,raw}; do
-    echo $i:: >> $SPEC2k_RUN_LOG;
-    cat $i >> $SPEC2k_RUN_LOG;
+  echo `pwd`
+  for i in result/C*.{asc,raw}; do
+    echo $i:: > ../../$SPEC2k_RUN_LOG;
+    cat $i >> ../../$SPEC2k_RUN_LOG;
   done
   # Check to see if any errors happened in the run
-  if cat $SPEC2k_RUN_LOG | grep -v reportable | grep errors > $SPEC2k_RUN_LOG.tmp; then
-    mv $SPEC2k_RUN_LOG.tmp $SPEC2k_RUN_LOG-failed.txt;
+  if cat ../../$SPEC2k_RUN_LOG | grep -v reportable | grep errors > ../../$SPEC2k_RUN_LOG.tmp; then
+    mv ../../$SPEC2k_RUN_LOG.tmp ../../$SPEC2k_RUN_LOG-failed.txt;
   fi
   popd
 }
@@ -58,8 +60,8 @@ spec2k_build ()
 {
   pushd $SPEC2k_SUITE/cpu2000/
   source shrc
-  echo VCFLAGS=$SPEC2k_VCFLAGS >> $SPEC2k_BUILD_LOG 2>&1
-  runspec  $RUNSPECFLAGS -a build $SPEC2k_TESTS
+  echo VCFLAGS=$SPEC2k_VCFLAGS > ../../$SPEC2k_BUILD_LOG 2>&1
+  runspec  $RUNSPECFLAGS -a build $SPEC2k_TESTS >> ../../$SPEC2k_BUILD_LOG 2>&1
   popd
 }
 
@@ -144,6 +146,9 @@ spec2k_extract ()
   sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/runspec > ./bin/runspec.new
   mv ./bin/runspec.new ./bin/runspec
   chmod +x ./bin/runspec
+  sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/specdiff > ./bin/specdiff.new
+  mv ./bin/specdiff.new ./bin/specdiff
+  chmod +x ./bin/specdiff
   source shrc
   popd
 }
