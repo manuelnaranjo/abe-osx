@@ -103,6 +103,7 @@ if test x"${sums}" != x; then
     for i in ${sums}; do
 	name="`basename $i`"
 	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
+	cp $i $WORKSPACE
     done
     junits="`find ${WORKSPACE} -name *.junit`"
     if test x"${junits}" != x; then
