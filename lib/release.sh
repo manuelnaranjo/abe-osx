@@ -59,17 +59,18 @@ release_binutils_src()
     local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::'`"
 
     # For a release, we don't need the .git identifier.
-    local destdir=/tmp/${tag}
+    local destdir="/tmp/linaro.$$/${tag}"
 
     # make a link with the correct name for the tarball's source directory
-    dryrun "ln -sfnT ${srcdir} ${destdir}"
+#    dryrun "ln -sfnT ${srcdir} ${destdir}"
+    dryrun "mkdir -p ${destdir}"
+    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
 
     # Update the Binutils version
-    rm -f ${destdir}/binutils/LINARO-VERSION
     if test x"${release}" = x;then
-	edit_changelogs ${srcdir} ${tag}
+	edit_changelogs ${destdir}/binutils ${tag}
     else
-	edit_changelogs ${srcdir} ${release}
+	edit_changelogs ${destdir}/binutils ${release}
     fi    
 
     # Create .gmo files from .po files.
@@ -89,14 +90,14 @@ release_binutils_src()
     sanitize ${srcdir}
 
     # make a link with the correct name for the tarball's source directory
-    dryrun "ln -sfnT ${srcdir}/ ${destdir}"
+#    dryrun "ln -sfnT ${srcdir}/ ${destdir}"
     
     local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
-    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"    
+    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
 }
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GCC/ReleaseProcess
@@ -113,27 +114,24 @@ release_gcc_src()
     fi
     local srcdir="`get_srcdir ${gcc_version}`"
     local builddir="`get_builddir ${gcc_version} stage2`"
-    local tag="`create_release_tag ${gcc_version} | sed -e 's:-linaro-::'`"
-    local destdir=/tmp/linaro.$$/${tag}
+    local tag="`create_release_tag ${gcc_version} | sed -e 's:[-~]linaro-::' | tr '~' '-'`"
+    local destdir="/tmp/linaro.$$/${tag}"
 
     dryrun "mkdir -p ${destdir}/gcc/doc"
 
-    dryrun "rsync --exclude .git -ar ${srcdir}/* ${destdir}"
+    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
     
-    # Update the GCC version, which should look like "4.8-${release}/"
-    rm -f ${destdir}/gcc/LINARO-VERSION
-    echo "${tag}" | sed -e 's:^.*linaro-::' > ${destdir}/gcc/LINARO-VERSION
-    
-    if test x"${release}" = x;then
-	edit_changelogs ${destdir} ${tag}
-    else
-	edit_changelogs ${destdir} ${release}
-    fi    
+    if test -d ${destdir}; then
+	if test x"${release}" = x;then
+	    edit_changelogs ${destdir}/gcc ${tag}
+	else
+	    edit_changelogs ${destdir}/gcc ${release}
+	fi    
+        # Remove extra files left over from any development hacking
+	sanitize ${destdir}
+    fi
     
     dryrun "regenerate_checksums ${destdir}"
-
-    # Remove extra files left over from any development hacking
-    sanitize ${destdir}
 
     # Install the docs
     install_gcc_docs ${destdir} ${builddir} 
@@ -144,8 +142,6 @@ release_gcc_src()
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
-
-    dryrun "rm -fr /tmp/linaro.$$"
 
     return 0
 }
@@ -161,12 +157,6 @@ install_gcc_docs()
     local destdir=$1
     local srcdir=$1
     local builddir=$2
-
-    # The destination directory for GCC is a symbolic link. For the docs we
-    # create a similar directory structure to install the docs into.
-#    if test ! -d ${destdir}/${srcdir}; then
-#	dryrun "mkdir -p ${destdir}/${srcdir}"
-#    fi
 
     # the GCC script needs these two values to work.
     SOURCEDIR=${srcdir}/gcc/doc
@@ -186,7 +176,9 @@ install_gcc_docs()
     # Copy all the info files and man pages into the release directory
     local docs="`find ${builddir}/ -name \*.info -o -name \*.1 -o -name \*.7 | sed -e "s:${builddir}/::"`"
     for i in ${docs}; do
-      	dryrun "cp -fv ${builddir}/$i ${destdir}/gcc/doc"
+	if test `echo $i | grep -c "\.so\.1"` -eq 0; then
+      	    dryrun "cp -fv ${builddir}/$i ${destdir}/gcc/doc"
+	fi
     done
 
 #    dryrun "rm -fr ${destdir}/${target}"
@@ -195,10 +187,25 @@ install_gcc_docs()
 }
 
 # Edit the ChangeLog.linaro file for this release
+# $1 - the destination directory for the release files
+# $2 - the tag or release string
 edit_changelogs()
 {
     trace "$*"
 
+    local destdir="$1"
+    local basedir="`dirname $1`"
+
+    # Update the GCC version, which should look like "4.8-${release}/"
+    local tool="`basename $1`"
+    local version="`echo $1 | grep -o "[0-9]\.[0-9]-[0-9\.]*"`"
+    if test -d ${destdir}; then
+	rm -f ${destdir}/LINARO-VERSION
+	echo "${version}" > ${destdir}/LINARO-VERSION
+    else
+	warning "${destdir} doesn't exist!"
+    fi
+    
     if test x"${fullname}" = x; then
 	case $1 in
 	    bzr*|lp*)
@@ -226,30 +233,12 @@ edit_changelogs()
 
     local date="`date +%Y-%m-%d`"
 
-    if test `echo ${srcdir} | grep -c "/gdb"` -gt 0; then
-	local tool=gdb
-	if test `echo ${srcdir} | grep -c "/gcc"` -gt 0; then
-	    local tool=gcc
-	    if test `echo ${srcdir} | grep -c "/binutils"` -gt 0; then
-		local tool=binutils
-		if test `echo ${srcdir} | grep -c "/glibc"` -gt 0; then
-		    local tool=glibc
-		    if test `echo ${srcdir} | grep -c "/eglibc"` -gt 0; then
-			local tool=eglibc
-			if test `echo ${srcdir} | grep -c "/newlib"` -gt 0; then
-			    local tool=newlib
-			fi
-		    fi
-		fi
-	    fi
-	fi
-    fi
-
     # Get all the ChangeLog files.
-    local clogs="`find $1 -name ChangeLog`"
-    #local uptool="`echo ${tool} | tr "[:lower:]" "[:upper:]"`"
+    local clogs="`find ${basedir} -name ChangeLog`"
+
     # For a dryrun, don't actually edit any ChangeLog files.
     if test x"${dryrun}" = x"no"; then
+	local verstr="`echo "${tool}" | tr "[:lower:]" "[:upper:]"` Linaro ${version}"
 	for i in ${clogs}; do
 	    if test -e $i.linaro; then
      		mv $i.linaro /tmp/
@@ -258,7 +247,7 @@ edit_changelogs()
 	    fi
      	    echo "${date}  ${fullname}  <${email}>" >> $i.linaro
      	    echo "" >> $i.linaro 
-	    echo "     ${uptool} Linaro $2 released." >> $i.linaro
+	    echo "     ${verstr} released." >> $i.linaro
      	    echo "" >> $i.linaro
      	    cat /tmp/ChangeLog.linaro >> $i.linaro
      	    rm -f /tmp/ChangeLog.linaro
@@ -279,28 +268,27 @@ release_gdb_src()
     local srcdir="`get_srcdir ${gdb_version}`"
     # The new combined repository for GDB has Binutils too, so we strip that off.
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
-    local destdir=/tmp/${tag}
+    local destdir="/tmp/linaro.$$/${tag}"
 
+    # make a link with the correct name for the tarball's source directory
+#    dryrun "ln -sfnT ${srcdir} ${destdir}"
+    dryrun "mkdir -p ${destdir}"
+    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
+    
     # Update the GDB version
-    rm -f ${destdir}/gdb/LINARO-VERSION
-    echo "${tag}" | sed -e 's:^.*linaro-::' > ${destdir}/gdb/LINARO-VERSION
-
     if test x"${release}" = x;then
-	edit_changelogs ${srcdir} ${tag}
+	edit_changelogs ${destdir}/gdb ${tag}
     else
-	edit_changelogs ${srcdir} ${release}
+	edit_changelogs ${destdir}/gdb ${release}
     fi    
     
 #    dryrun "regenerate_checksums ${destdir}"
 
     # Remove extra files left over from any development hacking
-    sanitize ${srcdir}
+    sanitize ${destdir}
 
-    # make a link with the correct name for the tarball's source directory
-    dryrun "ln -sfnT ${srcdir} /tmp/${tag}"
-    
     local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
