@@ -104,8 +104,8 @@ build_all()
     
     if test x"${tarsrc}" = x"yes"; then
         release_binutils_src 
-        release_gdb_src
         release_gcc_src
+        release_gdb_src
     fi
 
     if test x"${tarbin}" = x"yes"; then
@@ -117,6 +117,9 @@ build_all()
 	    binary_runtime
 	fi
     fi
+
+    # delete temp files from making the release
+    dryrun "rm -fr /tmp/linaro.$$"
 
     return 0
 }
