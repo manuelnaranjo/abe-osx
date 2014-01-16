@@ -135,7 +135,7 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 4 | cut -d '-' -f 1`"
 
     local destdir=/tmp/linaro-gcc-${version}.$$
 
@@ -165,10 +165,7 @@ binary_toolchain()
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
-	fi
-	local tag="`echo ${version}~${revision}-${target}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	local tag="`echo gcc-linaro-${version}~${revision}-${target}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
 	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
@@ -190,12 +187,13 @@ binary_toolchain()
 	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
 	dryrun "cd ${builddir} && rm -f ${bins}"
 	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
-	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+	dryrun "make SHELL=${bash_shell} ${make_flags} -C ${builddir}"
 	# Install the documentation too
-	dryrun "make install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
+	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
     else
 	# If the default is a dynamically linked GCC, we have to recompile everything
-	dryrun "make clean all install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
+	dryrun "make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
+	dryrun "make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
     fi
 
     local builddir="`get_builddir ${binutils_version}`"
@@ -205,9 +203,10 @@ binary_toolchain()
 	dryrun "cd ${builddir} && rm -f ${bins}"
 	# If the default is a statically linked binutils, we only have to relink
 	# the excutables,
-	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
     else
-	dryrun "make clean install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
     fi
 
     # Install the documentation too. The different components unfortunately 
@@ -402,7 +401,9 @@ binutils_src_tarball()
     local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
 
     # clean up files that don't go into a release, often left over from development
-    sanitize ${srcdir}
+    if test -d ${srcdir}; then
+	sanitize ${srcdir}
+    fi
 
     # from /linaro/snapshots/binutils.git/src-release: do-proto-toplev target
     # Take out texinfo from a few places.
