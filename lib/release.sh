@@ -53,6 +53,7 @@ release_binutils_src()
     if test x"${binutils_version}" = x; then
 	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
+
     local srcdir="`get_srcdir ${binutils_version}`"
     local builddir="`get_builddir ${binutils_version}`"
     # The new combined repository for binutils has GDB too, so we strip that off.
@@ -130,7 +131,7 @@ release_gcc_src()
         # Remove extra files left over from any development hacking
 	sanitize ${destdir}
     fi
-    
+
     dryrun "regenerate_checksums ${destdir}"
 
     # Install the docs
@@ -198,7 +199,8 @@ edit_changelogs()
 
     # Update the GCC version, which should look like "4.8-${release}/"
     local tool="`basename $1`"
-    local version="`echo $1 | grep -o "[0-9]\.[0-9]-[0-9\.]*"`"
+#    local version="`echo $1 | grep -o "[0-9]\.[0-9]-[0-9\.]*"`"
+    local version="`echo $1 | grep -o "[0-9]\.[0-9].*/" | tr -d '/'`"
     if test -d ${destdir}; then
 	rm -f ${destdir}/LINARO-VERSION
 	echo "${version}" > ${destdir}/LINARO-VERSION
