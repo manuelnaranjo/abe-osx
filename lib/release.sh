@@ -249,7 +249,7 @@ edit_changelogs()
 	    fi
      	    echo "${date}  ${fullname}  <${email}>" >> $i.linaro
      	    echo "" >> $i.linaro 
-	    echo "     ${verstr} released." >> $i.linaro
+	    echo "	${verstr} released." >> $i.linaro
      	    echo "" >> $i.linaro
      	    cat /tmp/ChangeLog.linaro >> $i.linaro
      	    rm -f /tmp/ChangeLog.linaro
