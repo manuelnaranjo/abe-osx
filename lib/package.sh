@@ -105,18 +105,20 @@ binary_gdb()
 {
     trace "$*"
 
-    local version="`${target}-gdb --version | head -1 | cut -d ' ' -f 4`"
-    local tag="`create_release_tag ${gdb_version}`"
+    local version="`${target}-gdb --version | head -1 | grep -o " [0-9\.][0-9].*\." | tr -d ')'`"
+    local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
     local builddir="`get_builddir ${gdb_version}`"
-    local destdir="/tmp/linaro.$$/${tag}"
-
-#    dryrun "mkdir -p ${destdir}-tmp"
-
+    local destdir="/tmp/linaro.$$/${tag}-tmp"
     local prefix="${local_builds}/destdir/${host}"
+
+    local gdb_static="`grep ^static_link= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+
+#    if test x"${gdb_static}" = x"yes"; then
+#    fi
 
     # install in alternate directory so it's easier to build the tarball
     dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
-    dryrun "ln -sfnT ${destdir}/${prefix} ${destdir}"
+    dryrun "ln -sfnT ${destdir}/${prefix} /tmp/linaro.$$/${tag}"
 
     local abbrev="`echo ${host}_${target} | sed -e 's:none-::' -e 's:unknown-::'`"
  
@@ -140,6 +142,8 @@ binary_toolchain()
 #    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 4 | cut -d '-' -f 1`"
     local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
     local destdir="/tmp/linaro.$$/${tag}"
+
+    dryrun "mkdir -p /tmp/linaro.$$"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -242,8 +246,7 @@ binary_sysroot()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local destdir="/tmp/linaro.$$/${tag}"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -295,12 +298,15 @@ binary_sysroot()
 	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
     fi
 
-    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
+#    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
+    local destdir="/tmp/linaro.$$/${tag}"
+    dryrun "mkdir -p /tmp/linaro.$$"
+    dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${destdir}"
 
     # Generate the install script
     sysroot_install_script ${destdir}
 
-    dryrun "tar Jcvf ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
