@@ -142,6 +142,10 @@ configure_build()
 			    notice "Building stage 2 of GCC"
 			    opts="${opts} ${stage2_flags}"
 			    ;;
+			server)
+			    notice "Building gdbserver for the target"
+			    local srcdir="${srcdir}/gdbserver"
+			    ;;
 			bootstrap*)
 			    notice "Building bootstrapped GCC"
 			    opts="${opts} --enable-bootstrap"
@@ -171,8 +175,11 @@ configure_build()
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	binutils*|gdb*)
+	binutils*|gdb)
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
+	    ;;
+	gdbserver)
+	    opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 	    ;;
 	dejagnu|gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
 	    opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
@@ -182,6 +189,8 @@ configure_build()
 	    ;;
     esac
 
+
+    local date="`date "+%Y.%m"`"
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
@@ -199,7 +208,7 @@ configure_build()
 #            esac
 #	fi
 
-	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
+	cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts} --with-bugurl="https://bugs.launchpad.net/gcc-linaro" --with-pkgversion="Linaro GCC ${date}"
 	if test $? -gt 0; then
 	    error "Configure of $1 failed."
 	    return $?
