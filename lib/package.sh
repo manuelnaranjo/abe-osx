@@ -48,7 +48,8 @@ binary_runtime()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+#    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -81,7 +82,7 @@ binary_runtime()
 
     fi
 
-    local destdir=/tmp/linaro/${tag}
+    local destdir="/tmp/linaro.$$/${tag}"
 
     dryrun "mkdir -p ${destdir}/lib/${target} ${destdir}/usr/lib/${target}"
 
@@ -106,20 +107,21 @@ binary_gdb()
 
     local version="`${target}-gdb --version | head -1 | cut -d ' ' -f 4`"
     local tag="`create_release_tag ${gdb_version}`"
-    local destdir=/tmp/linaro/${tag}
     local builddir="`get_builddir ${gdb_version}`"
+    local destdir="/tmp/linaro.$$/${tag}"
 
-    dryrun "mkdir -p ${destdir}-tmp"
+#    dryrun "mkdir -p ${destdir}-tmp"
 
     local prefix="${local_builds}/destdir/${host}"
 
     # install in alternate directory so it's easier to build the tarball
-    dryrun "make install ${make_flags} DESTDIR=${destdir}-tmp -w -C ${builddir}"
-    dryrun "ln -sfnT ${destdir}-tmp/${prefix} ${destdir}"
+    dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
+    dryrun "ln -sfnT ${destdir}/${prefix} ${destdir}"
 
     local abbrev="`echo ${host}_${target} | sed -e 's:none-::' -e 's:unknown-::'`"
-    # make the tarball from the tree we just created.
-    dryrun "tar JcvCfh /tmp/linaro ${local_snapshots}/${tag}-${abbrev}.tar.xz ${tag}"
+ 
+   # make the tarball from the tree we just created.
+    dryrun "tar JcvCfh /tmp/linaro.$$ ${local_snapshots}/${tag}-${abbrev}.tar.xz ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}-${abbrev}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}-${abbrev}.tar.xz.asc"
@@ -135,9 +137,9 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 4 | cut -d '-' -f 1`"
-
-    local destdir=/tmp/linaro-gcc-${version}.$$
+#    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 4 | cut -d '-' -f 1`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local destdir="/tmp/linaro.$$/${tag}"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -159,7 +161,6 @@ binary_toolchain()
 	fi
 	
 	local date="`date +%Y%m%d`"
-
 	local srcdir="`get_srcdir ${gcc_version}`"
 
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
@@ -178,7 +179,7 @@ binary_toolchain()
     local builddir="`get_builddir ${gcc_version} stage2`"
 
     # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} DESTDIR=${destdir} -w"
+    local make_flags="${make_flags} DESTDIR=${destdir}/${tag} -w"
 
     if test x"${gcc_static}" = x"yes"; then
 	# If the default is a statically linked GCC, we only have to relink
@@ -187,13 +188,13 @@ binary_toolchain()
 	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
 	dryrun "cd ${builddir} && rm -f ${bins}"
 	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
-	dryrun "make SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+	dryrun "(make SHELL=${bash_shell} ${make_flags} -C ${builddir})"
 	# Install the documentation too
 	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
     else
 	# If the default is a dynamically linked GCC, we have to recompile everything
-	dryrun "make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
-	dryrun "make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
+	dryrun "(make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir})" 
+	dryrun "(make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir})"
     fi
 
     local builddir="`get_builddir ${binutils_version}`"
@@ -211,31 +212,29 @@ binary_toolchain()
 
     # Install the documentation too. The different components unfortunately 
     # install differently, so just do the right thing.
-    dryrun "make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/bfd "
-    dryrun "make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/ld "
-    dryrun "make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gas"
-    dryrun "make SHELL=${bash_shell}  diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gprof"
-    dryrun "make SHELL=${bash_shell} install-html install-info ${make_flags} -C ${builddir} "
+    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/bfd)"
+    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/ld)"
+    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gas)"
+    dryrun "(make SHELL=${bash_shell}  diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gprof)"
+    dryrun "(make SHELL=${bash_shell} install-html install-info ${make_flags} -C ${builddir})"
 
     # We build and test GCCGO, but we don't release it yet
     # dryrun "rm -fr ${destdir}/bin/${target}-gccgo"
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest
-    mv /tmp/manifest.txt ${destdir}/manifest.txt
+    manifest ${destdir}/manifest.txt
 
     local installdir="`find ${destdir} -name ${target}-gcc`"
     local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
-    dryrun "ln -sfnT ${installdir} /tmp/${tag}"
+    dryrun "ln -sfnT ${installdir} ${destdir}"
 
     # make the tarball from the tree we just created.
-    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 
-    dryrun "rm -fr /tmp/${tag} ${destdir}"
     return 0
 }
 
@@ -244,6 +243,7 @@ binary_sysroot()
     trace "$*"
 
     local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+    local destdir="/tmp/linaro.$$/${tag}"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -295,12 +295,12 @@ binary_sysroot()
 	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
     fi
 
-    dryrun "cp -fr ${cbuild_top}/sysroots/${target} /tmp/${tag}"
+    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
 
     # Generate the install script
-    sysroot_install_script /tmp/${tag}
+    sysroot_install_script ${destdir}
 
-    dryrun "cd /tmp && tar Jcvf ${local_snapshots}/${tag}.tar.xz ${tag}"
+    dryrun "tar Jcvf ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
@@ -312,7 +312,7 @@ binary_sysroot()
 manifest()
 {
     if test x"$1" = x; then
-	local outfile=/tmp/manifest.txt
+	local outfile=/tmp/linaro.$$/manifest.txt
     else
 	local outfile=$1
     fi
