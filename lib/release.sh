@@ -59,13 +59,11 @@ release_binutils_src()
     # The new combined repository for binutils has GDB too, so we strip that off.
     local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::'`"
 
-    # For a release, we don't need the .git identifier.
+    dryrun "mkdir -p /tmp/linaro.$$"
     local destdir="/tmp/linaro.$$/${tag}"
 
     # make a link with the correct name for the tarball's source directory
-#    dryrun "ln -sfnT ${srcdir} ${destdir}"
-    dryrun "mkdir -p ${destdir}"
-    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
+    dryrun "ln -sfnT ${srcdir} ${destdir}"
 
     # Update the Binutils version
     if test x"${release}" = x;then
@@ -90,15 +88,14 @@ release_binutils_src()
     # Remove extra files left over from any development hacking
     sanitize ${srcdir}
 
-    # make a link with the correct name for the tarball's source directory
-#    dryrun "ln -sfnT ${srcdir}/ ${destdir}"
-    
-    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
-
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
+
+    return 0
 }
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GCC/ReleaseProcess
@@ -118,10 +115,9 @@ release_gcc_src()
     local tag="`create_release_tag ${gcc_version} | sed -e 's:[-~]linaro-::' | tr '~' '-'`"
     local destdir="/tmp/linaro.$$/${tag}"
 
-    dryrun "mkdir -p ${destdir}/gcc/doc"
+    dryrun "mkdir -p /tmp/linaro.$$"
+    dryrun "ln -sfnT ${srcdir} ${destdir}"
 
-    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
-    
     if test -d ${destdir}; then
 	if test x"${release}" = x;then
 	    edit_changelogs ${destdir}/gcc ${tag}
@@ -137,12 +133,15 @@ release_gcc_src()
     # Install the docs
     install_gcc_docs ${destdir} ${builddir} 
 
-    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
-
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}"
+
+    # Clean up doc files created during the build
+    rm -fr ${destdir}/INSTALL ${destdir}/MD5SUMS ${destdir}/gcc/doc/*.1  ${destdir}/gcc/doc/*.7
 
     return 0
 }
@@ -236,13 +235,17 @@ edit_changelogs()
     local date="`date +%Y-%m-%d`"
 
     # Get all the ChangeLog files.
-    local clogs="`find ${basedir} -name ChangeLog`"
+    local clogs="`find ${basedir}/ -name ChangeLog`"
 
     # For a dryrun, don't actually edit any ChangeLog files.
     if test x"${dryrun}" = x"no"; then
 	local verstr="`echo "${tool}" | tr "[:lower:]" "[:upper:]"` Linaro ${version}"
 	for i in ${clogs}; do
+	    # Don't do anything if the entry has already been updated.
 	    if test -e $i.linaro; then
+		if test "`grep -c "${version}" $i.linaro`" -eq 1; then
+		    continue
+		fi
      		mv $i.linaro /tmp/
 	    else
 		touch /tmp/ChangeLog.linaro
@@ -273,9 +276,8 @@ release_gdb_src()
     local destdir="/tmp/linaro.$$/${tag}"
 
     # make a link with the correct name for the tarball's source directory
-#    dryrun "ln -sfnT ${srcdir} ${destdir}"
-    dryrun "mkdir -p ${destdir}"
-    dryrun "rsync --exclude .git --exclude .svn -ar ${srcdir}/* ${destdir}/"
+    dryrun "mkdir -p /tmp/linaro.$$"
+    dryrun "ln -sfnT ${srcdir} ${destdir}"
     
     # Update the GDB version
     if test x"${release}" = x;then
@@ -289,12 +291,12 @@ release_gdb_src()
     # Remove extra files left over from any development hacking
     sanitize ${destdir}
 
-    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
-
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
+    local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     return 0
 }
