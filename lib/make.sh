@@ -14,9 +14,9 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2 gdb"
+	local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
     else
-	local builds="infrastructure binutils stage2 gdb" # native build
+	local builds="infrastructure binutils stage2 gdb gdbserver" # native build
     fi
 
     # See if specific component versions were specified at runtime
@@ -87,6 +87,10 @@ build_all()
 		build ${gdb_version}
 		build_all_ret=$?
 		;;
+	    gdbserver)
+		build ${gdb_version} server
+		build_all_ret=$?
+		;;
 	    # Build anything not GCC or infrastructure
 	    *)
 		build ${binutils_version}
@@ -103,7 +107,7 @@ build_all()
     notice "Build took ${SECONDS} seconds"
     
     if test x"${tarsrc}" = x"yes"; then
-        release_binutils_src 
+        release_binutils_src
         release_gcc_src
         release_gdb_src
     fi
@@ -113,13 +117,14 @@ build_all()
         binary_gdb
         binary_toolchain
 
-	if test x"${clibrary}" != x"newlib"; then
-	    binary_runtime
-	fi
+#	if test x"${clibrary}" != x"newlib"; then
+#	    binary_runtime
+#	fi
     fi
 
     # delete temp files from making the release
-    dryrun "rm -fr /tmp/linaro.$$"
+    dryrun "rm -f /tmp/linaro.$$/*"
+    dryrun "rmdir -f /tmp/linaro.$$"
 
     return 0
 }
@@ -344,7 +349,7 @@ make_install()
 	# will continue.
 	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
-	dryrun "make install ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
 
     if test $? != "0"; then
