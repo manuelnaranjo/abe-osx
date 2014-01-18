@@ -105,7 +105,7 @@ build_all()
     done
 
     notice "Build took ${SECONDS} seconds"
-    
+
     if test x"${tarsrc}" = x"yes"; then
         release_binutils_src
         release_gcc_src
@@ -117,14 +117,16 @@ build_all()
         binary_gdb
         binary_toolchain
 
-#	if test x"${clibrary}" != x"newlib"; then
-#	    binary_runtime
-#	fi
+	if test x"${clibrary}" != x"newlib"; then
+	    binary_runtime
+	fi
     fi
 
+    # First delete the symbolic links first, so we don't delete the actual files.
+    #dryrun "rm -f /tmp/linaro.$$/*"
+
     # delete temp files from making the release
-    dryrun "rm -f /tmp/linaro.$$/*"
-    dryrun "rmdir -f /tmp/linaro.$$"
+    #dryrun "rm -fr /tmp/linaro.$$"
 
     return 0
 }
