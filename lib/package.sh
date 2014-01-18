@@ -139,11 +139,7 @@ binary_toolchain()
 {
     trace "$*"
 
-#    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 4 | cut -d '-' -f 1`"
     local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
-    local destdir="/tmp/linaro.$$/${tag}"
-
-    dryrun "mkdir -p /tmp/linaro.$$"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -179,39 +175,46 @@ binary_toolchain()
 
     fi
 
+    local destdir="/tmp/linaro.$$/${tag}"
+    dryrun "mkdir -p /tmp/linaro.$$"
+
     # install in alternate directory so it's easier to build the tarball.
     local builddir="`get_builddir ${gcc_version} stage2`"
 
     # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} DESTDIR=${destdir}/${tag} -w"
+    local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w"
 
     if test x"${gcc_static}" = x"yes"; then
-	# If the default is a statically linked GCC, we only have to relink
-	# the executables,
+    	# If the default is a statically linked GCC, we only have to relink
+    	# the executables,
         # GCC executables we want to relink
-	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
-	dryrun "cd ${builddir} && rm -f ${bins}"
-	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
-	dryrun "(make SHELL=${bash_shell} ${make_flags} -C ${builddir})"
-	# Install the documentation too
-	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
-    else
-	# If the default is a dynamically linked GCC, we have to recompile everything
-	dryrun "(make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir})" 
-	dryrun "(make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir})"
-    fi
+     	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/cc1 gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross"
+     	dryrun "cd ${builddir} && rm -f ${bins}"
+     	dryrun "make SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc"
+     	dryrun "make SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+     	# Install the documentation too
+     	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
+     else
+     	# If the default is a dynamically linked GCC, we have to recompile everything
+    	dryrun "make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
+    	dryrun "make all SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}"
+    	dryrun "make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags}  CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
+     	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
+     fi
+
+    dryrun "ln -sfnT ${destdir}-tmp/${cbuild_top}/builds/destdir/${host} ${destdir}"
 
     local builddir="`get_builddir ${binutils_version}`"
     if test x"${binutils_static}" = x"yes"; then
         # Binutils executables we want to relink
-	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
-	dryrun "cd ${builddir} && rm -f ${bins}"
-	# If the default is a statically linked binutils, we only have to relink
-	# the excutables,
-	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-    else
-	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
+     	dryrun "cd ${builddir} && rm -f ${bins}"
+     	# If the default is a statically linked binutils, we only have to relink
+     	# the excutables,
+     	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     else
+     	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
     fi
 
     # Install the documentation too. The different components unfortunately 
@@ -229,9 +232,9 @@ binary_toolchain()
     # build toolchain.
     manifest ${destdir}/manifest.txt
 
-    local installdir="`find ${destdir} -name ${target}-gcc`"
-    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
-    dryrun "ln -sfnT ${installdir} ${destdir}"
+#    local installdir="`find ${destdir} -name ${target}-nm`"
+#    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
+#    dryrun "ln -sfnT ${destdir}/${cbuild_top}/destdir/${host} ${destdir}"
 
     # make the tarball from the tree we just created.
     dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
