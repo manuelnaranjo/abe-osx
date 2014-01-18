@@ -190,7 +190,11 @@ configure_build()
     esac
 
 
-    local date="`date "+%Y.%m"`"
+    if test x"${release}" = x; then
+	local date="`date "+%Y.%m"`"
+    else
+	local date="${release}"
+    fi
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
