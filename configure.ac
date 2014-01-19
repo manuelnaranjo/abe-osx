@@ -31,6 +31,13 @@ fi
 
 AC_PATH_PROG(CCACHE, ccache)
 
+AC_PATH_PROG(LSBCC, lsbcc)
+AC_SUBST(LSBCC)
+if test x"${LSBCC}" = x; then
+   AC_MSG_WARN([You need 'lsbcc' to produce binary releases!])
+#   missing="${missing} lsbcc"
+fi
+
 dnl AC_PATH_PROG(GITBZR, git-bzr)
 AC_PATH_PROG(BASH, bash)
 AC_SUBST(BASH)
