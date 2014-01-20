@@ -116,6 +116,13 @@ binary_gdb()
 #    if test x"${gdb_static}" = x"yes"; then
 #    fi
 
+    # Use LSB to produce more portable binary releases.
+    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
+	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+    fi
+
+    rm ${builddir}/gdb/gdb
+
     # install in alternate directory so it's easier to build the tarball
     dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
     dryrun "ln -sfnT ${destdir}/${prefix} /tmp/linaro.$$/${tag}"
@@ -185,8 +192,9 @@ binary_toolchain()
     local make_flags="${make_flags} LDFLAGS=-static DESTDIR=${destdir}-tmp -w"
 
     # Use LSB to produce more portable binary releases.
-    if test x"${LSBCC}" != x; then
-	local make_flags="${make_flags} CC=lsbcc CXX=lsbc++"
+    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
+	export LSB_SHAREDLIBPATH=${builddir}/gcc
+	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
     fi
 
     if test x"${gcc_static}" = x"yes"; then
@@ -195,7 +203,7 @@ binary_toolchain()
         # GCC executables we want to relink
      	local bins="gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross" #  gcc/cc1
      	dryrun "cd ${builddir} && rm -f ${bins}"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} LDFLAGS=-static CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc -L/home/rob/workspace/builds/i486-unknown-linux-gnu/arm-linux-gnueabihf/gcc.git~linaro-4.8-branch-stage2/gcc"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc LDFLAGS=-static"
 	if test $? -gt 0; then
 	    error "Couldn't build static GCC!"
 	    #return 1
