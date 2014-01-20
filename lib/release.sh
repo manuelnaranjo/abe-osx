@@ -28,7 +28,7 @@ regenerate_checksums()
 EOF
 
     find ${reldir}/ -type f | grep -v MD5SUMS | LC_ALL=C sort > /tmp/md5sums.$$
-    xargs md5sum < /tmp/md5sums.$$ 2>&1 | sed -e "s:${reldir}/::" >> ${reldir}/MD5SUMS
+    xargs md5sum < /tmp/md5sums.$$ 2>&1 | grep -v "\.git" | sed -e "s:${reldir}/::" >> ${reldir}/MD5SUMS
     rm -f /tmp/md5sums.$$
 
 #    for i in `cat /tmp/md5sums`; do
