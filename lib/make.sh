@@ -14,9 +14,9 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
+	local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
     else
-	local builds="infrastructure binutils stage2 gdb gdbserver" # native build
+	local builds="infrastructure binutils stage2 gdb" # native build
     fi
 
     # See if specific component versions were specified at runtime
@@ -116,7 +116,6 @@ build_all()
         binary_sysroot
         binary_gdb
         binary_toolchain
-
 	if test x"${clibrary}" != x"newlib"; then
 	    binary_runtime
 	fi
@@ -278,8 +277,8 @@ make_all()
     fi
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
-    fi
- 
+    fi 
+
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
