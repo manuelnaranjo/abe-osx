@@ -30,3 +30,5 @@ enable_ssh=@ENABLE_SSH@
 
 wget_bin=@WGET@
 bash_shell=@BASH@
+LSBCC=@LSBCC@
+LSBCXX=@LSBXX@
