@@ -361,9 +361,7 @@ if test ! -d /opt/linaro/; then
 fi
 
 # If it doesn't already exist, link to the sysroot path GCC will be using
-if test ! -d /opt/linaro/${tag}; then
-  ln -sf  \${PWD} ${sysroot}
-fi
+ln -sf  \${PWD} ${sysroot}
 EOF
     fi
 
