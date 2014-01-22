@@ -114,24 +114,19 @@ build_all()
 
     if test x"${tarbin}" = x"yes"; then
 	# Delete any previous release files
+        # First delete the symbolic links first, so we don't delete the
+	# actual files
 	dryrun "rm -f /tmp/linaro.*/*"
+        # delete temp files from making the release
 	dryrun "rm -fr /tmp/linaro.*"
 
         binary_sysroot
         binary_gdb
-	set -x
         binary_toolchain
 	if test x"${clibrary}" != x"newlib"; then
 	    binary_runtime
 	fi
-	set +x
     fi
-
-    # First delete the symbolic links first, so we don't delete the actual files.
-    #dryrun "rm -f /tmp/linaro.$$/*"
-
-    # delete temp files from making the release
-    #dryrun "rm -fr /tmp/linaro.$$"
 
     return 0
 }
@@ -219,10 +214,10 @@ build()
     fi
 
     # Build the documentation.
-    make_docs ${gitinfo} $2
-    if test $? -gt 0; then
-	return 1
-    fi
+#    make_docs ${gitinfo} $2
+#    if test $? -gt 0; then
+#	return 1
+#    fi
 
     make_install ${gitinfo} $2
     if test $? -gt 0; then
@@ -325,6 +320,10 @@ make_install()
 	    dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
 	    dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+	fi
+	if test $? != "0"; then
+	    warning "Make headers_install failed!"
+	    return 1
 	fi
 	return 0
     fi
@@ -494,32 +493,32 @@ make_docs()
 	*binutils*)
 	    # the diststuff target isn't supported by all the subdirectories,
 	    # so we build both all targets and ignore the error.
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/bfd diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/ld diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gas diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gprof diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/bfd diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/ld diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gas diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gprof diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
 	    return $?
 	    ;;
 	*gdb*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
 	    return $?
 	    ;;
 	*gcc*)
-	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/make.log"
+	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
 	    return $?
 	    ;;
 	*linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*)
 	    # the regular make install handles all the docs.
 	    ;;
 	*libc*) # including eglibc
-	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info dvi pdf html 2>&1 | tee -a ${builddir}/make.log"
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info html 2>&1 | tee -a ${builddir}/make.log"
+	    #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info dvi pdf html 2>&1 | tee -a ${builddir}/makedoc.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info html 2>&1 | tee -a ${builddir}/makedoc.log"
 	    return $?
 	    ;;
 	*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/makedoc.log"
 	    return $?
 	    ;;
     esac
