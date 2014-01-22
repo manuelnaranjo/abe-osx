@@ -14,7 +14,7 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
+	local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
     else
 	local builds="infrastructure binutils stage2 gdb" # native build
     fi
@@ -113,12 +113,18 @@ build_all()
     fi
 
     if test x"${tarbin}" = x"yes"; then
+	# Delete any previous release files
+	dryrun "rm -f /tmp/linaro.*/*"
+	dryrun "rm -fr /tmp/linaro.*"
+
         binary_sysroot
         binary_gdb
+	set -x
         binary_toolchain
 	if test x"${clibrary}" != x"newlib"; then
 	    binary_runtime
 	fi
+	set +x
     fi
 
     # First delete the symbolic links first, so we don't delete the actual files.

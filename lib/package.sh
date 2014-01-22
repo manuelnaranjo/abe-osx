@@ -202,7 +202,7 @@ binary_toolchain()
     	# the executables.
         # GCC executables we want to relink
      	local bins="gcc/cc1 gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross gcc/gfrtran"
-     	dryrun "cd ${builddir} && rm -f ${bins}"
+     	dryrun "(cd ${builddir} && rm -f ${bins})"
      	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
 	if test $? -gt 0; then
 	    error "Couldn't build static GCC!"
@@ -233,7 +233,7 @@ binary_toolchain()
     if test x"${binutils_static}" = x"yes"; then
         # Binutils executables we want to relink
      	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
-     	dryrun "cd ${builddir} && rm -f ${bins}"
+     	dryrun "(cd ${builddir} && rm -f ${bins})"
      	# If the default is a statically linked binutils, we only have to relink
      	# the excutables,
      	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
@@ -491,7 +491,7 @@ binutils_src_tarball()
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
-    dryrun "cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/"
+    dryrun "(cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/)"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
