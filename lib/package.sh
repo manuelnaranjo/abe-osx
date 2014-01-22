@@ -201,15 +201,20 @@ binary_toolchain()
     	# If the default is a statically linked GCC, we only have to relink
     	# the executables.
         # GCC executables we want to relink
-     	local bins="gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross" #  gcc/cc1
+     	local bins="gcc/cc1 gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross gcc/gfrtran"
      	dryrun "cd ${builddir} && rm -f ${bins}"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}/gcc LDFLAGS=-static"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
 	if test $? -gt 0; then
 	    error "Couldn't build static GCC!"
-	    #return 1
+	    return 1
+	fi
+     	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
+	if test $? -gt 0; then
+	    error "Couldn't install static GCC!"
+	    return 1
 	fi
      	# Install the documentation too
-     	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
+     	dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
      else
      	# If the default is a dynamically linked GCC, we have to recompile everything
     	dryrun "make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
