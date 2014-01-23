@@ -491,7 +491,7 @@ binutils_src_tarball()
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
-    dryrun "(cd /tmp && tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} ${tag}/)"
+    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/)"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
