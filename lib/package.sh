@@ -152,12 +152,12 @@ binary_toolchain()
     if test x"${release}" = x; then
 	if test x"${gcc_version}" = x; then
 	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	    local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	fi
+	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	if test x"${binutils_version}" = x; then
 	    local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	    local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
 	fi
+	local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
 	
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
 	    local branch="`basename ${gcc_version}`"
@@ -201,6 +201,7 @@ binary_toolchain()
     	# If the default is a statically linked GCC, we only have to relink
     	# the executables.
         # GCC executables we want to relink
+#	dryrun "rsync -av ${builddir}/lto-plugin/liblto_plugin.\* ${destdir}/libexec/gcc/*/"
      	local bins="gcc/cc1 gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross gcc/gfrtran"
      	dryrun "(cd ${builddir} && rm -f ${bins})"
      	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
@@ -208,7 +209,7 @@ binary_toolchain()
 	    error "Couldn't build static GCC!"
 	    return 1
 	fi
-     	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
+    	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
 	if test $? -gt 0; then
 	    error "Couldn't install static GCC!"
 	    return 1
@@ -236,10 +237,12 @@ binary_toolchain()
      	dryrun "(cd ${builddir} && rm -f ${bins})"
      	# If the default is a statically linked binutils, we only have to relink
      	# the excutables,
-     	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
      else
      	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-     	dryrun "make all install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
     fi
 
     # Install the documentation too. The different components unfortunately 
