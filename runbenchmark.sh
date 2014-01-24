@@ -105,6 +105,7 @@ extract=true
 clean=true
 build=true
 run=true
+build_pgo=false
 
 while :
 do
@@ -145,6 +146,10 @@ do
       ;;
     -p=* | --gcc-binary-path)
       GCC_PATH=${1#*=}
+      shift
+      ;;
+    --pgo)
+      build_pgo=true
       shift
       ;;
     --file=*)
@@ -199,8 +204,13 @@ do
   fi
 
   if $build; then
-    echo "Build benchmark $b"
-    build $ctx
+    if $build_pgo; then
+      echo "Build benchmark $b with pgo"
+      build_with_pgo $ctx
+    else
+      echo "Build benchmark $b"
+      build $ctx
+    fi
   fi
 
   if $run; then

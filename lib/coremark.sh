@@ -40,7 +40,7 @@ coremark_run ()
   echo "Note: All results are estimates." >> $COREMARK_RUN_LOG
   for i in $(seq 1 $COREMARK_BENCH_RUNS)
   do
-    echo -e \\nRun $$i:: >> $COREMARK_RUN_LOG
+    echo  "\nRun $i::" >> $COREMARK_RUN_LOG
     echo "make -C $COREMARK_SUITE/$COREMARK -s rerun UNAME=`uname`"
     make -C $COREMARK_SUITE/$COREMARK -s rerun UNAME=`uname`
     cat $COREMARK_SUITE/$COREMARK/*.log >> $COREMARK_RUN_LOG
@@ -55,8 +55,8 @@ coremark_clean()
 
 coremark_build_with_pgo ()
 {
-  echo PORT_CFLAGS=$COREMARK_VCFLAGS >> $COREMARK_SUITE/$COREMARK_BUILD_LOG
-  echo XCFLAGS=$COREMARK_XCFLAGS >> $COREMARK_SUIYE/$COREMARK_BUILD_LOG
+  echo PORT_CFLAGS=$COREMARK_VCFLAGS >> $COREMARK_BUILD_LOG
+  echo XCFLAGS=$COREMARK_XCFLAGS >> $COREMARK_BUILD_LOG
   local COREMARK=`ls coremark`
   # readme.txt sets what the training run should be
   make -C $COREMARK_SUITE/$COREMARK $PARALLEL run3.log REBUILD=1 \
