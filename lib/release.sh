@@ -89,7 +89,7 @@ release_binutils_src()
     sanitize ${srcdir}
 
     local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs --exclude ${target}"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
@@ -134,7 +134,7 @@ release_gcc_src()
     install_gcc_docs ${destdir} ${builddir} 
 
     local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
@@ -292,7 +292,7 @@ release_gdb_src()
     sanitize ${destdir}
 
     local exclude="--exclude-vcs --exclude .gitignore --exclude .cvsignore --exclude .libs"
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp/linaro.$$ ${tag}/"
 
     # Make the md5sum file for this tarball
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
