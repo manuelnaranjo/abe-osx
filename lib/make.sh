@@ -14,7 +14,7 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
+	local builds="infrastructure binutils stage1 libc stage2 gdb" # gdbserver
     else
 	local builds="infrastructure binutils stage2 gdb" # native build
     fi
@@ -73,6 +73,12 @@ build_all()
 		    return 1
 		fi
 		build_all_ret=$?
+                # If we don't install the sysroot, link to the one we built so
+                # we can use the GCC we just built.
+		local sysroot="`${target}-gcc -print-sysroot`"
+                if test ! -d ${sysroot}; then
+	            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+                fi
 		;;
 	    stage1)
 		build ${gcc_version} stage1
@@ -116,16 +122,17 @@ build_all()
 	# Delete any previous release files
         # First delete the symbolic links first, so we don't delete the
 	# actual files
+	dryrun "rm -fr /tmp/linaro.*/*-tmp /tmp/linaro.*/runtime*"
 	dryrun "rm -f /tmp/linaro.*/*"
         # delete temp files from making the release
 	dryrun "rm -fr /tmp/linaro.*"
 
-        binary_sysroot
-        binary_gdb
-        binary_toolchain
 	if test x"${clibrary}" != x"newlib"; then
 	    binary_runtime
 	fi
+        binary_toolchain
+        binary_sysroot
+        binary_gdb
     fi
 
     notice "Packaging took ${SECONDS} seconds"
@@ -216,10 +223,10 @@ build()
     fi
 
     # Build the documentation.
-#    make_docs ${gitinfo} $2
-#    if test $? -gt 0; then
-#	return 1
-#    fi
+    make_docs ${gitinfo} $2
+    if test $? -gt 0; then
+	return 1
+    fi
 
     make_install ${gitinfo} $2
     if test $? -gt 0; then
