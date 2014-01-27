@@ -75,7 +75,7 @@ binary_runtime()
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
 	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
 	fi
-	local tag="`echo runtime-${version}~${revision}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	local tag="`echo runtime-${version}~${revision}-${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
 	local tag="`echo runtime-linaro-gcc${version}-${release}-${target}`"
@@ -275,13 +275,6 @@ binary_toolchain()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
     
-    # If we don't install the sysroot, link to the one we built so
-    # we can use the GCC we just built.
-    local sysroot="`${builddir}/gcc/xgcc -print-sysroot`"
-    if test ! -d ${sysroot}; then
-	dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
-    fi
-
     return 0
 }
 
