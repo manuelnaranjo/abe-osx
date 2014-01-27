@@ -78,8 +78,7 @@ binary_runtime()
 	local tag="`echo runtime-${version}~${revision}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
-	local tag="`echo runtime-linaro-gcc${version}-${release}-${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
-
+	local tag="`echo runtime-linaro-gcc${version}-${release}-${target}`"
     fi
 
     local destdir="/tmp/linaro.$$/${tag}"
@@ -93,7 +92,8 @@ binary_runtime()
     dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
 
     # make the tarball from the tree we just created.
-    dryrun "tar Jcvf ${local_snapshots}/${tag}.tar.xz --directory /tmp/linaro.$$ ${tag}"
+    notice "Making binary tarball for runtime libraries, please wait..."
+    dryrun "tar Jcf ${local_snapshots}/${tag}.tar.xz --directory /tmp/linaro.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
@@ -123,14 +123,17 @@ binary_gdb()
 
     rm ${builddir}/gdb/gdb
 
+    local make_flags="${make_flags}"
     # install in alternate directory so it's easier to build the tarball
+    dryrun "make all ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
     dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
     dryrun "ln -sfnT ${destdir}/${prefix} /tmp/linaro.$$/${tag}"
 
     local abbrev="`echo ${host}_${target} | sed -e 's:none-::' -e 's:unknown-::'`"
  
    # make the tarball from the tree we just created.
-    dryrun "tar JcvCfh /tmp/linaro.$$ ${local_snapshots}/${tag}-${abbrev}.tar.xz ${tag}"
+    notice "Making binary tarball for GDB, please wait..."
+    dryrun "tar Jcfh ${local_snapshots}/${tag}-${abbrev}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}-${abbrev}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}-${abbrev}.tar.xz.asc"
@@ -189,7 +192,7 @@ binary_toolchain()
     local builddir="`get_builddir ${gcc_version} stage2`"
 
     # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} LDFLAGS=-static DESTDIR=${destdir}-tmp -w"
+    local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w LDFLAGS=-static"
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
@@ -204,12 +207,12 @@ binary_toolchain()
 #	dryrun "rsync -av ${builddir}/lto-plugin/liblto_plugin.\* ${destdir}/libexec/gcc/*/"
      	local bins="gcc/cc1 gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross gcc/gfrtran"
      	dryrun "(cd ${builddir} && rm -f ${bins})"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
 	if test $? -gt 0; then
 	    error "Couldn't build static GCC!"
 	    return 1
 	fi
-    	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir} LDFLAGS=-static"
+    	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
 	if test $? -gt 0; then
 	    error "Couldn't install static GCC!"
 	    return 1
@@ -218,13 +221,13 @@ binary_toolchain()
      	dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
      else
      	# If the default is a dynamically linked GCC, we have to recompile everything
-    	dryrun "make clean -i -k SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}" 
-    	dryrun "make all SHELL=${bash_shell} LDFLAGS=-static ${make_flags} -C ${builddir}"
+    	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}" 
+    	dryrun "make all SHELL=${bash_shell} ${make_flags} -C ${builddir}"
 	if test $? -gt 0; then
 	    error "Couldn't rebuild static GCC!"
 	    return 1
 	fi
-    	dryrun "make install SHELL=${bash_shell} LDFLAGS=-static ${make_flags}  CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
+    	dryrun "make install SHELL=${bash_shell} ${make_flags}  CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
      	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
      fi
 
@@ -232,17 +235,18 @@ binary_toolchain()
 
     local builddir="`get_builddir ${binutils_version}`"
     if test x"${binutils_static}" = x"yes"; then
+	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
         # Binutils executables we want to relink
-     	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp gprof/gprof binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new"
+     	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new" # gprof/gprof
      	dryrun "(cd ${builddir} && rm -f ${bins})"
      	# If the default is a statically linked binutils, we only have to relink
      	# the excutables,
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-     	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make all -i SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+     	dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir}"
      else
-     	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
-     	dryrun "make install SHELL=${bash_shell} ${make_flags} LDFLAGS=-all-static -C ${builddir}"
+     	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} CFLAGS=-UFORTIFY_SOURCE -C ${builddir}"
+     	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
     fi
 
     # Install the documentation too. The different components unfortunately 
@@ -265,10 +269,18 @@ binary_toolchain()
 #    dryrun "ln -sfnT ${destdir}/${cbuild_top}/destdir/${host} ${destdir}"
 
     # make the tarball from the tree we just created.
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
+    notice "Making binary tarball for toolchain, please wait..."
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+    
+    # If we don't install the sysroot, link to the one we built so
+    # we can use the GCC we just built.
+    local sysroot="`${builddir}/gcc/xgcc -print-sysroot`"
+    if test ! -d ${sysroot}; then
+	dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+    fi
 
     return 0
 }
@@ -337,7 +349,8 @@ binary_sysroot()
     # Generate the install script
     sysroot_install_script ${destdir}
 
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
+    notice "Making binary tarball for sysroot, please wait..."
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
@@ -494,7 +507,8 @@ binutils_src_tarball()
     # Cleanup any temp files.
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
-    dryrun "tar Jcvfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/)"
+    notice "Making source tarball for GCC, please wait..."
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/)"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
