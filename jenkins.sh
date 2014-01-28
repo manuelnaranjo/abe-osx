@@ -83,7 +83,7 @@ fi
 $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
 
 # Create the BUILD-INFO file for Jenkins.
-cat << EOF > ${shared}/snapshots/BUILD-INFO.txt
+cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
 
 Files-Pattern: *
