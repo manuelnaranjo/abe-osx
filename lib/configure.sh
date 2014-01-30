@@ -111,7 +111,9 @@ configure_build()
     fi
 
     # prefix is the root everything gets installed under.
-    local prefix="${local_builds}/destdir/${host}"
+    if test x"${prefix}" = x; then
+	prefix="${local_builds}/destdir/${host}"
+    fi
 
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
@@ -180,6 +182,9 @@ configure_build()
 	    ;;
 	gdbserver)
 	    opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
+	    local srcdir="${srcdir}/gdb/gdbserver"
+	    local builddir="${builddir}/gdbserver"
+	    dryrun "mkdir -p ${builddir}"
 	    ;;
 	dejagnu|gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
 	    opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"

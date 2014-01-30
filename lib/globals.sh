@@ -20,6 +20,9 @@ dbpasswd="default"
 
 manifest=
 
+# The prefix for installing the toolchain
+prefix=
+
 # The default timeout.  If you're on a wireless network this
 # might not be sufficient and can be overridden at the command
 # line.

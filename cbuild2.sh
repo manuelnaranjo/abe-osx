@@ -317,6 +317,8 @@ OPTIONS
 
   --parallel	Set the make flags for parallel builds.
 
+  --prefix	Set an alternate value for the prefix used to configure.
+
   --release <name>
 		The build system will package the resulting toolchain as a
 		release with the 'name' prefix.
@@ -491,6 +493,10 @@ while test $# -gt 0; do
        # download and install the infrastructure libraries GCC depends on
 	--inf*|infrastructure)
 	    infrastructure
+	    ;;
+	--pr*|--prefix)
+	    prefix=$2
+	    shift
 	    ;;
 	--sy*)			# sysroot
             set_sysroot ${url}
