@@ -93,6 +93,9 @@ EOF
 # Remove any leftover junit files
 rm -f ${WORKSPACE}/*.junit 2>&1 > /dev/null
 
+# make a zero sized .sum file to keep Jenkins happy, or it'll hang.
+touch ${WORKSPACE}/gcc.sum
+
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
