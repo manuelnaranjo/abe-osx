@@ -71,7 +71,11 @@ if test x"${runtests}" = xtrue; then
     check=--check
 fi
 
-# For coss build. For cross builds we build a native GCC, and then use
+if test x"${target}" != x; then
+    platform="--target ${target}"
+fi
+
+# For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
 # used to build the cross compiler, we don't bother to run 'make check'.
 if test x"${bootstrap}" = xtrue; then
@@ -80,7 +84,7 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} --target ${target} --build all
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} ${platform} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -92,9 +96,6 @@ EOF
 
 # Remove any leftover junit files
 rm -f ${WORKSPACE}/*.junit 2>&1 > /dev/null
-
-# make a zero sized .sum file to keep Jenkins happy, or it'll hang.
-touch ${WORKSPACE}/gcc.sum
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -118,11 +119,6 @@ if test x"${sums}" != x; then
 else
     echo "Bummer, no test results yet..."
     touch $WORKSPACE/gcc.sum.junit
-fi
-
-
-if test x"${target}" != x; then
-    platform="--target ${target}"
 fi
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
