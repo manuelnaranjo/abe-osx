@@ -75,6 +75,9 @@ if test x"${target}" != x; then
     platform="--target ${target}"
 fi
 
+# Delete the previous test resut fikes to avoid problems.
+find ${WORKSPACE} -name \*.sum -exec rm {} \;
+
 # For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
 # used to build the cross compiler, we don't bother to run 'make check'.
