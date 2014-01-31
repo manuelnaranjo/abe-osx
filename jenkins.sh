@@ -71,12 +71,12 @@ if test x"${runtests}" = xtrue; then
     check=--check
 fi
 
-if test x"${target}" != x; then
+if test x"${target}" != x"native"; then
     platform="--target ${target}"
 fi
 
 # Delete the previous test resut fikes to avoid problems.
-find ${WORKSPACE} -name \*.sum -exec rm {} \;
+find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 # For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
