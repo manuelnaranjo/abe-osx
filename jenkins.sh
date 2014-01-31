@@ -113,9 +113,11 @@ if test x"${sums}" != x; then
 	echo "Found junit files finally!!!"
     else
 	echo "Bummer, no junit files yet..."
+	touch $WORKSPACE/gcc.sum.junit
     fi
 else
     echo "Bummer, no test results yet..."
+    touch $WORKSPACE/gcc.sum.junit
 fi
 
 
