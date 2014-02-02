@@ -74,7 +74,7 @@ if test x"${runtests}" = xtrue; then
     check=--check
 fi
 
-if test x"${target}" != x"native"; then
+if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
 fi
 
