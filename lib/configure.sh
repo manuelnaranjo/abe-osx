@@ -217,7 +217,7 @@ configure_build()
 #            esac
 #	fi
 
-	(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts} --with-bugurl="https://bugs.launchpad.net/gcc-linaro" --with-pkgversion="Linaro GCC ${date}")
+	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GCC ${date}\")"
 	if test $? -gt 0; then
 	    error "Configure of $1 failed."
 	    return $?
