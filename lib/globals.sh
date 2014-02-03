@@ -69,10 +69,9 @@ network=""
 runtests=no
 ccache=no
 
-# These are flags for the --disable option to cbuild, which are enabled by default
+# These are flags for the --enable option to cbuild, which are disabled by default
 bootstrap=no
-makecheck=no
-tarballs=no
+# These are flags for the --disable option to cbuild, which are enabled by default
 install=yes
 release=""
 

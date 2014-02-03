@@ -263,9 +263,6 @@ cb_commands="--dryrun --checkout gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-
-
-
 cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout glibc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
@@ -330,6 +327,18 @@ cb_commands="--target ${target} --set libc=${libc}"
 match=''
 test_pass "${cb_commands}" "${match}"
 
+# Verify that setting glibc=glibc.git will fail for baremetal.
+cb_commands="--dryrun --target aarch64-none-elf glibc=glibc.git"
+match='crosscheck_clibrary_target'
+test_failure "${cb_commands}" "${match}"
+
+# Verify that glibc=glibc.git will fail when se before the target
+# for baremetal.
+cb_commands="--dryrun glibc=glibc.git --target aarch64-none-elf"
+match='crosscheck_clibrary_target'
+test_pass "${cb_commands}" "${match}"
+
+
 cb_commands="--snapshots"
 match='requires a directive'
 test_failure "${cb_commands}" "${match}"
@@ -362,6 +371,23 @@ test_pass "${cb_commands}" "${match}"
 # This tests that --checkout can go before --target and --target is still processed correctly.
 cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
 match='arm-none-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+# The default.
+cb_commands="--dump"
+match='Bootstrap          no'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--enable bootstrap --dump"
+match='Bootstrap          yes'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dump"
+match='Install            yes'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--disable install --dump"
+match='Install            no'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout and --build can be run together.

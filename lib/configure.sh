@@ -144,7 +144,7 @@ configure_build()
 			    notice "Building stage 2 of GCC"
 			    opts="${opts} ${stage2_flags}"
 			    ;;
-			server)
+			gdbserver)
 			    notice "Building gdbserver for the target"
 			    local srcdir="${srcdir}/gdbserver"
 			    ;;

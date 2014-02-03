@@ -183,6 +183,9 @@ dump()
     echo "Build Arch:        ${build_arch}"
     echo "Hostname:          ${hostname}"
     echo "Distribution:      ${distribution}"
+
+    echo "Bootstrap          ${bootstrap}"
+    echo "Install            ${install}"
 }
 
 usage()
@@ -191,8 +194,8 @@ usage()
     cat << EOF
   ${cbuild2} [''| [--timeout <value>]
              [[--build [<package>|all]|[--checkout <package>|all]]
-             [--ccache] [--check]
-             [--disable={bootstrap|tarball|install|update}] [--dryrun] [--dump]
+             [--ccache] [--check] [--enable {bootstrap}]
+             [--disable {install|update}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--manifest <manifest_file>] [--parallel] [--release]
              [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
@@ -273,15 +276,12 @@ OPTIONS
                        complete build as specified by the config/ .conf
                        files.
 
-  --disable	{boostrap|tarball|install}
+  --disable {install}
 
-  		bootstrap
-			Foo
-		tarball
-			Regardless of the default setting, disable the
-			building of tarballs.
 		install
-			Foo
+                        Disable the make install stage of packages, which
+                        is enabled by default.
+
 		update
 			Don't update source repositories before building.
 
@@ -289,6 +289,12 @@ OPTIONS
 		actual configuration, building, or installing.
 
   --dump	Dump configuration file information for this build.
+
+  --enable {bootstrap}
+
+                bootstrap
+                        Enable gcc bootstrapping, which is disabled by
+                        default.
 
   --fetch <url>
 
@@ -624,19 +630,18 @@ while test $# -gt 0; do
 	    fi
             shift
             ;;
-	# Disable steps in the complete process of building a toolchain. All of
-	# these are enabled by default, but not always desired.
-	--disable)
+	# These steps are disabled by default but are sometimes useful.
+	--enable)
 	    case $2 in
 		bootstrap|b*)
-		    bootstrap=no
+		    bootstrap=yes
 		    ;;
-		check|c*)
-		    makecheck=yes
-		    ;;
-		tarball|t*)
-		    tarballs=yes
-		    ;;
+	    esac
+	    shift
+	    ;;
+	# These are enabled by default, but not always desired.
+	--disable)
+	    case $2 in
 		install|i*)
 		    install=no
 		    ;;
@@ -691,6 +696,17 @@ while test $# -gt 0; do
 			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
 			;;
 		    eglibc|glibc|newlib)
+			# Test if --target follows one of these clibrary set
+			# commands.  If so, put $1 onto the back of the inputs.
+			# This is because clibrary validity depends on the target.
+			if test "`echo $@ | grep -c "\-targ.*"`" -gt 0; then
+			    # Push $1 onto the back of the inputs for later processing.
+			    set -- $@ $1
+			    # Shift it off the front.
+			    shift
+			    continue;
+			fi
+
 			# Only allow valid combinations of target and clibrary.
 			crosscheck_clibrary_target ${name} ${target}
 			if test $? -gt 0; then
