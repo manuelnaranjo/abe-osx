@@ -330,6 +330,18 @@ cb_commands="--target ${target} --set libc=${libc}"
 match=''
 test_pass "${cb_commands}" "${match}"
 
+# Verify that setting glibc=glibc.git will fail for baremetal.
+cb_commands="--dryrun --target aarch64-none-elf glibc=glibc.git"
+match='crosscheck_clibrary_target'
+test_failure "${cb_commands}" "${match}"
+
+# Verify that glibc=glibc.git will fail when se before the target
+# for baremetal.
+cb_commands="--dryrun glibc=glibc.git --target aarch64-none-elf"
+match='crosscheck_clibrary_target'
+test_pass "${cb_commands}" "${match}"
+
+
 cb_commands="--snapshots"
 match='requires a directive'
 test_failure "${cb_commands}" "${match}"

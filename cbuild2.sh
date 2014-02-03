@@ -686,6 +686,17 @@ while test $# -gt 0; do
 			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
 			;;
 		    eglibc|glibc|newlib)
+			# Test if --target follows one of these clibrary set
+			# commands.  If so, put $1 onto the back of the inputs.
+			# This is because clibrary validity depends on the target.
+			if test "`echo $@ | grep -c "\-targ.*"`" -gt 0; then
+			    # Push $1 onto the back of the inputs for later processing.
+			    set -- $@ $1
+			    # Shift it off the front.
+			    shift
+			    continue;
+			fi
+
 			# Only allow valid combinations of target and clibrary.
 			crosscheck_clibrary_target ${name} ${target}
 			if test $? -gt 0; then
