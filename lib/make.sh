@@ -254,7 +254,7 @@ build()
     if test x"${runtests}" = xyes; then
 	if test x"$2" != x"stage1"; then
 	    notice "Starting test run for ${tag}${2:+ $2}"
-	    dryrun "make_check ${gitinfo} ${2:+ $2}"
+	    dryrun "make_check ${gitinfo}${2:+ $2}"
 	    if test $? -gt 0; then
 		return 1
 	    fi
