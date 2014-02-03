@@ -183,6 +183,9 @@ dump()
     echo "Build Arch:        ${build_arch}"
     echo "Hostname:          ${hostname}"
     echo "Distribution:      ${distribution}"
+
+    echo "Bootstrap          ${bootstrap}"
+    echo "Install            ${install}"
 }
 
 usage()
@@ -191,8 +194,8 @@ usage()
     cat << EOF
   ${cbuild2} [''| [--timeout <value>]
              [[--build [<package>|all]|[--checkout <package>|all]]
-             [--ccache] [--check]
-             [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
+             [--ccache] [--check] [--enable {bootstrap}]
+             [--disable {install}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--manifest <manifest_file>] [--parallel] [--release]
              [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
@@ -273,20 +276,23 @@ OPTIONS
                        complete build as specified by the config/ .conf
                        files.
 
-  --disable	{boostrap|tarball|install}
+  --disable {install}
 
-  		bootstrap
-			Foo
-		tarball
-			Regardless of the default setting, disable the
-			building of tarballs.
 		install
-			Foo
+                        Disable the make install stage of packages, which
+                        is enabled by default.
+
 
   --dryrun	Run as much of ${cbuild2} as possible without doing any
 		actual configuration, building, or installing.
 
   --dump	Dump configuration file information for this build.
+
+  --enable {bootstrap}
+
+                bootstrap
+                        Enable gcc bootstrapping, which is disabled by
+                        default.
 
   --fetch <url>
 
@@ -622,19 +628,18 @@ while test $# -gt 0; do
 	    fi
             shift
             ;;
-	# Disable steps in the complete process of building a toolchain. All of
-	# these are enabled by default, but not always desired.
-	--disable)
+	# These steps are disabled by default but are sometimes useful.
+	--enable)
 	    case $2 in
 		bootstrap|b*)
-		    bootstrap=no
+		    bootstrap=yes
 		    ;;
-		check|c*)
-		    makecheck=yes
-		    ;;
-		tarball|t*)
-		    tarballs=yes
-		    ;;
+	    esac
+	    shift
+	    ;;
+	# These are enabled by default, but not always desired.
+	--disable)
+	    case $2 in
 		install|i*)
 		    install=no
 		    ;;
