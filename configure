@@ -674,6 +674,7 @@ with_dbuser
 with_dbpasswd
 with_dbhost
 with_toplevel
+with_sources_conf
 with_sysroot
 with_local_snapshots
 with_local_builds
@@ -1309,6 +1310,7 @@ Optional Packages:
   --with-dbpasswd         set the user password for the database
   --with-dbhost           set the database hostname
   --with-toplevel
+  --with-sources-conf
   --with-sysroot
   --with-local-snapshots  Where downloaded tarballs are stored
   --with-local-builds
@@ -3598,7 +3600,14 @@ $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" 
    mkdir -p ${CBUILD_TOP}
 fi
 
-SOURCES_CONF="${srcdir}/config/sources.conf"
+
+# Check whether --with-sources-conf was given.
+if test "${with_sources_conf+set}" = set; then :
+  withval=$with_sources_conf; SOURCES_CONF=${withval}
+else
+  SOURCES_CONF="${srcdir}/config/sources.conf"
+fi
+
 
 
 CBUILD_PATH=${srcdir}

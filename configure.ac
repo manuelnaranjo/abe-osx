@@ -147,7 +147,10 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
-SOURCES_CONF="${srcdir}/config/sources.conf"
+AC_ARG_WITH(sources-conf,
+  AC_HELP_STRING([--with-sources-conf], []),
+  SOURCES_CONF=${withval},
+  SOURCES_CONF="${srcdir}/config/sources.conf")
 AC_SUBST(SOURCES_CONF)
 
 CBUILD_PATH=${srcdir}
