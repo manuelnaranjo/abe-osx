@@ -74,6 +74,7 @@ bootstrap=no
 # These are flags for the --disable option to cbuild, which are enabled by default
 install=yes
 release=""
+supdate=yes
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
