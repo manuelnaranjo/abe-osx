@@ -220,12 +220,15 @@ checkout()
 	    ;;
 	git*|http*)
 	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-		notice "Updating sources for $1 in ${srcdir}"
-		# A revision represents a snapshot in time so it doesn't need to
-		# be updated.  Otherwise for a named branch or 'master' we pull.
-		if test x"${revision}" = x; then
+		if test x"${supdate}" = xyes; then
+		    notice "Updating sources for $1 in ${srcdir}"
+		    # A revision represents a snapshot in time so it doesn't
+		    # need to be updated.  Otherwise for a named branch or 
+		    # 'master' we pull.
+		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
-		    dryrun "(cd ${srcdir} && git pull origin${branch:+ ${branch}})"
+			dryrun "(cd ${srcdir} && git pull origin${branch:+ ${branch}})"
+		    fi
 		fi
 		# NOTE: It's possible that a git-new-workdir succeeded but the
 		# git checkout -b [branch|revision] didn't in which case our
@@ -478,10 +481,12 @@ change_branch()
     if test ! -d ${srcdir}/${branch}; then
 	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
     else
-	if test x"${branch}" = x; then
-	    dryrun "(cd ${local_snapshots}/${version} && git pull origin master)"
-	else
-	    dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
+	if test x"${supdate}" = xyes; then
+	    if test x"${branch}" = x; then
+		dryrun "(cd ${local_snapshots}/${version} && git pull origin master)"
+	    else
+		dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
+	    fi
 	fi
     fi
     

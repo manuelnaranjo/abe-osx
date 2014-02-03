@@ -192,7 +192,7 @@ usage()
   ${cbuild2} [''| [--timeout <value>]
              [[--build [<package>|all]|[--checkout <package>|all]]
              [--ccache] [--check]
-             [--disable={bootstrap|tarball|install}] [--dryrun] [--dump]
+             [--disable={bootstrap|tarball|install|update}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--manifest <manifest_file>] [--parallel] [--release]
              [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
@@ -282,6 +282,8 @@ OPTIONS
 			building of tarballs.
 		install
 			Foo
+		update
+			Don't update source repositories before building.
 
   --dryrun	Run as much of ${cbuild2} as possible without doing any
 		actual configuration, building, or installing.
@@ -637,6 +639,9 @@ while test $# -gt 0; do
 		    ;;
 		install|i*)
 		    install=no
+		    ;;
+		update|u*)
+		    supdate=no
 		    ;;
 	    esac
 	    shift
