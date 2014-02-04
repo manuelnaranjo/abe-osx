@@ -186,6 +186,7 @@ dump()
 
     echo "Bootstrap          ${bootstrap}"
     echo "Install            ${install}"
+    echo "Source Update      ${supdate}"
 }
 
 usage()

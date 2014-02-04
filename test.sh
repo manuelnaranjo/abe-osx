@@ -390,6 +390,14 @@ cb_commands="--disable install --dump"
 match='Install            no'
 test_pass "${cb_commands}" "${match}"
 
+cb_commands="--dump"
+match='Source Update      yes'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--disable update --dump"
+match='Source Update      no'
+test_pass "${cb_commands}" "${match}"
+
 # This tests that --checkout and --build can be run together.
 cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
 match=''
