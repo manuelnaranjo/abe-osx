@@ -1,41 +1,53 @@
 #!/bin/sh
 
 testcbuild2="`basename $0`"
-
-# The directory where the script lives.
-topdir="`dirname $0`"
-cbuild2="`realpath $0`"
-topdir="`dirname ${cbuild2}`"
-export cbuild_path=${topdir}
-
-# We need a host.conf file to squelch cbuild2 error messages.
-created_host_conf=
-if test ! -e "${PWD}/host.conf"; then
-    echo "Creating temporary host.conf file as ${PWD}/host.conf"
-    echo "cbuild_path=${cbuild_path}" > ${PWD}/host.conf
-    # source the host.conf file to get the values exported.
-    . ${PWD}/host.conf
-    created_host_conf="yes"
-fi
+topdir=`dirname $0`
+cbuild_path=`readlink -f ${topdir}`
+export cbuild_path
 
 # Source common.sh for some common utilities.
-. ${topdir}/lib/common.sh || exit 1
+. ${cbuild_path}/lib/common.sh || exit 1
 
-# Override $local_snapshots so that the local_snapshots directory
-# of an existing build is not moved or damaged.  This affects all
-# called instances of cbuild2.sh below.
-export local_snapshots="`mktemp -d /tmp/cbuild2.$$.XXX`/snapshots"
-export sources_conf=${topdir}testsuite/test_sources.conf
-export remote_snapshots=http://cbuild.validation.linaro.org/snapshots
-export wget_bin=/usr/bin/wget
-export wget_quiet=yes
-
-# Create the snapshots/ subdir before it is used.
-# It's possible that /tmp is out of space and this will fail.
-out="`mkdir -p ${local_snapshots}`"
+# We use a tmp/ directory for the builddir in order that we don't pollute the
+# srcdir or an existing builddir.
+tmpdir=`mktemp -d /tmp/cbuild2.$$.XXX`
 if test "$?" -gt 0; then
+    error "mktemp of ${tmpdir} failed."
     exit 1
 fi
+
+# Log files for cbuild test runs are dumped here.
+testlogs=${tmpdir}/testlogs
+mkdir -p ${testlogs}
+if test "$?" -gt 0; then
+    error "couldn't create '${testlogs}' directory."
+    exit 1
+fi
+
+runintmpdir=
+# If the current working directory has a host.conf in it we assume it's an
+# existing build dir, otherwise we're in the srcdir so we need to run
+# configure in the tmpdir and run the tests from there.
+if test ! -e "${PWD}/host.conf"; then
+    (cd ${tmpdir} && ${cbuild_path}/configure --with-sources-conf=${cbuild_path}/testsuite/test_sources.conf)
+    runintmpdir=yes
+else
+    # copy the md5sums file from the existing snapshots directory to the new local_snapshots directory.
+
+    # Override $local_snapshots so that the local_snapshots directory of an
+    # existing build is not moved or damaged.  This affects all called
+    # instances of cbuild2.sh below.
+    export local_snapshots="${tmpdir}/snapshots"
+    out="`mkdir -p ${local_snapshots}`"
+    if test "$?" -gt 0; then
+        error "couldn't create '${local_snapshots}' directory."
+        exit 1
+    fi
+    # Override the existing sources_conf setting in host.conf.
+    export sources_conf=${cbuild_path}testsuite/test_sources.conf
+fi
+
+export wget_quiet=yes
 
 usage()
 {
@@ -138,15 +150,6 @@ while test $# -gt 0; do
     fi
 done
 
-if test ! -e "${local_snapshots}/md5sums"; then
-    out="`fetch md5sums 2>/dev/null`"
-    if test $? -gt 0; then
-	echo "Failed to fetch md5sums.  Use --snapshots for offline mode." 1>&2 
-	exit 1;
-    fi
-    echo "Using ${local_snapshots}/md5sums for snapshots file."
-fi
-
 test_failure()
 {
     local testlineno=$BASH_LINENO
@@ -154,7 +157,7 @@ test_failure()
     local match=$2
     local out=
 
-    out="`./cbuild2.sh ${cb_commands} 2>&1 | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:'`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
 }
 
@@ -166,7 +169,7 @@ test_pass()
     local out=
 
     # Continue to search for error so we don't get false positives.
-    out="`./cbuild2.sh ${cb_commands} 2>&1 | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:'`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
@@ -442,8 +445,6 @@ cb_commands="--target ${target} newlib=newlib.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-tmpdir=`dirname ${local_snapshots}`
-
 target="aarch64-none-elf"
 cb_commands="--target ${target} --set libc=glibc"
 match="crosscheck_clibrary_target"
@@ -476,7 +477,16 @@ cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-
+# This one's a bit different because it doesn't work by putting the phrase to
+# be grepped in 'match'... yet.
+#cb_commands="--dryrun --build gcc.git --stage 2"
+#testlineno="`expr $LINENO + 1`"
+#out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
+#if test ${out} -gt 0; then
+#    pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
+#else
+#    fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
+#fi
 
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.
@@ -487,11 +497,6 @@ elif test -d "${tmpdir}/snapshots" -a ${failures} -lt 1; then
     echo ""
     echo "${testcbuild2} finished with no unexpected failures. Removing ${tmpdir}"
     rm -rf ${tmpdir}
-fi
-
-if test x"$created_host_conf" = x"yes"; then
-    echo "Removing temporary ${PWD}/host.conf file."
-    rm ${PWD}/host.conf
 fi
 
 # ----------------------------------------------------------------------------------
