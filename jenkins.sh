@@ -142,3 +142,4 @@ fi
 
 touch $WORKSPACE/*.junit
 
+echo "TCWGWEB dir: ${build}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
