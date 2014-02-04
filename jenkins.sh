@@ -142,4 +142,8 @@ fi
 
 touch $WORKSPACE/*.junit
 
-echo "TCWGWEB dir: ${build}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+# Setup the remote directory for tcwgweb
+distro=`lsb_release -c -s`
+arch=`uname -m`
+
+echo "TCWGWEB dir: ${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
