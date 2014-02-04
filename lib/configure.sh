@@ -16,7 +16,6 @@ configure_build()
     if test x"${tool}" = x"linux"; then
 	return 0
     fi
-
     # The git parser functions shall return valid results for all
     # services, especially once we have a URL.
 
@@ -74,20 +73,25 @@ configure_build()
     stage1_flags=""
     stage2_flags=""
     opts=""
-    if test -e "${topdir}/config/${tool}.conf"; then
-	. "${topdir}/config/${tool}.conf"
+    if test x"$2" = x"gdbserver"; then
+	local toolname="gdbserver"
+    else
+	local toolname="${tool}"
+    fi
+    if test -e "${topdir}/config/${toolname}.conf"; then
+	. "${topdir}/config/${toolname}.conf"
 	# if there is a local config file in the build directory, allow
 	# it to override the default settings
 	# unset these two variables to avoid problems later
-	if test -e "${builddir}/${tool}.conf" -a ${builddir}/${tool}.conf -nt ${topdir}/config/${tool}.conf; then
-	    . "${builddir}/${tool}.conf"
-	    notice "Local ${tool}.conf overriding defaults"
+	if test -e "${builddir}/${toolname}.conf" -a ${builddir}/${toolname}.conf -nt ${topdir}/config/${toolname}.conf; then
+	    . "${builddir}/${toolname}.conf"
+	    notice "Local ${toolname}.conf overriding defaults"
 	else
 	    # Since there is no local config file, make one using the
 	    # default, and then add the target architecture so it doesn't
 	    # have to be supplied for future reconfigures.
-	    echo "target=${target}" > ${builddir}/${tool}.conf
-	    cat ${topdir}/config/${tool}.conf >> ${builddir}/${tool}.conf
+	    echo "target=${target}" > ${builddir}/${toolname}.conf
+	    cat ${topdir}/config/${toolname}.conf >> ${builddir}/${toolname}.conf
 	fi
     else
 	error "No ${topdir}/config/${tool}.conf file for ${tool}."
@@ -177,13 +181,14 @@ configure_build()
 	    version="`echo $1 | sed -e 's#[a-zA-Z\+/:@.]*-##' -e 's:\.tar.*::'`"
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	binutils*|gdb)
+	binutils)
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	gdbserver)
+	gdb*)
 	    opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
-	    local srcdir="${srcdir}/gdb/gdbserver"
-	    local builddir="${builddir}/gdbserver"
+	    if test x"$2" = x"gdbserver"; then
+		local srcdir="${srcdir}/gdb/gdbserver"
+	    fi
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
 	dejagnu|gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
