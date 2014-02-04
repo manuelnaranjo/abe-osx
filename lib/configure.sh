@@ -119,6 +119,14 @@ configure_build()
 	prefix="${local_builds}/destdir/${host}"
     fi
 
+    # The release strig is usually the date as well, but in YYYY.MM format.
+    # For snapshots we add the day field as well.
+    if test x"${release}" = x; then
+	local date="`date "+%Y.%m"`"
+    else
+	local date="${release}"
+    fi
+
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
@@ -147,6 +155,7 @@ configure_build()
 			stage2*)
 			    notice "Building stage 2 of GCC"
 			    opts="${opts} ${stage2_flags}"
+ 			    opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GCC ${date}\""
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
@@ -185,9 +194,12 @@ configure_build()
 	    opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gdb*)
-	    opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
+ 	    opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
 	    if test x"$2" = x"gdbserver"; then
+		opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 		local srcdir="${srcdir}/gdb/gdbserver"
+	    else
+		opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 	    fi
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
@@ -200,11 +212,6 @@ configure_build()
     esac
 
 
-    if test x"${release}" = x; then
-	local date="`date "+%Y.%m"`"
-    else
-	local date="${release}"
-    fi
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
@@ -222,7 +229,7 @@ configure_build()
 #            esac
 #	fi
 
-	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GCC ${date}\")"
+	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
 	if test $? -gt 0; then
 	    error "Configure of $1 failed."
 	    return $?
