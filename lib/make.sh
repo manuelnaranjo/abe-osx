@@ -300,7 +300,7 @@ make_all()
 
     local errors="`grep Error ${builddir}/make.log`"
     if test x"${errors}" != x; then
-	if test "`echo ${error} | egrep -c "ignored"`" -eq 0; then
+	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
 	    exit
 	fi
