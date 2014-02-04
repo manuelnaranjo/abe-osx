@@ -339,12 +339,28 @@ test_failure "${cb_commands}" "${match}"
 # for baremetal.
 cb_commands="--dryrun glibc=glibc.git --target aarch64-none-elf"
 match='crosscheck_clibrary_target'
-test_pass "${cb_commands}" "${match}"
-
+test_failure "${cb_commands}" "${match}"
 
 cb_commands="--snapshots"
 match='requires a directive'
 test_failure "${cb_commands}" "${match}"
+
+cb_commands="--stage"
+match='requires a directive'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--stage a"
+match='stage requires a 2 or 1 directive'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--stage 3"
+match='stage requires a 2 or 1 directive'
+test_failure "${cb_commands}" "${match}"
+
+cb_commands="--stage 3"
+match='stage requires a 2 or 1 directive'
+test_failure "${cb_commands}" "${match}"
+
 
 cb_commands="--snapshots --sooboo"
 match='found the next'
@@ -479,14 +495,14 @@ test_pass "${cb_commands}" "${match}"
 
 # This one's a bit different because it doesn't work by putting the phrase to
 # be grepped in 'match'... yet.
-#cb_commands="--dryrun --build gcc.git --stage 2"
-#testlineno="`expr $LINENO + 1`"
-#out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
-#if test ${out} -gt 0; then
-#    pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
-#else
-#    fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
-#fi
+cb_commands="--dryrun --build gcc.git --stage 2"
+testlineno="`expr $LINENO + 1`"
+out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
+if test ${out} -gt 0; then
+    pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
+else
+    fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
+fi
 
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.

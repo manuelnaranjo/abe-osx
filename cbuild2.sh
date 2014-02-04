@@ -194,7 +194,8 @@ usage()
     # Format this section with 75 columns.
     cat << EOF
   ${cbuild2} [''| [--timeout <value>]
-             [[--build [<package>|all]|[--checkout <package>|all]]
+             [[--build [<package> --stage {1|2}]|all]
+              |[--checkout <package>|all]]
              [--ccache] [--check] [--enable {bootstrap}]
              [--disable {install|update}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
@@ -246,18 +247,24 @@ OPTIONS
 
   ''		Specifying no options will display synopsis information.
 
-  --build [<package>|all]
+  --build {<package>|all}
 
-		<package>
-			Build the specific package as specified by the
-			configuration files.  This option is really only
-			useful if you've done a previous entire toolchain
-			build.
+                <package>
+                        To build a package version that corresponds to an
+                        identifier in sources.conf do --build <sources.conf
+                        identifier>, e.g., --build gcc.git.
 
-		all
-			Build the entire toolchain.
-		''
-			If there are not options build the entire toolchain.
+                        To build a package version that corresponds to a
+                        snapshot archive do --build <snapshot fragment>,
+                        e.g., --build gcc-linaro-4.7-2014.01.
+
+                        NOTE: to build GCC stage1 or stage2 use the --stage
+                        flag, as described below, along with --build gcc,
+                        e.g. --build gcc --stage 2.
+
+                all
+                        Build the entire toolchain and populate the
+                        sysroot.
 
   --ccache	Use ccache when building packages.
 
@@ -340,6 +347,11 @@ OPTIONS
 
   --snapshots	/path/to/alternative/local_snapshots/directory
   		Use an alternative path to a local snapshots directory. 
+
+  --stage {1|2}
+                If --build <*gcc*> is passed, then --stage {1|2} will cause
+                stage1 or stage2 of gcc to be built.  If --build <*gcc*> is
+                not passed then --stage {1|2} does nothing.
 
   --tarball
   		Build source and binary tarballs after a successful build.
@@ -461,6 +473,7 @@ wget_timeout=${timeout_save}
 
 do_checkout=
 do_build=
+do_build_stage=stage2
 
 # Process the multiple command line arguments
 while test $# -gt 0; do
@@ -589,6 +602,15 @@ while test $# -gt 0; do
             local_snapshots=$2
 	    shift
             ;;
+	--sta*|-sta*)
+	    check_directive $1 stage sta $2
+	    if test x"$2" != x"2" -a x"$2" != x"1"; then
+		error "--stage requires a 2 or 1 directive."
+		build_failure
+	    fi
+	    do_build_stage="stage$2"
+	    shift
+	    ;;
 	--tarball*|-tarba*)
 	    tarsrc=yes
 	    tarbin=yes
@@ -775,12 +797,18 @@ if test ! -z ${do_build}; then
 	    error "Couldn't find the source for ${do_build}"
 	    build_failure
 	else
-	    build ${gitinfo}
+	    build_param=
+	    # If we're just building gcc then we need to pick a 'stage'.
+	    # The user might have specified a stage so we use that if
+	    # it's set.
+	    if test `echo ${do_build} | grep -c "gcc"` -gt 0; then
+		build_param=${do_build_stage}
+	    fi
+	    build ${gitinfo}${build_param:+ ${build_param}}
 	    if test $? -gt 0; then
 		error "Building ${gitinfo} failed."
 		build_failure
 	    fi
-
 	fi
     else
 	build_all
