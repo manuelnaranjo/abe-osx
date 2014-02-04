@@ -95,7 +95,7 @@ build_all()
 		build_all_ret=$?
 		;;
 	    gdbserver)
-		build ${gdb_version} server
+		build ${gdb_version} gdbserver
 		build_all_ret=$?
 		;;
 	    # Build anything not GCC or infrastructure
