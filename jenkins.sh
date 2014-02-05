@@ -148,5 +148,9 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-echo "TCWGWEB dir: /space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+dir="/space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
+echo "TCWGWEB: ${dir}"
+
+ssh cbuild@toolchain64.lab mkdir -p ${dir}
+scp ${WORKSPACE}/*.sum cbuild@toolchain64.lab:${dir}/
