@@ -3,7 +3,7 @@
 # Fetch a file from a remote machine
 fetch()
 {
-    trace "$*"
+#    trace "$*"
 
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
@@ -97,7 +97,7 @@ fetch()
 
 fetch_http()
 {
-    trace "$*"
+#    trace "$*"
 
     local getfile=$1
     local dir="`dirname $1`/"
@@ -123,7 +123,11 @@ fetch_http()
 	    fi
 	fi
     else
-	notice "${getfile} already exists in ${local_snapshots}"
+	# We don't want this message for md5sums, since it's so often
+	# downloaded.
+	if test x"${getfile}" != x"md5sums"; then
+	    notice "${getfile} already exists in ${local_snapshots}"
+	fi
     fi
     return 0
 }
@@ -148,7 +152,7 @@ fetch_rsync()
 
 check_md5sum()
 {
-    trace "$*"
+#    trace "$*"
 
     if test ! -e ${local_snapshots}/md5sums; then
 	fetch_http md5sums
