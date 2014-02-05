@@ -174,19 +174,19 @@ test_pass()
 }
 
 cb_commands="--dry-run"
-match="Complete build process took"
+match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dryrun"
-match="Complete build process took"
+match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dry"
-match="Complete build process took"
+match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="-dry"
-match="Complete build process took"
+match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dr"
@@ -227,7 +227,7 @@ match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--target foo"
-match="Complete build process took"
+match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--build=all"
