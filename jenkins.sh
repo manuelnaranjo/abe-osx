@@ -101,7 +101,7 @@ License-Type: open
 EOF
 
 # Remove any leftover junit files
-rm -f ${WORKSPACE}/*.junit 2>&1 > /dev/null
+rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -120,11 +120,9 @@ if test x"${sums}" != x; then
 	echo "Found junit files finally!!!"
     else
 	echo "Bummer, no junit files yet..."
-	touch $WORKSPACE/gcc.sum.junit
     fi
 else
     echo "Bummer, no test results yet..."
-    touch $WORKSPACE/gcc.sum.junit
 fi
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
@@ -150,5 +148,5 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-echo "TCWGWEB dir: /space/build/${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+echo "TCWGWEB dir: /space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
