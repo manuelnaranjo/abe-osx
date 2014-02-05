@@ -152,5 +152,5 @@ dir="/space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAM
 
 echo "TCWGWEB: ${dir}"
 
-ssh cbuild@toolchain64.lab mkdir -p ${dir}
-scp ${WORKSPACE}/*.sum cbuild@toolchain64.lab:${dir}/
+ssh buildslave@toolchain64.lab mkdir -p ${dir}
+scp ${WORKSPACE}/*.sum buildslave@toolchain64.lab:${dir}/
