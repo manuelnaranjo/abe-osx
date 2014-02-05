@@ -144,7 +144,7 @@ touch $WORKSPACE/*.junit
 
 # Setup the remote directory for tcwgweb
 gcc="`find ${WORKSPACE} -name ${target}-gcc`"
-date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | r -d ')'`"
+date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 
 distro=`lsb_release -c -s`
