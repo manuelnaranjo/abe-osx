@@ -143,7 +143,12 @@ fi
 touch $WORKSPACE/*.junit
 
 # Setup the remote directory for tcwgweb
+gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | r -d ')'`"
+version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-echo "TCWGWEB dir: ${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+echo "TCWGWEB dir: /space/build/${version}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+
