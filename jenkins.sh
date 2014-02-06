@@ -110,9 +110,11 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-dir="/space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+dir="${WORKSPACE}/results/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
 echo "FIXME: ${dir}"
+
+mkdir -p ${dir}
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -150,7 +152,5 @@ if test x"${canadian}" = x"true"; then
 fi
 
 touch $WORKSPACE/*.junit
-
-mkdir -p ${dir}
 
 # scp ${dir}/*.sum cbuild@toolchain64.lab:${dir}/
