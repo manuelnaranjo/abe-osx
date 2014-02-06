@@ -114,6 +114,7 @@ dir="${WORKSPACE}/results/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-$
 
 echo "FIXME: ${dir}"
 
+rm -fr ${WORKSPACE}/results
 mkdir -p ${dir}
 
 # If 'make check' works, we get .sum files with the results. These we
@@ -126,7 +127,7 @@ if test x"${sums}" != x; then
     for i in ${sums}; do
 	name="`basename $i`"
 	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
-	cp $i ${dir}
+	cp $i ${WORKSPACE}/
     done
     junits="`find ${WORKSPACE} -name *.junit`"
     if test x"${junits}" != x; then
@@ -152,5 +153,8 @@ if test x"${canadian}" = x"true"; then
 fi
 
 touch $WORKSPACE/*.junit
+
+cp ${WORKSPACE}/*.sum ${dir}
+#xz ${dir}/*.sum
 
 # scp ${dir}/*.sum cbuild@toolchain64.lab:${dir}/
