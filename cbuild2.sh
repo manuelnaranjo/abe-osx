@@ -464,13 +464,6 @@ fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
-timeout_save=${wget_timeout}
-# Do this temporarily until command processing is a state machine.
-wget_timeout=10
-# Get the md5sums file, which is used later to get the URL for remote files
-fetch md5sums
-wget_timeout=${timeout_save}
-
 do_checkout=
 do_build=
 do_build_stage=stage2
@@ -767,6 +760,11 @@ while test $# -gt 0; do
     fi
 done
 
+timeout_save=${wget_timeout}
+wget_timeout=10
+# Get the md5sums file, which is used later to get the URL for remote files
+fetch md5sums
+wget_timeout=${timeout_save}
 
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then
@@ -820,5 +818,9 @@ if test ! -z ${do_build}; then
 fi
 
 time="`expr ${SECONDS} / 60`"
-notice "Complete build process took ${time} minutes"
-
+if test ! -z ${do_build}; then
+    notice "Complete build process took ${time} minutes"
+elif test ! -z ${do_checkout}; then
+    notice "Complete checkout process took ${time} minutes"
+fi
+exit 0
