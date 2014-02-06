@@ -103,6 +103,17 @@ EOF
 # Remove any leftover junit files
 rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
+# Setup the remote directory for tcwgweb
+gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
+version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+distro=`lsb_release -c -s`
+arch=`uname -m`
+
+dir="/space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+
+echo "FIXME: ${dir}"
+
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
@@ -113,7 +124,7 @@ if test x"${sums}" != x; then
     for i in ${sums}; do
 	name="`basename $i`"
 	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
-	cp $i $WORKSPACE
+	cp $i ${dir}
     done
     junits="`find ${WORKSPACE} -name *.junit`"
     if test x"${junits}" != x; then
@@ -140,17 +151,6 @@ fi
 
 touch $WORKSPACE/*.junit
 
-# Setup the remote directory for tcwgweb
-gcc="`find ${WORKSPACE} -name ${target}-gcc`"
-date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
-version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+mkdir -p ${dir}
 
-distro=`lsb_release -c -s`
-arch=`uname -m`
-
-dir="/space/build/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
-
-echo "TCWGWEB: ${dir}"
-
-ssh buildslave@toolchain64.lab mkdir -p ${dir}
-scp ${WORKSPACE}/*.sum buildslave@toolchain64.lab:${dir}/
+# scp ${dir}/*.sum cbuild@toolchain64.lab:${dir}/
