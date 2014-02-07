@@ -115,7 +115,7 @@ dir="${WORKSPACE}/results/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-$
 echo "FIXME: ${dir}"
 
 rm -fr ${WORKSPACE}/results
-mkdir -p ${dir}
+mkdir -p ${WORKSPACE}/results/${dir}
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -157,4 +157,5 @@ touch $WORKSPACE/*.junit
 cp ${WORKSPACE}/*.sum ${dir}
 #xz ${dir}/*.sum
 
+ssh toolchain64.lab mkdir -p ${dir}
 scp ${dir}/*.sum toolchain64.lab:${dir}/
