@@ -157,4 +157,4 @@ touch $WORKSPACE/*.junit
 cp ${WORKSPACE}/*.sum ${dir}
 #xz ${dir}/*.sum
 
-# scp ${dir}/*.sum cbuild@toolchain64.lab:${dir}/
+scp ${dir}/*.sum toolchain64.lab:${dir}/
