@@ -110,7 +110,7 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-dir="${WORKSPACE}/results/gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
 echo "FIXME: ${dir}"
 
@@ -154,8 +154,8 @@ fi
 
 touch $WORKSPACE/*.junit
 
-cp ${WORKSPACE}/*.sum ${dir}
+cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
 #xz ${dir}/*.sum
 
 ssh toolchain64.lab mkdir -p ${dir}
-scp ${dir}/*.sum toolchain64.lab:${dir}/
+scp ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
