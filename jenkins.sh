@@ -157,5 +157,5 @@ touch $WORKSPACE/*.junit
 cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
 #xz ${dir}/*.sum
 
-#ssh toolchain64.lab mkdir -p /space/build/${dir}
-rsync -avrz ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
+ssh toolchain64.lab mkdir -p /space/build/${dir}
+scp ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
