@@ -14,7 +14,7 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
+	local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
     else
 	local builds="infrastructure binutils stage2 gdb" # native build
     fi
