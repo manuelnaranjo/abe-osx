@@ -103,7 +103,6 @@ EOF
 # Remove any leftover junit files
 rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
-set -x
 # Setup the remote directory for tcwgweb
 gcc="`find ${WORKSPACE} -name ${target}-gcc`"
 #
@@ -121,8 +120,6 @@ dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUM
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
-
-set +x
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -161,8 +158,9 @@ fi
 
 touch $WORKSPACE/*.junit
 
-cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
-#xz ${dir}/*.sum
+if test x"${sums}" != x; then
+    cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
 
-ssh toolchain64.lab mkdir -p /space/build/${dir}
-scp ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
+    ssh toolchain64.lab mkdir -p /space/build/${dir}
+    scp ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
+fi
