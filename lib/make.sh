@@ -252,7 +252,7 @@ build()
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes; then
-	if test x"$2" != x"stage1"; then
+	if test x"$2" != x"stage1" -a x"$2" = x"gdbserver"; then
 	    notice "Starting test run for ${tag}${2:+ $2}"
 	    dryrun "make_check ${gitinfo}${2:+ $2}"
 	    if test $? -gt 0; then
@@ -474,7 +474,7 @@ make_check()
 	export DEJAGNU=${topdir}/config/linaro.exp
     fi
 
-    dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     
     return 0
 }
