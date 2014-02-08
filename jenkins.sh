@@ -106,17 +106,23 @@ rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 set -x
 # Setup the remote directory for tcwgweb
 gcc="`find ${WORKSPACE} -name ${target}-gcc`"
-date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
+#
+if test x"${release}" = x; then
+    # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
+    date="`date +%Y%m%d`"
+else
+    date=${release}
+fi
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
 dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
-set +x
-
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
+
+set +x
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
