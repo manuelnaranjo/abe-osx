@@ -103,6 +103,7 @@ EOF
 # Remove any leftover junit files
 rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
+set -x
 # Setup the remote directory for tcwgweb
 gcc="`find ${WORKSPACE} -name ${target}-gcc`"
 date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
@@ -112,7 +113,7 @@ arch=`uname -m`
 
 dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
 
-echo "FIXME: ${dir}"
+set +x
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
