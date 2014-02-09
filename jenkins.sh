@@ -116,7 +116,23 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${node_selector}-${target}"
+if test x"${platform}" != x; then
+    case ${target} in
+	arm*-linux-gnueabihf)
+	    abbrev=armhf
+	    ;;
+	arm*-linux-gnueabi)
+	    abbrev=armel
+	    ;;
+	*)
+	    abbrev="`echo ${target} | cut -d '-' -f 3`"
+	    ;;
+    esac
+    board="${node_selector}_${abbrev}"
+else
+    board="${node_selector}"
+fi
+dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node_selector}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
