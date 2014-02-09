@@ -130,7 +130,7 @@ if test x"${platform}" != x; then
     esac
     board="${node_selector}_${abbrev}"
 else
-    board="${node_selector}"
+    board="${node_selector}_${arch}"
 fi
 dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node_selector}"
 
