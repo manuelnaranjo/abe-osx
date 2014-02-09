@@ -116,7 +116,7 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
-node="`echo ${node_selector}" | tr '-' '_'`"
+node="`echo ${node_selector} | tr '-' '_'`"
 if test x"${platform}" != x; then
     case ${target} in
 	arm*-linux-gnueabihf)
