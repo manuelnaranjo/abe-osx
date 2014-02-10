@@ -182,5 +182,8 @@ if test x"${sums}" != x; then
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
 
     ssh toolchain64.lab mkdir -p /space/build/${dir}
+    ssh toolchain64.lab touch /space/build/${dir}/started.txt
     scp ${WORKSPACE}/results/${dir}/*.sum ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/_build/hosts.conf toolchain64.lab:/space/build/${dir}/hosts.txt
+    
 fi
