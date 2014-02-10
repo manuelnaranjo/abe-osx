@@ -37,9 +37,10 @@ fi
 if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
 fi
-if test x"${libc}" != x; then
-    change="${change} --set libc=${libc}"
-fi
+
+#if test x"${libc}" != x; then
+#    change="${change} --set libc=${libc}"
+#fi
 
 # Remove the previous build if specified, default to reusing the existing
 # build directory.
