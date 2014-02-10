@@ -137,6 +137,10 @@ case ${target} in
     aarch64_be-*elf)
 	abbrev=aarch64be_bare
 	;;
+    native)
+	build_arch="`grep build_arch= ${WORKSPACE}/_build/host.conf | cut -d '=' -f 2`"
+	abbrev="${build_arch}"
+	;;
     *)
 	abbrev="`echo ${target} | cut -d '-' -f 3`"
 	;;
@@ -166,6 +170,11 @@ if test x"${sums}" != x; then
     fi
 else
     echo "Bummer, no test results yet..."
+fi
+
+if test "`echo ${sums} | grep -c gcc.sum`" -eq 0 -a x"${runtests}" = xtrue; then
+    echo "ERROR: GCC testsuite wasn't run!"
+    exit 1
 fi
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
