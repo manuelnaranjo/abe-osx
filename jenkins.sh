@@ -145,16 +145,13 @@ mkdir -p ${WORKSPACE}/results/${dir}
 # way to get the results into Jenkins.
 sums="`find ${WORKSPACE} -name *.sum`"
 if test x"${sums}" != x; then
-    echo "Found test results finally!!!"
     for i in ${sums}; do
 	name="`basename $i`"
 	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
 	cp $i ${WORKSPACE}/
     done
     junits="`find ${WORKSPACE} -name *.junit`"
-    if test x"${junits}" != x; then
-	echo "Found junit files finally!!!"
-    else
+    if test x"${junits}" = x; then
 	echo "Bummer, no junit files yet..."
     fi
 else
@@ -184,6 +181,6 @@ if test x"${sums}" != x; then
     ssh toolchain64.lab mkdir -p /space/build/${dir}
     ssh toolchain64.lab touch /space/build/${dir}/started.txt
     scp ${WORKSPACE}/results/${dir}/*.sum ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
-    scp ${WORKSPACE}/_build/hosts.conf toolchain64.lab:/space/build/${dir}/hosts.txt
+    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
     
 fi
