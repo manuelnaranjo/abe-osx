@@ -118,34 +118,31 @@ distro=`lsb_release -c -s`
 arch=`uname -m`
 
 node="`echo ${node_selector} | tr '-' '_'`"
-if test x"${platform}" != x; then
-    case ${target} in
-	arm*-linux-gnueabihf)
-	    abbrev=armhf
-	    ;;
-	arm*-linux-gnueabi)
-	    abbrev=armel
-	    ;;
-	aarch64*-linux-gnu)
-	    abbrev=aarch64
-	    ;;
-	aarch64_be-linux-gnu)
-	    abbrev=aarch64be
-	    ;;
-	aarch64*-elf)
-	    abbrev=aarch64_bare
-	    ;;
-	aarch64_be-*elf)
-	    abbrev=aarch64be_bare
-	    ;;
-	*)
-	    abbrev="`echo ${target} | cut -d '-' -f 3`"
-	    ;;
-    esac
-    board="${node}_${abbrev}"
-else
-    board="${node}_${arch}"
-fi
+case ${target} in
+    arm*-linux-gnueabihf)
+	abbrev=armhf
+	;;
+    arm*-linux-gnueabi)
+	abbrev=armel
+	;;
+    aarch64*-linux-gnu)
+	abbrev=aarch64
+	;;
+    aarch64_be-linux-gnu)
+	abbrev=aarch64be
+	;;
+    aarch64*-elf)
+	abbrev=aarch64_bare
+	;;
+    aarch64_be-*elf)
+	abbrev=aarch64be_bare
+	;;
+    *)
+	abbrev="`echo ${target} | cut -d '-' -f 3`"
+	;;
+esac
+#board="${node}_${abbrev}"
+board="${abbrev}"
 
 dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node}"
 
