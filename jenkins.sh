@@ -125,6 +125,12 @@ if test x"${platform}" != x; then
 	arm*-linux-gnueabi)
 	    abbrev=armel
 	    ;;
+	aarch64*-linux)
+	    abbrev=aarch64
+	    ;;
+	aarch64*-elf)
+	    abbrev=aarch64_elf
+	    ;;
 	*)
 	    abbrev="`echo ${target} | cut -d '-' -f 3`"
 	    ;;
