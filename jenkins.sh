@@ -85,12 +85,12 @@ find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 # that to compile the cross compiler to bootstrap. Since it's just
 # used to build the cross compiler, we don't bother to run 'make check'.
 if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} --bootstrap --build all
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${change} --bootstrap --build all
 fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${check} ${release} ${platform} --build all
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${release} ${platform} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -177,8 +177,10 @@ fi
 touch $WORKSPACE/*.junit
 
 if test x"${sums}" != x; then
+    date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
+
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
 
     ssh toolchain64.lab mkdir -p /space/build/${dir}
-    scp ${WORKSPACE}/results/${dir}/*.sum toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/results/${dir}/*.sum ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
 fi
