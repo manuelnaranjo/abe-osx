@@ -114,6 +114,7 @@ else
     date=${release}
 fi
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
 distro=`lsb_release -c -s`
 arch=`uname -m`
 
@@ -192,14 +193,25 @@ fi
 
 touch $WORKSPACE/*.junit
 
+# This setups al lthe files needed by tcwgweb
 if test x"${sums}" != x; then
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
-
+    for i in ${WORKSPACE}/results/${dir}; do
+	xz $i
+    done
+    # Copy over the test results
     ssh toolchain64.lab mkdir -p /space/build/${dir}
     ssh toolchain64.lab touch /space/build/${dir}/started.txt
     scp ${WORKSPACE}/results/${dir}/*.sum ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
-    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
     
+    # Copy over the build logs
+    logs="`find ${WORKSPACE} -name make.log`"
+    rm -f ${WORKSPACE}/toplevel.txt
+    cat ${logs} > ${WORKSPACE}/toplevel.txt
+    scp ${WORKSPACE}/toplevel.txt toolchain64.lab:/space/build/${dir}/
+
+    # Copy over the build machine config file
+    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
 fi
