@@ -214,4 +214,8 @@ if test x"${sums}" != x; then
 
     # Copy over the build machine config file
     scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
+
+    date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
+    scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+
 fi
