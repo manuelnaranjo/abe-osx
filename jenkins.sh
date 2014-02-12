@@ -198,7 +198,7 @@ if test x"${sums}" != x; then
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
-    for i in ${WORKSPACE}/results/${dir}; do
+    for i in ${WORKSPACE}/results/${dir}/*.sum; do
 	xz $i
     done
     # Copy over the test results
