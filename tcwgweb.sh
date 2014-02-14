@@ -73,8 +73,8 @@ diffall ()
 	    rm -f ${foo[${incr}]}/testsuite-diff.txt
 	    rm -f ${foo[${next}]}/testsuite-diff.txt
 	    mkdir -p ${diffdir}
-	    diff -u -r ${foo[${incr}]} ${foo[${next}]} 2>&1 > ${diffdir}/diff.txt
-#	    diff -u -r ${foo[${incr}]} ${foo[${next}]} | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
+#	    diff -u -r ${foo[${incr}]} ${foo[${next}]} 2>&1 > ${diffdir}/diff.txt
+	    diff -u -r ${foo[${incr}]} ${foo[${next}]} | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
 
 	    #difftests ${foo[${incr}]} ${foo[${next}]}
 	    if test `wc -l ${diffdir}/diff.txt | cut -d ' ' -f 1` -gt 0; then
@@ -109,6 +109,8 @@ Difference in testsuite results between:
  ${orig} build ${origdir}
 and the one before it:
  ${next} build ${nextdir}
+
+------
 EOF
     
     cat ${diffdir}/diff.txt  >> ${diffdir}/testsuite-diff.txt
