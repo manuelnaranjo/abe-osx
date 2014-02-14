@@ -114,9 +114,9 @@ else
     date=${release}
 fi
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
-bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
-distro=`lsb_release -c -s`
-arch=`uname -m`
+# bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
+distro="`lsb_release -c -s`"
+arch="`uname -m`"
 
 node="`echo ${node_selector} | tr '-' '_'`"
 case ${target} in
@@ -195,7 +195,8 @@ touch $WORKSPACE/*.junit
 
 # This setups al lthe files needed by tcwgweb
 if test x"${sums}" != x; then
-    date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
+    date="`date "+%Y-%m-%d %H:%M:%S%:z"`"
+    echo ${date} > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
     for i in ${WORKSPACE}/results/${dir}/*.sum; do
@@ -212,10 +213,17 @@ if test x"${sums}" != x; then
     cat ${logs} > ${WORKSPACE}/toplevel.txt
     scp ${WORKSPACE}/toplevel.txt toolchain64.lab:/space/build/${dir}/
 
+    logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
+    for i in${logs}; do
+	component="`dirname $i`"
+	component="`basename ${component}`"
+	scp $i toolchain64.lab:/space/build/${dir}/${component}.log
+	ssh toolchain64.lab xz /space/build/${dir}/${component}.log
+    done
+
     # Copy over the build machine config file
     scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
 
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
     scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
-
 fi
