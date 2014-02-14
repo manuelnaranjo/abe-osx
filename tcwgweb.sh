@@ -53,7 +53,7 @@ diffall ()
 		return 0
 	    fi
 	    # Don't diff files if the builds aren't completed yet
-	    if test -e ${foo[${incr}]}/finished.txt -a -e ${foo[${next}]}/finished.txt; then
+	    if test ! -e ${foo[${incr}]}/finished.txt -a ! -e ${foo[${next}]}/finished.txt; then
 		return 0
 	    fi
 	    rm -f ${foo[${incr}]}/testsuite-diff.txt
