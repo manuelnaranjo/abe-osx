@@ -214,7 +214,7 @@ if test x"${sums}" != x; then
     scp ${WORKSPACE}/toplevel.txt toolchain64.lab:/space/build/${dir}/
 
     logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
-    for i in${logs}; do
+    for i in ${logs}; do
 	component="`dirname $i`"
 	component="`basename ${component}`"
 	scp $i toolchain64.lab:/space/build/${dir}/${component}.log
