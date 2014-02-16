@@ -199,13 +199,10 @@ if test x"${sums}" != x; then
     echo ${date} > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
-    for i in ${WORKSPACE}/results/${dir}/*.sum; do
-	xz $i
-    done
     # Copy over the test results
     ssh toolchain64.lab mkdir -p /space/build/${dir}
     ssh toolchain64.lab touch /space/build/${dir}/started.txt
-    scp ${WORKSPACE}/results/${dir}/*.sum.xz ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/results/${dir}/*.sum* ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
     
     # Copy over the build logs
     logs="`find ${WORKSPACE} -name make.log`"
@@ -213,13 +210,13 @@ if test x"${sums}" != x; then
     cat ${logs} > ${WORKSPACE}/toplevel.txt
     scp ${WORKSPACE}/toplevel.txt toolchain64.lab:/space/build/${dir}/
 
-    logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
-    for i in ${logs}; do
-	component="`dirname $i`"
-	component="`basename ${component}`"
-	scp $i toolchain64.lab:/space/build/${dir}/${component}.log
-	ssh toolchain64.lab xz /space/build/${dir}/${component}.log
-    done
+#    logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
+#    for i in ${logs}; do
+#	component="`dirname $i`"
+#	component="`basename ${component}`"
+#	scp $i toolchain64.lab:/space/build/${dir}/${component}.log
+#    done
+    ssh toolchain64.lab xz /space/build/${dir}/\*.log /space/build/${dir}/\*.sum
 
     # Copy over the build machine config file
     scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
