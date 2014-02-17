@@ -1,7 +1,9 @@
-load_generic_config "arm-linux"
+# Config file for a Hardkernel Odroid U2 board
 
-set_board_info hostname odroidU2
+load_generic_config unix
 
-# Name of the computer whose socket will be used, if required.
-set_board_info sockethost "odroidU2:"
+set_board_info hostname arm-odroidU2
 
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
+#set_board_info username buildslave
