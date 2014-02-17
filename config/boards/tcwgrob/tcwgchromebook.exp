@@ -1,0 +1,9 @@
+# Config file for a Hardkernel Odroid U2 board
+
+load_generic_config unix
+
+set_board_info hostname tcwgchromebook06
+
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
+#set_board_info username buildslave
