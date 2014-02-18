@@ -39,7 +39,15 @@ if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
 fi
 
 if test x"${libc}" != x; then
-    change="${change} --set libc=${libc}"
+    # ELF based targets are bare metal only
+    case ${target} in
+	*-*elf)
+	    change="${change} --set libc=newlib"
+	    ;;
+	*)
+	    change="${change} --set libc=${libc}"
+	    ;;
+    esac
 fi
 
 # Remove the previous build if specified, default to reusing the existing
