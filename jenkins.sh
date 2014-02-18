@@ -95,7 +95,7 @@ fi
 $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
 
 # Delete the previous test resut files to avoid problems.
-# find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
+find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 # For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
@@ -245,4 +245,14 @@ if test x"${sums}" != x; then
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
     scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
 
+    allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+    if test x"${tarsrc}" = xtrue; then
+	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
+	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
+    fi
+
+    if test x"${tarbin}" = xtrue; then
+	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
+	scp ${binfiles} toolchain64.lab:/space/binaries/
+    fi
 fi
