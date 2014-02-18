@@ -1,0 +1,11 @@
+load_generic_config unix
+
+set_board_info hostname tcwgfoundation05
+
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
+set_board_info port 8022
+
+#set_board_info username buildslave
+set_board_info gcc,timeout 100000
+
