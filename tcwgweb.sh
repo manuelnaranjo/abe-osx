@@ -6,12 +6,6 @@ toplevel=$1
 #
 # Take all of the .sum files from two directories and generate the differences.
 # This function is blatentely ripped off from cbuild-tools. (which is in cbuildv1)
-#
-# Example:
-#  difftests.sh \
-#   build/gcc-4.6+svn173209/logs/armv7l-maverick-cbuild113-ursa3-cortexa9r1 \
-#   build/gcc-4.6+svn173722/logs/armv7l-maverick-cbuild114-ursa4-cortexa9r1
-#
 difftests ()
 {
     previous=$1
@@ -31,11 +25,10 @@ difftests ()
 	unxz -f ${diffdir}/current/*.xz
     done
     
-    diff -U 0 -r ${diffdir}/previous ${diffdir}/current | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt | sort -k 2 > ${diffdir}/diff.txt
-
+    diff -U 0 -r ${diffdir}/previous ${diffdir}/current 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt | sort -k 2 > ${diffdir}/diff.txt
 
     # Drop anything but changes in test lines
-    return `egrep -c -E '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt`
+#    return `egrep -c -E '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt`
 }
 
 #
@@ -53,9 +46,9 @@ diffall ()
 		return 0
 	    fi
 	    # Don't diff files if the builds aren't completed yet
-	    if test ! -e ${foo[${incr}]}/finished.txt -a ! -e ${foo[${next}]}/finished.txt; then
-		return 0
-	    fi
+#	    if test ! -e ${foo[${incr}]}/finished.txt -o ! -e ${foo[${next}]}/finished.txt; then
+#		return 0
+#	    fi
 	    rm -f ${foo[${incr}]}/testsuite-diff.txt
 	    rm -f ${foo[${next}]}/testsuite-diff.txt
 
@@ -64,16 +57,51 @@ diffall ()
 	    local cversion=`echo ${foo[${next}]} | grep -o "cbuild[0-9]*" | sed -e 's:cbuild::'`
 	    diffdir="${toplevel}/diffof-${pversion}-${cversion}"
 	    mkdir -p ${diffdir}
-	    diff -u -r ${foo[${incr}]} ${foo[${next}]} | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
+#	    diff -u -r ${foo[${incr}]} ${foo[${next}]} 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
+	    for i in gcc gdb glibc egibc newlib binutils; do
+		if test -e ${foo[${incr}]}/$i.sum -a -e ${foo[${next}]}/$i.sum; then
+		    diff -U 0 ${foo[${incr}]}/$i.sum ${foo[${next}]}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+		    if test -s ${diffdir}/diff-$i.txt; then
+			echo "Comparison between $1 and $2" > ${diffdir}/$i-test-results.txt
+		    fi
+		    if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
+			echo "" >> ${diffdir}/$i-test-results.txt
+			echo "Tests that were failing that now PASS" >> ${diffdir}/$i-test-results.txt
+			echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
+			grep ^\+PASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		    fi
+		    if test `grep -c ^\+FAIL ${diffdir}/diff-$i.txt` -gt 0; then
+			echo "" >> ${diffdir}/$i-test-results.txt
+			echo "Tests that were passing that now FAIL" >> ${diffdir}/$i-test-results.txt
+			echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
+			grep ^\+FAIL ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		    fi
+		    if test `grep -c ^\+XPASS ${diffdir}/diff-$i.txt` -gt 0; then
+			echo "" >> ${diffdir}/$i-test-results.txt
+			echo "Tests that were expected failures that now PASS" >> ${diffdir}/$i-test-results.txt
+			echo "-----------------------------------------------" >> ${diffdir}/$i-test-results.txt
+			grep ^\+XPASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		    fi
+		    if test `grep -c ^\+UN ${diffdir}/diff-$i.txt` -gt 0; then
+			echo "" >> ${diffdir}/$i-test-results.txt
+			echo "Tests that have problems" >> ${diffdir}/$i-test-results.txt
+			echo "------------------------" >> ${diffdir}/$i-test-results.txt
+			grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		    fi
+		fi
+	    done
 
-	    #difftests ${foo[${incr}]} ${foo[${next}]}
 	    if test -s ${diffdir}/diff.txt; then
 		testfile ${foo[${incr}]} ${foo[${next}]}
+		mailto ${foo[${incr}]} ${foo[${next}]}
 	    fi
-	    rm -fr ${diffdir}
+	    # rm -fr ${diffdir}
 	    local incr=`expr ${incr} + 1`
 	done
     fi
+
+
+
 
 }
 
@@ -105,6 +133,17 @@ EOF
     
     cat ${diffdir}/diff.txt  >> ${diffdir}/testsuite-diff.txt
     cp  ${diffdir}/testsuite-diff.txt  $1
+    cp  ${diffdir}/testsuite-diff.txt  $2
+}
+
+mailto()
+{
+    cat <<EOF > ${diffdir}/mailheader.txt
+To: rob.savoye@linaro.org
+From: buildslave@`hiostname`
+Subject: "$1"
+EOF
+
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
