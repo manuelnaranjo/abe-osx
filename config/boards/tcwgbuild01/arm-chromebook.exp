@@ -1,3 +1,0 @@
-load_generic_config "arm-linux"
-
-set_board_info hostname tcwgchromebook01
