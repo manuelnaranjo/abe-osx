@@ -28,7 +28,7 @@ crosscheck_clibrary_target()
     local test_clibrary=$1
     local test_target=$2
     case ${test_target} in
-       arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+       arm*-eabi|aarch64*-*elf|i686*-mingw32|x86_64*-mingw32)
            # Bare metal targets only support newlib.
            if test x"${test_clibrary}" != x"newlib"; then
                error "${test_target} is only compatible with newlib."
@@ -625,7 +625,7 @@ while test $# -gt 0; do
 	    # user might try to override this with --set libc={glibc|eglibc}
 	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
 	    case ${target} in
-		arm*-eabi|aarch64*-*-elf|i686*-mingw32|x86_64*-mingw32)
+		arm*-eabi|aarch64*-*elf|i686*-mingw32|x86_64*-mingw32)
 		    clibrary="newlib"
 		    ;;
 		 *)

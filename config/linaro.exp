@@ -13,7 +13,7 @@ case "$target_triplet" in {
 	}
     }
     
-    { "arm*-*-elf*"} { 
+    { "arm*-*elf*"} { 
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
@@ -21,10 +21,10 @@ case "$target_triplet" in {
     }
     
     { "aarch64*-*-*gnu*"} {
-	set target_list { aarch64-fv8 }
+	set target_list { tcwgfoundation }
     }
 
-    { "aarch64*-*-elf*" } {
+    { "aarch64*-*elf*" } {
 	set target_list { "aarch64-none-elf-foundation" }
 	# Because of the way the Foundation model is invoked we have to
 	# wrap it in an invoke script.
