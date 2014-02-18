@@ -38,9 +38,9 @@ if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
 fi
 
-#if test x"${libc}" != x; then
-#    change="${change} --set libc=${libc}"
-#fi
+if test x"${libc}" != x; then
+    change="${change} --set libc=${libc}"
+fi
 
 # Remove the previous build if specified, default to reusing the existing
 # build directory.
@@ -223,4 +223,5 @@ if test x"${sums}" != x; then
 
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
     scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+
 fi
