@@ -2,8 +2,15 @@
 
 case "$target_triplet" in { 
     { "arm*-*-*eabi*"} {
-#	set target_list { arm-chromebook arm-odroidU2 arm-odroidXU }
-	set target_list { arm-chromebook }
+	set hostname [get_local_hostname]
+	case "$hostname" in {
+	    { tcwgrob* } {
+		set target_list { arm-odroidU2 tcwgblack tcwgchromebook }
+	    }
+	    { tcwgbuild* } {
+		set target_list { tcwgblack tcwgchromebook }
+	    }
+	}
     }
     
     { "arm*-*-elf*"} { 
