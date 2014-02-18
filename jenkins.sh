@@ -10,11 +10,18 @@ shared="`dirname ${WORKSPACE}`/shared"
 cbuild_dir="${shared}/cbuildv2"
 
 if test x"${tarsrc}" = xtrue; then
-    release="--tarsrc"
+    tars="--tarsrc"
 fi
 
 if test x"${tarbin}" = xtrue; then
-    release="${release} --tarbin "
+    tars="${tars} --tarbin "
+fi
+
+if test x"${release}" = xsnapshot; then
+    release=
+    releasestr=
+else
+    releasestr="--release ${release}"
 fi
 
 # Get the versions of dependant components to use
@@ -36,6 +43,15 @@ if test x"${binutils_snapshot}" != x"latest" -a x"${binutils_snapshot}" != x; th
 fi
 if test x"${linux_snapshot}" != x"latest" -a x"${linux_snapshot}" != x; then
     change="${change} linux-${linux_snapshot}"
+fi
+
+# if runtests is true, then run make check after the build completes
+if test x"${runtests}" = xtrue; then
+    check=--check
+fi
+
+if test x"${target}" != x"native" -a x"${target}" != x; then
+    platform="--target ${target}"
 fi
 
 if test x"${libc}" != x; then
@@ -78,17 +94,8 @@ fi
 
 $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
 
-# if runtests is true, then run make check after the build completes
-if test x"${runtests}" = xtrue; then
-    check=--check
-fi
-
-if test x"${target}" != x"native" -a x"${target}" != x; then
-    platform="--target ${target}"
-fi
-
-# Delete the previous test resut fikes to avoid problems.
-find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
+# Delete the previous test resut files to avoid problems.
+# find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 # For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
@@ -99,7 +106,7 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${release} ${platform} --build all
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -114,13 +121,19 @@ rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
 # Setup the remote directory for tcwgweb
 gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+# If we can't find GCC, our buld failed, so don't continue
+if test x"${gcc}" = x; then
+    exit 1
+fi
+
 #
-if test x"${release}" = x; then
+if test x"${tars}" = x; then
     # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
     date="`date +%Y%m%d`"
 else
     date=${release}
 fi
+
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 # bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
 distro="`lsb_release -c -s`"
@@ -193,15 +206,15 @@ if test x"${canadian}" = x"true"; then
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${release} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
 touch $WORKSPACE/*.junit
 
-# This setups al lthe files needed by tcwgweb
+# This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
     date="`date "+%Y-%m-%d %H:%M:%S%:z"`"
     echo ${date} > ${WORKSPACE}/results/${dir}/finished.txt
