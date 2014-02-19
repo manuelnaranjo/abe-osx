@@ -62,7 +62,9 @@ diffall ()
 		if test -e ${foo[${incr}]}/$i.sum -a -e ${foo[${next}]}/$i.sum; then
 		    diff -U 0 ${foo[${incr}]}/$i.sum ${foo[${next}]}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
 		    if test -s ${diffdir}/diff-$i.txt; then
-			echo "Comparison between $1 and $2" > ${diffdir}/$i-test-results.txt
+			echo "Comparison between:" > ${diffdir}/$i-test-results.txt
+			echo "	${foo[${incr}]}/$i.sum and" >> ${diffdir}/$i-test-results.txt
+			echo "	${foo[${next}]}/$i.sum" >> ${diffdir}/$i-test-results.txt
 		    fi
 		    if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
 			echo "" >> ${diffdir}/$i-test-results.txt
@@ -88,6 +90,7 @@ diffall ()
 			echo "------------------------" >> ${diffdir}/$i-test-results.txt
 			grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
 		    fi
+#		    echo "" >> ${diffdir}/$i-test-results.txt
 		fi
 	    done
 
