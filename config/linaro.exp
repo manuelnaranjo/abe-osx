@@ -19,17 +19,16 @@ case "$target_triplet" in {
 	set SIM "qemu-arm"
 	set target_list { "arm-qemu" } 
     }
-    
-    { "aarch64*-*-*gnu*"} {
-	set target_list { tcwgfoundation }
+    { "aarch64*-*-elf*" } {
+	set target_list { "arm-sim" }
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu"
     }
-
-    { "aarch64*-*elf*" } {
-	set target_list { "aarch64-none-elf-foundation" }
-	# Because of the way the Foundation model is invoked we have to
-	# wrap it in an invoke script.
+    { "aarch64*-*-linux*" } {
 	global SIM
-	set SIM "invoke-foundation-v8-bare-metal.sh"
+	set target_list { "arm-sim" }
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu"
+	set SIM "setarch x86_64 -R qemu-aarch64"
     }
+    
 }
 
