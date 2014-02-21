@@ -4,34 +4,6 @@
 toplevel=$1
 
 #
-# Take all of the .sum files from two directories and generate the differences.
-# This function is blatentely ripped off from cbuild-tools. (which is in cbuildv1)
-difftests ()
-{
-    previous=$1
-    current=$2
-    
-    mkdir -p ${diffdir}/previous
-    mkdir -p ${diffdir}/current
-    
-    # Copy across all logs
-    cp ${previous}/*.sum* ${diffdir}/previous/
-    cp ${current}/*.sum* ${diffdir}/current/
-    # uncompress the files if need be
-    for i in ${diffdir}/previous/*.xz; do
-	unxz -f ${diffdir}/previous/*.xz ${diffdir}/current/*.xz
-    done
-    for i in ${diffdir}/current/*.xz; do
-	unxz -f ${diffdir}/current/*.xz
-    done
-    
-    diff -U 0 -r ${diffdir}/previous ${diffdir}/current 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt | sort -k 2 > ${diffdir}/diff.txt
-
-    # Drop anything but changes in test lines
-#    return `egrep -c -E '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' ${diffdir}/diff.txt`
-}
-
-#
 # diffall "list"
 # Takes a list of directories and compares them one by one in sequence.
 diffall ()
@@ -45,12 +17,13 @@ diffall ()
 	    if test ${next} = ${count}; then
 		return 0
 	    fi
-	    # Don't diff files if the builds aren't completed yet
-#	    if test ! -e ${foo[${incr}]}/finished.txt -o ! -e ${foo[${next}]}/finished.txt; then
-#		return 0
-#	    fi
-	    rm -f ${foo[${incr}]}/testsuite-diff.txt
-	    rm -f ${foo[${next}]}/testsuite-diff.txt
+
+	    # Don't diff it's already been done
+	    if test -e ${foo[${incr}]}/testsuite-diff.txt -o -e ${foo[${next}]}/testsuite-diff.txt; then
+		return 0
+	    fi
+	    #rm -f ${foo[${incr}]}/testsuite-diff.txt
+	    #rm -f ${foo[${next}]}/testsuite-diff.txt
 
 	    echo "Diffing: ${foo[${incr}]} against ${foo[${next}]}..."
 	    local pversion=`echo ${foo[${incr}]} | grep -o "cbuild[0-9]*" | sed -e 's:cbuild::'`
@@ -90,22 +63,16 @@ diffall ()
 			echo "------------------------" >> ${diffdir}/$i-test-results.txt
 			grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
 		    fi
-#		    echo "" >> ${diffdir}/$i-test-results.txt
+		    if test -e ${diffdir}/$i-test-results.txt; then
+			mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
+		    fi
 		fi
 	    done
 
-	    if test -s ${diffdir}/diff.txt; then
-		testfile ${foo[${incr}]} ${foo[${next}]}
-		mailto ${foo[${incr}]} ${foo[${next}]}
-	    fi
 	    # rm -fr ${diffdir}
 	    local incr=`expr ${incr} + 1`
 	done
     fi
-
-
-
-
 }
 
 
@@ -141,13 +108,9 @@ EOF
 
 mailto()
 {
-    cat <<EOF > ${diffdir}/mailheader.txt
-To: rob.savoye@linaro.org
-From: buildslave@`hiostname`
-Subject: "$1"
-EOF
 
-    cp  ${diffdir}/testsuite-diff.txt  $2
+    mail tcwg-test-results@linaro.org  -s "$1" < $2
+    #rm /tmp/mail$$.txt
 }
 
 # ----------------------------------------------------------------------
