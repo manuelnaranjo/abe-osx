@@ -255,4 +255,7 @@ if test x"${sums}" != x; then
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
+
+    ssh toolchain64.lab /home/cbuild/tcwgweb.sh /space/builds/gcc-linaro-${version}-${date}/logs/
+
 fi
