@@ -22,8 +22,6 @@ diffall ()
 	    if test -e ${foo[${incr}]}/testsuite-diff.txt -o -e ${foo[${next}]}/testsuite-diff.txt; then
 		return 0
 	    fi
-	    #rm -f ${foo[${incr}]}/testsuite-diff.txt
-	    #rm -f ${foo[${next}]}/testsuite-diff.txt
 
 	    echo "Diffing: ${foo[${incr}]} against ${foo[${next}]}..."
 	    local pversion=`echo ${foo[${incr}]} | grep -o "cbuild[0-9]*" | sed -e 's:cbuild::'`
@@ -31,6 +29,8 @@ diffall ()
 	    diffdir="${toplevel}/diffof-${pversion}-${cversion}"
 	    mkdir -p ${diffdir}
 #	    diff -u -r ${foo[${incr}]} ${foo[${next}]} 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
+	    unxz ${foo[${incr}]}/*.sum.xz
+	    unxz ${foo[${next}]}/*.sum.xz
 	    for i in gcc gdb glibc egibc newlib binutils; do
 		if test -e ${foo[${incr}]}/$i.sum -a -e ${foo[${next}]}/$i.sum; then
 		    diff -U 0 ${foo[${incr}]}/$i.sum ${foo[${next}]}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
@@ -72,6 +72,8 @@ diffall ()
 	    # rm -fr ${diffdir}
 	    local incr=`expr ${incr} + 1`
 	done
+	xz ${foo[${incr}]}/*.sum
+	xz ${foo[${next}]}/*.sum
     fi
 }
 
