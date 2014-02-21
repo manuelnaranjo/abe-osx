@@ -216,8 +216,8 @@ touch $WORKSPACE/*.junit
 
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
-    date="`date "+%Y-%m-%d %H:%M:%S%:z"`"
-    echo ${date} > ${WORKSPACE}/results/${dir}/finished.txt
+    tdate="`date "+%Y-%m-%d %H:%M:%S%:z"`"
+    echo ${tdate} > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
     # Copy over the test results
