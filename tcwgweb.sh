@@ -110,7 +110,8 @@ mailto()
 {
 
     mail tcwg-test-results@linaro.org  -s "$1" < $2
-    #rm /tmp/mail$$.txt
+    # Hack till the mailing list lets me get messages
+    mail rob.savoye@linaro.org -s "$1" < $2
 }
 
 # ----------------------------------------------------------------------
