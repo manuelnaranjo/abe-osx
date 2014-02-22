@@ -64,7 +64,7 @@ diffall ()
 			grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
 		    fi
 		    if test -e ${diffdir}/$i-test-results.txt; then
-			mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
+			mailto "[TEST] $i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
 		    fi
 		fi
 	    done
