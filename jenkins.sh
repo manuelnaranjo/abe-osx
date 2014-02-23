@@ -120,7 +120,12 @@ EOF
 rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
 # Setup the remote directory for tcwgweb
-gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+if test x"${target}" = x"native"; then
+    gcc="`find ${WORKSPACE} -name gcc`"
+else
+    gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+fi
+
 # If we can't find GCC, our buld failed, so don't continue
 if test x"${gcc}" = x; then
     exit 1
