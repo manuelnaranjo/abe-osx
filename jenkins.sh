@@ -37,6 +37,9 @@ if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
 fi
 if test x"${gcc_snapshot}" != x"latest" -a x"${gcc_snapshot}" != x; then
     change="${change} gcc=${gcc_snapshot}"
+    branch="~`echo ${gcc_snapshot} | cut '~' -f 2`"
+else
+    branch=
 fi
 if test x"${binutils_snapshot}" != x"latest" -a x"${binutils_snapshot}" != x; then
     change="${change} binutils=${binutils_snapshot}"
@@ -175,7 +178,7 @@ esac
 #board="${node}_${abbrev}"
 board="${abbrev}"
 
-dir="gcc-linaro-${version}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node}"
+dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
