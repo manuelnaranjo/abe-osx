@@ -381,6 +381,23 @@ make_install()
 	return 1
     fi
 
+    # FIXME: aarch64 needs to have libgcc* installed in the sysroot so the
+    # compiler can be run from the build directories in qemu-aarch64.
+    if test x"$2" = x"stage2" -a `echo ${target} | grep -c aarch64` -gt 0; then
+	if test -d ${sysroots}/lib64; then
+	    rsync -av ${builddir}/gcc/libgcc* ${sysroots}/lib64/
+	else
+	    rsync -av ${builddir}/gcc/libgcc* ${sysroots}/lib/
+	fi
+    fi
+
+    # FIXME: For some reason qemu-aarch doesn't link the symlink, so we
+    # replace it with the actual file.
+    if test x"${tool}" = x"glibc" -o x"${tool}" = x"eglibc" -a "`echo ${target} | grep -c aarch64`" -gt 0; then
+	rm ${sysroots}/lib/ld-linux-aarch64.so.1
+	cp ${sysroots}/lib64/ld-2.18-2013.10-1-git.so ${sysroots}/lib/ld-linux-aarch64.so.1
+    fi
+
     # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
     # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
     # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
