@@ -266,6 +266,6 @@ if test x"${sums}" != x; then
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
-    ssh toolchain64.lab /home/cbuild/tcwgweb.sh /space/build/gcc-linaro-${version}-${date}/logs/
-
+    rdate="`date +%Y%m`"
+    ssh toolchain64.lab /home/cbuild/tcwgweb.sh --find /space/build/ 'gcc-linaro-${version}-${rdate}*'
 fi
