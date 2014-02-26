@@ -123,9 +123,9 @@ EOF
 mailto()
 {
 
-#    mail tcwg-test-results@linaro.org  -s "$1" < $2
+    mail -s "$1" tcwg-test-results@linaro.org < $2
     # Hack till the mailing list lets me get messages
-    mail -s "$1" rob.savoye@linaro.org < $2
+#    mail -s "$1" rob.savoye@linaro.org < $2
 }
 
 usage()
