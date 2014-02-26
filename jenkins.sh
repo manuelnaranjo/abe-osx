@@ -37,7 +37,7 @@ if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
 fi
 if test x"${gcc_snapshot}" != x"latest" -a x"${gcc_snapshot}" != x; then
     change="${change} gcc=${gcc_snapshot}"
-    branch="~`echo ${gcc_snapshot} | cut '~' -f 2`"
+    branch="~`echo ${gcc_snapshot} | cut -d '~' -f 2`"
 else
     branch=
 fi
@@ -178,6 +178,8 @@ esac
 #board="${node}_${abbrev}"
 board="${abbrev}"
 
+# This is the remote directory for tcwgweb where all test results and log
+# files get copied too.
 dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node}"
 
 rm -fr ${WORKSPACE}/results
