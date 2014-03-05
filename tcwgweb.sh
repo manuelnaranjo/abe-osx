@@ -77,7 +77,7 @@ difftwodirs ()
 	fi
     done
     
-    # rm -fr ${diffdir}
+    rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
     xz ${prev}/*.sum
@@ -139,6 +139,7 @@ EOF
 mailto()
 {
 
+    notice "Mailing test results!"
     mail -s "$1" tcwg-test-results@linaro.org < $2
     # Hack till the mailing list lets me get messages
 #    mail -s "$1" rob.savoye@linaro.org < $2
