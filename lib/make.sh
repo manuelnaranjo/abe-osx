@@ -410,9 +410,23 @@ make_install()
     # FIXME: For some reason qemu-aarch doesn't link the symlink, so we
     # replace it with the actual file.
     if test x"${tool}" = x"glibc" -o x"${tool}" = x"eglibc" -a "`echo ${target} | grep -c aarch64`" -gt 0; then
-	rm ${sysroots}/lib/ld-linux-aarch64.so.1
-	cp ${sysroots}/lib64/ld-2.18-2013.10-1-git.so ${sysroots}/lib/ld-linux-aarch64.so.1
+	# Programmatically determine the embedded glibc version number for
+	# this version of the clibrary.
+	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
+	local dynamic_linker_name=
+	dynamic_linker="`find ${sysroots}/lib64/ | grep ld-${c_library_version}.so`"
+	if test $? -ne 0; then
+	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
+	    exit 1;
+	fi
+
+	local dynamic_linker_name="`basename ${dynamic_linker}`"
+
+	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
+	dryrun "(rm ${sysroots}/lib/ld-linux-aarch64.so.1)"
+	dryrun "(cp ${sysroots}/lib64/${dynamic_linker_name} ${sysroots}/lib/ld-linux-aarch64.so.1)"
     fi
+
 
     # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
     # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
