@@ -584,16 +584,6 @@ PACKAGE_URL=''
 ac_unique_file="cbuild2.sh"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
-DISTRIBUTION
-HOSTNAME
-BUILDHOST
-BUILD_ARCH
-KERNEL
-LIBC
-CPUS
-DBHOST
-DBPASSWD
-DBUSER
 NEWWORKDIR
 DEJAGNU
 LIBTOOL
@@ -616,6 +606,16 @@ LSBCXX
 LSBCC
 CCACHE
 WGET
+DISTRIBUTION
+HOSTNAME
+BUILDHOST
+BUILD_ARCH
+KERNEL
+LIBC
+CPUS
+DBHOST
+DBPASSWD
+DBUSER
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
@@ -1882,6 +1882,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+missing=
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2930,6 +2931,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test x"${CC}" = x -a x"${CXX}" = x; then
    as_fn_error $? "You need 'gcc' and 'g++' to fully run cbuild!" "$LINENO" 5
+   missing="${missing} gcc"
 fi
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -3054,7 +3056,32 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
-missing=
+DBUSER=${dbuser}
+
+DBPASSWD=${dbpasswd}
+
+DBHOST=${dbhost}
+
+
+CPUS="`getconf _NPROCESSORS_ONLN`"
+
+LIBC="`getconf GNU_LIBC_VERSION`"
+
+KERNEL="`uname -r`"
+
+BUILDHOST="`${srcdir}/config.guess`"
+BUILD_ARCH="`uname -m`"
+if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
+   BUILD_ARCH=i486
+   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
+fi
+
+
+HOSTNAME="`uname -n`"
+
+DISTRIBUTION="`lsb_release -sc`"
+
+
 # Extract the first word of "wget", so it can be a program name with args.
 set dummy wget; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3465,7 +3492,7 @@ fi
 if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'libncurses' to run configure for GDB properly!" >&5
 $as_echo "$as_me: WARNING: You need 'libncurses' to run configure for GDB properly!" >&2;}
-   missing="${missing} ncurses"
+   missing="${missing} libncurses5-dev"
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gzread in -lz" >&5
 $as_echo_n "checking for gzread in -lz... " >&6; }
@@ -3519,7 +3546,9 @@ dpkg="`which dpkg`"
 result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib"
+    if test x"${BUILD_ARCH}" != xaarch64; then
+       packages="${packages} gcc-multilib g++-multilib"
+    fi
     for i in ${packages}; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
 $as_echo_n "checking if $i is installed... " >&6; }
@@ -3919,34 +3948,8 @@ fi
 if test x"${NEWWORKDIR}" = x; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need to install git-new-workdir to use GIT!" >&5
 $as_echo "$as_me: WARNING: You need to install git-new-workdir to use GIT!" >&2;}
-   missing="${missing} git-new-workdir"
+#   missing="${missing} git-new-workdir"
 fi
-
-DBUSER=${dbuser}
-
-DBPASSWD=${dbpasswd}
-
-DBHOST=${dbhost}
-
-
-CPUS="`getconf _NPROCESSORS_ONLN`"
-
-LIBC="`getconf GNU_LIBC_VERSION`"
-
-KERNEL="`uname -r`"
-
-BUILDHOST="`${srcdir}/config.guess`"
-BUILD_ARCH="`uname -m`"
-if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
-   BUILD_ARCH=i486
-   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
-fi
-
-
-HOSTNAME="`uname -n`"
-
-DISTRIBUTION="`lsb_release -sc`"
-
 
 ac_config_files="$ac_config_files host.conf"
 
