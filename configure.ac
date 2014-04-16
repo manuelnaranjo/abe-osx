@@ -29,16 +29,44 @@ dnl AC_CONFIG_MACRO_DIR([macros])
 dnl --------------------------------------------------------
 dnl Figure out development tool stuff
 dnl --------------------------------------------------------
+missing=
 AC_PROG_CC
 AC_PROG_CXX
 if test x"${CC}" = x -a x"${CXX}" = x; then
    AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run cbuild!])
+   missing="${missing} gcc"
 fi
 AC_PROG_INSTALL
 dnl AC_CANONICAL_BUILD
 dnl AC_CANONICAL_HOST
 
-missing=
+dnl Get and store often used information on this build machine
+DBUSER=${dbuser}
+AC_SUBST(DBUSER)
+DBPASSWD=${dbpasswd}
+AC_SUBST(DBPASSWD)
+DBHOST=${dbhost}
+AC_SUBST(DBHOST)
+
+CPUS="`getconf _NPROCESSORS_ONLN`"
+AC_SUBST(CPUS)
+LIBC="`getconf GNU_LIBC_VERSION`"
+AC_SUBST(LIBC)
+KERNEL="`uname -r`"
+AC_SUBST(KERNEL)
+BUILDHOST="`${srcdir}/config.guess`"
+BUILD_ARCH="`uname -m`"
+if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
+   BUILD_ARCH=i486
+   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
+fi
+AC_SUBST(BUILD_ARCH)
+AC_SUBST(BUILDHOST)
+HOSTNAME="`uname -n`"
+AC_SUBST(HOSTNAME)
+DISTRIBUTION="`lsb_release -sc`"
+AC_SUBST(DISTRIBUTION)
+
 AC_PATH_PROG(WGET, wget)
 AC_SUBST(WGET)
 if test x"${WGET}" = x; then
@@ -87,7 +115,7 @@ dnl Building GDB requires ncurses and termcap
 AC_CHECK_LIB(ncurses, doupdate)
 if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
    AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
-   missing="${missing} ncurses"
+   missing="${missing} libncurses5-dev"
 fi
 AC_CHECK_LIB(z, gzread)
 
@@ -100,7 +128,9 @@ dpkg="`which dpkg`"
 result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
-    packages="${packages} gcc-multilib g++-multilib"
+    if test x"${BUILD_ARCH}" != xaarch64; then
+       packages="${packages} gcc-multilib g++-multilib"   
+    fi
     for i in ${packages}; do
 	AC_MSG_CHECKING([if $i is installed])
 #	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
@@ -261,35 +291,8 @@ fi
 AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
 if test x"${NEWWORKDIR}" = x; then
    AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
-   missing="${missing} git-new-workdir"
+#   missing="${missing} git-new-workdir"
 fi
-
-dnl Get and store often used information on this build machine
-DBUSER=${dbuser}
-AC_SUBST(DBUSER)
-DBPASSWD=${dbpasswd}
-AC_SUBST(DBPASSWD)
-DBHOST=${dbhost}
-AC_SUBST(DBHOST)
-
-CPUS="`getconf _NPROCESSORS_ONLN`"
-AC_SUBST(CPUS)
-LIBC="`getconf GNU_LIBC_VERSION`"
-AC_SUBST(LIBC)
-KERNEL="`uname -r`"
-AC_SUBST(KERNEL)
-BUILDHOST="`${srcdir}/config.guess`"
-BUILD_ARCH="`uname -m`"
-if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
-   BUILD_ARCH=i486
-   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
-fi
-AC_SUBST(BUILD_ARCH)
-AC_SUBST(BUILDHOST)
-HOSTNAME="`uname -n`"
-AC_SUBST(HOSTNAME)
-DISTRIBUTION="`lsb_release -sc`"
-AC_SUBST(DISTRIBUTION)
 
 AC_OUTPUT(host.conf)
 
