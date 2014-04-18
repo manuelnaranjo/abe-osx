@@ -13,6 +13,7 @@ EEMBC=11
 EEMBC_OFFICE=12
 SPEC2K=13
 NBENCH=14
+SPEC2006=15
 
 TIME=time
 
@@ -26,6 +27,7 @@ _eembc_init=false
 _eembc_office_init=false
 _spec2k_init=false
 _nbench_init=false
+_spec2006_init=false
 
 check_pattern()
 {
@@ -87,6 +89,10 @@ bench_init()
       spec2k_init
       return $SPEC2K
       ;;
+    spec2006)
+      spec2006_init
+      return $SPEC2006
+      ;;
   esac
   if test $? != 0 ; then
     error "init failed"
@@ -134,6 +140,9 @@ clean()
       ;;
     $SPEC2K)
       spec2k_clean
+      ;;
+    $SPEC2006)
+      spec2006_clean
       ;;
     *)
       error "unknown ID"
@@ -234,6 +243,14 @@ build()
 	exit
       fi
       ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_build
+      else
+	error "spec2006 init not called"
+	exit
+      fi
+      ;;
     *)
       error "unknown ID"
       exit -1
@@ -330,6 +347,14 @@ build_with_pgo()
 	spec2k_build_with_pgo
       else
 	error "spec2k init not called"
+	exit
+      fi
+      ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_build_with_pgo
+      else
+	error "spec2006 init not called"
 	exit
       fi
       ;;
@@ -433,6 +458,14 @@ run()
 	exit
       fi
       ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_run
+      else
+	error "spec2006 init not called"
+	exit
+      fi
+      ;;
     *)
       error "unknown ID"
       exit -1
@@ -530,6 +563,14 @@ install()
 	spec2k_install
       else
 	error "spec2k init not called"
+	exit
+      fi
+      ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_install
+      else
+	error "spec2006 init not called"
 	exit
       fi
       ;;
@@ -633,6 +674,14 @@ testsuit()
 	exit
       fi
       ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_testsuite
+      else
+	error "spec2006 init not called"
+	exit
+      fi
+      ;;
     *)
       error "unknown ID"
       exit -1
@@ -730,6 +779,14 @@ extract()
 	spec2k_extract
       else
 	error "spec2k init not called"
+	exit
+      fi
+      ;;
+    $SPEC2006)
+      if test $_spec2006_init; then
+	spec2006_extract
+      else
+	error "spec2006 init not called"
 	exit
       fi
       ;;

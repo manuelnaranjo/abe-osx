@@ -13,6 +13,7 @@ app="`basename $0`"
 . "${topdir}/lib/coremark.sh" || exit 1
 . "${topdir}/lib/gnugo.sh" || exit 1
 . "${topdir}/lib/spec2k.sh" || exit 1
+. "${topdir}/lib/spec2006.sh" || exit 1
 . "${topdir}/lib/denbench.sh" || exit 1
 . "${topdir}/lib/eembc.sh" || exit 1
 . "${topdir}/lib/eembc_office.sh" || exit 1
@@ -34,6 +35,22 @@ usage()
   [-L, --aditional-lflags]
 EOF
   return 0
+}
+
+setup_cpu()
+{
+  sudo cpufreq-set -g performance
+  for p in `(ps ax --format='%p' | tail -n +2)`; do
+    sudo taskset -a -p 0x1 $p 2>&1;
+  done
+}
+
+restore_cpu()
+{
+  for p in `(ps ax --format='%p' | tail -n +2)`; do
+    sudo taskset -a -p 0xFFFFFFFF $p 2>&1;
+  done
+  sudo cpufreq-set -g  conservative
 }
 
 help()
