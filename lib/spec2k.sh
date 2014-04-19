@@ -136,11 +136,6 @@ spec2k_extract ()
   $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
   rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt
 
-  # and the helper scripts
-  check_pattern "$SRC_PATH/spec2000-*.tar*"
-  get_becnhmark  "$SRC_PATH/spec2000-*.tar*" $SPEC2k_SUITE
-  tar xaf $SPEC2k_SUITE/spec2000-*.tar* -C $SPEC2k_SUITE/cpu2000* --strip-components=1
-  rm $SPEC2k_SUITE/spec2000-*.tar*
 
   pushd $SPEC2k_SUITE/cpu2000/
   sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/runspec > ./bin/runspec.new
