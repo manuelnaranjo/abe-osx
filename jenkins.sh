@@ -20,7 +20,7 @@
 
 # The files in this directory are shared across all platforms 
 #shared="`dirname ${WORKSPACE}`/shared"
-shared="`/home/buildslave/workspace/shared/snapshots`"
+shared="/home/buildslave/workspace/shared/snapshots"
 
 # This is the source directory for Cbuildv2. Jenkins specifies this
 # sub directory when it does a git clone or pull of Cbuildv2.
