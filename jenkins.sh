@@ -24,7 +24,7 @@ shared="/home/buildslave/workspace/shared/"
 
 # This is the source directory for Cbuildv2. Jenkins specifies this
 # sub directory when it does a git clone or pull of Cbuildv2.
-cbuild_dir="/home/buildslave/workspace/shared/cbuildv2"
+cbuild_dir="${shared}/cbuildv2"
 
 if test x"${tarsrc}" = xtrue; then
     tars="--tarsrc"
@@ -126,7 +126,7 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} --build all
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --build all
 
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
