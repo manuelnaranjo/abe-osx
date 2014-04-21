@@ -24,7 +24,7 @@ shared="`/home/buildslave/workspace/shared/snapshots`"
 
 # This is the source directory for Cbuildv2. Jenkins specifies this
 # sub directory when it does a git clone or pull of Cbuildv2.
-cbuild_dir="${shared}/cbuildv2"
+cbuild_dir="/home/buildslave/workspace/shared/cbuildv2"
 
 if test x"${tarsrc}" = xtrue; then
     tars="--tarsrc"
