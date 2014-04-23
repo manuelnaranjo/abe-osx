@@ -34,7 +34,7 @@ if test x"${tarbin}" = xtrue; then
     tars="${tars} --tarbin "
 fi
 
-if test x"${release}" = xsnapshot; then
+if test x"${release}" = xsnapshot -o x"${release}" = x; then
     release=
     releasestr=
 else
