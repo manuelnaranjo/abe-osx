@@ -294,6 +294,17 @@ if test x"${NEWWORKDIR}" = x; then
 #   missing="${missing} git-new-workdir"
 fi
 
+AC_PATH_PROG(MAKEINFO,makeinfo)
+# Texinfo 5 can't process the gcc texinfo files until they are fixed, 
+# so we have to disable it for Ubuntu 14.04 "trusty".
+if test `lsb_release -i -s` = "Ubuntu"; then
+   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
+   if test "${texversion}" -gt 4; then
+      MAKEINFO="missing"
+   fi
+fi
+AC_SUBST(MAKEINFO)
+
 AC_OUTPUT(host.conf)
 
 if test x"${missing}" != x; then
