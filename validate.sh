@@ -68,10 +68,10 @@ while test $i -lt ${#revisions[@]}; do
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
     if test x"${sums}" != x; then
 	mkdir -p ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
-	#cp ${sums} ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
+	cp ${sums} ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
-	#xz -f ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/*.sum
+	xz -f ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/*.sum
 	rm ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/{x,xXx,testrun}.sum
     fi
     i=`expr $i + 1`

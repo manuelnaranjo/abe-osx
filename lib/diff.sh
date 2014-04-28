@@ -37,8 +37,8 @@ difftwodirs ()
 
     diffdir="${resultsdir}/diffof-${pversion}-${nversion}"
     mkdir -p ${diffdir}
-    #unxz -f ${prev}/*.sum.xz
-    #unxz -f ${next}/*.sum.xz
+    unxz -f ${prev}/*.sum.xz
+    unxz -f ${next}/*.sum.xz
     for i in gcc gdb glibc egibc newlib binutils; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
 	    diff -U 0 ${prev}/$i.sum ${next}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
@@ -80,8 +80,8 @@ difftwodirs ()
 #    rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
-    #xz -f ${prev}/*.sum
-    #xz -f ${next}/*.sum
+    xz -f ${prev}/*.sum
+    xz -f ${next}/*.sum
 }
 
 #
