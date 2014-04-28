@@ -34,10 +34,9 @@ if test x"${tarbin}" = xtrue; then
     tars="${tars} --tarbin "
 fi
 
-if test x"${release}" = xsnapshot -o x"${release}" = x; then
-    release=
-    releasestr=
-else
+release=
+releasestr=
+if ! test x"${release}" = xsnapshot -o x"${release}" = x; then
     releasestr="--release ${release}"
 fi
 
@@ -81,7 +80,8 @@ if test x"${libc}" != x; then
 	    change="${change} --set libc=newlib"
 	    ;;
 	*)
-	    change="${change} --set libc=${libc}"
+#	    change="${change} --set libc=${libc}"
+	    change="${change} --set libc=glibc"
 	    ;;
     esac
 fi
@@ -137,7 +137,7 @@ License-Type: open
 EOF
 
 # Remove any leftover junit files
-rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
+#rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
 
 # Setup the remote directory for tcwgweb
 if test x"${target}" = x"native"; then
@@ -146,7 +146,7 @@ else
     gcc="`find ${WORKSPACE} -name ${target}-gcc`"
 fi
 
-# If we can't find GCC, our buld failed, so don't continue
+# If we can't find GCC, our build failed, so don't continue
 if test x"${gcc}" = x; then
     exit 1
 fi
@@ -202,24 +202,26 @@ dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${JOB_NAME}${
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
 
+# Find all the test result files.
+sums="`find ${WORKSPACE} -name *.sum`"
+
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
 # way to get the results into Jenkins.
-sums="`find ${WORKSPACE} -name *.sum`"
-if test x"${sums}" != x; then
-    for i in ${sums}; do
-	name="`basename $i`"
-	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
-	cp $i ${WORKSPACE}/
-    done
-    junits="`find ${WORKSPACE} -name *.junit`"
-    if test x"${junits}" = x; then
-	echo "Bummer, no junit files yet..."
-    fi
-else
-    echo "Bummer, no test results yet..."
-fi
+#if test x"${sums}" != x; then
+#    for i in ${sums}; do
+#	name="`basename $i`"
+#	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
+#	cp $i ${WORKSPACE}/
+#    done
+#    junits="`find ${WORKSPACE} -name *.junit`"
+#    if test x"${junits}" = x; then
+#	echo "Bummer, no junit files yet..."
+#    fi
+#else
+#    echo "Bummer, no test results yet..."
+#fi
 
 if test "`echo ${sums} | grep -c gcc.sum`" -eq 0 -a x"${runtests}" = xtrue; then
     echo "ERROR: GCC testsuite wasn't run!"
@@ -239,7 +241,7 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
-touch $WORKSPACE/*.junit
+#touch $WORKSPACE/*.junit
 
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
