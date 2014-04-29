@@ -124,7 +124,9 @@ dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
 #packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="texinfo gawk"
-dpkg="`which dpkg`"
+
+### Debian packages ###
+dpkg="`which dpkg 2> /dev/null`"
 result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
@@ -132,29 +134,55 @@ if test ${result} -eq 0; then
        packages="${packages} gcc-multilib g++-multilib"   
     fi
     for i in ${packages}; do
-	AC_MSG_CHECKING([if $i is installed])
-#	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
-	exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
-	if test x"${exists}" != x'ii'; then
-	    AC_MSG_RESULT([no, install $i])
-	    missing="${missing} $i"
-	else
-	    AC_MSG_RESULT([yes])
-	fi
+    AC_MSG_CHECKING([if $i is installed])
+    #exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
+    exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
+    if test x"${exists}" != x'ii'; then
+        AC_MSG_RESULT([no, install $i])
+        missing="${missing} $i"
+    else
+        AC_MSG_RESULT([yes])
+    fi
     done
+
+### RPM Packages ###
 else
-    yum="`which yum`"
-    result=$?
+yum="`which yum 2> /dev/null`"
+result=$?
+if test ${result} -eq 0; then
     for i in ${packages}; do
-    	exists="`rpm -q -a $i| grep -c $i`"
-	    if test ${exists} -eq 0; then
-	       AC_MSG_RESULT([no, install $i])
-	       missing="${missing} $i"
-	else                      
-	    AC_MSG_RESULT([yes])
-	fi
+        AC_MSG_CHECKING([if $i is installed])
+        exists="`rpm -q -a $i| grep -c $i`"
+        if test ${exists} -eq 0; then
+           AC_MSG_RESULT([no, install $i])
+           missing="${missing} $i"
+        else
+            AC_MSG_RESULT([yes])
+        fi
     done
-fi
+
+### Arch Packages ###
+else
+pacman="`which pacman 2> /dev/null`"
+result=$?
+if test ${result} -eq 0; then
+    for i in ${packages}; do
+        AC_MSG_CHECKING([if $i is installed])
+        exists="`pacman -Qs ${i} | wc -l`"
+        if test ${exists} -eq 0; then
+           AC_MSG_RESULT([no, install $i])
+           missing="${missing} $i"
+        else
+            AC_MSG_RESULT([yes])
+        fi
+    done
+
+### Unknown Packages ###
+else
+   AC_MSG_WARN([Unknown package management system])
+fi # Arch
+fi # RPM
+fi # Debian
 
 dnl FIXME: Look for git-svn and git-bzr, bzr-fastimport svn-all-fast-export
 
