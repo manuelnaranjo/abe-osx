@@ -141,6 +141,7 @@ mailto()
 
     notice "Mailing test results!"
     mail -s "$1" tcwg-test-results@linaro.org < $2
-    # Hack till the mailing list lets me get messages
-#    mail -s "$1" rob.savoye@linaro.org < $2
+    # Hack till the mailing list lets me get messages, which it won't do
+    # cause I'm the admin.
+    mail -s "$1" rob.savoye@linaro.org < $2
 }
