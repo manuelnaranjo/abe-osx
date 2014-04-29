@@ -566,7 +566,7 @@ fi
 echo "============= get_URL() [git|http]:// tests ================"
 testing="get_URL: sources.conf <repo>.git identifier should match git://<url>/<repo>.git"
 out="`get_URL glibc.git`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"git://git.linaro.org/toolchain/glibc.git"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git.linaro.org/git/toolchain/glibc.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -575,88 +575,88 @@ fi
 
 testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
 out="`get_URL glibc.git/branch`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~branch"; then
-    pass "${testing} git://<url>/<repo>.git"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch"; then
+    pass "${testing} http://<url>/<repo>.git"
 else
-    fail "${testing} git://<url>/<repo>.git"
+    fail "${testing} http://<url>/<repo>.git"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git/<multi/part/branch> identifier should match"
 out="`get_URL glibc.git/multi/part/branch`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~multi/part/branch"; then
-    pass "${testing} git://<url>/<repo>.git/multi/part/branch"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch"; then
+    pass "${testing} http://<url>/<repo>.git/multi/part/branch"
 else
-    fail "${testing} git://<url>/<repo>.git/multi/part/branch"
+    fail "${testing} http://<url>/<repo>.git/multi/part/branch"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git~<branch> identifier should match"
 out="`get_URL glibc.git~branch`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~branch"; then
-    pass "${testing} git://<url>/<repo>.git~branch"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch"; then
+    pass "${testing} http://<url>/<repo>.git~branch"
 else
-    fail "${testing} git://<url>/<repo>.git~branch"
+    fail "${testing} http://<url>/<repo>.git~branch"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git~<multi/part/branch> identifier should match"
 out="`get_URL glibc.git~multi/part/branch`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~multi/part/branch"; then
-    pass "${testing} git://<url>/<repo>.git~multi/part/branch"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch"; then
+    pass "${testing} http://<url>/<repo>.git~multi/part/branch"
 else
-    fail "${testing} git://<url>/<repo>.git~multi/part/branch"
+    fail "${testing} http://<url>/<repo>.git~multi/part/branch"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
 out="`get_URL glibc.git/branch@12345`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~branch@12345"; then
-    pass "${testing} git://<url>/<repo>.git/<branch>@<revision>"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch@12345"; then
+    pass "${testing} http://<url>/<repo>.git/<branch>@<revision>"
 else
-    fail "${testing} git://<url>/<repo>.git/<branch>@<revision>"
+    fail "${testing} http://<url>/<repo>.git/<branch>@<revision>"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git/<mulit/part/branch>@<revision> identifier should match"
 out="`get_URL glibc.git/multi/part/branch@12345`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~multi/part/branch@12345"; then
-    pass "${testing} git://<url>/<repo>.git/<multi/part/branch>@<revision>"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch@12345"; then
+    pass "${testing} http://<url>/<repo>.git/<multi/part/branch>@<revision>"
 else
-    fail "${testing} git://<url>/<repo>.git/<multi/part/branch>@<revision>"
+    fail "${testing} http://<url>/<repo>.git/<multi/part/branch>@<revision>"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git~<branch>@<revision> identifier should match"
 out="`get_URL glibc.git~branch@12345`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~branch@12345"; then
-    pass "${testing} git://<url>/<repo>.git~<branch>@<revision>"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch@12345"; then
+    pass "${testing} http://<url>/<repo>.git~<branch>@<revision>"
 else
-    fail "${testing} git://<url>/<repo>.git~<branch>@<revision>"
+    fail "${testing} http://<url>/<repo>.git~<branch>@<revision>"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git~<mulit/part/branch>@<revision> identifier should match"
 out="`get_URL glibc.git~multi/part/branch@12345`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git~multi/part/branch@12345"; then
-    pass "${testing} git://<url>/<repo>.git~<multi/part/branch>@<revision>"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch@12345"; then
+    pass "${testing} http://<url>/<repo>.git~<multi/part/branch>@<revision>"
 else
-    fail "${testing} git://<url>/<repo>.git~<multi/part/branch>@<revision>"
+    fail "${testing} http://<url>/<repo>.git~<multi/part/branch>@<revision>"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
 out="`get_URL glibc.git@12345`"
-if test x"`echo ${out}`" = x"git://git.linaro.org/toolchain/glibc.git@12345"; then
-    pass "${testing} git://<url>/<repo>.git@<revision>"
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git@12345"; then
+    pass "${testing} http://<url>/<repo>.git@<revision>"
 else
-    fail "${testing} git://<url>/<repo>.git@<revision>"
+    fail "${testing} http://<url>/<repo>.git@<revision>"
     fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf <repo>.git identifier should match http://<url>/<repo>.git"
 out="`get_URL gcc.git`"
-if test x"`echo ${out}`" = x"http://staging.git.linaro.org/git/toolchain/gcc.git"; then
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/gcc.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -902,7 +902,7 @@ fi
 testing="get_source: git repository"
 in="eglibc.git"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -912,7 +912,7 @@ fi
 testing="get_source: git repository with / branch"
 in="eglibc.git/linaro_eglibc-2_17"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git~linaro_eglibc-2_17"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc.git~linaro_eglibc-2_17"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -922,7 +922,7 @@ fi
 testing="get_source: git repository with / branch and commit"
 in="newlib.git/binutils-2_23-branch@e9a210b"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -932,7 +932,7 @@ fi
 testing="get_source: git repository with ~ branch and commit"
 in="newlib.git~binutils-2_23-branch@e9a210b"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -942,7 +942,7 @@ fi
 testing="get_source: <repo>.git@commit"
 in="newlib.git@e9a210b"
 out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/newlib.git@e9a210b"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git@e9a210b"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -990,13 +990,13 @@ else
 fi
 
 testing="get_source: git direct url not ending in .git with revision returns bogus url."
-in="git://git.linaro.org/toolchain/eglibc/branch@1234567"
+in="http://git.linaro.org/git/toolchain/eglibc/branch@1234567"
 if test x"${debug}" = x"yes"; then
     out="`get_source ${in}`"
 else
     out="`get_source ${in} 2>/dev/null`"
 fi
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc/branch@1234567"; then
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -1006,13 +1006,13 @@ fi
 # These aren't valid if testing from a build directory.
 testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
 if test ! -e "${PWD}/host.conf"; then
-    in="git://git.linaro.org/toolchain/foo.git"
+    in="http://git.linaro.org/git/toolchain/foo.git"
     if test x"${debug}" = x"yes"; then
         out="`get_source ${in}`"
     else
         out="`get_source ${in} 2>/dev/null`"
     fi
-    if test x"${out}" = x"git://git.linaro.org/toolchain/foo.git"; then
+    if test x"${out}" = x"http://git.linaro.org/git/toolchain/foo.git"; then
 	pass "${testing}"
     else
 	fail "${testing}"
@@ -1194,7 +1194,7 @@ out="`create_release_tag ${in} | grep -v TRACE`"
 toolname="`echo ${out} | cut -d ' ' -f 1`"
 branch="`echo ${out} | cut -d ' ' -f 2`"
 revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc-linaro~gcc-4.8-branch@12345abcde-${date}"; then
+if test x"${out}" = x"gcc.git~gcc-4.8-branch@12345abcde-${date}"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -1207,7 +1207,7 @@ testing="create_release_tag: repository branch empty"
 if test -d ${srcdir}; then
     in="gcc.git"
     out="`create_release_tag ${in} | grep -v TRACE`"
-    if test "`echo ${out} | grep -c "gcc-linaro\@[a-z0-9]*-${date}"`" -gt 0; then
+    if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
 	pass "${testing}"
     else
 	fail "${testing}"
