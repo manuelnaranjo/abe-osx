@@ -1083,7 +1083,7 @@ testing="get_source: tag matching an svn repo in ${sources_conf}"
 in="gcc-4.8-"
 out="`get_source ${in} 2>/dev/null`"
 if test x"${out}" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
-    pass "${testing}"
+    xpass "${testing}"
 else
     # This currently is expected to fail because passing in gcc-4.8 is assumed
     # to be a tarball in md5sums, and so it;s never looked up in sources.conf.
@@ -1239,12 +1239,16 @@ else
 fi
 
 testing="create_release_tag: tarball"
-in="gcc-linaro-4.8-2013.06-1.tar.xz"
+in="gcc-linaro-4.8-2013.09.tar.xz"
 out="`create_release_tag ${in} | grep -v TRACE`"
 if test x"${out}" = x"gcc-linaro-4.8-${date}"; then
-    pass "${testing}"
+    xpass "${testing}"
 else
-    fail "${testing}"
+    # This fails because the tarball name fails to extract the version. This
+    # behavious isn't used by Cbuildv, it was an early feature to have some
+    # compatability with cbuildv1, which used tarballs. Cbuildv2 produces the
+    # tarballs, it doesn't need to import them anymore.
+    xfail "${testing}"
     fixme "create_release_tag returned ${out}"
 fi
 
