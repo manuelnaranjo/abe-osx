@@ -32,3 +32,4 @@ wget_bin=@WGET@
 bash_shell=@BASH@
 LSBCC=@LSBCC@
 LSBCXX=@LSBCXX@
+MAKEINFO=@MAKEINFO@
