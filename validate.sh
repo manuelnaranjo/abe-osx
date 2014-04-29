@@ -62,9 +62,9 @@ mkdir -p ${resultsdir}
 i=0
 while test $i -lt ${#revisions[@]}; do
     stamps="`ls -C1 ${local_builds}/${build}/${target}/*-stage2-build.stamp`"
-    # if test "`echo ${stamps} | grep -c ${revisions[$i]}`" -eq 0; then
-    # 	${cbuild2} --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
-    # fi
+    if test "`echo ${stamps} | grep -c ${revisions[$i]}`" -eq 0; then
+     	${cbuild2} --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
+    fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
     if test x"${sums}" != x; then
 	mkdir -p ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
