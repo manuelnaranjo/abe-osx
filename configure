@@ -3543,7 +3543,9 @@ fi
 
 #packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="texinfo gawk"
-dpkg="`which dpkg`"
+
+### Debian packages ###
+dpkg="`which dpkg 2> /dev/null`"
 result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
@@ -3551,34 +3553,65 @@ if test ${result} -eq 0; then
        packages="${packages} gcc-multilib g++-multilib"
     fi
     for i in ${packages}; do
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
 $as_echo_n "checking if $i is installed... " >&6; }
-#	exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
-	exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
-	if test x"${exists}" != x'ii'; then
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
+    #exists=`dpkg --get-selections | grep -c "^$i\[[:space:]\]*install"`
+    exists="`dpkg -l $i | tail -1| cut -d ' ' -f 1`"
+    if test x"${exists}" != x'ii'; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
-	    missing="${missing} $i"
-	else
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        missing="${missing} $i"
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	fi
+    fi
     done
+
+### RPM Packages ###
 else
-    yum="`which yum`"
-    result=$?
+yum="`which yum 2> /dev/null`"
+result=$?
+if test ${result} -eq 0; then
     for i in ${packages}; do
-    	exists="`rpm -q -a $i| grep -c $i`"
-	    if test ${exists} -eq 0; then
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
+$as_echo_n "checking if $i is installed... " >&6; }
+        exists="`rpm -q -a $i| grep -c $i`"
+        if test ${exists} -eq 0; then
+           { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
 $as_echo "no, install $i" >&6; }
-	       missing="${missing} $i"
-	else
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+           missing="${missing} $i"
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	fi
+        fi
     done
-fi
+
+### Arch Packages ###
+else
+pacman="`which pacman 2> /dev/null`"
+result=$?
+if test ${result} -eq 0; then
+    for i in ${packages}; do
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
+$as_echo_n "checking if $i is installed... " >&6; }
+        exists="`pacman -Qs ${i} | wc -l`"
+        if test ${exists} -eq 0; then
+           { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, install $i" >&5
+$as_echo "no, install $i" >&6; }
+           missing="${missing} $i"
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        fi
+    done
+
+### Unknown Packages ###
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Unknown package management system" >&5
+$as_echo "$as_me: WARNING: Unknown package management system" >&2;}
+fi # Arch
+fi # RPM
+fi # Debian
 
 
 BUILDDATE="`date +%Y%m%d`"
@@ -3997,7 +4030,7 @@ fi
 if test `lsb_release -i -s` = "Ubuntu"; then
    texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
    if test "${texversion}" -gt 4; then
-      MAKEINFO="missing"
+      MAKEINFO="echo"
    fi
 fi
 
