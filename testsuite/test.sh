@@ -950,9 +950,9 @@ else
 fi
 
 testing="get_source: tar.bz2 archive"
-in="gcc-linaro-4.8-2013.05.tar.bz2"
+in="gcc-linaro-4.8-2013.09.tar.xz"
 out="`get_source ${in}`"
-if test x"${out}" = x"gcc-linaro-4.8-2013.05.tar.bz2"; then
+if test x"${out}" = x"gcc-linaro-4.8-2013.09.tar.xz"; then
     pass "${testing}"
 else
     fail "${testing}"
