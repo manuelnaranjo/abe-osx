@@ -73,6 +73,8 @@ difftwodirs ()
 	    fi
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "[TEST] $i had regressions between ${prev} and ${next}!" ${diffdir}/$i-test-results.txt
+	    else
+		mailto "[TEST] $i had ZERO regressions between ${prev} and ${next}!"
 	    fi
 	fi
     done
