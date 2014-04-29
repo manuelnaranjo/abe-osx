@@ -1161,10 +1161,10 @@ else
 fi
 
 testing="get_source: too many matches in snapshots, latest set."
-latest="gcc-linaro-4.8-2013.06.tar.bz2"
+latest="gcc-linaro-4.8-2013.09.tar.xz"
 in="gcc-linaro-4.8"
 out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"gcc-linaro-4.8-2013.06.tar.bz2"; then
+if test x"${out}" = x"gcc-linaro-4.8-2013.09.tar.xz"; then
     pass "${testing}"
 else
     fail "${testing}"
