@@ -328,7 +328,7 @@ AC_PATH_PROG(MAKEINFO,makeinfo)
 if test `lsb_release -i -s` = "Ubuntu"; then
    texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
    if test "${texversion}" -gt 4; then
-      MAKEINFO="missing"
+      MAKEINFO="echo"
    fi
 fi
 AC_SUBST(MAKEINFO)
