@@ -414,7 +414,7 @@ make_install()
 	# this version of the clibrary.
 	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
 	local dynamic_linker_name=
-	dynamic_linker="`find ${sysroots}/lib64/ | grep ld-${c_library_version}.so`"
+	dynamic_linker="`find ${sysroots} -type f -name ld-\*.so`"
 	if test $? -ne 0; then
 	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
 	    exit 1;
