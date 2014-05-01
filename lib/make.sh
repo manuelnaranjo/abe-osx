@@ -366,7 +366,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-	local make_flags=" install_root=${sysroots} ${make_flags}"
+	local make_flags=" install_root=${sysroots} ${make_flags} 'PARALLELMFLAGS=-j 4'"
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -419,7 +419,6 @@ make_install()
 	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
 	    exit 1;
 	fi
-
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
