@@ -189,6 +189,7 @@ done
 
 if test x"$list" = x; then
   error "Benchmark list is empty"
+  exit 1
 fi
 if test x"$list" = xall; then
   list=coremark,gmpbench,gnugo,skiabench,denbench,eembc,spec2k,libavbench,eembc_office,nbench
@@ -203,13 +204,19 @@ dump_host_info  > host.txt
 
 for b in ${list//,/ };
 do
-  echo $b;
-  bench_init $b
-  ctx=$?
-  if test $ctx = 0; then
+  get_bench_id $b
+  if test $? = 0; then
     error "Unrecognized benchmark name $b"
+    exit
   fi
+done
 
+for b in ${list//,/ };
+do
+  echo $b;
+  get_bench_id $b
+  ctx=$?
+  bench_init $ctx || exit
   if $extract; then
     echo "Extract benchmark $b"
     extract $ctx

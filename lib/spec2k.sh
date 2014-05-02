@@ -32,10 +32,11 @@ spec2k_init()
   fi
   if test "x$SPEC2k_TARBALL" = x; then
     error "TARBALL not defined in spec2k.conf"
-    exit
+    return 1
   fi
   SPEC2k_VCFLAGS="-O2 -fno-common $SPEC2k_VCFLAGS $XCFLAGS"
   RUNSPECFLAGS="-c $SPEC2k_CONFIG -e $SPEC2k_EXTENSION -n $SPEC2k_ITERATIONS -i $SPEC2k_WORKLOAD"
+  return 0
 }
 
 spec2k_run ()

@@ -72,9 +72,10 @@ skiabench_init()
   fi
   if test "x$SKIABENCH_TARBALL" = x; then
     error "TARBALL not defined in skiabench.conf"
-    exit
+    return 1
   fi
   SKIABENCH_VCFLAGS="-O2  $SKIABENCH_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 skiabench_run ()

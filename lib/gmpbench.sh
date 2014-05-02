@@ -20,10 +20,11 @@ gmpbench_init()
   fi
   if test "x$GMPBENCH_TARBALL" = x; then
     error "TARBALL not defined in gmpbench.conf"
-    exit
+    return 1
   fi
 
   EEMBC_VCFLAGS="-O2 $EEMBC_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 gmpbench_run ()

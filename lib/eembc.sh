@@ -25,10 +25,11 @@ eembc_init()
   fi
   if test "x$EEMBC_TARBALL" = x; then
     error "TARBALL not defined in eembc.conf"
-    exit
+    return 1
   fi
 
   EEMBC_VCFLAGS="-O2 -DNDEBUG -DHOST_EXAMPLE_CODE=1 $EEMBC_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 eembc_run ()

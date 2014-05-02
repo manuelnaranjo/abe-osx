@@ -42,64 +42,99 @@ check_pattern()
   fi
 }
 
+#
+# $1 is the benchmark name
+#
+get_bench_id()
+{
+  case $1 in
+    coremark)
+      return $COREMARK
+      ;;
+    libavbench)
+      return $LIBAVBENCH
+      ;;
+    gmpbench)
+      return $GMPBENCH
+      ;;
+    gnugo)
+      return $GNUGO
+      ;;
+    skiabench)
+      return $SKIABENCH
+      ;;
+    denbench)
+      return $DENBENCH
+      ;;
+    nbench)
+      return $NBENCH
+      ;;
+    eembc)
+      return $EEMBC
+      ;;
+    eembc_office)
+      return $EEMBC_OFFICE
+      ;;
+    spec2k)
+      return $SPEC2K
+      ;;
+    spec2006)
+      return $SPEC2006
+      ;;
+  esac
+
+  return 0
+}
+
+#
+# $1 is the benchmark ID
+#
 bench_init()
 {
   if test x"$1" = x; then
     echo "bench_init requires benchmark name as parameter"
-    retuen 0
+    return 1
   fi
   case $1 in
-    coremark)
+    $COREMARK)
       coremark_init
-      return $COREMARK
       ;;
-    libavbench)
+    $LIBAVBENCH)
       libavbench_init
-      return $LIBAVBENCH
       ;;
-    gmpbench)
+    $GMPBENCH)
       gmpbench_init
-      return $GMPBENCH
       ;;
-    gnugo)
+    $GNUGO)
       gnugo_init
-      return $GNUGO
       ;;
-    skiabench)
+    $SKIABENCH)
       skiabench_init
-      return $SKIABENCH
       ;;
-    denbench)
+    $DENBENCH)
       denbench_init
-      return $DENBENCH
       ;;
-    nbench)
+    $NBENCH)
       nbench_init
-      return $NBENCH
       ;;
-    eembc)
+    $EEMBC)
       eembc_init
-      return $EEMBC
       ;;
-    eembc_office)
+    $EEMBC_OFFICE)
       eembc_office_init
-      return $EEMBC_OFFICE
       ;;
-    spec2k)
+    $SPEC2K)
       spec2k_init
-      return $SPEC2K
       ;;
-    spec2006)
+    $SPEC2006)
       spec2006_init
-      return $SPEC2006
+      ;;
+    *)
+      return 1
       ;;
   esac
-  if test $? != 0 ; then
-    error "init failed"
-    exit
-  fi
 
-  return 0
+  return $?
 }
 
 #

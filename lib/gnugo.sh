@@ -26,9 +26,10 @@ gnugo_init()
   fi
   if test "x$GNUGO_TARBALL" = x; then
     error "TARBALL not defined in gnugo.conf"
-    exit
+    return 1
   fi
   GNUGO_VCFLAGS="-O2 $GNUGO_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 gnugo_run ()

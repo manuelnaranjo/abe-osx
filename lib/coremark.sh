@@ -28,10 +28,11 @@ coremark_init()
   fi
   if test "x$COREMARK_TARBALL" = x; then
     error "TARBALL not defined in coremark.conf"
-    exit
+    return 1
   fi
 
   COREMARK_XCFLAGS="$COREMARK_XCFLAGS $XCFLAGS"
+  return 0
 }
 
 coremark_run ()

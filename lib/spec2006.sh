@@ -32,10 +32,11 @@ spec2006_init()
   fi
   if test "x$SPEC2006_TARBALL" = x; then
     error "TARBALL not defined in spec2006.conf"
-    exit
+    return 1
   fi
   SPEC2006_VCFLAGS="-O2 -fno-common $SPEC2006_VCFLAGS $XCFLAGS"
   RUNSPECFLAGS="-c $SPEC2006_CONFIG -e $SPEC2006_EXTENSION -n $SPEC2006_ITERATIONS -i $SPEC2006_WORKLOAD"
+  return 0
 }
 
 spec2006_run ()

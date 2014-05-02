@@ -25,9 +25,10 @@ eembc_office_init()
   fi
   if test "x$EEMBC_OFFICE_TARBALL" = x; then
     error "TARBALL not defined in eembc_office.conf"
-    exit
+    return 1
   fi
   EEMBC_OFFICE_VCFLAGS="-O2 -DNDEBUG -DHOST_EXAMPLE_CODE=1 $EEMBC_OFFICE_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 eembc_office_run ()

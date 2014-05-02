@@ -25,9 +25,10 @@ nbench_init()
   fi
   if test "x$NBENCH_TARBALL" = x; then
     error "TARBALL not defined in nbench.conf"
-    exit
+    return 1
   fi
   NBENCH_VCFLAGS="-O2 -static $NBENCH_VCFLAGS $XCFLAGS"
+  return 0
 }
 
 

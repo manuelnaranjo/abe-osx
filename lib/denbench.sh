@@ -25,8 +25,9 @@ denbench_init()
   fi
   if test "x$DENBENCH_TARBALL" = x; then
     error "TARBALL not defined in denbench.conf"
-    exit
+    return 1
   fi
+  return 0
 }
 
 denbench_run ()

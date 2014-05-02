@@ -31,13 +31,14 @@ libavbench_init()
   fi
   if test "x$LIBAVBENCH_TARBALL" = x; then
     error "TARBALL not defined in libavbench.conf"
-    exit
+    return 1
   fi
 
   LIBAVBENCH_VCFLAGS="-O3 $LIBAVBENCH_VCFLAGS $XCFLAGS"
   DISABLE_ASM="--disable-asm"
   REMOVE_CFLAGS=-fno-tree-vectorize
   CONFIGURE_FLAGS="--disable-pthreads --optflags=$LIBAVBENCH_VCFLAGS $DISABLE_ASM"
+  return 0
 }
 
 libavbench_run ()
