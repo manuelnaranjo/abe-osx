@@ -31,6 +31,7 @@ usage()
   [-l, --list-of-benchmarks=benchmark1,benchmark2..]
   [-t, --gcc-binary-tarball=tarball]
   [-d, --dir-to-build=directory]
+  [-x, --extract-dir=directory]
   [-C, --additional-cflags]
   [-L, --aditional-lflags]
 EOF
@@ -99,6 +100,10 @@ OPTIONS
   -d, --dir-to-build=directory
 	       Specify the path of directory in which bennchrks
 	       should be placed and executed.
+
+  -x, --extract-dir=directory
+               Specify the path of directory from which benchmarks
+               should be extracted.
 
   -C, --additional-cflags
 	       Additional CFLAGS for compiling benchmarks.
@@ -171,6 +176,10 @@ do
       ;;
     --file=*)
       file=${1#*=}        # Delete everything up till "="
+      shift
+      ;;
+    -x=* | --extract-dir==*)
+      SRC_PATH=${1#*=}
       shift
       ;;
     --) # End of all options
