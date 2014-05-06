@@ -164,7 +164,14 @@ version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 distro="`lsb_release -c -s`"
 arch="`uname -m`"
 
-node="`echo ${node_selector} | tr '-' '_'`"
+# Non matrix builds use node_selector, but matrix builds use NODE_NAME
+if test x"${node_selector}" != x; then
+    node="`echo ${node_selector} | tr '-' '_'`"
+    job=${JOB_NAME}
+else
+    node="`echo ${NODE_NAME} | tr '-' '_'`"
+    job="`$ echo $JOB_NAME  | cut -d '/' -f 1`"
+fi
 case ${target} in
     arm*-linux-gnueabihf)
 	abbrev=armhf
@@ -197,7 +204,7 @@ board="${abbrev}"
 
 # This is the remote directory for tcwgweb where all test results and log
 # files get copied too.
-dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${JOB_NAME}${BUILD_NUMBER}-${board}-${node}"
+dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${board}-${node}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
