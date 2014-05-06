@@ -170,7 +170,7 @@ if test x"${node_selector}" != x; then
     job=${JOB_NAME}
 else
     node="`echo ${NODE_NAME} | tr '-' '_'`"
-    job="`$ echo $JOB_NAME  | cut -d '/' -f 1`"
+    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 case ${target} in
     arm*-linux-gnueabihf)
