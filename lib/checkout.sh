@@ -169,14 +169,11 @@ checkout_all()
 #       have a git identifier call get_URL first.
 checkout()
 {
+    trace "$*"
+
     if test x"$1" = x; then
 	error "No URL given!"
 	return 1
-    fi
-
-    # 
-    if test x"$2" = xstage2; then
-	return 0
     fi
 
     local service=
@@ -288,7 +285,7 @@ checkout()
 			# If there's no revision we checkout a specific branch.
 			# If the branch doesn't exists yet, we need to update
 			# master first.
-			local exists="`(cd ${srcdir} && git branch -a | grep -c ${branch})`"
+			local exists="`cd ${srcdir} && git branch -a | grep -c ${branch}`"
 			if "${exists}" -eq 0; then
 			    warning "branch doesn't exist, updating master"
 			    dryrun "(cd ${sdir} && git reset --hard origin/master)"
