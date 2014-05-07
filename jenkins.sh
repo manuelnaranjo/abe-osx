@@ -223,7 +223,7 @@ sums="`find ${WORKSPACE} -name *.sum`"
 #    for i in ${sums}; do
 #	name="`basename $i`"
 #	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
-#	cp $i ${WORKSPACE}/
+#	cp $i ${WORKSPACE}/results/${dir}
 #    done
 #    junits="`find ${WORKSPACE} -name *.junit`"
 #    if test x"${junits}" = x; then
@@ -258,7 +258,7 @@ if test x"${sums}" != x; then
     tdate="`date "+%Y-%m-%d %H:%M:%S%:z"`"
     echo ${tdate} > ${WORKSPACE}/results/${dir}/finished.txt
 
-    cp ${WORKSPACE}/*.sum ${WORKSPACE}/results/${dir}
+    cp ${sums} ${WORKSPACE}/results/${dir}
     # Copy over the test results
     ssh toolchain64.lab mkdir -p /space/build/${dir}
     ssh toolchain64.lab touch /space/build/${dir}/started.txt
