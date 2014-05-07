@@ -173,23 +173,26 @@ else
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 case ${target} in
+    armeb-linux-gnueabihf)
+	abbrev=armeb
+	;;
     arm*-linux-gnueabihf)
 	abbrev=armhf
 	;;
     arm*-linux-gnueabi)
 	abbrev=armel
 	;;
-    aarch64*-linux-gnu)
-	abbrev=aarch64
-	;;
     aarch64_be-linux-gnu)
 	abbrev=aarch64be
 	;;
-    aarch64*-elf)
-	abbrev=aarch64_bare
+    aarch64*-linux-gnu)
+	abbrev=aarch64
 	;;
     aarch64_be-*elf)
 	abbrev=aarch64be_bare
+	;;
+    aarch64*-elf)
+	abbrev=aarch64_bare
 	;;
     native)
 	build_arch="`grep build_arch= ${WORKSPACE}/_build/host.conf | cut -d '=' -f 2`"
