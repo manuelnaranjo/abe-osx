@@ -311,7 +311,11 @@ make_all()
     fi
 
     local makeret=
-    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+    if test x"${tool}" = x"gdb"; then
+	dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+    else
+	dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+    fi
     local makeret=$?
 
     local errors="`grep Error ${builddir}/make.log`"
@@ -389,7 +393,11 @@ make_install()
 	# will continue.
 	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
-	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	if test x"${tool}" = x"gdb"; then
+	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	else
+	    dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	fi
     fi
 
     if test $? != "0"; then
