@@ -174,6 +174,11 @@ checkout()
 	return 1
     fi
 
+    # 
+    if test x"$2" = xstage2; then
+	return 0
+    fi
+
     local service=
     service="`get_git_service $1`"
     if test x"${service}" = x ; then
@@ -243,7 +248,9 @@ checkout()
 		    # 'master' we pull.
 		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
-			dryrun "(cd ${srcdir} && git pull origin${branch:+ ${branch}})"
+                        local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
+			dryrun "(cd ${sdir} && git reset --hard origin/HEAD)"
+			dryrun "(cd ${sdir} && git pull origin${branch:+ ${branch}})"
 		    fi
 		fi
 		# NOTE: It's possible that a git-new-workdir succeeded but the
@@ -280,6 +287,14 @@ checkout()
 			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
 		    elif test x"${branch}" != x; then
 			# If there's no revision we checkout a specific branch.
+			# If the branch doesn't exists yet, we need to update
+			# master first.
+			local exists="`(cd ${srcdir} && git branch -a | grep -c ${branch})`"
+			if "${exists}" -eq 0; then
+			    warning "branch doesn't exist, updating master"
+			    dryrun "(cd ${srcdir} && git pull)"
+			fi
+			dryrun "(cd ${sdir} && git pull origin${branch:+ ${branch}})"
 			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		    # We don't need a new-workdir if there's no designated
