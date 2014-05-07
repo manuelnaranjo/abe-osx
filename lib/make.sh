@@ -312,9 +312,9 @@ make_all()
 
     local makeret=
     if test x"${tool}" = x"gdb"; then
-	dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    else
 	dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+    else
+	dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
     fi
     local makeret=$?
 
