@@ -198,7 +198,7 @@ build()
     if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
 	# Don't checkout for stage2 gcc, otherwise it'll do an unnecessary pull.
 	    notice "Checking out ${tag}${2:+ $2}"
-	    checkout ${gitinfo}
+	    checkout ${gitinfo} ${2:+$2}
 	    if test $? -gt 0; then
 		warning "Sources not updated, network error!"
 	    fi
