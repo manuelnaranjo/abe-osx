@@ -404,14 +404,14 @@ manifest()
     if test x"${eglibc_version}" = x; then
 	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
     fi
-    local srcdir="`get_srcdir ${eglibc_version}`"
-    local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    #local srcdir="`get_srcdir ${eglibc_version}`"
+    #local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
         
     if test x"${newlib_version}" = x; then
 	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
     fi
-    local srcdir="`get_srcdir ${newlib_version}`"
-    local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    #local srcdir="`get_srcdir ${newlib_version}`"
+    #local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
         
     if test x"${glibc_version}" = x; then
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
