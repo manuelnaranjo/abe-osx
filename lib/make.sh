@@ -52,11 +52,10 @@ build_all()
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
     fi
 
-
     if test x"${gdb_version}" = x; then
 	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
     fi
-
+    
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
@@ -127,6 +126,8 @@ build_all()
 	fi
     done
 
+    manifest ${local_builds}/${host}/${target}/manifest.txt
+
     notice "Build took ${SECONDS} seconds"
 
     if test x"${tarsrc}" = x"yes"; then
@@ -196,7 +197,6 @@ build()
     notice "Building ${tag}${2:+ $2}"
     
     if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
-	# Don't checkout for stage2 gcc, otherwise it'll do an unnecessary pull.
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo} ${2:+$2}
 	    if test $? -gt 0; then
