@@ -207,7 +207,16 @@ board="${abbrev}"
 
 # This is the remote directory for tcwgweb where all test results and log
 # files get copied too.
-dir="gcc-linaro-${version}${branch}-${date}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${board}-${node}"
+
+# These fields are enabled by the buikd-user-vars plugin.
+if x"${BUILD_USER_FIRST_NAME}" !=x; then
+    requestor="-${BUILD_USER_FIRST_NAME}"
+fi
+if x"${BUILD_USER_LAST_NAME}" !=x; then
+    requestor=".${BUILD_USER_LAST_NAME}"
+fi
+
+dir="gcc-linaro-${version}${branch}-${date}${requestor}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${board}-${node}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
@@ -293,6 +302,13 @@ if test x"${sums}" != x; then
     if test x"${tarbin}" = xtrue; then
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} toolchain64.lab:/space/binaries/
+    fi
+
+    manifest="`find ${WORKSPACE} -name manifest.txt`"
+    if x"${manifest}" != x; then
+	scp ${manifest} toolchain64.lab:/space/build/${dir}/
+    else
+	echo "ERROR: No manifest file, build probably failed!"
     fi
 
     rdate="`date +%Y%m`"
