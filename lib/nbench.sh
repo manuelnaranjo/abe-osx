@@ -73,7 +73,7 @@ nbench_extract ()
   rm -rf $NBENCH_SUITE
   mkdir -p $NBENCH_SUITE
   check_pattern "$SRC_PATH/$NBENCH_TARBALL*.tar.*z"
-  get_becnhmark  $SRC_PATH/$NBENCH_TARBALL*.tar.*z $NBENCH_SUITE
+  get_benchmark  $SRC_PATH/$NBENCH_TARBALL*.tar.*z $NBENCH_SUITE
   tar xaf $NBENCH_SUITE/$NBENCH_TARBALL*.tar.*z -C $NBENCH_SUITE
   rm $SRC_PATH/$NBENCH_TARBALL*.tar.*z
   #cat $(TOPDIR)/files/$(SUITE)/*.patch | patch -p1 -d $(VBUILD)/$(SUITE)-*

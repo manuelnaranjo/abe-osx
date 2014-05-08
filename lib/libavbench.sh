@@ -88,7 +88,7 @@ libavbench_extract ()
   rm -rf $LIBAVBENCH_SUITE
   mkdir -p $LIBAVBENCH_SUITE
   check_pattern "$SRC_PATH/$LIBAVBENCH_TARBALL*.tar.xz"
-  get_becnhmark "$SRC_PATH/$LIBAVBENCH_TARBALL*.tar.xz" $LIBAVBENCH_SUITE
+  get_benchmark "$SRC_PATH/$LIBAVBENCH_TARBALL*.tar.xz" $LIBAVBENCH_SUITE
   tar xaf $LIBAVBENCH_SUITE/$LIBAVBENCH_TARBALL*.tar.xz -C $LIBAVBENCH_SUITE
   rm -f $LIBAVBENCH_SUITE/$LIBAVBENCH_TARBALL*.tar.xz
 

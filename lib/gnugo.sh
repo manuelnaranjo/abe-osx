@@ -82,7 +82,7 @@ gnugo_extract ()
   rm -rf $GNUGO_SUITE
   mkdir -p $GNUGO_SUITE
   check_pattern "$SRC_PATH/$GNUGO_TARBALL*.tar.gz"
-  get_becnhmark  "$SRC_PATH/$GNUGO_TARBALL*.tar.gz" $GNUGO_SUITE
+  get_benchmark  "$SRC_PATH/$GNUGO_TARBALL*.tar.gz" $GNUGO_SUITE
   tar xaf $GNUGO_SUITE/$GNUGO_TARBALL*.tar.gz -C $GNUGO_SUITE
   rm -f $GNUGO_SUITE/$GNUGO_TARBALL*.tar.gz
 }

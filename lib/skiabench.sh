@@ -123,7 +123,7 @@ skiabench_extract ()
   rm -rf $SKIABENCH_SUITE
   mkdir -p $SKIABENCH_SUITE
   check_pattern "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz"
-  get_becnhmark "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
+  get_benchmark "$SRC_PATH/$SKIABENCH_TARBALL*.tar.xz" $SKIABENCH_SUITE
   tar xaf $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz -C $SKIABENCH_SUITE
   rm -f $SKIABENCH_SUITE/$SKIABENCH_TARBALL*.tar.xz
   local SRCDIR=`ls $SKIABENCH_SUITE`

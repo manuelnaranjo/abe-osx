@@ -82,7 +82,7 @@ eembc_extract ()
   rm -rf $EEMBC_SUITE
   mkdir -p $EEMBC_SUITE
   check_pattern "$SRC_PATH/$EEMBC_TARBALL*.cpt"
-  get_becnhmark  "$SRC_PATH/$EEMBC_TARBALL*.cpt" $EEMBC_SUITE
+  get_benchmark  "$SRC_PATH/$EEMBC_TARBALL*.cpt" $EEMBC_SUITE
   $CCAT $EEMBC_SUITE/$EEMBC_TARBALL*.cpt | tar xjf - -C $EEMBC_SUITE
   rm $EEMBC_SUITE/$EEMBC_TARBALL*.cpt
 }

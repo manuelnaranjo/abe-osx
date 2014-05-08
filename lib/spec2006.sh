@@ -107,7 +107,7 @@ spec2006_extract ()
   rm -rf $SPEC2006_SUITE
   mkdir -p $SPEC2006_SUITE
   check_pattern "$SRC_PATH/$SPEC2006_TARBALL*.cpt"
-  get_becnhmark "$SRC_PATH/$SPEC2006_TARBALL*.cpt" $SPEC2006_SUITE
+  get_benchmark "$SRC_PATH/$SPEC2006_TARBALL*.cpt" $SPEC2006_SUITE
   local FILE=`ls $SPEC2006_SUITE*/$SPEC2006_TARBALL*.cpt`
   echo "$CCAT $FILE | tar xJf - -C $SPEC2006_SUITE"
   $CCAT $FILE | tar xJf - -C $SPEC2006_SUITE
@@ -135,7 +135,7 @@ spec2006_extract ()
   esac
   # Create the config file
   check_pattern "$SRC_PATH/cpu2006tools-*$MACHINE*$FLOAT_SUFFIX*.tar"
-  get_becnhmark  "$SRC_PATH/cpu2006tools-*$MACHINE*$FLOAT_SUFFIX*.tar" $SPEC2006_SUITE
+  get_benchmark  "$SRC_PATH/cpu2006tools-*$MACHINE*$FLOAT_SUFFIX*.tar" $SPEC2006_SUITE
   tar -xvzf $SPEC2006_SUITE/cpu2006tools-*$MACHINE*$FLOAT_SUFFIX*.tar -C $SPEC2006_SUITE/cpu2006-1.1-Linaro-ToolchainWG/tools/bin
   rm $SSPEC2006_SUITE/cpu2006tools-*$MACHINE*$FLOAT_SUFFIX*.tar
 

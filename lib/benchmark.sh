@@ -857,7 +857,7 @@ set_gcc_to_runwith ()
   fi
 }
 
-get_becnhmark ()
+get_benchmark ()
 {
   if test x$1 != x; then
     echo "fetching $1 into $2"

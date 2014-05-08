@@ -106,7 +106,7 @@ spec2k_extract ()
   rm -rf $SPEC2k_SUITE
   mkdir -p $SPEC2k_SUITE
   check_pattern "$SRC_PATH/$SPEC2k_TARBALL*.cpt"
-  get_becnhmark "$SRC_PATH/$SPEC2k_TARBALL*.cpt" $SPEC2k_SUITE
+  get_benchmark "$SRC_PATH/$SPEC2k_TARBALL*.cpt" $SPEC2k_SUITE
   local FILE=`ls $SPEC2k_SUITE*/$SPEC2k_TARBALL*.cpt`
   $CCAT $FILE | tar xJf - -C $SPEC2k_SUITE
   chmod -R +w $SPEC2k_SUITE
@@ -133,7 +133,7 @@ spec2k_extract ()
   esac
   # Create the config file
   check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt"
-  get_becnhmark  "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
+  get_benchmark  "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
   $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
   rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt
 

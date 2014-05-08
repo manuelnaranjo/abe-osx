@@ -73,7 +73,7 @@ denbench_extract ()
   rm -rf $DENBENCH_SUITE
   mkdir -p $DENBENCH_SUITE
   check_pattern "$SRC_PATH/$DENBENCH_TARBALL*.cpt"
-  get_becnhmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
+  get_benchmark  "$SRC_PATH/$DENBENCH_TARBALL*.cpt" $DENBENCH_SUITE
   $CCAT $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt | tar xjf - -C $DENBENCH_SUITE
   rm -f $DENBENCH_SUITE/$DENBENCH_TARBALL*.cpt
 }

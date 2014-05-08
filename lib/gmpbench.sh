@@ -42,7 +42,7 @@ gmpbench_build ()
   echo $CONFIGURE_FLAGS > $GMPBENCH_BUILD_LOG
   echo CFLAGS=$GMPBENCH_VCFLAGS >> $GMPBENCH_BUILD_LOG
   check_pattern "$SRC_PATH/gexpr.c"
-  get_becnhmark  "$SRC_PATH/gexpr.c" $GMPBENCH_SUITE
+  get_benchmark  "$SRC_PATH/gexpr.c" $GMPBENCH_SUITE
   gcc -o $GMPBENCH_SUITE/gexpr $GMPBENCH_SUITE/gexpr.c -lm
 }
 
@@ -72,7 +72,7 @@ gmpbench_extract ()
   rm -rf $GMPBENCH_SUITE
   mkdir -p $GMPBENCH_SUITE
   check_pattern "$SRC_PATH/$GMPBENCH_TARBALL*.tar.bz2"
-  get_becnhmark  "$SRC_PATH/$GMPBENCH_TARBALL*.tar.bz2" $GMPBENCH_SUITE
+  get_benchmark  "$SRC_PATH/$GMPBENCH_TARBALL*.tar.bz2" $GMPBENCH_SUITE
   tar xaf $GMPBENCH_SUITE/$GMPBENCH_TARBALL*.tar.bz2 -C $GMPBENCH_SUITE
   rm -f $GMPBENCH_SUITE/$GMPBENCH_TARBALL*.tar.bz2
 }

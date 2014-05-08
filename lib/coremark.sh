@@ -95,7 +95,7 @@ coremark_extract ()
   rm -rf $COREMARK_SUITE
   mkdir -p $COREMARK_SUITE
   check_pattern "$SRC_PATH/$COREMARK_TARBALL*.cpt"
-  get_becnhmark  "$SRC_PATH/$COREMARK_TARBALL*.cpt" $COREMARK_SUITE
+  get_benchmark  "$SRC_PATH/$COREMARK_TARBALL*.cpt" $COREMARK_SUITE
   $CCAT $COREMARK_SUITE/$COREMARK_TARBALL*.cpt | gunzip | tar xaf - -C $COREMARK_SUITE
   rm $COREMARK_SUITE/$COREMARK_TARBALL*.cpt
 }
