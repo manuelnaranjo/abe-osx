@@ -18,7 +18,7 @@
 
 #
 # diffall dir1 dir2
-# Takes a two directories and compares the sum file
+# Takes a two directories and compares the sum files
 difftwodirs ()
 {
     local prev=$1
@@ -30,8 +30,8 @@ difftwodirs ()
     fi
     
     echo "Diffing: ${prev} against ${next}..."
-    local pversion=`echo ${prev} | grep -o "cbuild[0-9]*" | sed -e 's:cbuild::'`
-    local cversion=`echo ${next} | grep -o "cbuild[0-9]*" | sed -e 's:cbuild::'`
+    local pversion=`echo ${prev} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
+    local cversion=`echo ${next} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
     local toplevel="`dirname ${prev}`"
 
     diffdir="${toplevel}/diffof-${pversion}-${cversion}"
@@ -77,7 +77,7 @@ difftwodirs ()
 	fi
     done
     
-    rm -fr ${diffdir}
+#    rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
     xz ${prev}/*.sum
@@ -139,10 +139,8 @@ EOF
 mailto()
 {
 
-    notice "Mailing test results!"
-    mail -s "$1" tcwg-test-results@linaro.org < $2
-    # Hack till the mailing list lets me get messages
-#    mail -s "$1" rob.savoye@linaro.org < $2
+    echo "Mailing test results!"
+    mail -s "$1" tcwg-test-results@gnashdev.org < $2
 }
 
 usage()
