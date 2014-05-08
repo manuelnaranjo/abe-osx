@@ -380,7 +380,9 @@ manifest()
     if test x"${gcc_version}" = x; then
 	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
     fi
-    
+    local srcdir="`get_srcdir ${gcc_version}`"
+    local gcc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+
     if test x"${gmp_version}" = x; then
 	gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
@@ -396,18 +398,26 @@ manifest()
     if test x"${binutils_version}" = x; then
 	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
+    local srcdir="`get_srcdir ${binutils_version}`"
+    local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
 
     if test x"${eglibc_version}" = x; then
 	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
     fi
+    local srcdir="`get_srcdir ${eglibc_version}`"
+    local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
         
     if test x"${newlib_version}" = x; then
 	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
     fi
+    local srcdir="`get_srcdir ${newlib_version}`"
+    local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
         
     if test x"${glibc_version}" = x; then
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
     fi        
+    local srcdir="`get_srcdir ${glibc_version}`"
+    local glibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -423,7 +433,11 @@ gmp_version=${gmp_version}
 mpc_version=${mpc_version}
 mpfr_version=${mpfr_version}
 gcc_version=${gcc_version}
+gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
+binutils_revision=${binutils_revision}
+glibc_version=${glibc_version}
+glibc_revision=${glibc_revision}
 EOF
     
     case ${clibrary} in
