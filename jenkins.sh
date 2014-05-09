@@ -305,7 +305,7 @@ if test x"${sums}" != x; then
     fi
 
     manifest="`find ${WORKSPACE} -name manifest.txt`"
-    if x"${manifest}" != x; then
+    if test x"${manifest}" != x; then
 	scp ${manifest} toolchain64.lab:/space/build/${dir}/
     else
 	echo "ERROR: No manifest file, build probably failed!"
