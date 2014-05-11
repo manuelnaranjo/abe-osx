@@ -173,7 +173,7 @@ else
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 case ${target} in
-    armeb-linux-gnueabihf)
+    armeb-*)
 	abbrev=armeb
 	;;
     arm*-linux-gnueabihf)
@@ -209,10 +209,10 @@ board="${abbrev}"
 # files get copied too.
 
 # These fields are enabled by the buikd-user-vars plugin.
-if x"${BUILD_USER_FIRST_NAME}" !=x; then
+if x"${BUILD_USER_FIRST_NAME}" != x; then
     requestor="-${BUILD_USER_FIRST_NAME}"
 fi
-if x"${BUILD_USER_LAST_NAME}" !=x; then
+if x"${BUILD_USER_LAST_NAME}" != x; then
     requestor=".${BUILD_USER_LAST_NAME}"
 fi
 
@@ -304,13 +304,14 @@ if test x"${sums}" != x; then
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
-    manifest="`find ${WORKSPACE} -name manifest.txt`"
-    if test x"${manifest}" != x; then
-	scp ${manifest} toolchain64.lab:/space/build/${dir}/
-    else
-	echo "ERROR: No manifest file, build probably failed!"
-    fi
-
     rdate="`date +%Y%m`"
     ssh toolchain64.lab /home/cbuild/tcwgweb.sh --find /space/build/ 'gcc-linaro-${version}-${rdate}*'
 fi
+
+manifest="`find ${WORKSPACE} -name manifest.txt`"
+if test x"${manifest}" != x; then
+    scp ${manifest} toolchain64.lab:/space/build/${dir}/
+else
+    echo "ERROR: No manifest file, build probably failed!"
+fi
+
