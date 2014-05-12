@@ -308,6 +308,9 @@ if test x"${sums}" != x; then
     if test x"${manifest}" != x; then
 	echo "node=${node}" >> ${manifest}
 	echo "requestor=${requestor}" >> ${manifest}
+	if test x"${BUILD_USER_ID}" != x; then
+	    echo "email=${BUILD_USER_ID}" >> ${manifest}
+	fi
 	scp ${manifest} toolchain64.lab:/space/build/${dir}/
     else
 	echo "ERROR: No manifest file, build probably failed!"
