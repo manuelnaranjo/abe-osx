@@ -209,14 +209,14 @@ board="${abbrev}"
 # files get copied too.
 
 # These fields are enabled by the buikd-user-vars plugin.
-if x"${BUILD_USER_FIRST_NAME}" != x; then
+if test x"${BUILD_USER_FIRST_NAME}" != x; then
     requestor="-${BUILD_USER_FIRST_NAME}"
 fi
-if x"${BUILD_USER_LAST_NAME}" != x; then
+if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor=".${BUILD_USER_LAST_NAME}"
 fi
 
-dir="gcc-linaro-${version}${branch}-${date}${requestor}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${board}-${node}"
+dir="gcc-linaro-${version}${branch}-${date}${requestor}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${target}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
@@ -310,6 +310,7 @@ fi
 
 manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
+    echo "node=${node}" >> ${manifest}
     scp ${manifest} toolchain64.lab:/space/build/${dir}/
 else
     echo "ERROR: No manifest file, build probably failed!"
