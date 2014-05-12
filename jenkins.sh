@@ -213,7 +213,7 @@ if test x"${BUILD_USER_FIRST_NAME}" != x; then
     requestor="-${BUILD_USER_FIRST_NAME}"
 fi
 if test x"${BUILD_USER_LAST_NAME}" != x; then
-    requestor=".${BUILD_USER_LAST_NAME}"
+    requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
 
 dir="gcc-linaro-${version}${branch}-${date}${requestor}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${target}"
@@ -304,15 +304,16 @@ if test x"${sums}" != x; then
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
+    manifest="`find ${WORKSPACE} -name manifest.txt`"
+    if test x"${manifest}" != x; then
+	echo "node=${node}" >> ${manifest}
+	echo "requestor=${requestor}" >> ${manifest}
+	scp ${manifest} toolchain64.lab:/space/build/${dir}/
+    else
+	echo "ERROR: No manifest file, build probably failed!"
+    fi
+    
     rdate="`date +%Y%m`"
-    ssh toolchain64.lab /home/cbuild/tcwgweb.sh --find /space/build/ 'gcc-linaro-${version}-${rdate}*'
-fi
-
-manifest="`find ${WORKSPACE} -name manifest.txt`"
-if test x"${manifest}" != x; then
-    echo "node=${node}" >> ${manifest}
-    scp ${manifest} toolchain64.lab:/space/build/${dir}/
-else
-    echo "ERROR: No manifest file, build probably failed!"
+    ssh toolchain64.lab /home/cbuild/tcwgweb.sh --base ${dir}
 fi
 
