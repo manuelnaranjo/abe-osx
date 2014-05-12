@@ -96,8 +96,9 @@ difftwodirs ()
 		echo "------------------------" >> ${diffdir}/$i-test-results.txt
 		grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
 	    fi
+	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
-		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
+		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
 		cat ${diffdir}/$i-test-results.txt
 	    else
 		echo "$i had no regressions between ${pversion} and ${cversion}!" > /tmp/mail$$.txt
@@ -107,7 +108,7 @@ difftwodirs ()
 	fi
     done
     
-#    rm -fr ${diffdir}
+    rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
     xz ${prev}/*.sum
@@ -171,6 +172,9 @@ mailto()
 
     echo "Mailing test results!"
     mail -s "$1" tcwg-test-results@gnashdev.org < $2
+    if test x"$3" != x; then
+	mail -s "$1" $3 < $2	
+    fi
 }
 
 usage()
