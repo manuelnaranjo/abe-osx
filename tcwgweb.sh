@@ -16,6 +16,30 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+diffbaseline ()
+{
+    local baselines="/work/cbuildv2/baselines"
+    # /work/cbuildv2/baselines/x86_64/gcc
+
+    # dir=gcc-linaro-4.10.0~gcc.git-20140511/logs/x86_64-precise-BuildFarm116-aarch64
+
+    # x86_64-precise-BuildFarm118-aarch64-x86_64_03/
+    # x86_64-precise-BuildFarm118-aarch64_bare-x86_64_02/
+    # x86_64-precise-BuildFarm118-aarch64be_bare-x86_64_03/
+    # x86_64-precise-BuildFarm118-armhf-x86_64_06/
+
+    local tool="`echo $1 | cut -d '-' -f 1`"
+    local tool="`basename ${tool}`"
+    local version="`echo $1 | grep -o "[0-9]\.[0-9]*" | head -1`"
+#    local version="`echo $1 | grep -o "[0-9]\.[0-9]*\.[0-9]"`"
+    local target="`echo $1 | sed -e "s/^.*BuildFarm[0-9]*-//"`"
+    local build="`basename $1`"
+    local build="`echo ${build} | cut -d '-' -f 1`"
+
+    local dir="${baselines}/${build}/${tool}/${target}/${version}"
+    difftwodirs ${dir} $1
+}
+
 #
 # diffall dir1 dir2
 # Takes a two directories and compares the sum files
@@ -30,13 +54,14 @@ difftwodirs ()
     fi
     
     echo "Diffing: ${prev} against ${next}..."
-    local pversion=`echo ${prev} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
-    local cversion=`echo ${next} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
+#    local pbuild=`echo ${prev} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
+#    local cbuild=`echo ${next} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
+    local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
+    local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local toplevel="`dirname ${prev}`"
 
     diffdir="${toplevel}/diffof-${pversion}-${cversion}"
     mkdir -p ${diffdir}
-#	    diff -u -r ${foo[${incr}]} ${foo[${next}]} 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' | sort -k 2 > ${diffdir}/diff.txt
     unxz ${prev}/*.sum.xz
     unxz ${next}/*.sum.xz
     for i in gcc gdb glibc egibc newlib binutils; do
@@ -72,7 +97,12 @@ difftwodirs ()
 		grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
 	    fi
 	    if test -e ${diffdir}/$i-test-results.txt; then
-		mailto "[TEST] $i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
+		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt
+		cat ${diffdir}/$i-test-results.txt
+	    else
+		echo "$i had no regressions between ${pversion} and ${cversion}!" > /tmp/mail$$.txt
+		mailto "$i had no regressions between ${pversion} and ${cversion}!" /tmp/mail$$.txt
+		rm /tmp/mail$$.txt
 	    fi
 	fi
     done
@@ -145,8 +175,9 @@ mailto()
 
 usage()
 {
-    echo "--find [directory] [pattern]"
-    echo "--tdir [dir1] [dir2]"
+    echo "--find directory pattern"
+    echo "--tdir dir1 dir2"
+    echo "--base dir"
 }
 
 # ----------------------------------------------------------------------
@@ -183,6 +214,9 @@ case "$1" in
 	;;
     --tdir*)
 	difftwodirs "$2" "$3"
+	;;
+    --base*)	
+	diffbaseline "$2"
 	;;
     *)
 	usage
