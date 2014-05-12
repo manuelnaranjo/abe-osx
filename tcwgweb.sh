@@ -95,13 +95,13 @@ difftwodirs ()
 		echo "Tests that have problems" >> ${diffdir}/$i-test-results.txt
 		echo "------------------------" >> ${diffdir}/$i-test-results.txt
 		grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
-		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
-		grep "# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
-		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Build log: http://cbuild.validation.linaro.org/build/${next}/toplevel.txt" >> ${diffdir}/$i-test-results.txt
-		echo "Test log: http://cbuild.validation.linaro.org/build/${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
 	    fi
+	    echo "" >> ${diffdir}/$i-test-results.txt
+	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
+	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
+	    echo "" >> ${diffdir}/$i-test-results.txt
+	    echo "Build log: http://cbuild.validation.linaro.org/build/${next}/toplevel.txt" >> ${diffdir}/$i-test-results.txt
+	    echo "Test log: http://cbuild.validation.linaro.org/build/${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
