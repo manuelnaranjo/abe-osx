@@ -1,11 +1,31 @@
 # The master configuration file should be here
 
+# # target triplets sometimes have an extra field like 'unknown' that
+# # isn't used by Cbuildv2, so we remove it.
+# if {![string match *-unknown-* $target_triplet]} then {
+#     set sysroot $base_dir/sysroot/$target_triplet
+# } else {
+#     set start [string first -unknown $target_triplet]
+#     set end [expr $start + 7]
+#     set target [string replace $target_triplet $start $end]
+#     set sysroot $base_dir/sysroots/$target
+# }
+
+set sysroot /opt/linaro/sysroot-glibc.git-aarch64-linux-gnu
+
 case "$target_triplet" in { 
-    { "arm*-*-*eabi*"} {
-	set hostname [get_local_hostname]
-	case "$hostname" in {
+    { "armbe-*"} {	
+	puts "No target hardware for $target_triplet"
+    }
+    { "aarch64_be-*"} {
+	puts "No target hardware for $target_triplet"
+    }
+    { "arm-*-*eabihf"} {
+	set myname [get_local_hostname]
+	case "$myname" in {
 	    { tcwgrob* } {
-		set target_list { arm-odroidU2 tcwgblack tcwgchromebook }
+#               set target_list { arm-odroidU2 tcwgblack tcwgchromebook }
+		set target_list { arm-odroidU2 }
 	    }
 	    { tcwgbuild* } {
 		set target_list { tcwgblack tcwgchromebook }
@@ -21,12 +41,12 @@ case "$target_triplet" in {
     }
     { "aarch64*-*-elf*" } {
 	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu"
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
     }
     { "aarch64*-*-linux*" } {
 	global SIM
 	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu"
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
 	set SIM "setarch x86_64 -R qemu-aarch64"
     }
     
