@@ -172,38 +172,6 @@ else
     node="`echo ${NODE_NAME} | tr '-' '_'`"
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
-case ${target} in
-    armeb-*)
-	abbrev=armeb
-	;;
-    arm*-linux-gnueabihf)
-	abbrev=armhf
-	;;
-    arm*-linux-gnueabi)
-	abbrev=armel
-	;;
-    aarch64_be-linux-gnu)
-	abbrev=aarch64be
-	;;
-    aarch64*-linux-gnu)
-	abbrev=aarch64
-	;;
-    aarch64_be-*elf)
-	abbrev=aarch64be_bare
-	;;
-    aarch64*-elf)
-	abbrev=aarch64_bare
-	;;
-    native)
-	build_arch="`grep build_arch= ${WORKSPACE}/_build/host.conf | cut -d '=' -f 2`"
-	abbrev="${build_arch}"
-	;;
-    *)
-	abbrev="`echo ${target} | cut -d '-' -f 3`"
-	;;
-esac
-#board="${node}_${abbrev}"
-board="${abbrev}"
 
 # This is the remote directory for tcwgweb where all test results and log
 # files get copied too.
@@ -216,7 +184,20 @@ if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
 
-dir="gcc-linaro-${version}${branch}-${date}${requestor}/logs/${arch}-${distro}-${job}${BUILD_NUMBER}-${target}"
+manifest="`find ${WORKSPACE} -name manifest.txt`"
+if test x"${manifest}" != x; then
+    echo "node=${node}" >> ${manifest}
+    echo "requestor=${requestor}" >> ${manifest}
+    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2
+    if test x"${BUILD_USER_ID}" != x; then
+	echo "email=${BUILD_USER_ID}" >> ${manifest}
+    fi
+    scp ${manifest} toolchain64.lab:${basedir}/${dir}/
+else
+    echo "ERROR: No manifest file, build probably failed!"
+fi
+    
+dir="gcc-linaro-${version}/${branch}-${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
 
 rm -fr ${WORKSPACE}/results
 mkdir -p ${WORKSPACE}/results/${dir}
@@ -264,34 +245,35 @@ fi
 
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
+    basedir="/work/logs"
     tdate="`date "+%Y-%m-%d %H:%M:%S%:z"`"
     echo ${tdate} > ${WORKSPACE}/results/${dir}/finished.txt
 
     cp ${sums} ${WORKSPACE}/results/${dir}
     # Copy over the test results
-    ssh toolchain64.lab mkdir -p /space/build/${dir}
-    ssh toolchain64.lab touch /space/build/${dir}/started.txt
+    ssh toolchain64.lab mkdir -p ${basedir}/${dir}
+    ssh toolchain64.lab touch ${basedir}/${dir}/started.txt
     scp ${WORKSPACE}/results/${dir}/*.sum* ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
     
     # Copy over the build logs
     logs="`find ${WORKSPACE} -name make.log`"
     rm -f ${WORKSPACE}/toplevel.txt
     cat ${logs} > ${WORKSPACE}/toplevel.txt
-    scp ${WORKSPACE}/toplevel.txt toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/toplevel.txt toolchain64.lab:${basedir}/${dir}/
 
 #    logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
 #    for i in ${logs}; do
 #	component="`dirname $i`"
 #	component="`basename ${component}`"
-#	scp $i toolchain64.lab:/space/build/${dir}/${component}.log
+#	scp $i toolchain64.lab:${basedir}/${dir}/${component}.log
 #    done
-    ssh toolchain64.lab xz /space/build/${dir}/\*.log /space/build/${dir}/\*.sum
+    ssh toolchain64.lab xz ${basedir}/${dir}/\*.log ${basedir}/${dir}/\*.sum
 
     # Copy over the build machine config file
-    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:/space/build/${dir}/hosts.txt
+    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:${basedir}/${dir}/hosts.txt
 
     date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
-    scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:${basedir}/${dir}/
 
     allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
     if test x"${tarsrc}" = xtrue; then
@@ -304,18 +286,6 @@ if test x"${sums}" != x; then
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
-    manifest="`find ${WORKSPACE} -name manifest.txt`"
-    if test x"${manifest}" != x; then
-	echo "node=${node}" >> ${manifest}
-	echo "requestor=${requestor}" >> ${manifest}
-	if test x"${BUILD_USER_ID}" != x; then
-	    echo "email=${BUILD_USER_ID}" >> ${manifest}
-	fi
-	scp ${manifest} toolchain64.lab:/space/build/${dir}/
-    else
-	echo "ERROR: No manifest file, build probably failed!"
-    fi
-    
     rdate="`date +%Y%m`"
     ssh toolchain64.lab /home/cbuild/tcwgweb.sh --base ${dir}
 fi
