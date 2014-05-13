@@ -105,7 +105,6 @@ difftwodirs ()
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
-		cat ${diffdir}/$i-test-results.txt
 	    else
 		echo "$i had no regressions between ${pversion} and ${cversion}!" > /tmp/mail$$.txt
 		mailto "$i had no regressions between ${pversion} and ${cversion}!" /tmp/mail$$.txt
@@ -175,11 +174,14 @@ EOF
 
 mailto()
 {
-
-    echo "Mailing test results!"
-    mail -s "$1" tcwg-test-results@gnashdev.org < $2
-    if test x"$3" != x; then
-	mail -s "$1" $3 < $2	
+    if test x"${email}" = xyes; then
+	echo "Mailing test results!"
+	mail -s "$1" tcwg-test-results@gnashdev.org < $2
+	if test x"$3" != x; then
+	    mail -s "$1" $3 < $2	
+	fi
+    else
+	cat $2
     fi
 }
 
@@ -188,6 +190,7 @@ usage()
     echo "--find directory pattern"
     echo "--tdir dir1 dir2"
     echo "--base dir"
+    echo "--email"
 }
 
 # ----------------------------------------------------------------------
@@ -224,9 +227,15 @@ case "$1" in
 	;;
     --tdir*)
 	difftwodirs "$2" "$3"
+	shift
 	;;
     --base*)	
 	diffbaseline "$2"
+	shift
+	;;
+    --email)
+	email=yes
+	shift
 	;;
     *)
 	usage
