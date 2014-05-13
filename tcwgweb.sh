@@ -187,10 +187,9 @@ mailto()
 
 usage()
 {
-    echo "--find directory pattern"
-    echo "--tdir dir1 dir2"
-    echo "--base dir"
-    echo "--email"
+    echo "--tdir dir1 dir2 : Compare the test results in 2 subdirectories"
+    echo "--base dir       : Compare the test results in dir to the baseline"
+    echo "--email          : Send email of the validation results"
 }
 
 # ----------------------------------------------------------------------
@@ -198,46 +197,27 @@ usage()
 
 # The top level is usually something like /space/build/gcc-linaro-4.8.3-2014.02
 
-case "$1" in
-    --find*)
-	dirs="`find $2 -name $3 | sort -n`"
-	for toplevel in ${dirs}; do
-            # First get all the cross compilers
-	    arm="`find ${toplevel} -name \*-arm-\* | sort -n`"
-	    if test x"${arm}" != x; then
-		diffall "${arm}"
-	    fi
-	    armel="`find ${toplevel} -name \*-armel-\* | sort -n`"
-	    if test x"${armel}" != x; then
-		diffall "${armel}"
-	    fi
-	    armhf="`find ${toplevel} -name \*-armhf-\* | sort -n`"
-	    if test x"${armhf}" != x; then
-		diffall "${armhf}"
-	    fi
-	    aarch64="`find ${toplevel} -name \*-aarch64-\* | sort -n`"
-	    if test x"${aarch64}" != x; then
-		diffall "${aarch64}"
-	    fi
-	    aarch64be="`find ${toplevel} -name \*-aarch64_be-\* | sort -n`"
-	    if test x"${aarch64be}" != x; then
-		diffall "${aarch64be}"
-	    fi
-	done
-	;;
-    --tdir*)
-	difftwodirs "$2" "$3"
+if test "`echo $* | grep -c email`" -gt 0; then
+    email=yes    
+fi
+
+if test $# -eq 0; then
+    usage
+fi
+while test $# -gt 0; do
+    case "$1" in
+	--email)
+	    ;;
+	--tdir*)
+	    difftwodirs "$2" "$3"
+	    shift
+	    ;;
+	--base*)	
+	    diffbaseline "$2"
+	    ;;
+    esac
+    if test $# -gt 0; then
 	shift
-	;;
-    --base*)	
-	diffbaseline "$2"
-	shift
-	;;
-    --email)
-	email=yes
-	shift
-	;;
-    *)
-	usage
-	;;
-esac
+    fi
+done
+
