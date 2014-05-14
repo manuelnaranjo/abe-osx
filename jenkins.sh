@@ -40,6 +40,14 @@ if ! test x"${release}" = xsnapshot -o x"${release}" = x; then
     releasestr="--release ${release}"
 fi
 
+# If there is a comand line argument, assume it's a release string. if
+# so set a few default parameters.
+if test x"$1" != x; then
+    releasestr="--release $1"
+    tars="--tarsrc --tarbin "    
+    runtests=false
+fi
+
 # Get the versions of dependant components to use
 changes=""
 if test x"${gmp_snapshot}" != x"latest" -a x"${gmp_snapshot}" != x; then
@@ -188,7 +196,7 @@ manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
-    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2
+    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
