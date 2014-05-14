@@ -246,7 +246,7 @@ checkout()
 		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
                         local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
-			dryrun "(cd ${sdir} && git stash && git pull origin${branch:+ ${branch}})"
+			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull origin${branch:+ ${branch}})"
 		    fi
 		fi
 		# NOTE: It's possible that a git-new-workdir succeeded but the
@@ -285,10 +285,10 @@ checkout()
 			# If there's no revision we checkout a specific branch.
 			# If the branch doesn't exists yet, we need to update
 			# master first.
-			local exists="`cd ${srcdir} && git branch -a | grep -c ${branch}`"
+			local exists="(cd ${srcdir} && git branch -a | grep -c ${branch})"
 			if "${exists}" -eq 0; then
 			    warning "branch doesn't exist, updating master"
-			    dryrun "(cd ${sdir} && git reset --hard origin/master)"
+			    dryrun "(cd ${sdir} && git reset --hard HEAD^)"
 			    dryrun "(cd ${srcdir} && git pull)"
 			fi
 			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
