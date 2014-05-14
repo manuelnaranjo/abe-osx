@@ -192,6 +192,10 @@ if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
 
+basedir="/work/logs"
+dir="gcc-linaro-${version}/${branch}-${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+ssh toolchain64.lab mkdir -p ${basedir}/${dir}
+
 manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
@@ -205,14 +209,6 @@ else
     echo "ERROR: No manifest file, build probably failed!"
 fi
     
-dir="gcc-linaro-${version}/${branch}-${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-
-rm -fr ${WORKSPACE}/results
-mkdir -p ${WORKSPACE}/results/${dir}
-
-# Find all the test result files.
-sums="`find ${WORKSPACE} -name *.sum`"
-
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
@@ -230,6 +226,10 @@ sums="`find ${WORKSPACE} -name *.sum`"
 #else
 #    echo "Bummer, no test results yet..."
 #fi
+#touch $WORKSPACE/*.junit
+
+# Find all the test result files.
+sums="`find ${WORKSPACE} -name *.sum`"
 
 if test "`echo ${sums} | grep -c gcc.sum`" -eq 0 -a x"${runtests}" = xtrue; then
     echo "ERROR: GCC testsuite wasn't run!"
@@ -249,52 +249,29 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
-#touch $WORKSPACE/*.junit
-
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
-    basedir="/work/logs"
-    tdate="`date "+%Y-%m-%d %H:%M:%S%:z"`"
-    echo ${tdate} > ${WORKSPACE}/results/${dir}/finished.txt
-
-    cp ${sums} ${WORKSPACE}/results/${dir}
-    # Copy over the test results
-    ssh toolchain64.lab mkdir -p ${basedir}/${dir}
-    ssh toolchain64.lab touch ${basedir}/${dir}/started.txt
-    scp ${WORKSPACE}/results/${dir}/*.sum* ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:${basedir}/${dir}/
+    scp ${sums} toolchain64.lab:${basedir}/${dir}/
     
     # Copy over the build logs
     logs="`find ${WORKSPACE} -name make.log`"
-    rm -f ${WORKSPACE}/toplevel.txt
-    cat ${logs} > ${WORKSPACE}/toplevel.txt
-    scp ${WORKSPACE}/toplevel.txt toolchain64.lab:${basedir}/${dir}/
+    rm -f ${WORKSPACE}/make.log
+    cat ${logs} > ${WORKSPACE}/make.log
+    scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
+    ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum
 
-#    logs="`find ${WORKSPACE} -name \*.log | grep -v make.log`"
-#    for i in ${logs}; do
-#	component="`dirname $i`"
-#	component="`basename ${component}`"
-#	scp $i toolchain64.lab:${basedir}/${dir}/${component}.log
-#    done
-    ssh toolchain64.lab xz ${basedir}/${dir}/\*.log ${basedir}/${dir}/\*.sum
-
-    # Copy over the build machine config file
-    scp ${WORKSPACE}/_build/host.conf toolchain64.lab:${basedir}/${dir}/hosts.txt
-
-    date "+%Y-%m-%d %H:%M:%S%:z" > ${WORKSPACE}/results/${dir}/finished.txt
-    scp ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:${basedir}/${dir}/
-
-    allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
     if test x"${tarsrc}" = xtrue; then
+	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
     fi
 
     if test x"${tarbin}" = xtrue; then
+	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
-    rdate="`date +%Y%m`"
-    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --base ${dir}
+    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --base ${basedir}/${dir}
 fi
 
