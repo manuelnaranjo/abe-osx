@@ -61,7 +61,7 @@ if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
 fi
 if test x"${gcc_snapshot}" != x"latest" -a x"${gcc_snapshot}" != x; then
     change="${change} gcc=${gcc_snapshot}"
-    branch="~`echo ${gcc_snapshot} | cut -d '~' -f 2`"
+    branch="`echo ${gcc_snapshot} | cut -d '~' -f 2`"
 else
     branch=
 fi
