@@ -295,6 +295,6 @@ if test x"${sums}" != x; then
     fi
 
     rdate="`date +%Y%m`"
-    ssh toolchain64.lab /home/cbuild/tcwgweb.sh --base ${dir}
+    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --base ${dir}
 fi
 
