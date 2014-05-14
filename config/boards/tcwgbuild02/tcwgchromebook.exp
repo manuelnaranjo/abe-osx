@@ -1,6 +1,6 @@
 load_generic_config unix
 
-set_board_info hostname tcwgchromebook02
+set_board_info hostname tcwgchromebook04
 
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
