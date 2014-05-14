@@ -261,7 +261,7 @@ if test x"${sums}" != x; then
     # Copy over the test results
     ssh toolchain64.lab mkdir -p ${basedir}/${dir}
     ssh toolchain64.lab touch ${basedir}/${dir}/started.txt
-    scp ${WORKSPACE}/results/${dir}/*.sum* ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:/space/build/${dir}/
+    scp ${WORKSPACE}/results/${dir}/*.sum* ${WORKSPACE}/results/${dir}/finished.txt toolchain64.lab:${basedir}/${dir}/
     
     # Copy over the build logs
     logs="`find ${WORKSPACE} -name make.log`"
