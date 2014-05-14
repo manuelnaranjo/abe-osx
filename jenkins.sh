@@ -144,8 +144,12 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-# Remove any leftover junit files
-#rm -f ${WORKSPACE}/*.junit ${WORKSPACE}/*.sum 2>&1 > /dev/null
+if test x"${tars}" = x; then
+    # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
+    date="`date +%Y%m%d`"
+else
+    date=${release}
+fi
 
 # Setup the remote directory for tcwgweb
 if test x"${target}" = x"native"; then
@@ -157,14 +161,6 @@ fi
 # If we can't find GCC, our build failed, so don't continue
 if test x"${gcc}" = x; then
     exit 1
-fi
-
-#
-if test x"${tars}" = x; then
-    # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
-    date="`date +%Y%m%d`"
-else
-    date=${release}
 fi
 
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
@@ -193,22 +189,27 @@ if test x"${BUILD_USER_LAST_NAME}" != x; then
 fi
 
 basedir="/work/logs"
-dir="gcc-linaro-${version}/${branch}-${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+
 ssh toolchain64.lab mkdir -p ${basedir}/${dir}
 
 manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
-    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
+    revision="-`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
-    scp ${manifest} toolchain64.lab:${basedir}/${dir}/
 else
     echo "ERROR: No manifest file, build probably failed!"
 fi
-    
+
+# This becomes the path on the remote file server    
+dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+if test x"${manifest}" != x; then
+    scp ${manifest} toolchain64.lab:${basedir}/${dir}/
+fi
+
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
 # in. We then cat them to the console, as that seems to be the only
