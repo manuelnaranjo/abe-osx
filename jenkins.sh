@@ -188,10 +188,6 @@ if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
 
-basedir="/work/logs"
-
-ssh toolchain64.lab mkdir -p ${basedir}/${dir}
-
 manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
@@ -205,7 +201,9 @@ else
 fi
 
 # This becomes the path on the remote file server    
+basedir="/work/logs"
 dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+ssh toolchain64.lab mkdir -p ${basedir}/${dir}
 if test x"${manifest}" != x; then
     scp ${manifest} toolchain64.lab:${basedir}/${dir}/
 fi
