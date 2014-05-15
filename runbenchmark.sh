@@ -228,26 +228,26 @@ do
   bench_init $ctx || exit
   if $extract; then
     echo "Extract benchmark $b"
-    extract $ctx
+    extract $ctx || exit
   fi
 
   if $clean; then
     echo "Clean benchmark $b"
-    clean $ctx
+    clean $ctx || exit
   fi
 
   if $build; then
     if $build_pgo; then
       echo "Build benchmark $b with pgo"
-      build_with_pgo $ctx
+      build_with_pgo $ctx || exit
     else
       echo "Build benchmark $b"
-      build $ctx
+      build $ctx || exit
     fi
   fi
 
   if $run; then
     echo "Run benchmark $b"
-    run $ctx
+    run $ctx || exit
   fi
 done
