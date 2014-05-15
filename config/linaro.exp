@@ -12,6 +12,7 @@
 # }
 
 set sysroot /opt/linaro/sysroot-glibc.git-aarch64-linux-gnu
+set besysroot /opt/linaro/sysroot-glibc.git-aarch64_be-linux-gnu
 
 case "$target_triplet" in { 
     { "armbe-*"} {	
@@ -24,8 +25,8 @@ case "$target_triplet" in {
 	set myname [get_local_hostname]
 	case "$myname" in {
 	    { tcwgrob* } {
-#               set target_list { arm-odroidU2 tcwgblack tcwgchromebook }
-		set target_list { arm-odroidU2 }
+               set target_list { tcwgblack tcwgchromebook }
+#		set target_list { arm-odroidU2 }
 	    }
 	    { tcwgbuild* } {
 		set target_list { tcwgblack tcwgchromebook }
@@ -39,11 +40,21 @@ case "$target_triplet" in {
 	set SIM "qemu-arm"
 	set target_list { "arm-qemu" } 
     }
-    { "aarch64*-*-elf*" } {
+    { "aarch64_be-*-elf*" } {
+	set target_list { "arm-sim" }
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $besysroot"
+    }
+    { "aarch64-*-elf*" } {
 	set target_list { "arm-sim" }
 	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
     }
-    { "aarch64*-*-linux*" } {
+    { "aarch64_be*-linux*" } {
+	global SIM
+	set target_list { "arm-sim" }
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $besysroot"
+	set SIM "setarch x86_64 -R qemu-aarch64"
+    }
+    { "aarch64-*-linux*" } {
 	global SIM
 	set target_list { "arm-sim" }
 	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
