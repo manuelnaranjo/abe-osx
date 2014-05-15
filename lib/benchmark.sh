@@ -37,7 +37,7 @@ check_pattern()
     exit
   fi
   if test $COUNT != 1; then
-    error "pattern $1  matches more than one file"
+    error "pattern $1 matches more than one file"
     exit
   fi
 }
