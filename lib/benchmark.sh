@@ -859,9 +859,10 @@ set_gcc_to_runwith ()
 
 get_benchmark ()
 {
-  if test x$1 != x; then
-    echo "fetching $1 into $2"
-    cp $1 $2/
+  if test x"$1" != x; then
+    local file=($1)
+    echo "fetching $file into $2"
+    cp $1 $2/ || error "Failed to copy $1 to $2/" || return 1
   fi
 }
 
