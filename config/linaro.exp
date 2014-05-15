@@ -15,7 +15,7 @@ set sysroot /opt/linaro/sysroot-glibc.git-aarch64-linux-gnu
 set besysroot /opt/linaro/sysroot-glibc.git-aarch64_be-linux-gnu
 
 case "$target_triplet" in { 
-    { "armbe-*"} {	
+    { "armeb-*"} {	
 	puts "No target hardware for $target_triplet"
     }
     { "aarch64_be-*"} {
