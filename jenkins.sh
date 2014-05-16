@@ -61,7 +61,7 @@ if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
 fi
 if test x"${gcc_snapshot}" != x"latest" -a x"${gcc_snapshot}" != x; then
     change="${change} gcc=${gcc_snapshot}"
-    branch="`echo ${gcc_snapshot} | cut -d '~' -f 2`"
+    branch="`echo ${gcc_snapshot} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
 else
     branch=
 fi
@@ -192,7 +192,7 @@ manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
-    revision="-`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
+    revision="-`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2 | tr -s ' '`"
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
