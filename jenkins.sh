@@ -43,7 +43,9 @@ fi
 # so set a few default parameters.
 if test x"$1" != x; then
     releasestr="--release $1"
-    tars="--tarsrc --tarbin "    
+    tars="--tarsrc --tarbin "
+    tarsrc=true
+    tarbin=true
     runtests=false
 fi
 
@@ -231,11 +233,6 @@ fi
 
 # Find all the test result files.
 sums="`find ${WORKSPACE} -name *.sum`"
-
-if test "`echo ${sums} | grep -c gcc.sum`" -eq 0 -a x"${runtests}" = xtrue; then
-    echo "ERROR: GCC testsuite was not run!"
-    exit 1
-fi
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
