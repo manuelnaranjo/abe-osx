@@ -252,32 +252,33 @@ if test x"${canadian}" = x"true"; then
 fi
 
 # This setups all the files needed by tcwgweb
-if test x"${sums}" != x; then
-    scp ${sums} toolchain64.lab:${basedir}/${dir}/
-
-    # Copy over the logs from make check, which we need to find testcase errors.
-    checks="`find ${WORKSPACE} -name check.log`"
-    scp ${checks} toolchain64.lab:${basedir}/${dir}/
-    
-    # Copy over the build logs
-    logs="`find ${WORKSPACE} -name make.log`"
-    rm -f ${WORKSPACE}/make.log
-    cat ${logs} > ${WORKSPACE}/make.log
-    scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
-    ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
-
-    if test x"${tarsrc}" = xtrue; then
+if test x"${sums}" != x -o x"${release}" != x; then
+    if test x"${sums}" != x; then
+	scp ${sums} toolchain64.lab:${basedir}/${dir}/
+	
+	# Copy over the logs from make check, which we need to find testcase errors.
+	checks="`find ${WORKSPACE} -name check.log`"
+	scp ${checks} toolchain64.lab:${basedir}/${dir}/
+	
+	# Copy over the build logs
+	logs="`find ${WORKSPACE} -name make.log`"
+	rm -f ${WORKSPACE}/make.log
+	cat ${logs} > ${WORKSPACE}/make.log
+	scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
+	ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
+	ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --email --base ${basedir}/${dir}
+    fi
+    if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
     fi
 
-    if test x"${tarbin}" = xtrue; then
+    if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} toolchain64.lab:/space/binaries/
+	scp ${binfiles} toolchain64.lab:/work/space/binaries/
     fi
 
-    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --email --base ${basedir}/${dir}
 fi
 
