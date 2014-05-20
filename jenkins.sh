@@ -264,7 +264,7 @@ if test x"${sums}" != x; then
     rm -f ${WORKSPACE}/make.log
     cat ${logs} > ${WORKSPACE}/make.log
     scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
-    ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum
+    ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
 
     if test x"${tarsrc}" = xtrue; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
