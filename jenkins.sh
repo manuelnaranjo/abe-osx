@@ -192,7 +192,10 @@ manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
-    revision="-`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2 | tr -s ' '`"
+    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2 | tr -s ' '`"
+    if test x"${revision}" != x; then
+	revision="`${revision}`"
+    fi
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
@@ -231,7 +234,7 @@ fi
 sums="`find ${WORKSPACE} -name *.sum`"
 
 if test "`echo ${sums} | grep -c gcc.sum`" -eq 0 -a x"${runtests}" = xtrue; then
-    echo "ERROR: GCC testsuite wasn't run!"
+    echo "ERROR: GCC testsuite was not run!"
     exit 1
 fi
 
@@ -251,6 +254,10 @@ fi
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x; then
     scp ${sums} toolchain64.lab:${basedir}/${dir}/
+
+    # Copy over the logs from make check, which we need to find testcase errors.
+    checks="`find ${WORKSPACE} -name check.log`"
+    scp ${checks} toolchain64.lab:${basedir}/${dir}/
     
     # Copy over the build logs
     logs="`find ${WORKSPACE} -name make.log`"
