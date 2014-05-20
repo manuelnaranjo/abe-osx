@@ -13,20 +13,22 @@
 
 set sysroot /opt/linaro/sysroot-glibc.git-aarch64-linux-gnu
 set besysroot /opt/linaro/sysroot-glibc.git-aarch64_be-linux-gnu
+set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
+set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
 
 case "$target_triplet" in { 
     { "armeb-*"} {	
 	puts "No target hardware for $target_triplet"
     }
-    { "aarch64_be-*"} {
+    { "arm*-*-gnueabi"} {
 	puts "No target hardware for $target_triplet"
     }
-    { "arm-*-*eabihf"} {
+    { "arm-*-gnueabihf"} {
 	set myname [get_local_hostname]
 	case "$myname" in {
 	    { tcwgrob* } {
-               set target_list { tcwgblack tcwgchromebook }
-#		set target_list { arm-odroidU2 }
+#               set target_list { tcwgblack tcwgchromebook }
+		set target_list { arm-odroidU2 }
 	    }
 	    { tcwgbuild* } {
 		set target_list { tcwgblack tcwgchromebook }
@@ -42,11 +44,11 @@ case "$target_triplet" in {
     }
     { "aarch64_be-*-elf*" } {
 	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $besysroot"
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $benewlib"
     }
     { "aarch64-*-elf*" } {
 	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $newlib"
     }
     { "aarch64_be*-linux*" } {
 	global SIM
