@@ -113,6 +113,19 @@ difftwodirs ()
 	fi
     done
     
+    # scan the check build log for errors in compiling the test cases themselves.
+    egrep "^gcc: error: |^collect2: error: | undefined reference to " ${next}/check.log > /tmp/check$$.tmp
+    if test `wc -l ${diffdir}/check.tmp` -gt 0; then
+	rm -f /tmp/mail$$.txt
+	echo "Test case errors found in ${cversion}" > /tmp/mail$$.txt
+	echo "" >> /tmp/mail$$.txt
+	echo "Check build log: http://cbuild.validation.linaro.org/build/${next}/check.log" >> /tmp/mail$$.txt
+	echo "" >> /tmp/mail$$.txt
+	cat /tmp/check$$.tmp >> /tmp/mail$$.txt
+	mailto "Test case errors in ${cversion}!" /tmp/mail$$.txt
+	rm /tmp/mail$$.txt
+    fi
+
     rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
