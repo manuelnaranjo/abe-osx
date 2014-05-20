@@ -16,6 +16,45 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# $1 - the check.log file to scan
+scancheck () 
+{
+    if ! test -e $1; then
+	echo "ERROR: $1 doesn't exist!"
+	return 1
+    fi
+
+    # If there are no errors, just return
+    if test "`egrep -c "^gcc: error: |^collect2: error: | undefined reference to | Download to .* failed, ssh: connect to host " $1`" -eq 0; then
+	return 0
+    fi
+
+    local build="`basename $1`"
+    local build="`basename ${build}`"
+
+    # These are the errors we want to scan for
+    declare -a errors=("^gcc: error:" "^collect2: error:" " undefined reference to" "Download to .* failed, ssh: connect to host")
+    # These are the pretty print version for users for each error above
+    declare -a errmsg=("compile error" "linker error" "undefined symbols" "target connectivity")
+    rm -f /tmp/mail$$.txt
+    echo "Testsuite build failures found in ${build}" > /tmp/mail$$.txt
+    echo "" >> /tmp/mail$$.txt
+    echo "Check build log: http://cbuild.validation.linaro.org/work/$1" >> /tmp/mail$$.txt
+    echo "" >> /tmp/mail$$.txt
+    local i=0
+    while test $i -lt ${#errors[@]}; do
+	local count="`grep -c "${errors[$i]}" $1`"
+	if test ${count} -gt 0; then
+	    echo "# of ${errmsg[$i]}: ${count}" >> /tmp/mail$$.txt
+	fi
+	i="`expr $i + 1`"
+    done
+
+    mailto "Testsuite build failures in ${build}!" /tmp/mail$$.txt
+
+    rm /tmp/mail$$.txt
+}
+
 diffbaseline ()
 {
     local baselines="/work/cbuildv2/baselines"
@@ -100,8 +139,8 @@ difftwodirs ()
 	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
 	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Build log: http://cbuild.validation.linaro.org/build/${next}/make.log" >> ${diffdir}/$i-test-results.txt
-	    echo "Test log: http://cbuild.validation.linaro.org/build/${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Build log: http://cbuild.validation.linaro.org/work/${next}/make.log" >> ${diffdir}/$i-test-results.txt
+	    echo "Test log: http://cbuild.validation.linaro.org/work/${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
@@ -112,19 +151,9 @@ difftwodirs ()
 	    fi
 	fi
     done
-    
-    # scan the check build log for errors in compiling the test cases themselves.
-    egrep "^gcc: error: |^collect2: error: | undefined reference to " ${next}/check.log > /tmp/check$$.tmp
-    if test `wc -l ${diffdir}/check.tmp` -gt 0; then
-	rm -f /tmp/mail$$.txt
-	echo "Test case errors found in ${cversion}" > /tmp/mail$$.txt
-	echo "" >> /tmp/mail$$.txt
-	echo "Check build log: http://cbuild.validation.linaro.org/build/${next}/check.log" >> /tmp/mail$$.txt
-	echo "" >> /tmp/mail$$.txt
-	cat /tmp/check$$.tmp >> /tmp/mail$$.txt
-	mailto "Test case errors in ${cversion}!" /tmp/mail$$.txt
-	rm /tmp/mail$$.txt
-    fi
+
+    # Scan the check log for testsuite build errors
+    scancheck ${next}/check.log
 
     rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
@@ -185,6 +214,9 @@ EOF
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
+# $1 - the subject for the email
+# $2 - the body of the email
+# $3 - optional user to send email to
 mailto()
 {
     if test x"${email}" = xyes; then
@@ -194,6 +226,7 @@ mailto()
 	    mail -s "$1" $3 < $2	
 	fi
     else
+	echo "$1"
 	cat $2
     fi
 }
