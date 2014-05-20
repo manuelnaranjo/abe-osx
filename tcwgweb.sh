@@ -39,7 +39,7 @@ scancheck ()
     rm -f /tmp/mail$$.txt
     echo "Testsuite build failures found in ${build}" > /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
-    echo "Check build log: http://cbuild.validation.linaro.org/work/$1" >> /tmp/mail$$.txt
+    echo "Check build log: http://cbuild.validation.linaro.org/$1" >> /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
     local i=0
     while test $i -lt ${#errors[@]}; do
@@ -55,27 +55,22 @@ scancheck ()
     rm /tmp/mail$$.txt
 }
 
+# $1 - the current directory to use when comparing against the baseline
 diffbaseline ()
 {
     local baselines="/work/cbuildv2/baselines"
-    # /work/cbuildv2/baselines/x86_64/gcc
-
-    # dir=gcc-linaro-4.10.0~gcc.git-20140511/logs/x86_64-precise-BuildFarm116-aarch64
-
-    # x86_64-precise-BuildFarm118-aarch64-x86_64_03/
-    # x86_64-precise-BuildFarm118-aarch64_bare-x86_64_02/
-    # x86_64-precise-BuildFarm118-aarch64be_bare-x86_64_03/
-    # x86_64-precise-BuildFarm118-armhf-x86_64_06/
 
     local tool="`echo $1 | cut -d '-' -f 1`"
     local tool="`basename ${tool}`"
     local version="`echo $1 | grep -o "[0-9]\.[0-9]*" | head -1`"
 #    local version="`echo $1 | grep -o "[0-9]\.[0-9]*\.[0-9]"`"
-    local target="`echo $1 | sed -e "s/^.*BuildFarm[0-9]*-//"`"
+    local target="`basename $1`"
+    local target="`echo ${target} | sed -e 's:-BuildFarm.*::'`"
     local build="`basename $1`"
     local build="`echo ${build} | cut -d '-' -f 1`"
 
-    local dir="${baselines}/${build}/${tool}/${target}/${version}"
+    local dir="${baselines}/${tool}-${version}/${target}"
+
     difftwodirs ${dir} $1
 }
 
@@ -103,6 +98,7 @@ difftwodirs ()
     mkdir -p ${diffdir}
     unxz ${prev}/*.sum.xz
     unxz ${next}/*.sum.xz
+    unxz ${next}/check.log.xz
     for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
 	    diff -U 0 ${prev}/$i.sum ${next}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
@@ -139,8 +135,9 @@ difftwodirs ()
 	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
 	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Build log: http://cbuild.validation.linaro.org/work/${next}/make.log" >> ${diffdir}/$i-test-results.txt
-	    echo "Test log: http://cbuild.validation.linaro.org/work/${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Build log: http://cbuild.validation.linaro.org${next}/make.log" >> ${diffdir}/$i-test-results.txt
+	    echo "Test summary: http://cbuild.validation.linaro.org${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Test log: http://cbuild.validation.linaro.org${next}/check.log.xz" >> ${diffdir}/$i-test-results.txt
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
@@ -159,7 +156,7 @@ difftwodirs ()
     local incr=`expr ${incr} + 1`
 
     xz ${prev}/*.sum
-    xz ${next}/*.sum
+    xz ${next}/*.sum ${next}/*.log
 }
 
 #
