@@ -278,6 +278,6 @@ if test x"${sums}" != x; then
 	scp ${binfiles} toolchain64.lab:/space/binaries/
     fi
 
-    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --base ${basedir}/${dir}
+    ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --email --base ${basedir}/${dir}
 fi
 
