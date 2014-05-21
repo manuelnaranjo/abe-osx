@@ -259,7 +259,7 @@ binary_toolchain()
      	# If the default is a statically linked binutils, we only have to relink
      	# the excutables,
      	dryrun "make all SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-     	dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+     	dryrun "make install -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}"
      else
      	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}"
      	dryrun "make all SHELL=${bash_shell} ${make_flags} CFLAGS=-UFORTIFY_SOURCE -C ${builddir}"
