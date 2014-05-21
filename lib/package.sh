@@ -252,7 +252,7 @@ binary_toolchain()
 
     local builddir="`get_builddir ${binutils_version}`"
     if test x"${binutils_static}" = x"yes"; then
-	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
+	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-static"
         # Binutils executables we want to relink
      	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/sysinfo binutils/objcopy ld/ld-new gas/as-new" # gprof/gprof
      	dryrun "(cd ${builddir} && rm -f ${bins})"
