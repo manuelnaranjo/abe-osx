@@ -43,8 +43,8 @@ fi
 # so set a few default parameters.
 if test x"$1" != x; then
     releasestr="--release $1"
-    tars="--tarsrc --tarbin "
-    tarsrc=true
+    tars="--tarbin "
+    tarsrc=false
     tarbin=true
     runtests=false
 fi
