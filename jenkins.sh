@@ -270,12 +270,14 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
+	rm ${srcfiles}
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} toolchain64.lab:/work/space/binaries/
+	rm ${binfiles}
     fi
 
 fi
