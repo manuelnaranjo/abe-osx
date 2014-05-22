@@ -195,7 +195,7 @@ if test x"${manifest}" != x; then
     echo "requestor=${requestor}" >> ${manifest}
     revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2 | tr -s ' '`"
     if test x"${revision}" != x; then
-	revision="`${revision}`"
+	revision="-${revision}"
     fi
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
@@ -205,12 +205,13 @@ else
 fi
 
 # This becomes the path on the remote file server    
-basedir="/work/logs"
-dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-ssh toolchain64.lab mkdir -p ${basedir}/${dir}
-if test x"${manifest}" != x; then
-    scp ${manifest} toolchain64.lab:${basedir}/${dir}/
-fi
+if test x"${runtests}" = xtrue; then
+    basedir="/work/logs"
+    dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+    ssh toolchain64.lab mkdir -p ${basedir}/${dir}
+    if test x"${manifest}" != x; then
+	scp ${manifest} toolchain64.lab:${basedir}/${dir}/
+    fi
 
 # If 'make check' works, we get .sum files with the results. These we
 # convert to JUNIT format, which is what Jenkins wants it's results
@@ -230,6 +231,7 @@ fi
 #    echo "Bummer, no test results yet..."
 #fi
 #touch $WORKSPACE/*.junit
+fi
 
 # Find all the test result files.
 sums="`find ${WORKSPACE} -name *.sum`"
