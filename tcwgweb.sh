@@ -39,7 +39,7 @@ scancheck ()
     rm -f /tmp/mail$$.txt
     echo "Testsuite build failures found in ${build}" > /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
-    echo "Check build log: http://cbuild.validation.linaro.org/$1" >> /tmp/mail$$.txt
+    echo "Check build log: http://cbuild.validation.linaro.org/$1.xz" >> /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
     local i=0
     while test $i -lt ${#errors[@]}; do
