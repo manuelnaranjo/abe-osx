@@ -285,11 +285,13 @@ checkout()
 			# If there's no revision we checkout a specific branch.
 			# If the branch doesn't exists yet, we need to update
 			# master first.
-			local exists="(cd ${srcdir} && git branch -a | grep -c ${branch})"
-			if "${exists}" -eq 0; then
-			    warning "branch doesn't exist, updating master"
-			    dryrun "(cd ${sdir} && git reset --hard HEAD^)"
-			    dryrun "(cd ${srcdir} && git pull)"
+			if test -e ${srcdir}; then
+			    local exists="(cd ${srcdir} && git branch -a | grep -c ${branch})"
+			    if test "${exists}" -eq 0; then
+				warning "branch doesn't exist, updating master"
+				dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull)"
+				dryrun "(cd ${srcdir} && git pull)"
+			    fi
 			fi
 			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
