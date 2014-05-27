@@ -191,7 +191,9 @@ build()
 
     check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
     if test $? -eq 0; then
-	return 0 
+	if test x"${runtests}" != xyes; then
+	    return 0 
+	fi
     fi
 
     notice "Building ${tag}${2:+ $2}"
@@ -528,7 +530,11 @@ make_check()
 	export DEJAGNU=${topdir}/config/linaro.exp
     fi
 
-    dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    if test x"${build}" = x"${target}"; then
+	dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    else
+	dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+    fi
     
     return 0
 }
