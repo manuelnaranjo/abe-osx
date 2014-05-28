@@ -50,6 +50,8 @@ AC_SUBST(DBHOST)
 
 CPUS="`getconf _NPROCESSORS_ONLN`"
 AC_SUBST(CPUS)
+CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
+AC_SUBST(CORES)
 LIBC="`getconf GNU_LIBC_VERSION`"
 AC_SUBST(LIBC)
 KERNEL="`uname -r`"
@@ -316,11 +318,11 @@ if test x"${DEJAGNU}" = x; then
    missing="${missing} dejagnu"
 fi
 
-AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
-if test x"${NEWWORKDIR}" = x; then
-   AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
-#   missing="${missing} git-new-workdir"
-fi
+dnl AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
+dnl if test x"${NEWWORKDIR}" = x; then
+dnl    AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
+dnl #   missing="${missing} git-new-workdir"
+dnl fi
 
 AC_PATH_PROG(MAKEINFO,makeinfo)
 # Texinfo 5 can't process the gcc texinfo files until they are fixed, 
