@@ -206,7 +206,7 @@ binary_toolchain()
     dryrun "mkdir -p /tmp/linaro.$$"
 
     # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir ${gcc_version} stage2`"
+    local builddir="`get_builddir gcc-linaro-${version}-${release} stage2`"
 
     # All invocations of make in this function use these additional flags
     local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w LDFLAGS=-static"
