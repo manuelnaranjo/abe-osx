@@ -109,6 +109,10 @@ build_all()
 		build ${gdb_version}
 		build_all_ret=$?
 		;;
+	    zlib)
+		build ${zlib_version}
+		build_all_ret=$?
+		;;
 	    gdbserver)
 		build ${gdb_version} gdbserver
 		build_all_ret=$?
@@ -313,11 +317,15 @@ make_all()
     fi
 
     local makeret=
-    if test x"${tool}" = x"gdb"; then
-	dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    else
-	dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
-    fi
+    case ${tool} in
+	gdb)
+	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
+	*)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
+    esac
+
     local makeret=$?
 
     local errors="`grep Error ${builddir}/make.log`"

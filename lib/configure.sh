@@ -59,7 +59,11 @@ configure_build()
 
     if test ! -d "${builddir}"; then
 	notice "The build directory '${builddir}' doesn't exist, so creating it"
-	mkdir -p ${builddir}
+	if test x"${tool}" = x"zlib"; then
+	    dryrun "ln -s ${srcdir} ${builddir}"
+	else
+	    mkdir -p ${builddir}
+	fi
     fi
 
     if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
@@ -245,7 +249,13 @@ configure_build()
 #            esac
 #	fi
 
-	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
+	# zlib can only be configured in the source tree, and doesn't like any of the
+	# stadard GNU configure options
+	if test x"${tool}" = x"zlib"; then
+	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
+	else
+	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
+	fi
 	if test $? -gt 0; then
 	    error "Configure of $1 failed."
 	    return $?
