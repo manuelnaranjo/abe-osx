@@ -16,10 +16,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-#
-#
-#
-
 # This performs all the steps to build a full cross toolchain
 build_all()
 {
@@ -47,6 +43,7 @@ build_all()
     fi
     if test x"${newlib_version}" = x; then
 	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+	libgloss_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
     fi
     if test x"${glibc_version}" = x; then
 	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
@@ -83,6 +80,7 @@ build_all()
 		    build ${glibc_version}
 		elif test x"${clibrary}" = x"newlib"; then
 		    build ${newlib_version}
+		    build ${newlib_version} libgloss
 		else
 		    error "\${clibrary}=${clibrary} not supported."
 		    return 1
@@ -182,13 +180,12 @@ build()
     local tag=
     tag="`get_git_tag ${gitinfo}`"
 
-    local srcdir=
-    srcdir="`get_srcdir ${gitinfo}`"
+    local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
 
     local stamp=
     stamp="`get_stamp_name build ${gitinfo} ${2:+$2}`"
 
-    local builddir="`get_builddir ${gitinfo} $2`"
+    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
 
     # The stamp is in the buildir's parent directory.
     local stampdir="`dirname ${builddir}`"
@@ -298,8 +295,9 @@ make_all()
 	return 0
     fi
 
+    echo "FURBY: $1 $2"
     # FIXME: This should be a URL 
-    local builddir="`get_builddir $1 $2`"
+    local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
     # FIXME: see if the users wants multiple make jobs, which we ignore for
@@ -321,6 +319,9 @@ make_all()
 	gdb)
 	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
+	zlib)
+	    dryrun "make -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
+	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
@@ -328,11 +329,13 @@ make_all()
 
     local makeret=$?
 
-    local errors="`grep Error ${builddir}/make.log`"
-    if test x"${errors}" != x; then
-	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
-	    error "Couldn't build ${tool}: ${errors}"
-	    exit
+    if test x"${tool}" != x"zlib"; then
+	local errors="`grep Error ${builddir}/make.log`"
+	if test x"${errors}" != x; then
+	    if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
+		error "Couldn't build ${tool}: ${errors}"
+		exit
+	    fi
 	fi
     fi
 
@@ -363,7 +366,7 @@ make_install()
 
     local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
-     	local srcdir="`get_srcdir $1`"
+     	local srcdir="`get_srcdir $1 ${2:+$2}`"
 	if test `echo ${target} | grep -c aarch64` -gt 0; then
 	    dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
 	else
@@ -376,7 +379,7 @@ make_install()
 	return 0
     fi
 
-    local builddir="`get_builddir $1 $2`"
+    local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
@@ -472,7 +475,7 @@ make_check_installed()
 
     local tool="`get_toolname $1`"
     if test x"${builddir}" = x; then
-	local builddir="`get_builddir $1 $2`"
+	local builddir="`get_builddir $1 ${2:+$2}`"
     fi
     notice "Making check in ${builddir}"
 
@@ -486,12 +489,12 @@ make_check_installed()
     case $1 in
 	binutils*)
 	    # these 
-	    local builddir="`get_builddir ${binutils_version}`"
+	    local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
 	    dryrun "make -C ${builddir}/as check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
 	    dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
 	    ;;
 	gcc*)
-	    local builddir="`get_builddir ${gcc_version} $2`"
+	    local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
 	    for i in "c c++"; do
 		dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
 	    done
@@ -518,7 +521,7 @@ make_check()
     trace "$*"
 
     local tool="`get_toolname $1`"
-    local builddir="`get_builddir $1 $2`"
+    local builddir="`get_builddir $1 ${2:+$2}`"
 
     notice "Making check in ${builddir}"
 
@@ -551,7 +554,7 @@ make_clean()
 {
     trace "$*"
 
-    builddir="`get_builddir $1 $2`"
+    builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
@@ -571,7 +574,7 @@ make_docs()
 {
     trace "$*"
 
-    local builddir="`get_builddir $1 $2`"
+    local builddir="`get_builddir $1 ${2:+$2}`"
 
     notice "Making docs in ${builddir}"
 
