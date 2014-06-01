@@ -253,17 +253,17 @@ binary_toolchain()
     local builddir="`get_builddir ${binutils_version}`"
     if test x"${binutils_static}" = x"yes"; then
 #	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
-	local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${destdir}" LDFLAGS_FOR_BUILD=-static"
+	local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-static"
         # Binutils executables we want to relink
      	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/objcopy ld/ld-new gas/as-new" # gprof/gprof  binutils/sysinfo
      	dryrun "(cd ${builddir} && rm -f ${bins})"
      	# If the default is a statically linked binutils, we only have to relink
      	# the excutables,
      	dryrun "make all SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-     	dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+     	dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir} LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
      else
      	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} CFLAGS=-UFORTIFY_SOURCE -C ${builddir}  LDFLAGS="-static -Wl,-rpath -Wl,${destdir}" LDFLAGS_FOR_BUILD=-all-static"
+     	dryrun "make all SHELL=${bash_shell} ${make_flags} CFLAGS=-UFORTIFY_SOURCE -C ${builddir}  LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
      	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
     fi
 
@@ -361,6 +361,8 @@ binary_sysroot()
 
     # Generate the install script
     sysroot_install_script ${destdir}
+
+    dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${destdir}/lib/"
 
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
