@@ -35,19 +35,12 @@ configure_build()
     # The git parser functions shall return valid results for all
     # services, especially once we have a URL.
 
-    local url=
-    url="`get_git_url ${gitinfo}`"
+    local url="`get_git_url ${gitinfo}`"
+    local tag="`get_git_tag ${gitinfo}`"
+    local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
+    local stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
+    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
 
-    local tag=
-    tag="`get_git_tag ${gitinfo}`"
-
-    local srcdir=
-    srcdir="`get_srcdir ${gitinfo}`"
-
-    local stamp=
-    stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
-
-    local builddir="`get_builddir ${gitinfo} $2`"
     # Don't look for the stamp in the builddir because it's in builddir's
     # parent directory.
     local stampdir="`dirname ${builddir}`"
@@ -59,6 +52,7 @@ configure_build()
 
     if test ! -d "${builddir}"; then
 	notice "The build directory '${builddir}' doesn't exist, so creating it"
+	# Zlib has to be built in it's source directory.
 	if test x"${tool}" = x"zlib"; then
 	    dryrun "ln -s ${srcdir} ${builddir}"
 	else
@@ -150,8 +144,12 @@ configure_build()
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
-	newlib*|libelf*)
-	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr"
+	zlib)
+	    # zlib doesn't support most standard configure options
+	    opts="--prefix=${sysroots}/usr"
+	    ;;
+	newlib*|libgloss*)
+	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr CC=${target}-gcc"
 	    ;;
 	*libc)
 	    opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
@@ -223,6 +221,7 @@ configure_build()
 	    fi
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
+	# These are only built for the host
 	dejagnu|gmp|mpc|mpfr|isl|ppl|cloog|qt-everywhere-opensource-src|ffmpeg)
 	    opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 	    ;;
@@ -260,7 +259,6 @@ configure_build()
 	    error "Configure of $1 failed."
 	    return $?
 	fi
-
 	# unset this to avoid problems later
 	default_configure_flags=
     fi
