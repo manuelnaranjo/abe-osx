@@ -273,7 +273,11 @@ get_builddir()
     # as well because we might be passed a tar file.
     local dir="`normalize_path $1`"
 
-    echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
+    if test x"$2" = x"libgloss"; then
+     	echo "${local_builds}/${host}/${target}/${dir}/${target}/libgloss"
+    else
+	echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
+    fi
 
     return 0
 }
@@ -628,6 +632,10 @@ get_srcdir()
 	    ;;
     esac
     
+    if test x"$2" = x"libgloss"; then
+	local srcdir="${srcdir}/libgloss"
+    fi
+
     echo ${srcdir}
 
     return 0
