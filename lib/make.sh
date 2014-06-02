@@ -295,7 +295,6 @@ make_all()
 	return 0
     fi
 
-    echo "FURBY: $1 $2"
     # FIXME: This should be a URL 
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
@@ -384,6 +383,7 @@ make_install()
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
 	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j $cpus}\""
+    dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${sysroots}/lib/"
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
