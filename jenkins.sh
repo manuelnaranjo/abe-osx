@@ -137,8 +137,6 @@ fi
 # the stage2 bootstrap build.
 $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --disable update --build all
 
-echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
-
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
@@ -190,6 +188,8 @@ fi
 if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
+
+echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
 
 manifest="`find ${WORKSPACE} -name manifest.txt`"
 if test x"${manifest}" != x; then
