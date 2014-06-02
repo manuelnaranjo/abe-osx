@@ -282,3 +282,4 @@ if test x"${sums}" != x -o x"${release}" != x; then
 
 fi
 
+echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
