@@ -246,7 +246,7 @@ checkout()
 		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
                         local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
-			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull"
+			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull)"
 			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
 			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
