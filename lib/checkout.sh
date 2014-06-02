@@ -247,8 +247,8 @@ checkout()
 		    # If there's branch info, pull branch, otherwise just pull.
                         local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
 			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull)"
-			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
-			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
+			#dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
+			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		fi
 		# NOTE: It's possible that a git-new-workdir succeeded but the
@@ -269,13 +269,13 @@ checkout()
 		    # If revision is set only use ${branch} for naming.
 		    if test x"${revision}" != x; then
 			notice "Creating git workdir for revision ${revision}"
-			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
-			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
+#			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
+			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
 			# if no configure script, make one more attempt
 			if ! test -e ${srcdir}/configure; then
 			    error "git-new-workdir failed for ${branch}"
-			    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
+			    dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
 			fi
 			if test $? -gt 0; then
 			    error "Couldn't create git workdir ${srcdir}"
@@ -303,7 +303,7 @@ checkout()
 			    fi
 			fi
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
-			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
+			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		    # We don't need a new-workdir if there's no designated
 		    # branch or revision.
@@ -518,7 +518,7 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
