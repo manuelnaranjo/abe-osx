@@ -246,7 +246,9 @@ checkout()
 		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
                         local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
-			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull origin${branch:+ ${branch}})"
+			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull"
+			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		fi
 		# NOTE: It's possible that a git-new-workdir succeeded but the
@@ -267,8 +269,8 @@ checkout()
 		    # If revision is set only use ${branch} for naming.
 		    if test x"${revision}" != x; then
 			notice "Creating git workdir for revision ${revision}"
-#			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
-			dryrun "git clone --local ${local_snapshots}/${repo} ${srcdir}"
+			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
 			# if no configure script, make one more attempt
 #			if ! test -e ${srcdir}/configure; then
@@ -299,9 +301,8 @@ checkout()
 				dryrun "(cd ${srcdir} && git pull)"
 			    fi
 			fi
-			dryrun "git clone --local ${local_snapshots}/${repo} ${srcdir}"
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
-#			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
 		    # We don't need a new-workdir if there's no designated
 		    # branch or revision.
