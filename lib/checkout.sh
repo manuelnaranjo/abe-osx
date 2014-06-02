@@ -273,9 +273,10 @@ checkout()
 			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
 			# if no configure script, make one more attempt
-#			if ! test -e ${srcdir}/configure; then
-#			    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
-#			fi
+			if ! test -e ${srcdir}/configure; then
+			    error "git-new-workdir failed for ${branch}"
+			    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
+			fi
 			if test $? -gt 0; then
 			    error "Couldn't create git workdir ${srcdir}"
 			    return 1
