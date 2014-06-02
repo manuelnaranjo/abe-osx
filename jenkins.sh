@@ -165,6 +165,9 @@ if test x"${gcc}" = x; then
 fi
 
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+if x"${version}" = x"(experimental)" ; then
+    version=4.10
+fi
 # bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
 distro="`lsb_release -c -s`"
 arch="`uname -m`"
