@@ -121,7 +121,8 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
+$CONFIG_SHELL ${cbuild_dir}/configure
+# $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
 
 # Delete the previous test resut files to avoid problems.
 find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
