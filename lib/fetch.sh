@@ -102,9 +102,9 @@ fetch()
     fi
 
     dryrun "check_md5sum ${getfile}"
-    if test $? -gt 0; then
-	return 1
-    fi
+#    if test $? -gt 0; then
+#	return 1
+#    fi
 
     create_stamp "${stampdir}" "${stamp}"
 
