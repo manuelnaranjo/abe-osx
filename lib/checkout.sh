@@ -194,27 +194,10 @@ checkout()
     branch="`get_git_branch $1`"
     local revision=
     revision="`get_git_revision $1`"
-
     local srcdir=
     srcdir="`get_srcdir $1`"
 
-    set -x
     case $1 in
-	bzr*|lp*)
-	    if test x"${force}" =  xyes; then
-		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${srcdir}"
-	    fi
-	    if test x"${usegit}" =  xyes; then
-		local out="`git-bzr clone $1 ${srcdir}`"
-	    else
-		if test -e ${srcdir}/.bzr; then
-		    local out="`(cd ${srcdir} && bzr pull)`"
-		else
-		    local out="`bzr branch $1 ${srcdir}`"
-		fi
-	    fi
-	    ;;
 	svn*)
 	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
@@ -238,87 +221,36 @@ checkout()
 	    fi
 	    ;;
 	git*|http*)
-	    if test ! -d ${srcdir}; then
-		dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
-		return 0
+            local repodir="`echo ${srcdir} | cut -d '~' -f 1`"
+	    local branchdir="${srcdir}"
+	    # If the master branch doesn't exist, clone it. If it exists,
+	    # update the sources.
+	    if test ! -d ${repodir}; then
+		notice "Cloning $1 in ${srcdir}"
+		dryrun "flock /tmp/lock-${branch} -c \"git clone ${url} ${repodir}\""
 	    fi
-	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-		if test x"${supdate}" = xyes; then
-		    notice "Updating sources for $1 in ${srcdir}"
-		    # A revision represents a snapshot in time so it doesn't
-		    # need to be updated.  Otherwise for a named branch or 
-		    # 'master' we pull.
-		    if test x"${revision}" = x; then
-		    # If there's branch info, pull branch, otherwise just pull.
-                        local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
-			dryrun "(cd ${sdir} && flock /tmp/lock-${branch} -c git reset --hard HEAD^ && flock /tmp/lock-${branch} -c git pull)"
-			#dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
-			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
-		    fi
+	    if test ! -d ${srcdir}; then
+		notice "Creating branch for ${tool} in ${srcdir}"
+		dryrun "flock /tmp/lock-${branch} -c \"git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}\""
+		if test x"${revision}" != x; then
+		    dryrun "(cd ${branchdir} && flock /tmp/lock-${branch} -c \"git checkout ${revision}\")"
 		fi
-		# NOTE: It's possible that a git-new-workdir succeeded but the
-		# git checkout -b [branch|revision] didn't in which case our
-		# directory would be in the 'master' branch rather than a named
-		# branch but we can't handle every corner case.
 	    else
-		notice "Checking out sources for $1 into ${srcdir}"
-		if test x"${branch}" = x -a x"${revision}" = x; then
-		    dryrun "flock /tmp/lock-${branch} -c git clone $1 ${srcdir}"
-		else
-		    if test ! -d ${local_snapshots}/${repo}; then
-			# Strip off the "[/<branchname>][@<revision>]" from $1 to
-			# get the repo address
-			dryrun "flock /tmp/lock-${branch} -c git clone ${url} ${local_snapshots}/${repo}"
+		if test x"${revision}" = x; then
+		    if test x"${supdate}" = xyes; then
+			notice "Updating sources for ${tool} in ${srcdir}"
+			dryrun "(cd ${repodir} && flock /tmp/lock-${branch} -c \"git reset --hard HEAD^\")"
+			dryrun "(cd ${repodir} && flock /tmp/lock-${branch} -c \"git pull\")"
+			dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c \"git reset --hard HEAD^\")"
+			dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c \"git pull\")"
 		    fi
-
-		    # If revision is set only use ${branch} for naming.
-		    if test x"${revision}" != x; then
-			notice "Creating git workdir for revision ${revision}"
-#			dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
-			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
-			dryrun "(cd ${srcdir} && git checkout ${branch})"
-			# if no configure script, make one more attempt
-			if ! test -e ${srcdir}/configure; then
-			    error "git-new-workdir failed for ${branch}"
-			    dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
-			fi
-			if test $? -gt 0; then
-			    error "Couldn't create git workdir ${srcdir}"
-			    return 1
-			fi
-
-			# Check out detached head state at ${revision}.
-			dryrun "(cd ${srcdir} && git checkout ${revision})"
-			if test $? -gt 0; then
-			    error "Couldn't checkout ${revision}"
-			    return 1
-			fi
-			# Create a [branch_]revision working branch.
-			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
-		    elif test x"${branch}" != x; then
-			# If there's no revision we checkout a specific branch.
-			# If the branch doesn't exists yet, we need to update
-			# master first.
-			if test -e ${srcdir}; then
-			    local exists="(cd ${srcdir} && git branch -a | grep -c ${branch})"
-			    if test "${exists}" -eq 0; then
-				warning "branch doesn't exist, updating master"
-				dryrun "(cd ${sdir} && flock /tmp/lock-${branch} -c git reset --hard HEAD^ && flock /tmp/lock-${branch} -c git pull)"
-				dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c git pull)"
-			    fi
-			fi
-			dryrun "(cd ${srcdir} && git checkout ${branch})"
-			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
-		    fi
-		    # We don't need a new-workdir if there's no designated
-		    # branch or revision.
 		fi
 	    fi
 	    ;;
 	*)
 	    ;;
     esac
-    set +x
+
     if test $? -gt 0; then
 	error "Couldn't checkout $1 !"
 	return 1
