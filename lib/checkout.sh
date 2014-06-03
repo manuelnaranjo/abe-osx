@@ -198,6 +198,7 @@ checkout()
     local srcdir=
     srcdir="`get_srcdir $1`"
 
+    set -x
     case $1 in
 	bzr*|lp*)
 	    if test x"${force}" =  xyes; then
@@ -313,7 +314,7 @@ checkout()
 	*)
 	    ;;
     esac
-
+    set +x
     if test $? -gt 0; then
 	error "Couldn't checkout $1 !"
 	return 1
