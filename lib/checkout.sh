@@ -227,24 +227,24 @@ checkout()
 	    # update the sources.
 	    if test ! -d ${repodir}; then
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "flock /tmp/lock-${branch} -c \"git clone ${url} ${repodir}\""
+		dryrun "git clone ${url} ${repodir}"
 	    fi
 	    if test ! -d ${srcdir}; then
 		notice "Creating branch for ${tool} in ${srcdir}"
-#		dryrun "flock /tmp/lock-${branch} -c \"git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}\""
+#		dryrun "git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}"
 		dryrun "git clone --local ${local_snapshots}/${repo} ${branchdir}"
 		dryrun "(cd ${branchdir} && git checkout ${branch})"
 		if test x"${revision}" != x; then
-		    dryrun "(cd ${branchdir} && flock /tmp/lock-${branch} -c \"git checkout ${revision}\")"
+		    dryrun "(cd ${branchdir} && git checkout ${revision})"
 		fi
 	    else
 		if test x"${revision}" = x; then
 		    if test x"${supdate}" = xyes; then
 			notice "Updating sources for ${tool} in ${srcdir}"
-			dryrun "(cd ${repodir} && flock /tmp/lock-${branch} -c \"git reset --hard HEAD^\")"
-			dryrun "(cd ${repodir} && flock /tmp/lock-${branch} -c \"git pull\")"
-			dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c \"git reset --hard HEAD^\")"
-			dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c \"git pull\")"
+			dryrun "(cd ${repodir} && git reset --hard HEAD^)"
+			dryrun "(cd ${repodir} && git pull)"
+			dryrun "(cd ${srcdir} && git reset --hard HEAD^)"
+			dryrun "(cd ${srcdir} && git pull)"
 		    fi
 		fi
 	    fi
@@ -457,7 +457,7 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "flock /tmp/lock-${branch} -c \"git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}\""
+	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
