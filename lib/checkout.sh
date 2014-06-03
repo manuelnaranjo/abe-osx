@@ -238,6 +238,10 @@ checkout()
 	    fi
 	    ;;
 	git*|http*)
+	    if test ! -d ${srcdir}; then
+		dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
+		return 0
+	    fi
 	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 		if test x"${supdate}" = xyes; then
 		    notice "Updating sources for $1 in ${srcdir}"
