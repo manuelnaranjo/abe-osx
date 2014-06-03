@@ -246,7 +246,7 @@ checkout()
 		    if test x"${revision}" = x; then
 		    # If there's branch info, pull branch, otherwise just pull.
                         local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
-			dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull)"
+			dryrun "(cd ${sdir} && flock /tmp/lock-${branch} -c git reset --hard HEAD^ && flock /tmp/lock-${branch} -c git pull)"
 			#dryrun "rm -fr ${srcdir}${branch:+ ${branch}}"
 			dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
 		    fi
@@ -258,12 +258,12 @@ checkout()
 	    else
 		notice "Checking out sources for $1 into ${srcdir}"
 		if test x"${branch}" = x -a x"${revision}" = x; then
-		    dryrun "git clone $1 ${srcdir}"
+		    dryrun "flock /tmp/lock-${branch} -c git clone $1 ${srcdir}"
 		else
 		    if test ! -d ${local_snapshots}/${repo}; then
 			# Strip off the "[/<branchname>][@<revision>]" from $1 to
 			# get the repo address
-			dryrun "git clone ${url} ${local_snapshots}/${repo}"
+			dryrun "flock /tmp/lock-${branch} -c git clone ${url} ${local_snapshots}/${repo}"
 		    fi
 
 		    # If revision is set only use ${branch} for naming.
@@ -298,8 +298,8 @@ checkout()
 			    local exists="(cd ${srcdir} && git branch -a | grep -c ${branch})"
 			    if test "${exists}" -eq 0; then
 				warning "branch doesn't exist, updating master"
-				dryrun "(cd ${sdir} && git reset --hard HEAD^ && git pull)"
-				dryrun "(cd ${srcdir} && git pull)"
+				dryrun "(cd ${sdir} && flock /tmp/lock-${branch} -c git reset --hard HEAD^ && flock /tmp/lock-${branch} -c git pull)"
+				dryrun "(cd ${srcdir} && flock /tmp/lock-${branch} -c git pull)"
 			    fi
 			fi
 			dryrun "(cd ${srcdir} && git checkout ${branch})"
