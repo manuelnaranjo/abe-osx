@@ -455,7 +455,7 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "flock /tmp/lock-${branch} -c git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	dryrun "flock /tmp/lock-${branch} -c \"git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}\""
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
