@@ -269,7 +269,7 @@ extract()
 
     local taropts="${taropt}xf"
     notice "Extracting ${srcdir} from ${tarball}."
-    dryrun "tar ${taropts} ${tarball} -C `dirname ${srcdir}`"
+    dryrun "flock /tmp/lock-tar -c \"tar ${taropts} ${tarball} -C `dirname ${srcdir}\"`"
 
     # FIXME: this is hopefully a temporary hack for tarballs where the
     # directory name versions doesn't match the tarball version. This means
