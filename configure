@@ -3074,10 +3074,6 @@ KERNEL="`uname -r`"
 
 BUILDHOST="`${srcdir}/config.guess`"
 BUILD_ARCH="`uname -m`"
-if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
-   BUILD_ARCH=i486
-   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
-fi
 
 
 HOSTNAME="`uname -n`"
@@ -3675,7 +3671,7 @@ fi
 
 
 
-CBUILD_PATH=${srcdir}
+CBUILD_PATH=$(readlink -f ${srcdir})
 
 
 

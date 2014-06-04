@@ -58,10 +58,6 @@ KERNEL="`uname -r`"
 AC_SUBST(KERNEL)
 BUILDHOST="`${srcdir}/config.guess`"
 BUILD_ARCH="`uname -m`"
-if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
-   BUILD_ARCH=i486
-   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
-fi
 AC_SUBST(BUILD_ARCH)
 AC_SUBST(BUILDHOST)
 HOSTNAME="`uname -n`"
@@ -230,7 +226,7 @@ AC_ARG_WITH(sources-conf,
   SOURCES_CONF="${srcdir}/config/sources.conf")
 AC_SUBST(SOURCES_CONF)
 
-CBUILD_PATH=${srcdir}
+CBUILD_PATH=$(readlink -f ${srcdir})
 AC_SUBST(CBUILD_PATH)
 
 dnl The top of the cbuild tree
