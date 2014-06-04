@@ -550,9 +550,9 @@ make_check()
     fi
 
     if test x"${build}" = x"${target}"; then
-	dryrun "make check RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     else
-	dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     fi
     
     return 0
