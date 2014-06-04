@@ -668,6 +668,9 @@ while test $# -gt 0; do
 		bootstrap|b*)
 		    bootstrap=yes
 		    ;;
+		alltests|b*)
+		    alltests=yes
+		    ;;
 	    esac
 	    shift
 	    ;;

@@ -42,7 +42,7 @@ prefix=
 # The default timeout.  If you're on a wireless network this
 # might not be sufficient and can be overridden at the command
 # line.
-wget_timeout=1
+wget_timeout=10
 wget_quiet=
 # Try something like "dot:mega"
 wget_progress_style=
@@ -87,6 +87,7 @@ ccache=no
 
 # These are flags for the --enable option to cbuild, which are disabled by default
 bootstrap=no
+alltests=no
 # These are flags for the --disable option to cbuild, which are enabled by default
 install=yes
 release=""
