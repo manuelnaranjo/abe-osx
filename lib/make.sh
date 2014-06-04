@@ -523,6 +523,14 @@ make_check()
     local tool="`get_toolname $1`"
     local builddir="`get_builddir $1 ${2:+$2}`"
 
+    # Some tests cause problems, so don't run them all unless
+    # --enable alltests is specified at runtime.
+    local ignore="dejagnu gmp mpc mpfr gdb"
+    for i in ${ignore}; do
+	if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
+	    return 0
+	fi
+    done
     notice "Making check in ${builddir}"
 
 #    if test x"$2" != x; then
