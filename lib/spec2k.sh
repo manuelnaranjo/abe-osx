@@ -1,9 +1,18 @@
-
+. "${topdir}/lib/targetcontrol.sh" || exit 1
 
 spec2k_init()
 {
-  SPEC2k_SUITE=spec2k
   _spec2k_init=true
+  SPEC2k_SUITE="`get_URL cpu2000.git`"
+  if test $? -gt 0; then
+    error "get_URL failed to resolve spec2k"
+    return 1
+  fi
+  SPEC2k_SUITE="`get_srcdir ${SPEC2k_SUITE}`"
+  if test $? -gt 0; then
+    error "get_source failed to resolve spec2k"
+    return 1
+  fi
   SPEC2k_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
   SPEC2k_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/spec2k.conf \
@@ -22,127 +31,107 @@ spec2k_init()
     | awk -F":=" '{print $2}'`"
   SPEC2k_TARBALL="`grep ^TARBALL:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
+  SPEC2k_CONFIG="`grep ^CONFIG:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
+  SPEC2k_ARCH="`grep ^ARCH:= ${topdir}/config/spec2k.conf \
+    | awk -F":=" '{print $2}'`"
   if test "x$SPEC2k_BUILD_LOG" = x; then
-    SPEC2k_BUILD_LOG=spec2k_build_log.txt
+    SPEC2k_BUILD_LOG="spec2k_build_log.txt"
   fi
+  SPEC2k_BUILD_LOG="`pwd`/${topdir}/${SPEC2k_BUILD_LOG}"
   if test "x$SPEC2k_RUN_LOG" = x; then
-    SPEC2k_RUN_LOG=spec2k_run_log.txt
+    SPEC2k_RUN_LOG="spec2k_run_log.txt"
   fi
+  SPEC2k_RUN_LOG="`pwd`/${topdir}/${SPEC2k_RUN_LOG}"
   if test "x$SPEC2k_TARBALL" = x; then
     error "TARBALL not defined in spec2k.conf"
     return 1
   fi
-  RUNSPECFLAGS="-c $SPEC2k_CONFIG -e $SPEC2k_EXTENSION -n $SPEC2k_ITERATIONS -i $SPEC2k_WORKLOAD"
+  if test "x$SPEC2k_CONFIG" = x; then
+    error "CONFIG not defined in spec2k.conf"
+    return 1
+  fi
+  if test "x$SPEC2k_ARCH" = x; then
+    error "ARCH not defined in spec2k.conf"
+    return 1
+  fi
+
+  #TODO: Watch out for any of this being undefined -- might be better to just have a 'flags' in the config file
+  RUNSPECFLAGS="-c ${SPEC2k_CONFIG} -e ${SPEC2k_EXTENSION} -n ${SPEC2k_ITERATIONS} -i ${SPEC2k_WORKLOAD}"
+
   return 0
 }
 
 spec2k_run ()
 {
-  pushd $SPEC2k_SUITE/cpu2000/
-  source shrc
-  echo "runspec --I $RUNSPECFLAGS  $SPEC2k_TESTS"
-  runspec --I $RUNSPECFLAGS  $SPEC2k_TESTS
-  echo `pwd`
-  for i in result/C*.{asc,raw}; do
-    echo $i:: > ../../$SPEC2k_RUN_LOG;
-    cat $i >> ../../$SPEC2k_RUN_LOG;
+  controlled_run cd ${SPEC2k_SUITE} \&\& . shrc \&\& runspec ${RUNSPECFLAGS} ${SPEC2k_TESTS} > ${SPEC2k_RUN_LOG} 2>&1
+  for i in ${SPEC2k_SUITE}/result/C*.{asc,raw}; do
+    echo $i:: >> ${SPEC2k_RUN_LOG}
+    cat $i >> ${SPEC2k_RUN_LOG}
   done
   # Check to see if any errors happened in the run
-  if cat ../../$SPEC2k_RUN_LOG | grep -v reportable | grep errors > ../../$SPEC2k_RUN_LOG.tmp; then
-    mv ../../$SPEC2k_RUN_LOG.tmp ../../$SPEC2k_RUN_LOG-failed.txt;
+  if cat ${SPEC2k_RUN_LOG} | grep -v reportable | grep errors > ${SPEC2k_RUN_LOG}.tmp; then
+    mv ${SPEC2k_RUN_LOG}.tmp ${SPEC2k_RUN_LOG}-failed.txt;
   fi
-  popd
+  rm -f ${SPEC2k_RUN_LOG}.tmp
 }
 
 spec2k_build ()
 {
-  pushd $SPEC2k_SUITE/cpu2000/
-  source shrc
-  runspec  $RUNSPECFLAGS -a build $SPEC2k_TESTS >> ../../$SPEC2k_BUILD_LOG 2>&1
-  popd
+  bash -c "cd ${SPEC2k_SUITE} && . shrc && runspec ${RUNSPECFLAGS} -a build ${SPEC2k_TESTS} >> ${SPEC2k_BUILD_LOG} 2>&1"
+  if test $? -gt 0; then
+    error "Failed while building spec with 'runspec ${RUNSPECFLAGS} -a build ${SPEC2k_TESTS} >> ${SPEC2k_BUILD_LOG} 2>&1'"
+    return 1
+  fi
 }
 
 spec2k_clean ()
 {
-  pushd $SPEC2k_SUITE/cpu2000/
-  source shrc
-  runspec $RUNSPECFLAGS -a nuke $SPEC2k_TESTS
-  rm -rf out
-  popd
+  output="`cd ${SPEC2k_SUITE} && . shrc && runspec ${RUNSPECFLAGS} -a nuke ${SPEC2k_TESTS} 2>&1`"
+  if test $? -gt 0; then
+    error "Failed while cleaning spec with 'cd ${SPEC2k_SUITE} && . shrc && runspec ${RUNSPECFLAGS} -a nuke ${SPEC2k_TESTS}': $output"
+    return 1
+  fi
 }
 
 
 spec2k_build_with_pgo ()
 {
-  echo "spec2k build with pgo"
-}
-
-spec2k_install ()
-{
-  echo "spec2k install"
-  local FILE=`ls $SPEC2k_SUITE*`
-  rm -rf $FILE/install
-  mkdir $SPEC2k_SUITE/$FILE/install
-  for i in $SPEC2k_SUITE/$FILE/benchspec/C*/*; do
-    if [ -d $SPEC2k_SUITE/$FILE/$i/exe ]; then
-      echo ">cp -a $SPEC2k_SUITE/$FILE/$i/exe/* $SPEC2k_SUITE/$FILE/install/`basename $i`<";
-      cp -a $SPEC2k_SUITE/$FILE/$i/exe/* $SPEC2k_SUITE/$FILE/install/`basename $i`;
-    fi;
-  done
+  error "Not implemented"
+  return 1
 }
 
 spec2k_testsuite ()
 {
-  echo "spec2k testsuite"
+  error "Not implemented"
+  return 1
 }
 
 spec2k_extract ()
 {
-  # Extract SPEC
-  rm -rf $SPEC2k_SUITE
-  mkdir -p $SPEC2k_SUITE
-  check_pattern "$SRC_PATH/$SPEC2k_TARBALL*.cpt"
-  get_benchmark "$SRC_PATH/$SPEC2k_TARBALL*.cpt" $SPEC2k_SUITE
-  local FILE=`ls $SPEC2k_SUITE*/$SPEC2k_TARBALL*.cpt`
-  $CCAT $FILE | tar xJf - -C $SPEC2k_SUITE
-  chmod -R +w $SPEC2k_SUITE
-  rm $FILE
-  # and the tools for this architecture
-  case `uname -m` in
-    *x86_64*)
-      MACHINE=x86_64
-      ;;
-    *arm*)
-      MACHINE=arm
-      BUILD_ARCH=`dpkg-architecture -qDEB_BUILD_ARCH`
-      case $BUILD_ARCH in
-	*hf*)
-	  FLOAT_SUFFIX=hf
-	  ;;
-	*)
-	  ;;
-      esac
-      ;;
-    *)
-     error "MACHINE=`uname -m` is not supported"
-     ;;
-  esac
-  # Create the config file
-  check_pattern "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt"
-  get_benchmark  "$SRC_PATH/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt" $SPEC2k_SUITE
-  $CCAT $SPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.cpt | tar xJf - -C $SPEC2k_SUITE/cpu2000
-  rm $SSPEC2k_SUITE/cpu2000tools-*$MACHINE*$FLOAT_SUFFIX*.tar*cpt
+  url="`get_source cpu2000.git`"
+  if test $? -gt 0; then
+      error "Couldn't find the source for ${do_checkout}"
+      return 1 
+  fi
 
+  checkout ${url}
+  if test $? -gt 0; then
+      error "--checkout ${url} failed."
+      return 1
+  fi
 
-  pushd $SPEC2k_SUITE/cpu2000/
-  sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/runspec > ./bin/runspec.new
-  mv ./bin/runspec.new ./bin/runspec
-  chmod +x ./bin/runspec
-  sed -e s#/home/michaelh/linaro/benchmarks/ref#$PWD/..//#g < ./bin/specdiff > ./bin/specdiff.new
-  mv ./bin/specdiff.new ./bin/specdiff
-  chmod +x ./bin/specdiff
-  source shrc
-  popd
+  #We do 'install' as part of 'extract'
+  if test $? -gt 0; then
+    error "Could not cd to ${SPEC2k_SUITE}"
+    return 1
+  fi
+
+  #This produces a pretty weird error on failure, but that's better than hanging on input
+  output="`cd ${SPEC2k_SUITE} && (yes no | ./install.sh ${SPEC2k_ARCH} 2>&1)`" 
+  if test $? -gt 0; then
+    error "./install.sh ${SPEC2k_ARCH} failed: $output"
+    return 1
+  fi
 }
-
 
