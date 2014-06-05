@@ -2,7 +2,7 @@
 
 spec2006_init()
 {
-  spec2006_init=true
+  _spec2006_init=true
   SPEC2006_SUITE=spec2006
   SPEC2006_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/spec2006.conf \
     | awk -F":=" '{print $2}'`"

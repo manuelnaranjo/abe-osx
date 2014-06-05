@@ -2,8 +2,8 @@
 
 spec2k_init()
 {
-  spec2k_init=true
   SPEC2k_SUITE=spec2k
+  _spec2k_init=true
   SPEC2k_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
   SPEC2k_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/spec2k.conf \

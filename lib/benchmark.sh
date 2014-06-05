@@ -199,7 +199,7 @@ build()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_build
       else
 	error "coremark init not called"
@@ -207,7 +207,7 @@ build()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_build
       else
 	error "libavbench init not called"
@@ -215,7 +215,7 @@ build()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_build
       else
 	error "gmpbench init not called"
@@ -223,7 +223,7 @@ build()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_build
       else
 	error "gnugo init not called"
@@ -231,7 +231,7 @@ build()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_build
       else
 	error "skiabench init not called"
@@ -239,7 +239,7 @@ build()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_build
       else
 	error "denbench init not called"
@@ -247,7 +247,7 @@ build()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_build
       else
 	error "nbench init not called"
@@ -255,7 +255,7 @@ build()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_build
       else
 	error "eembc init not called"
@@ -263,7 +263,7 @@ build()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_build
       else
 	error "eembc office init not called"
@@ -271,7 +271,7 @@ build()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_build
       else
 	error "spec2k init not called"
@@ -279,7 +279,7 @@ build()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_build
       else
 	error "spec2006 init not called"
@@ -306,7 +306,7 @@ build_with_pgo()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_build_with_pgo
       else
 	error "coremark init not called"
@@ -314,7 +314,7 @@ build_with_pgo()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_build_with_pgo
       else
 	error "libavbench init not called"
@@ -322,7 +322,7 @@ build_with_pgo()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_build_with_pgo
       else
 	error "gmpbench init not called"
@@ -330,7 +330,7 @@ build_with_pgo()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_build_with_pgo
       else
 	error "gnugo init not called"
@@ -338,7 +338,7 @@ build_with_pgo()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_build_with_pgo
       else
 	error "skiabench init not called"
@@ -346,7 +346,7 @@ build_with_pgo()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_build_with_pgo
       else
 	error "denbench init not called"
@@ -354,7 +354,7 @@ build_with_pgo()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_build_with_pgo
       else
 	error "nbench init not called"
@@ -362,7 +362,7 @@ build_with_pgo()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_build_with_pgo
       else
 	error "eembc init not called"
@@ -370,7 +370,7 @@ build_with_pgo()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_build_with_pgo
       else
 	error "eembc office init not called"
@@ -378,7 +378,7 @@ build_with_pgo()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_build_with_pgo
       else
 	error "spec2k init not called"
@@ -386,7 +386,7 @@ build_with_pgo()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_build_with_pgo
       else
 	error "spec2006 init not called"
@@ -414,7 +414,7 @@ run()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_run
       else
 	error "coremark init not called"
@@ -422,7 +422,7 @@ run()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_run
       else
 	error "libavbench init not called"
@@ -430,7 +430,7 @@ run()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_run
       else
 	error "gmpbench init not called"
@@ -438,7 +438,7 @@ run()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_run
       else
 	error "gnugo init not called"
@@ -446,7 +446,7 @@ run()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_run
       else
 	error "skiabench init not called"
@@ -454,7 +454,7 @@ run()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_run
       else
 	error "denbench init not called"
@@ -462,7 +462,7 @@ run()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_run
       else
 	error "nbench init not called"
@@ -470,7 +470,7 @@ run()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_run
       else
 	error "eembc init not called"
@@ -478,7 +478,7 @@ run()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_run
       else
 	error "eembc office init not called"
@@ -486,7 +486,7 @@ run()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_run
       else
 	error "spec2k init not called"
@@ -494,7 +494,7 @@ run()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_run
       else
 	error "spec2006 init not called"
@@ -522,7 +522,7 @@ install()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_install
       else
 	error "coremark init not called"
@@ -530,7 +530,7 @@ install()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_install
       else
 	error "libavbench init not called"
@@ -538,7 +538,7 @@ install()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_install
       else
 	error "gmpbench init not called"
@@ -546,7 +546,7 @@ install()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_install
       else
 	error "gnugo init not called"
@@ -554,7 +554,7 @@ install()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_install
       else
 	error "skiabench init not called"
@@ -562,7 +562,7 @@ install()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_install
       else
 	error "denbench init not called"
@@ -570,7 +570,7 @@ install()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_install
       else
 	error "nbench init not called"
@@ -578,7 +578,7 @@ install()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_install
       else
 	error "eembc init not called"
@@ -586,7 +586,7 @@ install()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_install
       else
 	error "eembc office init not called"
@@ -594,7 +594,7 @@ install()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_install
       else
 	error "spec2k init not called"
@@ -602,7 +602,7 @@ install()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_install
       else
 	error "spec2006 init not called"
@@ -630,7 +630,7 @@ testsuit()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_testsuite
       else
 	error "coremark init not called"
@@ -638,7 +638,7 @@ testsuit()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_testsuite
       else
 	error "libavbench init not called"
@@ -646,7 +646,7 @@ testsuit()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_testsuite
       else
 	error "gmpbench init not called"
@@ -654,7 +654,7 @@ testsuit()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_testsuite
       else
 	error "gnugo init not called"
@@ -662,7 +662,7 @@ testsuit()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_testsuite
       else
 	error "skiabench init not called"
@@ -670,7 +670,7 @@ testsuit()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_testsuite
       else
 	error "denbench init not called"
@@ -678,7 +678,7 @@ testsuit()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_testsuite
       else
 	error "nbench init not called"
@@ -686,7 +686,7 @@ testsuit()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_testsuite
       else
 	error "eembc init not called"
@@ -694,7 +694,7 @@ testsuit()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_testsuite
       else
 	error "eembc office init not called"
@@ -702,7 +702,7 @@ testsuit()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_testsuite
       else
 	error "spec2k init not called"
@@ -710,7 +710,7 @@ testsuit()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_testsuite
       else
 	error "spec2006 init not called"
@@ -738,7 +738,7 @@ extract()
   fi
   case $1 in
     $COREMARK)
-      if test $_coremark_init; then
+      if $_coremark_init; then
 	coremark_extract
       else
 	error "coremark init not called"
@@ -746,7 +746,7 @@ extract()
       fi
       ;;
     $LIBAVBENCH)
-      if test $_libavbench_init; then
+      if $_libavbench_init; then
 	libavbench_extract
       else
 	error "libavbench init not called"
@@ -754,7 +754,7 @@ extract()
       fi
       ;;
     $GMPBENCH)
-      if test $_gmpbench_init; then
+      if $_gmpbench_init; then
 	gmpbench_extract
       else
 	error "gmpbench init not called"
@@ -762,7 +762,7 @@ extract()
       fi
       ;;
     $GNUGO)
-      if test $_gnugo_init; then
+      if $_gnugo_init; then
 	gnugo_extract
       else
 	error "gnugo init not called"
@@ -770,7 +770,7 @@ extract()
       fi
       ;;
     $SKIABENCH)
-      if test $_skiabench_init; then
+      if $_skiabench_init; then
 	skiabench_extract
       else
 	error "skiabench init not called"
@@ -778,7 +778,7 @@ extract()
       fi
       ;;
     $DENBENCH)
-      if test $_denbench_init; then
+      if $_denbench_init; then
 	denbench_extract
       else
 	error "denbench init not called"
@@ -786,7 +786,7 @@ extract()
       fi
       ;;
     $NBENCH)
-      if test $_nbench_init; then
+      if $_nbench_init; then
 	nbench_extract
       else
 	error "nbench init not called"
@@ -794,7 +794,7 @@ extract()
       fi
       ;;
     $EEMBC)
-      if test $_eembc_init; then
+      if $_eembc_init; then
 	eembc_extract
       else
 	error "eembc init not called"
@@ -802,7 +802,7 @@ extract()
       fi
       ;;
     $EEMBC_OFFICE)
-      if test $_eembc_office_init; then
+      if $_eembc_office_init; then
 	eembc_office_extract
       else
 	error "eembc office init not called"
@@ -810,7 +810,7 @@ extract()
       fi
       ;;
     $SPEC2K)
-      if test $_spec2k_init; then
+      if $_spec2k_init; then
 	spec2k_extract
       else
 	error "spec2k init not called"
@@ -818,7 +818,7 @@ extract()
       fi
       ;;
     $SPEC2006)
-      if test $_spec2006_init; then
+      if $_spec2006_init; then
 	spec2006_extract
       else
 	error "spec2006 init not called"
