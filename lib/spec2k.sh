@@ -4,8 +4,6 @@ spec2k_init()
 {
   SPEC2k_SUITE=spec2k
   _spec2k_init=true
-  SPEC2k_VCFLAGS="`grep ^VFLAGS:= ${topdir}/config/spec2k.conf \
-    | awk -F":=" '{print $2}'`"
   SPEC2k_XCFLAGS="`grep ^XCFLAGS:= ${topdir}/config/spec2k.conf \
     | awk -F":=" '{print $2}'`"
   SPEC2k_BUILD_LOG="`grep ^BUILD_LOG:= ${topdir}/config/spec2k.conf \
@@ -34,7 +32,6 @@ spec2k_init()
     error "TARBALL not defined in spec2k.conf"
     return 1
   fi
-  SPEC2k_VCFLAGS="-O2 -fno-common $SPEC2k_VCFLAGS $XCFLAGS"
   RUNSPECFLAGS="-c $SPEC2k_CONFIG -e $SPEC2k_EXTENSION -n $SPEC2k_ITERATIONS -i $SPEC2k_WORKLOAD"
   return 0
 }
@@ -61,7 +58,6 @@ spec2k_build ()
 {
   pushd $SPEC2k_SUITE/cpu2000/
   source shrc
-  echo VCFLAGS=$SPEC2k_VCFLAGS > ../../$SPEC2k_BUILD_LOG 2>&1
   runspec  $RUNSPECFLAGS -a build $SPEC2k_TESTS >> ../../$SPEC2k_BUILD_LOG 2>&1
   popd
 }
