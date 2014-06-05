@@ -10,11 +10,12 @@ finish_session=false
 gen_schroot=false
 pubkey=""
 sysroot=""
+ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
 privkey=""
 
-while getopts "a:bc:d:fgk:l:o:p:qs:v" OPTION; do
+while getopts "a:bc:d:fgk:l:mo:p:qs:v" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
@@ -24,6 +25,7 @@ while getopts "a:bc:d:fgk:l:o:p:qs:v" OPTION; do
 	g) gen_schroot=true ;;
 	k) pubkey=$OPTARG ;;
 	l) sysroot=$OPTARG ;;
+	m) ssh_master=true ;;
 	o) target_ssh_opts="$OPTARG" ;;
 	p) host_ssh_opts="$OPTARG" ;;
 	q) exec > /dev/null ;;
@@ -101,7 +103,7 @@ user="$(ssh $target echo \$USER)"
 home="$(ssh $target pwd)"
 
 if $gen_schroot; then
-    chroot=/tmp/$deb_arch-$deb_dist
+    chroot=/tmp/$schroot_id.$$
 
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
@@ -127,9 +129,9 @@ if $gen_schroot; then
 	sudo rm $chroot/usr/bin/qemu-\*-static
 
     ssh $target_ssh_opts $target \
-	sudo mkdir -p /srv/chroots/
+	sudo mkdir -p /var/chroots/
     ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd $chroot && tar --one-file-system -czf /srv/chroots/$deb_arch-$deb_dist.tgz .\""
+	sudo bash -c "\"cd $chroot && tar --one-file-system -czf /var/chroots/$schroot_id.tgz .\""
 
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
@@ -138,28 +140,29 @@ if $gen_schroot; then
 	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\"" <<EOF
 [$schroot_id]
 type=file
-file=/srv/chroots/$deb_arch-$deb_dist.tgz
+file=/var/chroots/$schroot_id.tgz
 groups=buildslave,users
 root-groups=buildslave,users
 profile=tcwg-test
 EOF
 
     if ! [ -z "$schroot_master" ]; then
-	scp $target_ssh_opts $target:/srv/chroots/$deb_arch-$deb_dist.tgz $schroot_master/
-	scp $target_ssh_opts $target:/etc/schroot/chroot.d/$schroot_id $schroot_master/schroot/chroot.d/
+	scp $target_ssh_opts $target:/var/chroots/$schroot_id.tgz $schroot_master/
+	mkdir -p $schroot_master/chroot.d/
+	scp $target_ssh_opts $target:/etc/schroot/chroot.d/$schroot_id $schroot_master/chroot.d/
     fi
 fi
 
 if ! [ -z "$schroot_master" ]; then
     ssh $target_ssh_opts $target \
-	sudo mkdir -p /srv/chroots/
+	sudo mkdir -p /var/chroots/
 
-    cat $schroot_master/$deb_arch-$deb_dist.tgz | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /srv/chroots/$deb_arch-$deb_dist.tgz\""
-    cat $schroot_master/schroot/chroot.d/$deb_arch-$deb_dist | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /etc/schroot/chroot.d/$deb_arch-$deb_dist\""
+    cat $schroot_master/$schroot_id.tgz | ssh $target_ssh_opts $target \
+	sudo bash -c "\"cat > /var/chroots/$schroot_id.tgz\""
+    cat $schroot_master/chroot.d/$schroot_id | ssh $target_ssh_opts $target \
+	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\""
 
-    (cd $schroot_master/schroot && tar -c tcwg-test/ | ssh $target_ssh_opts $target \
+    (cd $schroot_master && tar -c tcwg-test/ | ssh $target_ssh_opts $target \
 	sudo bash -c "\"cd /etc/schroot && rm -rf tcwg-test && tar -x && chown -R root:root tcwg-test/\"")
 fi
 
@@ -203,8 +206,19 @@ if ! [ -z "$shared_dir" ]; then
 fi
 
 if ! [ -z "$sysroot" ]; then
-    rsync -az -e "$rsh" $sysroot/ root@$target:/
+    rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
+    # Make sure that sysroot libraries are searched before any other.
+    $rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
+/lib
+/usr/lib
+EOF
+    $rsh root@$target "cat /etc/ld.so.conf >> /etc/ld.so.conf.new"
+    $rsh root@$target "mv /etc/ld.so.conf.new /etc/ld.so.conf && rsync -a --exclude=/sysroot /sysroot/ / && ldconfig"
     echo $target:$port installed sysroot $sysroot
+fi
+
+if $ssh_master; then
+    $rsh -fMN $target
 fi
 
 if $finish_session; then
