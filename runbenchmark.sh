@@ -1,6 +1,13 @@
 
 #!/bin/bash
 
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "WARNING: no host.conf file!  Did you run configure?" 1>&2
+fi
+
 # load commonly used functions
 script="`which $0`"
 topdir="`dirname ${script}`"
