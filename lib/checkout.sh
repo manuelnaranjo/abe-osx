@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # 
 #   Copyright (C) 2013, 2014 Linaro, Inc
 # 
@@ -163,17 +163,6 @@ checkout_all()
     return 0
 }
 
-# Try hard to get git command succeed.  Retry up to 10 times.
-# $@ - arguments passed directly to "git".
-git_robust()
-{
-    local try=1
-
-    while [ "$try" -lt "10" ]; do
-	try="$(($try+1))"
-	git "$@" && break
-    done
-}
 
 # This gets the source tree from a remote host
 # $1 - This should be a service:// qualified URL.  If you just
@@ -189,10 +178,10 @@ checkout()
 
     local service=
     service="`get_git_service $1`"
-    if test x"${service}" = x ; then
-	error "A proper url is required. Call get_URL first."
-	return 1
-    fi
+#    if test x"${service}" = x ; then
+#	error "A proper url is required. Call get_URL first."
+#	return 1
+#    fi
 
     local repo=
     repo="`get_git_repo $1`"
@@ -205,10 +194,26 @@ checkout()
     branch="`get_git_branch $1`"
     local revision=
     revision="`get_git_revision $1`"
+
     local srcdir=
     srcdir="`get_srcdir $1`"
 
     case $1 in
+	bzr*|lp*)
+	    if test x"${force}" =  xyes; then
+		#rm -fr ${local_snapshots}/${dir}
+		echo "Removing existing sources for ${srcdir}"
+	    fi
+	    if test x"${usegit}" =  xyes; then
+		local out="`git-bzr clone $1 ${srcdir}`"
+	    else
+		if test -e ${srcdir}/.bzr; then
+		    local out="`(cd ${srcdir} && bzr pull)`"
+		else
+		    local out="`bzr branch $1 ${srcdir}`"
+		fi
+	    fi
+	    ;;
 	svn*)
 	    local trunk="`echo $1 |grep -c trunk`"
 	    if test ${trunk} -gt 0; then
@@ -232,88 +237,64 @@ checkout()
 	    fi
 	    ;;
 	git*|http*|ssh*)
-	    #FIXME: This is an unreliable way to parse the repo directory.
-            local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
-
-	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
-		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
-		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
-	    fi
-
-	    # If the master branch doesn't exist, clone it. If it exists,
-	    # update the sources.
-	    if test ! -d ${repodir}; then
-		local git_reference_opt
-		if [ x"$git_reference_dir" != x"" -a \
-		    -d "$git_reference_dir/$(basename $repodir)" ]; then
-		    local git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
-		fi
-		notice "Cloning $1 in ${srcdir}"
-		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
-	    fi
-	    if test ! -d ${srcdir}; then
-		# By definition a git commit resides on a branch.  Therefore specifying a
-		# branch AND a commit is redundant and potentially contradictory.  For this
-		# reason we only consider the commit if both are present.
-		if test x"${revision}" != x""; then
-		    notice "Checking out revision for ${tool} in ${srcdir}"
-		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${revision}"
-		    if test $? -gt 0; then
-			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
-		    	return 1
-		    fi
-		    # git checkout of a commit leaves the head in detached state so we need to
-		    # give the current checkout a name.  Use -B so that it's only created if
-		    # it doesn't exist already.
-		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
-	        else
-		    if test x"${branch}" != x""; then
-			# Sometimes, after removing a srcdir and re-running, the branch
-			# you're trying to checkout will already be a named branch in the
-			# repodir, so we have to delete it so that the new checkout will
-			# get the latest, updated branch source.
-			notice "Checking for existing named branch ${branch} in ${repodir}"
-
-			# Don't test this for dryrun because repodir probably won't exist.
-			if test x"${dryrun}" = no; then
-			    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
-			    if test ${existing_branch} -gt 0; then
-				notice "Removing previously named branch ${branch} from ${repodir}"
-				dryrun "(cd ${repodir} && git branch -D ${branch})"
-			    fi
-			fi
-		    fi
-
-		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
-		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
-		    if test $? -gt 0; then
-			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
-		   	return 1
+	    if test -e ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
+		if test x"${supdate}" = xyes; then
+		    notice "Updating sources for $1 in ${srcdir}"
+		    # A revision represents a snapshot in time so it doesn't
+		    # need to be updated.  Otherwise for a named branch or 
+		    # 'master' we pull.
+		    if test x"${revision}" = x; then
+		    # If there's branch info, pull branch, otherwise just pull.
+                        local sdir="`echo ${srcdir} | cut -d '~' -f 1`"
+			dryrun "(cd ${sdir} && git stash && git pull origin${branch:+ ${branch}})"
 		    fi
 		fi
-		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
-		# dryrun "(cd ${srcdir} && git checkout ${branch})"
-	    elif test x"${supdate}" = xyes; then
-		# Some packages allow the build to modify the source directory and
-		# that might screw up cbuild2's state so we restore a pristine branch.
-		notice "Updating sources for ${tool} in ${srcdir}"
-		dryrun "(cd ${repodir} && git stash --all)"
-		dryrun "(cd ${repodir} && git reset --hard)"
-		dryrun "(cd ${repodir} && git_robust pull)"
-		# Update branch directory (which maybe the same as repo
-		# directory)
-		dryrun "(cd ${srcdir} && git stash --all)"
-		dryrun "(cd ${srcdir} && git reset --hard)"
-		if test x"${revision}" != x""; then
-		    # No need to pull.  A commit is a single moment in time
-		    # and doesn't change.
-		    dryrun "(cd ${srcdir} && git checkout local_${revision})"
+		# NOTE: It's possible that a git-new-workdir succeeded but the
+		# git checkout -b [branch|revision] didn't in which case our
+		# directory would be in the 'master' branch rather than a named
+		# branch but we can't handle every corner case.
+	    else
+		notice "Checking out sources for $1 into ${srcdir}"
+		if test x"${branch}" = x -a x"${revision}" = x; then
+		    dryrun "git clone $1 ${srcdir}"
 		else
-		    # Make sure we are on the correct branch.
-		    # This is a no-op if $branch is empty and it
-		    # just gets master.
-		    dryrun "(cd ${srcdir} && git checkout ${branch})"
-		    dryrun "(cd ${srcdir} && git_robust pull)"
+		    if test ! -d ${local_snapshots}/${repo}; then
+			# Strip off the "[/<branchname>][@<revision>]" from $1 to
+			# get the repo address
+			dryrun "git clone ${url} ${local_snapshots}/${repo}"
+		    fi
+
+		    # If revision is set only use ${branch} for naming.
+		    if test x"${revision}" != x; then
+			notice "Creating git workdir for revision ${revision}"
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}"
+			if test $? -gt 0; then
+			    error "Couldn't create git workdir ${srcdir}"
+			    return 1
+			fi
+
+			# Check out detached head state at ${revision}.
+			dryrun "(cd ${srcdir} && git checkout ${revision})"
+			if test $? -gt 0; then
+			    error "Couldn't checkout ${revision}"
+			    return 1
+			fi
+			# Create a [branch_]revision working branch.
+			dryrun "(cd ${srcdir} && git checkout -b "${branch:+${branch}_}${revision}")"
+		    elif test x"${branch}" != x; then
+			# If there's no revision we checkout a specific branch.
+			# If the branch doesn't exists yet, we need to update
+			# master first.
+			local exists="`cd ${srcdir} && git branch -a | grep -c ${branch}`"
+			if "${exists}" -eq 0; then
+			    warning "branch doesn't exist, updating master"
+			    dryrun "(cd ${sdir} && git reset --hard origin/master)"
+			    dryrun "(cd ${srcdir} && git pull)"
+			fi
+			dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir}${branch:+ ${branch}}"
+		    fi
+		    # We don't need a new-workdir if there's no designated
+		    # branch or revision.
 		fi
 	    fi
 	    ;;
@@ -388,7 +369,7 @@ push ()
 		fi
 	    fi
 	    ;;
-	git*|ssh*)
+	git*)
 	    if test x"$3" = x; then
 		warning "No branch given, so using master or trunk"
 		local branch="master"
@@ -471,7 +452,7 @@ commit ()
 		fi
 	    fi
 	    ;;
-	git*|ssh*)
+	git*)
 	    if test x"$2" = x; then
 		warning "No files given, so commiting all"
 		local files="-a"
@@ -529,9 +510,9 @@ change_branch()
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
-		dryrun "(cd ${local_snapshots}/${version} && git_robust pull origin master)"
+		dryrun "(cd ${local_snapshots}/${version} && git pull origin master)"
 	    else
-		dryrun "(cd ${local_snapshots}/${version}-${branch} && git_robust pull origin ${branch})"
+		dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
 	    fi
 	fi
     fi
