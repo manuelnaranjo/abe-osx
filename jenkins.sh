@@ -121,7 +121,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-export files="`echo ${WORKSPACE} | cut -d '/' -f 4`"
+export files="`echo ${WORKSPACE} | cut -d '/' -f 5`"
 $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
 # $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
 
