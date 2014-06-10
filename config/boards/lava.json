@@ -1,0 +1,37 @@
+{
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "hwpack": "http://releases.linaro.org/14.04/ubuntu/arndale/hwpack_linaro-arndale_20140417-630_armhf_supported.tar.gz",
+                "rootfs": "http://people.linaro.org/~maxim.kuvyrkov/tcwg-test-armhf-trusty.tgz"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "http://git.linaro.org/git/lava-team/hacking-session.git",
+                        "parameters": {
+                            "PUB_KEY": "ssh-dss AAAAB3NzaC1kc3MAAACBAJySXHGb8CgqFeN8KLAsmJEx3XhtSAwIsPM3+4n/n+w3athh1PD7dYbmksz2wNrXTJ4Atj17R+IWLvCQ3qnDh+oiOwRLVRXV4uKGqsVxjmSXQqeDAZLcJXtZnepxNLkLZe342LI3Q2FWlwSqsvNA/XVA4vBP/ckQD8EQt+BLAg+pAAAAFQC2kcFr+teo4UVl4BSLb/ELpLCF3wAAAIA3de8nXOOPQt5PziSfdrIcM/6LZVwwxBbbNCc8uh88TAeKe3kaQkXc8wB0VcYOhagBknwoPrZpcE+qeimYTUUCWPkR2r5diQvo+X25Ofq5Dz9799h1olIcnxSlcKZGBYYpOkz2c4bi8BbI9ZMfkrO45paEP7sUh1H8ag3ALJi8BgAAAIBghwYeqI4C7H4dnGigB/4VaOSFSeKZkUEvieEIAnxgUrn6N2PuU4ym/oRAahDme5Zp5RUBncme0ru/BeCvZpv2Uy4Qa8uKiCVRz4+adBl7SXMnIIpWO6oAeWngSa8z8iVjqBLkaGfK0kgNcKIyJgICc6hCbNyaAyGITQj1dx75eg== maxim.kuvyrkov@linaro.org"
+                        },
+                        "testdef": "hacking-session-debian.yaml"
+                    }
+                ],
+                "timeout": 18000
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "http://validation.linaro.org/RPC2/",
+                "stream": "/anonymous/maxim-kuvyrkov/"
+            }
+        }
+    ],
+    "device_type": "arndale",
+    "job_name": "tcwg-testing",
+    "logging_level": "DEBUG",
+    "timeout": 18000
+}
