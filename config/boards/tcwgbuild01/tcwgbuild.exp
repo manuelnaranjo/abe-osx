@@ -1,0 +1,4 @@
+load_generic_config schroot-ssh
+load_generic_config tcwgbuild-common
+
+set_board_info hostname tcwgbuild02

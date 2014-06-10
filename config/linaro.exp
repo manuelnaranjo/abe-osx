@@ -62,6 +62,12 @@ case "$target_triplet" in {
 	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
 	set SIM "setarch x86_64 -R qemu-aarch64"
     }
-    
+    { "*-linux-gnu*" } {
+	set myname [get_local_hostname]
+	case "$myname" in {
+	    { tcwgbuild* } {
+		set target_list { tcwgbuild }
+	    }
+	}
+    }
 }
-
