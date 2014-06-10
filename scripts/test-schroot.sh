@@ -6,6 +6,7 @@ arch="native"
 begin_session=false
 schroot_master=""
 shared_dir=""
+board_exp=""
 finish_session=false
 gen_schroot=false
 pubkey=""
@@ -15,12 +16,13 @@ target_ssh_opts=""
 host_ssh_opts=""
 privkey=""
 
-while getopts "a:bc:d:fgk:l:mo:p:qs:v" OPTION; do
+while getopts "a:bc:d:e:fgk:l:mo:p:qs:v" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
 	c) schroot_master="$OPTARG" ;;
 	d) shared_dir=$OPTARG ;;
+	e) board_exp="$OPTARG" ;;
 	f) finish_session=true ;;
 	g) gen_schroot=true ;;
 	k) pubkey=$OPTARG ;;
@@ -91,6 +93,26 @@ if [ "x$arch" = "xnative" ]; then
     esac
 fi
 
+if [ "x$board_exp" != "x" ] ; then
+    lava_json="$(grep "^set_board_info lava_json " $board_exp | sed -e "s/^set_board_info lava_json //")"
+    if [ "x$lava_json" != "x" ] && $begin_session; then
+	job_id="$(lava-tool submit-job http://maxim-kuvyrkov@validation.linaro.org/RPC2/ "$lava_json" | sed -e "s/submitted as job id: //")"
+	while sleep 60; do
+	    if lava-tool job-output -o - http://maxim-kuvyrkov@validation.linaro.org/RPC2/ $job_id | grep "^Hacking session active" >/dev/null; then
+		lava_ssh_opts="$(lava-tool job-output -o - http://maxim-kuvyrkov@validation.linaro.org/RPC2/ $job_id | grep -a "^Please connect to" | sed -e "s/.* ssh \(.*\) \([^ ]*\) (.*$/\1/")"
+		lava_target="$(lava-tool job-output -o - http://maxim-kuvyrkov@validation.linaro.org/RPC2/ $job_id | grep -a "^Please connect to" | sed -e "s/.* ssh \(.*\) \([^ ]*\) (.*$/\2/")"
+		sed -i -e "s/^set_board_info hostname .*/set_board_info hostname $lava_target/" "$board_exp"
+		echo "set_board_info lava_ssh_opts \"$lava_ssh_opts\"" >> "$board_exp"
+		echo "set_board_info lava_job_id $job_id" >> "$board_exp"
+
+		target="$lava_target"
+		target_ssh_opts="$target_ssh_opts $lava_ssh_opts"
+		break
+	    fi
+	done
+    fi
+fi
+
 deb_arch="$(triplet_to_deb_arch $arch)"
 deb_dist="$(triplet_to_deb_dist $arch)"
 
@@ -99,11 +121,15 @@ schroot_id=tcwg-test-$deb_arch-$deb_dist
 schroot="ssh $target_ssh_opts $target schroot -r -c session:tcwg-test-$port -d / -u root --"
 rsh_opts="$target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no"
 rsh="ssh $rsh_opts"
-user="$(ssh $target echo \$USER)"
-home="$(ssh $target pwd)"
+user="$(ssh $target_ssh_opts $target echo \$USER)"
+home="$(ssh $target_ssh_opts $target pwd)"
 
 if $gen_schroot; then
     chroot=/tmp/$schroot_id.$$
+
+    # Make sure machine in the lab agree on what time it is.
+    ssh $target_ssh_opts $target \
+	sudo ntpdate pool.ntp.org
 
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
@@ -115,7 +141,7 @@ if $gen_schroot; then
 	--foreign \
 	$deb_dist $chroot
     ssh $target_ssh_opts $target \
-	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/
+	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/ || true
     ssh $target_ssh_opts $target \
 	sudo chroot $chroot ./debootstrap/debootstrap --second-stage &
     pid=$!
@@ -126,7 +152,7 @@ if $gen_schroot; then
 	fi
     done
     ssh $target_ssh_opts $target \
-	sudo rm $chroot/usr/bin/qemu-\*-static
+	sudo rm -f $chroot/usr/bin/qemu-\*-static
 
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
@@ -154,6 +180,10 @@ EOF
 fi
 
 if ! [ -z "$schroot_master" ]; then
+    # Make sure machine in the lab agree on what time it is.
+    ssh $target_ssh_opts $target \
+	sudo ntpdate pool.ntp.org
+
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
 
@@ -168,10 +198,13 @@ fi
 
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
-    $schroot sed -i -e "\"s/Port 22/Port $port/\"" /etc/ssh/sshd_config
+    $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
+    $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
     $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT || true
+    # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
+    $schroot chmod +x /bin/fusermount || true
     echo $target:$port started schroot: $rsh $target
 fi
 
@@ -201,7 +234,7 @@ if ! [ -z "$shared_dir" ]; then
 
     $rsh root@$target rm -f /etc/mtab
     $rsh root@$target ln -s /proc/mounts /etc/mtab
-    $rsh $target sshfs -o ssh_command="ssh -o IdentityFile=$home/.ssh/$(basename "$privkey") -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@$(hostname):$shared_dir" "$shared_dir"
+    $rsh $target sshfs -o ssh_command="ssh $host_ssh_opts -o IdentityFile=$home/.ssh/$(basename "$privkey") -o StrictHostKeyChecking=no" "$USER@$(hostname):$shared_dir" "$shared_dir"
     echo $target:$port shared directory $shared_dir
 fi
 
@@ -226,4 +259,11 @@ if $finish_session; then
     $schroot /etc/init.d/ssh stop || true
     ssh $target_ssh_opts $target schroot -e -c session:tcwg-test-$port
     echo $target:$port finished session
+fi
+
+if [ "x$board_exp" != "x" ] ; then
+    lava_job_id="$(grep "^set_board_info lava_job_id " $board_exp | sed -e "s/^set_board_info lava_job_id //")"
+    if [ "x$lava_job_id" != "x" ] && $finish_session; then
+	lava-tool cancel-job http://maxim-kuvyrkov@validation.linaro.org/RPC2/ $lava_job_id
+    fi
 fi
