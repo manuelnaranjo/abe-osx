@@ -1,0 +1,8 @@
+global env
+if {[info exists env(SCHROOT_PORT)]} {
+    set_board_info rsh_prog "/usr/bin/ssh -o Port=[getenv SCHROOT_PORT] -o StrictHostKeyChecking=no"
+    set_board_info rcp_prog "/usr/bin/scp -o Port=[getenv SCHROOT_PORT] -o StrictHostKeyChecking=no"
+}
+if {[info exists env(SCHROOT_SHARED_DIR)]} {
+    set_board_info shared_dir "[getenv SCHROOT_SHARED_DIR]"
+}
