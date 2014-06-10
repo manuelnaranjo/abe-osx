@@ -231,9 +231,9 @@ checkout()
 	    fi
 	    if test ! -d ${srcdir}; then
 		notice "Creating branch for ${tool} in ${srcdir}"
-#		dryrun "git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}"
-		dryrun "git clone --local ${local_snapshots}/${repo} ${branchdir}"
-		dryrun "(cd ${branchdir} && git checkout ${branch})"
+		dryrun "git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}"
+#		dryrun "git clone --local ${local_snapshots}/${repo} ${branchdir}"
+#		dryrun "(cd ${branchdir} && git checkout ${branch})"
 		if test x"${revision}" != x; then
 		    dryrun "(cd ${branchdir} && git checkout ${revision})"
 		fi
