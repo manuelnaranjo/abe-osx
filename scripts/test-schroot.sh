@@ -129,7 +129,7 @@ if $gen_schroot; then
 
     # Make sure machine in the lab agree on what time it is.
     ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org
+	sudo ntpdate pool.ntp.org || true
 
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
@@ -182,7 +182,7 @@ fi
 if ! [ -z "$schroot_master" ]; then
     # Make sure machine in the lab agree on what time it is.
     ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org
+	sudo ntpdate pool.ntp.org || true
 
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
