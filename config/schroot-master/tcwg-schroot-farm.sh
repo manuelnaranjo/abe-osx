@@ -40,6 +40,14 @@ for m in $(for i in `seq 1 8`; do echo linaro@tcwgchromebook0$i; done) $(for i i
 	pids="$pids $!"
     done
 done
+# Copy Aarch64 and ARM 32-bit chroots to AArch64 boards.
+for m in $(for i in `seq 1 3`; do echo linaro@tcwg-apm-0$i; done); do
+    for a in aarch64-linux-gnu arm-linux-gnueabi arm-linux-gnueabihf; do
+	eval $test_schroot -c $master -a $a $m &
+	pids="$pids $!"
+    done
+done
+
 
 wait $pids
 echo ALL DONE
