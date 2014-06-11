@@ -45,8 +45,7 @@ triplet_to_deb_arch()
     set -e
     case "$1" in
 	aarch64-*linux-gnu) echo arm64 ;;
-	arm-*linux-gnueabi) echo armel ;;
-	arm-*linux-gnueabihf) echo armhf ;;
+	arm-*linux-gnueabi*) echo armhf ;;
 	i686-*linux-gnu) echo i386 ;;
 	mips-*linux-gnu) echo mips ;;
 	mipsel-*linux-gnu) echo mipsel ;;
@@ -61,8 +60,7 @@ triplet_to_deb_dist()
     set -e
     case "$arch" in
 	aarch64-*linux-gnu) echo trusty ;;
-	arm-*linux-gnueabi) echo wheezy ;;
-	arm-*linux-gnueabihf) echo trusty ;;
+	arm-*linux-gnueabi*) echo trusty ;;
 	i686-*linux-gnu) echo trusty ;;
 	mips-*linux-gnu) echo wheezy ;;
 	mipsel-*linux-gnu) echo wheezy ;;
