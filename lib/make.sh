@@ -153,9 +153,9 @@ build_all()
         binary_toolchain
         binary_sysroot
         binary_gdb
+	notice "Packaging took ${SECONDS} seconds"
     fi
 
-    notice "Packaging took ${SECONDS} seconds"
 
     return 0
 }
@@ -552,7 +552,11 @@ make_check()
     if test x"${build}" = x"${target}"; then
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     else
-	dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	if test x"${tool}" = x"binutils"; then
+	    dryrun "make check-binutils CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	else
+	    dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	fi
     fi
     
     return 0
