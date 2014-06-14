@@ -541,7 +541,9 @@ make_check()
     # see if the users wants multiple make jobs, which we ignore for native
     # ARM or AARCH64 as the hardware can't handle the load.
     if test x"${parallel}" = x"yes" -a "`echo ${build} | egrep -c 'arm|aarch64'`" -eq 0; then
-     	make_flags="${make_flags} -j ${cpus}"
+        # Run tests with twice the parallelism to compensate for wait during
+        # target execution.
+	make_flags="${make_flags} -j $((2*$cpus))"
     fi
 
     # load the config file for Linaro build farms
