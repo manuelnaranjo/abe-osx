@@ -31,7 +31,7 @@ case "$target_triplet" in {
 		set target_list { arm-odroidU2 }
 	    }
 	    { tcwgbuild* } {
-		set target_list { tcwgblack }
+		set target_list { tcwgd01 }
 	    }
 	}
     }
@@ -43,9 +43,7 @@ case "$target_triplet" in {
 	set target_list { "arm-qemu" } 
     }
     { "aarch64_be-*-elf*" } {
-	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $benewlib -specs=rdimon.specs"
-	set SIM "setarch x86_64 -R qemu-aarch64"
+	puts "No target hardware for $target_triplet"
     }
     { "aarch64-*-elf*" } {
 	set target_list { "arm-sim" }
@@ -58,10 +56,14 @@ case "$target_triplet" in {
 	puts "No target hardware for $target_triplet"
     }
     { "aarch64-*-linux*" } {
-	global SIM
-	set target_list { "arm-sim" }
-	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
-	set SIM "setarch x86_64 -R qemu-aarch64"
+	if {} {
+	    global SIM
+	    set target_list { "arm-sim" }
+	    set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
+	    set SIM "setarch x86_64 -R qemu-aarch64"
+	} else {
+	    set target_list { tcwgapm }
+	}
     }
     { "*-linux-gnu*" } {
 	set myname [get_local_hostname]
