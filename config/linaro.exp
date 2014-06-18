@@ -17,26 +17,22 @@ set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
 set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
 
 case "$target_triplet" in { 
-    { "armeb-*"} {	
+    { "armeb*-*"} {
 	puts "No target hardware for $target_triplet"
     }
-    { "arm*-*-gnueabi"} {
-	puts "No target hardware for $target_triplet"
-    }
-    { "arm-*-gnueabihf"} {
+    { "arm*-linux-gnueabi*"} {
 	set myname [get_local_hostname]
 	case "$myname" in {
 	    { tcwgrob* } {
 #               set target_list { tcwgblack tcwgchromebook }
 		set target_list { arm-odroidU2 }
 	    }
-	    { tcwgbuild* } {
+	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgd01 }
 	    }
 	}
     }
-    
-    { "arm*-*elf*"} { 
+    { "arm*-elf*"} {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
@@ -45,7 +41,7 @@ case "$target_triplet" in {
     { "aarch64_be-*-elf*" } {
 	puts "No target hardware for $target_triplet"
     }
-    { "aarch64-*-elf*" } {
+    { "aarch64*-elf*" } {
 	set target_list { "arm-sim" }
 	set board_info(arm-sim,sim,cflags) " -specs=rdimon.specs"
 	set board_info(arm-sim,sim,ldflags) " -specs=rdimon.specs"
@@ -56,19 +52,17 @@ case "$target_triplet" in {
 	puts "No target hardware for $target_triplet"
     }
     { "aarch64-*-linux*" } {
-	if {} {
-	    global SIM
-	    set target_list { "arm-sim" }
-	    set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
-	    set SIM "setarch x86_64 -R qemu-aarch64"
-	} else {
-	    set target_list { tcwgapm }
+	set myname [get_local_hostname]
+	case "$myname" in {
+	    { tcwgbuild* toolchain64 } {
+		set target_list { tcwgapm }
+	    }
 	}
     }
     { "*-linux-gnu*" } {
 	set myname [get_local_hostname]
 	case "$myname" in {
-	    { tcwgbuild* } {
+	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgbuild }
 	    }
 	}
