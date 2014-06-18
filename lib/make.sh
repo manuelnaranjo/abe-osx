@@ -299,11 +299,10 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-    if test x"${parallel}" = x"yes" -a "`echo ${build} | egrep -c arm`" -gt 0; then
+    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c arm` -gt 0; then
 	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
-	else
+    else
 	    local make_flags="${make_flags} -j ${cpus}"
-	fi
     fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
