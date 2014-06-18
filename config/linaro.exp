@@ -38,7 +38,7 @@ case "$target_triplet" in {
 	set SIM "qemu-arm"
 	set target_list { "arm-qemu" } 
     }
-    { "aarch64_be-*-elf*" } {
+    { "aarch64_be*-elf*" } {
 	puts "No target hardware for $target_triplet"
     }
     { "aarch64*-elf*" } {
@@ -51,7 +51,7 @@ case "$target_triplet" in {
     { "aarch64_be*-linux*" } {
 	puts "No target hardware for $target_triplet"
     }
-    { "aarch64-*-linux*" } {
+    { "aarch64*-linux*" } {
 	set myname [get_local_hostname]
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 } {
