@@ -9,14 +9,13 @@ shared_dir=""
 board_exp=""
 finish_session=false
 gen_schroot=false
-pubkey=""
 sysroot=""
 ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
-privkey=""
+multilib_path="lib"
 
-while getopts "a:bc:d:e:fgk:l:mo:p:qs:v" OPTION; do
+while getopts "a:bc:d:e:fgh:l:mo:p:qv" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
@@ -25,13 +24,12 @@ while getopts "a:bc:d:e:fgk:l:mo:p:qs:v" OPTION; do
 	e) board_exp="$OPTARG" ;;
 	f) finish_session=true ;;
 	g) gen_schroot=true ;;
-	k) pubkey=$OPTARG ;;
+	h) multilib_path="$OPTARG" ;;
 	l) sysroot=$OPTARG ;;
 	m) ssh_master=true ;;
 	o) target_ssh_opts="$OPTARG" ;;
 	p) host_ssh_opts="$OPTARG" ;;
 	q) exec > /dev/null ;;
-	s) privkey=$OPTARG ;;
 	v) set -x ;;
     esac
 done
@@ -200,39 +198,43 @@ if $begin_session; then
     $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
     $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
+    # Crouton needs firewall rule.
     $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT || true
     # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
     $schroot chmod +x /bin/fusermount || true
-    echo $target:$port started schroot: $rsh $target
-fi
 
-if ! [ -z "$pubkey" ]; then
     $schroot mkdir -p /root/.ssh
-    $schroot bash -c "'cat > /root/.ssh/authorized_keys'" < "$pubkey"
+    ssh $target_ssh_opts $target cat .ssh/authorized_keys | $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
     $schroot chmod 0600 /root/.ssh/authorized_keys
 
     $rsh root@$target rsync -a /root/ $home/
     $rsh root@$target chown -R $user $home/
 
-    echo $target:$port imported ssh pubkey $pubkey
-fi
-
-if ! [ -z "$privkey" ]; then
-    scp $rsh_opts "$privkey" $target:.ssh/
-    echo $target:$port imported ssh privkey $privkey
+    echo $target:$port started schroot: $rsh $target
 fi
 
 if ! [ -z "$shared_dir" ]; then
-    if [ -z "$privkey" ]; then
-	echo ERROR: cannot share directory without privkey
-    fi
+    # Generate a one-time key to allow ssh back to host.
+    ssh-keygen -t rsa -N "" -C "test-schroot.$$" -f ~/.ssh/id_rsa-test-schroot.$$
+    echo >> ~/.ssh/authorized_keys
+    cat ~/.ssh/id_rsa-test-schroot.$$.pub >> ~/.ssh/authorized_keys
+    scp $rsh_opts ~/.ssh/id_rsa-test-schroot.$$ $target:.ssh/
 
     $rsh root@$target mkdir -p "$shared_dir"
     $rsh root@$target chown -R $user "$shared_dir"
 
     $rsh root@$target rm -f /etc/mtab
     $rsh root@$target ln -s /proc/mounts /etc/mtab
-    $rsh $target sshfs -o ssh_command="ssh $host_ssh_opts -o IdentityFile=$home/.ssh/$(basename "$privkey") -o StrictHostKeyChecking=no" "$USER@$(hostname):$shared_dir" "$shared_dir"
+    tmp_ssh_port="$(($port-10000))"
+    host_ssh_port="$(grep "^Port" /etc/ssh/sshd_config | sed -e "s/^Port //")"
+    # Establish port forwarding
+    $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
+    $rsh $target sshfs -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
+
+    # Remove temporary key and delete extra empty lines at the end of file.
+    sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
+    rm ~/.ssh/id_rsa-test-schroot.$$*
+
     echo $target:$port shared directory $shared_dir
 fi
 
@@ -240,8 +242,8 @@ if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
     # Make sure that sysroot libraries are searched before any other.
     $rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
-/lib
-/usr/lib
+/$multilib_path
+/usr/$multilib_path
 EOF
     $rsh root@$target "cat /etc/ld.so.conf >> /etc/ld.so.conf.new"
     $rsh root@$target "mv /etc/ld.so.conf.new /etc/ld.so.conf && rsync -a --exclude=/sysroot /sysroot/ / && ldconfig"
