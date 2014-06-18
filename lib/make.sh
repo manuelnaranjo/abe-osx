@@ -299,12 +299,13 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-    # FIXME: see if the users wants multiple make jobs, which we ignore for
-    # native ARM or AARCH64 as the hardware can't handle the load, and usually
-    # don't have enough memory either.
-    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
-     	local make_flags="${make_flags} -j ${cpus}"
+    if test x"${parallel}" = x"yes" -a "`echo ${build} | egrep -c arm`" -gt 0; then
+	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
+	else
+	    local make_flags="${make_flags} -j ${cpus}"
+	fi
     fi
+
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi 
@@ -317,6 +318,9 @@ make_all()
     case ${tool} in
 	gdb)
 	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
+	binutils)
+	    dryrun "make all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
 	    ;;
 	zlib)
 	    dryrun "make -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
@@ -357,10 +361,8 @@ make_install()
 {
     trace "$*"
 
-    # see if the users wants multiple make jobs, which we ignore for native
-    # ARM or AARCH64 as the hardware can't handle the load.
-    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c "arm|aarch64"` -eq 0; then
-     	local make_flags="${make_flags} -j ${cpus}"
+    if test x"${parallel}" = x"yes"; then
+	local make_flags="${make_flags} -j ${cpus}"
     fi
 
     local tool="`get_toolname $1`"
@@ -381,10 +383,10 @@ make_install()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making install in ${builddir}"
 
-    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j $cpus}\""
-    dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${sysroots}/lib/"
-    fi
+#    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
+#	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j $cpus}\""
+#        dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${sysroots}/lib/"
+#    fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
     # like parallel jobs. We also change tooldir, so the headers and libraries
@@ -404,7 +406,7 @@ make_install()
 	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
 	# due to an info file problem, so we ignore the error so the build
 	# will continue.
-	dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "make install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
 	if test x"${tool}" = x"gdb"; then
 	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
@@ -538,12 +540,8 @@ make_check()
 #	return 0
 #    fi
 
-    # see if the users wants multiple make jobs, which we ignore for native
-    # ARM or AARCH64 as the hardware can't handle the load.
-    if test x"${parallel}" = x"yes" -a "`echo ${build} | egrep -c 'arm|aarch64'`" -eq 0; then
-        # Run tests with twice the parallelism to compensate for wait during
-        # target execution.
-	make_flags="${make_flags} -j $((2*$cpus))"
+    if test x"${parallel}" = x"yes"; then
+	local make_flags="${make_flags} -j ${cpus}"
     fi
 
     # load the config file for Linaro build farms
