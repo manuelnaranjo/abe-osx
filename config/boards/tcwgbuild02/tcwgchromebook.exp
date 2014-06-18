@@ -1,3 +1,3 @@
-load_generic_config tcwgchromebook-common
+load_generic_config tcwg-common
 
 set_board_info hostname tcwgchromebook02
