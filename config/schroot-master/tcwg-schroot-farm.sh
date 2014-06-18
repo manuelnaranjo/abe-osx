@@ -34,7 +34,7 @@ for m in $(for i in `seq 2 6`; do echo tcwgbuild0$i; done); do
     done
 done
 # Copy ARMv7 hard-fp and soft-fp chroots to all chromebooks and some blacks.
-for m in $(for i in `seq 1 8`; do echo linaro@tcwgchromebook0$i; done) $(for i in `seq 1 6`; do echo tcwgblack0$i; done); do
+for m in linaro@tcwg-d01-01 linaro@tcwg-d01-02 $(for i in `seq 1 8`; do echo linaro@tcwgchromebook0$i; done) $(for i in `seq 1 6`; do echo tcwgblack0$i; done); do
     for a in arm-linux-gnueabi arm-linux-gnueabihf; do
 	eval $test_schroot -c $master -a $a $m &
 	pids="$pids $!"
