@@ -321,7 +321,7 @@ make_all()
 	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
 	binutils)
-	    dryrun "make all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
+	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
 	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
@@ -401,7 +401,7 @@ make_install()
 	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
 	# due to an info file problem, so we ignore the error so the build
 	# will continue.
-	dryrun "make install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "make install-gas install-ld install-gprof install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
 	if test x"${tool}" = x"gdb"; then
 	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
