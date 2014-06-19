@@ -299,11 +299,11 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c arm` -gt 0; then
-	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
-    else
+#    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c arm` -gt 0; then
+#	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
+#    else
 	    local make_flags="${make_flags} -j ${cpus}"
-    fi
+#    fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
@@ -314,15 +314,14 @@ make_all()
     fi
 
     local makeret=
+    # GDB and Binutils share the same top level files, so we have to explicitly build
+    # one or the other, or we get duplicates.
     case ${tool} in
 	gdb)
 	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
 	binutils)
 	    dryrun "make all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
-	    ;;
-	zlib)
-	    dryrun "make -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
 	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
@@ -331,13 +330,11 @@ make_all()
 
     local makeret=$?
 
-    if test x"${tool}" != x"zlib"; then
-	local errors="`grep Error ${builddir}/make.log`"
-	if test x"${errors}" != x; then
-	    if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
-		error "Couldn't build ${tool}: ${errors}"
-		exit
-	    fi
+    local errors="`egrep ' error:|Error' ${builddir}/make.log`"
+    if test x"${errors}" != x; then
+	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
+	    error "Couldn't build ${tool}: ${errors}"
+	    exit 1
 	fi
     fi
 
@@ -382,10 +379,9 @@ make_install()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making install in ${builddir}"
 
-#    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-#	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j $cpus}\""
-#        dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${sysroots}/lib/"
-#    fi
+    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
+	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j $cpus}\""
+    fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
     # like parallel jobs. We also change tooldir, so the headers and libraries
@@ -552,9 +548,9 @@ make_check()
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     else
 	if test x"${tool}" = x"binutils"; then
-	    dryrun "make check-binutils CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	else
-	    dryrun "make check CFLAGS=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
     fi
     
