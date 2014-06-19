@@ -139,6 +139,11 @@ fi
 # the stage2 bootstrap build.
 $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --timeout 100 --build all
 
+# If cbuild2 returned an error, make jenkins see this as a build failure
+if test $? -gt 0; then
+    exit 1
+fi
+
 # Create the BUILD-INFO file for Jenkins.
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
