@@ -330,7 +330,7 @@ make_all()
 
     local makeret=$?
 
-    local errors="`egrep ' error:|Error' ${builddir}/make.log`"
+    local errors="`egrep 'configure: error:|Error' ${builddir}/make.log`"
     if test x"${errors}" != x; then
 	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
@@ -398,14 +398,14 @@ make_install()
     fi
 
     if test x"${tool}" = x"binutils"; then
-	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
-	# due to an info file problem, so we ignore the error so the build
-	# will continue.
-	dryrun "make install-gas install-ld install-gprof install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+     	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
+     	# due to an info file problem, so we ignore the error so the build
+     	# will continue.
+     	dryrun "make install-gas install-ld install-gprof install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     else
-	if test x"${tool}" = x"gdb"; then
-	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-	else
+     	if test x"${tool}" = x"gdb"; then
+     	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+     	else
 	    dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
 	fi
     fi
@@ -431,8 +431,7 @@ make_install()
 	# Programmatically determine the embedded glibc version number for
 	# this version of the clibrary.
 	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
-	local dynamic_linker_name=
-	dynamic_linker="`find ${sysroots} -type f -name ld-\*.so`"
+	local dynamic_linker_name="`find ${sysroots} -type f -name ld-\*.so`"
 	if test $? -ne 0; then
 	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
 	    exit 1;
@@ -548,7 +547,11 @@ make_check()
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     else
 	if test x"${tool}" = x"binutils"; then
-	    dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    if test x"$2" = x"gdb"; then		
+		dryrun "make check-gdb CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    else
+		dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    fi
 	else
 	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
