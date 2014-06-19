@@ -330,7 +330,7 @@ make_all()
 
     local makeret=$?
 
-    local errors="`egrep 'configure: error:|Error' ${builddir}/make.log`"
+    local errors="`egrep 'fatal error:|configure: error:|Error' ${builddir}/make.log`"
     if test x"${errors}" != x; then
 	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
