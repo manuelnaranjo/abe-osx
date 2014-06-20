@@ -197,13 +197,16 @@ build()
     
     # Always grab/update the sources to see if we need to rebuild.
     if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
+	# Don't update the compiler sources between stage1 and stage2 builds.
+	if test x"$2" != x"stage2"; then
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo} ${2:+$2}
 	    if test $? -gt 0; then
 		warning "Sources not updated, network error!"
 	    fi
-	#fi
+	fi
     else
+	# Don't update the compiler sources between stage1 and stage2 builds.
 	if test x"$2" != x"stage2"; then
 	    fetch ${gitinfo}
 	    if test $? -gt 0; then
