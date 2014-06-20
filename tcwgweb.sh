@@ -90,8 +90,12 @@ difftwodirs ()
     echo "Diffing: ${prev} against ${next}..."
 #    local pbuild=`echo ${prev} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
 #    local cbuild=`echo ${next} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
-    local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
     local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
+    if test -e ${prev}/manifest.txt; then
+	local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
+    else
+	local pversion=${cversion}
+    fi
     local toplevel="`dirname ${prev}`"
 
     diffdir="${toplevel}/diffof-${pversion}-${cversion}"
@@ -155,7 +159,11 @@ difftwodirs ()
     rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
 
-    xz ${prev}/*.sum
+    # Not all subdirectories have uncompressed sum files
+    local files="`ls ${prev}/*.sum | wc -l`"
+    if test ${files} -gt 0; then
+	xz ${prev}/*.sum
+    fi
     xz ${next}/*.sum ${next}/*.log
 }
 
