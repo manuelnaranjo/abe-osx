@@ -716,19 +716,19 @@ while test $# -gt 0; do
 			binutils_version="`echo ${value}`"
 			;;
 		    gc*|gcc)
-			gcc_version="`echo ${value} | sed -e 's:gcc-::'`"
+			gcc_version="${value}"
 			;;
 		    gm*|gmp)
-			gmp_version="`echo ${value} | sed -e 's:gmp-::'`"
+			gmp_version="${value}"
 			;;
 		    gd*|gdb)
-			gdb_version="`echo ${value} | sed -e 's:gdb-::'`"
+			gdb_version="${value}"
 			;;
 		    mpf*|mpfr)
-			mpfr_version="`echo ${value} | sed -e 's:mpfr-::'`"
+			mpfr_version="${value}"
 			;;
 		    mpc)
-			mpc_version="`echo ${value} | sed -e 's:mpc-::'`"
+			mpc_version="${value}"
 			;;
 		    eglibc|glibc|newlib)
 			# Test if --target follows one of these clibrary set
@@ -751,15 +751,15 @@ while test $# -gt 0; do
 			case ${name} in
 			    eglibc)
 				clibrary="eglibc"
-				eglibc_version="`echo ${value} | sed -e 's:eglibc-::'`"
+				eglibc_version="${value}"
 				;;
 			    glibc)
 				clibrary="glibc"
-				glibc_version="`echo ${value} | sed -e 's:glibc-::'`"
+				glibc_version="${value}"
 				;;
 			    n*|newlib)
 				clibrary="newlib"
-				newlib_version="`echo ${value} | sed -e 's:newlib-::'`"
+				newlib_version="${value}"
 				;;
 			    *)
 				;;
