@@ -30,6 +30,9 @@ case "$target_triplet" in {
 	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgchromebook }
 	    }
+	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
+		set target_list { unix }
+	    }
 	}
     }
     { "arm*-elf*"} {
@@ -56,6 +59,25 @@ case "$target_triplet" in {
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgapm }
+	    }
+	    { tcwg-apm-* localhost } {
+		set target_list { unix }
+	    }
+	}
+    }
+    { "x86_64*-linux-gnu" } {
+	set myname [get_local_hostname]
+	case "$myname" in {
+	    { tcwgbuild* toolchain64 } {
+		set target_list { unix }
+	    }
+	}
+    }
+    { "i686*-linux-gnu" } {
+	set myname [get_local_hostname]
+	case "$myname" in {
+	    { tcwgbuild* toolchain64 } {
+		set target_list { unix }
 	    }
 	}
     }
