@@ -86,13 +86,16 @@ build_all()
 		    return 1
 		fi
 		build_all_ret=$?
-                # If we don't install the sysroot, link to the one we built so
-                # we can use the GCC we just built.
-		local sysroot="`${target}-gcc -print-sysroot`"
-                if test ! -d ${sysroot}; then
-		    dryrun "mkdir -p /opt/linaro"
-	            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
-                fi
+		# Don't create the sysroot if the clibrary build didn't succeed.
+		if test ${build_all_ret} -lt 1; then
+		    # If we don't install the sysroot, link to the one we built so
+		    # we can use the GCC we just built.
+		    local sysroot="`${target}-gcc -print-sysroot`"
+		    if test ! -d ${sysroot}; then
+		        dryrun "mkdir -p /opt/linaro"
+		        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+		    fi
+		fi
 		;;
 	    stage1)
 		build ${gcc_version} stage1
@@ -190,15 +193,9 @@ build()
     # The stamp is in the buildir's parent directory.
     local stampdir="`dirname ${builddir}`"
 
-    check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
-    if test $? -eq 0; then
-	if test x"${runtests}" != xyes; then
-	    return 0 
-	fi
-    fi
-
     notice "Building ${tag}${2:+ $2}"
     
+    # Always grab/update the sources to see if we need to rebuild.
     if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo} ${2:+$2}
@@ -219,6 +216,20 @@ build()
 		return 1
 	    fi
 	fi
+    fi
+
+    # We don't need to build if the srcdir has not changed!  We check the
+    # build stamp against the timestamp of the srcdir.
+    local ret=
+    check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
+    ret=$?
+    if test $ret -eq 0; then
+	if test x"${runtests}" != xyes; then
+	    return 0 
+	fi
+    elif test $ret -eq 255; then
+	# Don't proceed if the srcdir isn't present.  What's the point?
+	return 1
     fi
 
     notice "Configuring ${tag}${2:+ $2}"

@@ -64,10 +64,15 @@ fetch()
     fi
 
     if test -e "${local_snapshots}/${md5file}"; then 
+	local ret=
     	# If the tarball hasn't changed, then don't fetch anything
 	check_stamp "${stampdir}" ${stamp} ${local_snapshots}/${md5file} fetch ${force}
-	if test $? -eq 0; then
+	ret=$?
+	if test $ret -eq 0; then
 	    return 0 
+	elif test $ret -eq 255; then
+	    # The compare file ${local_snapshots}/${md5file} is not there.
+	    return 1
 	fi
     else
 	notice "${local_snapshots}/${md5file} does not exist.  Downloading."
@@ -239,10 +244,15 @@ extract()
     # Name of the downloaded tarball.
     local tarball="`dirname ${srcdir}`/${file}"
 
+    local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
     check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
-    if test $? -eq 0; then
+    ret=$?
+    if test $ret -eq 0; then
 	return 0 
+    elif test $ret -eq 255; then
+	# the ${tarball} isn't present.
+	return 1
     fi
 
     # Figure out how to decompress a tarball
