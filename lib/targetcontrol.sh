@@ -100,12 +100,12 @@ controlled_run()
   fi
   # TODO: also fix to a low frequency, so we don't melt?
   # Disable frequency scaling
-  old_governor=$(cpufreq-info -p | cut -f 3 -d " ")
-  if test "x$old_governor" = "x" \
-      || ! $sudo cpufreq-set -g performance; then
-      old_governor=""
-      warning "Frequency scaling not supported"
-  fi
+  #old_governor=$(cpufreq-info -p | cut -f 3 -d " ")
+  #if test "x$old_governor" = "x" \
+  #    || ! $sudo cpufreq-set -g performance; then
+  #    old_governor=""
+  #    warning "Frequency scaling not supported"
+  #fi
 
   # Bind all existing processes to CPU #0.  We then run benchmarks on CPU #1.
   # Note that some processes cannot be bound (e.g. ksoftirqd, which is a per-cpu kernel thread)
@@ -166,12 +166,12 @@ controlled_run()
       done
   fi
 
-  if [ "x$old_governor" != "x" ]; then
-      $sudo cpufreq-set -g $old_governor
-      if test $? -gt 0; then
-          warning "Failed to restore freq"
-      fi
-  fi
+  #if [ "x$old_governor" != "x" ]; then
+  #    $sudo cpufreq-set -g $old_governor
+  #    if test $? -gt 0; then
+  #        warning "Failed to restore freq"
+  #    fi
+  #fi
 
   if test $result -gt 0; then
       error "$cmd failed"
