@@ -28,7 +28,7 @@ case "$target_triplet" in {
 		set target_list { arm-odroidU2 }
 	    }
 	    { tcwgbuild* toolchain64 } {
-		set target_list { tcwgd01 }
+		set target_list { tcwgchromebook }
 	    }
 	}
     }
