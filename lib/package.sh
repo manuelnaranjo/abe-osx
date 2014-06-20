@@ -406,24 +406,6 @@ manifest()
     local srcdir="`get_srcdir ${binutils_version}`"
     local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
 
-    if test x"${eglibc_version}" = x; then
-	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-    fi
-    #local srcdir="`get_srcdir ${eglibc_version}`"
-    #local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-        
-    if test x"${newlib_version}" = x; then
-	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-    fi
-    #local srcdir="`get_srcdir ${newlib_version}`"
-    #local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-        
-    if test x"${glibc_version}" = x; then
-	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-    fi        
-    local srcdir="`get_srcdir ${glibc_version}`"
-    local glibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
@@ -441,22 +423,37 @@ gcc_version=${gcc_version}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
-glibc_version=${glibc_version}
-glibc_revision=${glibc_revision}
 EOF
-    
     case ${clibrary} in
-	eglibc)
-	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
-	    ;;
 	glibc)
+	    local srcdir="`get_srcdir ${glibc_version}`"
+	    if test x"${glibc_version}" = x; then
+	        glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
+	    fi
+	    local glibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+
 	    echo "glibc_version=${glibc_version}" >> ${outfile}
+	    echo "glibc_revision=${glibc_revision}" >> ${outfile}
 	    ;;
 	newlib)
+	    local srcdir="`get_srcdir ${newlib_version}`"
+	    if test x"${newlib_version}" = x; then
+	        newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
+	    fi
+	    local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+
 	    echo "newlib_version=${newlib_version}" >> ${outfile}
+	    echo "newlib_revision=${newlib_revision}" >> ${outfile}
 	    ;;
-	*)
+	eglibc|*)
+	    local srcdir="`get_srcdir ${eglibc_version}`"
+	    if test x"${eglibc_version}" = x; then
+	        eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
+	    fi
+	    local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+
 	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
+	    echo "eglibc_revision=${eglibc_revision}" >> ${outfile}
 	    ;;
     esac
 }
