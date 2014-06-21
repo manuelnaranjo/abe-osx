@@ -557,20 +557,46 @@ make_check()
 	export DEJAGNU=${topdir}/config/linaro.exp
     fi
 
+    # Run tests
     if test x"${build}" = x"${target}"; then
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
     else
+	local exec_tests
+	exec_tests=false
+	case "$tool" in
+	    gcc) exec_tests=true ;;
+	    binutils)
+		if [ x"$2" = x"gdb" ]; then
+		    exec_tests=true
+		fi
+		;;
+	esac
+
+	local -a schroot_boards
+	local schroot_port schroot_port_opt
+	if $exec_tests; then
+	    # Start schroot sessions on target boards that support it
+	    schroot_port="$(print_schroot_port)"
+	    local schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")"
+	    schroot_boards=($(start_schroot_sessions "$target" "$schroot_port" "$schroot_sysroot"))
+	    rm -rf "$schroot_sysroot"
+	    schroot_port_opt="SCHROOT_PORT=$schroot_port"
+	fi
+
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-gdb CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    else
 		dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    fi
 	else
-	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
+
+	# Stop schroot sessions
+	stop_schroot_sessions "$schroot_port" "${schroot_boards[@]}"
     fi
-    
+
     return 0
 }
 
@@ -671,3 +697,37 @@ EOF
     return 0
 }
 
+# Print path to GCC's shared libraries
+# $1 - compiler and its flags
+print_gcc_library_path()
+{
+    set -e
+
+    local compiler="$1"
+    lib_path="$($compiler -print-file-name=libgcc_s.so)"
+    dirname "$lib_path"
+}
+
+# Make a single-use target sysroot with all shared libraries for testing.
+# NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
+# $1 - compiler (and any compiler flags) to query multilib information
+make_target_sysroot()
+{
+    trace "$*"
+    set -e
+
+    local sysroot
+    sysroot=/tmp/sysroot.$$
+    rsync -a $sysroots/ $sysroot/
+
+    local gcc_lib_path
+    gcc_lib_path="$(print_gcc_library_path "$@")"
+
+    local sysroot_lib_dir
+    sysroot_lib_dir="$(find "$sysroot" -type f -name ld-\*.so)"
+    sysroot_lib_dir="$(dirname $sysroot_lib_dir)"
+
+    rsync -a $gcc_lib_path/ $sysroot_lib_dir/
+
+    echo $sysroot
+}
