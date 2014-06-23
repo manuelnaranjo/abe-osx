@@ -108,10 +108,10 @@ build_failure()
 # parse the -- of the following switch.
 check_directive()
 {
-    switch=$1
-    long=$2
-    short=$3
-    directive=$4
+    switch="$1"
+    long="$2"
+    short="$3"
+    directive="$4"
 
     if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
 	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
@@ -653,7 +653,7 @@ while test $# -gt 0; do
 	    testcode
 	    ;;
        --time*|-time*)
-	    check_directive $1 timeout time $2
+	    check_directive $1 timeout "time" $2
 	    if test $2 -lt 11; then
 		wget_timeout=$2
 	    else
@@ -663,7 +663,8 @@ while test $# -gt 0; do
             shift
             ;;
 	# These steps are disabled by default but are sometimes useful.
-	--enable)
+	--enable*)
+	    check_directive $1 "enable" "enable" $2
 	    case $2 in
 		bootstrap|b*)
 		    bootstrap=yes
@@ -671,17 +672,27 @@ while test $# -gt 0; do
 		alltests|b*)
 		    alltests=yes
 		    ;;
+
+		*)
+		    error "$2 not recognized as a valid --enable directive."
+		    build_failure
+		    ;;
 	    esac
 	    shift
 	    ;;
 	# These are enabled by default, but not always desired.
-	--disable)
+	--disable*)
+	    check_directive $1 "disable" "disable" $2
 	    case $2 in
 		install|i*)
 		    install=no
 		    ;;
 		update|u*)
 		    supdate=no
+		    ;;
+		*)
+		    error "$2 not recognized as a valid --disable directive."
+		    build_failure
 		    ;;
 	    esac
 	    shift
