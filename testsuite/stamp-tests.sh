@@ -14,9 +14,9 @@ test_get_stamp_name()
 {
     local buglineno=$BASH_LINENO
     local feature="get"
-    local in=$1
-    local match=$2
-    local errmatch=$3
+    local in="$1"
+    local match="$2"
+    local errmatch="$3"
     local ret=
     local out=
 
@@ -151,9 +151,9 @@ test_check_stamp()
 {
     local buglineno=$BASH_LINENO
     local feature="check"
-    local testing=$1
-    local in=$2
-    local match=$3
+    local testing="$1"
+    local in="$2"
+    local match="$3"
     local ret=
     local out=
 
@@ -185,9 +185,9 @@ test_create_stamp()
 {
     local buglineno=$BASH_LINENO
     local feature="create"
-    local testing=$1
-    local in=$2
-    local match=$3
+    local testing="$1"
+    local in="$2"
+    local match="$3"
     local ret=
     local out=
 

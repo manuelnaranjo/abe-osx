@@ -11,7 +11,7 @@ git_parser_fixme()
 
 get_git_foo()
 {
-    local in=$1
+    local in="$1"
     local out=
     local ret=
     out="`git_parser foo ${in}`"
@@ -23,10 +23,10 @@ get_git_foo()
 test_parser()
 {
     local buglineno=$BASH_LINENO
-    local feature=$1
-    local in=$2
-    local match=$3
-    local errmatch=$4
+    local feature="$1"
+    local in="$2"
+    local match="$3"
+    local errmatch="$4"
     local ret=
     local out=
     if test x"${debug}" = x"yes"; then

@@ -1262,11 +1262,11 @@ echo "================================================"
 
 test_checkout ()
 {
-    local should=$1
-    local testing=$2
-    local package=$3
-    local branch=$4
-    local revision=$5
+    local should="$1"
+    local testing="$2"
+    local package="$3"
+    local branch="$4"
+    local revision="$5"
 
     #in="${package}${branch:+/${branch}}${revision:+@${revision}}"
     in="${package}${branch:+~${branch}}${revision:+@${revision}}"

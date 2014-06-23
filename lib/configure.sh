@@ -45,9 +45,14 @@ configure_build()
     # parent directory.
     local stampdir="`dirname ${builddir}`"
 
+    local ret=
     check_stamp "${stampdir}" ${stamp} ${srcdir} configure ${force}
-    if test $? -eq 0; then
+    ret=$?
+    if test $ret -eq 0; then
 	return 0 
+    elif test $ret -eq 255; then
+	# This means that the compare file ${srcdir} is not present.
+	return 1
     fi
 
     if test ! -d "${builddir}"; then

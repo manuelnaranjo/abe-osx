@@ -194,8 +194,14 @@ fi
 
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
+    # Set ssh port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
+    # Run as root
     $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
+    # Increase number of incoming connections from 10 to 256
+    $schroot sed -i -e "\"/.*MaxStartups.*/d\"" -e "\"/.*MaxSesssions.*/d\"" /etc/ssh/sshd_config
+    $schroot bash -c "\"echo \\\"MaxStartups 256\\\" >> /etc/ssh/sshd_config\""
+    $schroot bash -c "\"echo \\\"MaxSessions 256\\\" >> /etc/ssh/sshd_config\""
     $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.

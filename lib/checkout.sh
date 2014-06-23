@@ -232,6 +232,10 @@ checkout()
 	    if test ! -d ${srcdir}; then
 		notice "Creating branch for ${tool} in ${srcdir}"
 		dryrun "git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}"
+		if test $? -gt 0; then
+		    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+		    return 1
+		fi
 #		dryrun "git clone --local ${local_snapshots}/${repo} ${branchdir}"
 #		dryrun "(cd ${branchdir} && git checkout ${branch})"
 		if test x"${revision}" != x; then
