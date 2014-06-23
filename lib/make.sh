@@ -453,7 +453,7 @@ make_install()
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
-	dryrun "(rm ${sysroots}/lib/ld-linux-aarch64.so.1)"
+	dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
 	dryrun "(cp ${sysroots}/lib64/${dynamic_linker_name} ${sysroots}/lib/ld-linux-aarch64.so.1)"
     fi
 
