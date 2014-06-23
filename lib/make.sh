@@ -337,6 +337,9 @@ make_all()
 	binutils)
 	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
 	    ;;
+	newlib)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
@@ -441,7 +444,7 @@ make_install()
 
     # FIXME: For some reason qemu-aarch doesn't link the symlink, so we
     # replace it with the actual file.
-    if test x"${tool}" = x"glibc" -o x"${tool}" = x"eglibc" -a "`echo ${target} | grep -c aarch64`" -gt 0; then
+    if test "`echo ${tool} | grep -c eglibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
 	# Programmatically determine the embedded glibc version number for
 	# this version of the clibrary.
 	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
@@ -453,7 +456,7 @@ make_install()
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
-	dryrun "(rm ${sysroots}/lib/ld-linux-aarch64.so.1)"
+	dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
 	dryrun "(cp ${sysroots}/lib64/${dynamic_linker_name} ${sysroots}/lib/ld-linux-aarch64.so.1)"
     fi
 
@@ -590,7 +593,7 @@ make_check()
 		dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    fi
 	else
-	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check CFLAGS_FOR_TARGET=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
 
 	# Stop schroot sessions

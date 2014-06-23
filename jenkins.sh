@@ -24,7 +24,7 @@ shared="/home/buildslave/workspace/shared/"
 
 # This is the source directory for Cbuildv2. Jenkins specifies this
 # sub directory when it does a git clone or pull of Cbuildv2.
-cbuild_dir="${shared}/cbuildv2"
+cbuild_dir="${WORKSPACE}/cbuildv2"
 
 if test x"${tarsrc}" = xtrue; then
     tars="--tarsrc"
@@ -276,7 +276,11 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	cat ${logs} > ${WORKSPACE}/make.log
 	scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
 	ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
-	ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb.sh --email --base ${basedir}/${dir}
+	scp ${cbuild_dir}/cbuild2/tcwgweb.sh toolchain64.lab:/tmp/tcwgweb$$.sh
+	ssh toolchain64.lab /work/cbuildv2/cbuild2/tcwgweb$$.sh --email --base ${basedir}/${dir}
+	ssh toolchain64.lab rm /work/cbuildv2/cbuild2/tcwgweb$$.sh
+
+	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"

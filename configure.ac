@@ -110,11 +110,11 @@ if test x"${AUTOGEN}" = x; then
 fi
 
 dnl Building GDB requires ncurses and termcap
-AC_CHECK_LIB(ncurses, doupdate)
-if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
-   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
-   missing="${missing} libncurses5-dev"
-fi
+#AC_CHECK_LIB(ncurses, doupdate)
+#if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+#   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
+#   missing="${missing} libncurses5-dev"
+#fi
 AC_CHECK_LIB(z, gzread)
 
 dnl Look for packages that do not have executables, so we are forced
@@ -129,7 +129,7 @@ result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
-       packages="${packages} gcc-multilib g++-multilib"   
+       packages="${packages} gcc-multilib g++-multilib libncurses5-dev"
     fi
     for i in ${packages}; do
     AC_MSG_CHECKING([if $i is installed])
@@ -148,6 +148,7 @@ else
 yum="`which yum 2> /dev/null`"
 result=$?
 if test ${result} -eq 0; then
+    packages="${packages} ncurses-devel"
     for i in ${packages}; do
         AC_MSG_CHECKING([if $i is installed])
         exists="`rpm -q -a $i| grep -c $i`"
