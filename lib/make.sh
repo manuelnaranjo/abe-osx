@@ -337,6 +337,9 @@ make_all()
 	binutils)
 	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
 	    ;;
+	newlib)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
@@ -567,7 +570,7 @@ make_check()
 		dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    fi
 	else
-	    dryrun "make check CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check CFLAGS_FOR_TARGET=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
     fi
     
