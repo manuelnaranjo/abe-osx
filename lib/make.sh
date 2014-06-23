@@ -441,7 +441,7 @@ make_install()
 
     # FIXME: For some reason qemu-aarch doesn't link the symlink, so we
     # replace it with the actual file.
-    if test x"${tool}" = x"glibc" -o x"${tool}" = x"eglibc" -a "`echo ${target} | grep -c aarch64`" -gt 0; then
+    if test "`echo ${tool} | grep -c eglibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
 	# Programmatically determine the embedded glibc version number for
 	# this version of the clibrary.
 	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
