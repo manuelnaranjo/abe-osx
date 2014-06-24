@@ -704,8 +704,6 @@ EOF
 # $1 - compiler and its flags
 print_gcc_library_path()
 {
-    set -e
-
     local compiler="$1"
     lib_path="$($compiler -print-file-name=libgcc_s.so)"
     dirname "$lib_path"
@@ -717,7 +715,6 @@ print_gcc_library_path()
 make_target_sysroot()
 {
     trace "$*"
-    set -e
 
     local sysroot
     sysroot=/tmp/sysroot.$$

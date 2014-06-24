@@ -5,7 +5,6 @@
 print_schroot_board_files()
 {
     trace "$*"
-    set -e
 
     local target="$1"
 
@@ -25,7 +24,6 @@ print_schroot_board_files()
 print_schroot_port()
 {
     trace "$*"
-    set -e
 
     # Set build_n to the last digit appearing in hostname.
     # E.g., tcwgbuild04 becomes "4" (and so does x86_64).
@@ -48,7 +46,6 @@ print_schroot_port()
 start_schroot_sessions()
 {
     trace "$*"
-    set -e
 
     local target="$1"
     local port="$2"
@@ -97,7 +94,6 @@ start_schroot_sessions()
 stop_schroot_sessions()
 {
     trace "$*"
-    set -e
 
     local port="$1"
     shift 1
