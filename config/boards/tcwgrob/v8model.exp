@@ -26,7 +26,11 @@ set cpuinit /linaro/build/x86_64-linux-gnu/cbuild2/master/builds/x86_64-unknown-
 
 # This is the model itself. It's bit brain dead in that it only can be executed with a
 # full absolute path.
-set_board_info model "/linaro/src/linaro/linaro-aarch64/FoundationModel/Foundation_v8pkg/Foundation_v8"
+if {[info exists env(FOUNDATION_MODEL)]} {
+    set_board_info model "$env(FOUNDATION_MODEL)"
+} else {
+    error "Set FOUNDATION_MODEL in your environment to execute remote tests"
+}
 
 set_board_info cflags  "-specs=rdimon.specs -Wl,$cpuinit -Wl,-Ttext-segment=0x80000000 [libgloss_link_flags] [newlib_link_flags]"
 
