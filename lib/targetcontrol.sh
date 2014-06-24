@@ -32,6 +32,7 @@ stop_services()
           #keep="$keep\lightdm\|binfmt-support"  #For Ubuntu chroot
           keep="$keep\|auto-serial-console" #For Linaro dist target
 	  keep="$keep\|tty1"
+          keep="$keep\|rcS" #For (just lava?) highbank
       fi
 
       for s in $($sudo initctl list | grep running | cut -f 1 -d " "); do
