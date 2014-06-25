@@ -233,6 +233,7 @@ if ! [ -z "$shared_dir" ]; then
     $rsh root@$target ln -s /proc/mounts /etc/mtab
     tmp_ssh_port="$(($port-10000))"
     host_ssh_port="$(grep "^Port" /etc/ssh/sshd_config | sed -e "s/^Port //")"
+    test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
     $rsh $target sshfs -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
