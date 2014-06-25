@@ -514,7 +514,8 @@ while test $# -gt 0; do
 	    host=$2
 	    shift
 	    ;;
-	--manifest|-m*)
+	--manifest*|-m*)
+	    check_directive $1 manifest "m" $2
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
 		. $2
@@ -525,7 +526,8 @@ while test $# -gt 0; do
 	--inf*|infrastructure)
 	    infrastructure
 	    ;;
-	--pr*|--prefix)
+	--pr*|--prefix*)
+	    check_directive $1 prefix "pr" $2
 	    prefix=$2
 	    shift
 	    ;;
@@ -697,11 +699,13 @@ while test $# -gt 0; do
 	    esac
 	    shift
 	    ;;
-	--merge)
+	--merge*)
+	    check_directive $1 merge merge $2
 	    merge_branch $2
 	    shift
 	    ;;
-	--merge-diff)
+	--merge-diff*)
+	    check_directive $1 "merge-diff" "merge-diff" $2
 	    merge_diff $2
 	    shift
 	    ;;

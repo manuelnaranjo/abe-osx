@@ -1,0 +1,56 @@
+# Copyright (C) 2014 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DejaGnu; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+load_generic_config "aarch64-fv8"
+
+# Use the ARM Foundation Model for the armv8
+set_board_info protocol v8model
+
+# This is the model itself. It's bit brain dead in that it only can be executed with a
+# full absolute path, and can be installed anywhere in the file system.
+if {[info exists env(FOUNDATION_MODEL)]} {
+    set_board_info model "$env(FOUNDATION_MODEL)"
+} else {
+    error "Set FOUNDATION_MODEL in your environment to execute remote tests!"
+}
+
+# Find the sysroot, so if can be used to locate the cpu init object file.
+set compiler  "[find_gcc]"
+set ret [local_exec "$compiler --print-sysroot" "" "" $timeout]
+if { [lindex $ret 0] == 0 } {
+    set sysroot "[lindex $ret 1]"
+    # Strip the CR or LF off the end of the line as returned by GCC
+    regsub -all "\[\n\r\]+" $sysroot "" sysroot
+}
+
+# This is needed in addition to the spec file.
+set cpuinit "$sysroot/usr/lib/cpu-init/rdimon-aem-el3.o"
+
+set_board_info cflags  "-specs=rdimon.specs -Wl,$cpuinit -Wl,-Ttext-segment=0x80000000 [libgloss_link_flags] [newlib_link_flags]"
+
+# Can't pass arguments to the program.
+set_board_info noargs 1
+
+# No support for signals.
+set_board_info gdb,nosignals 1
+
+# The simulator doesn't return exit statuses and we need to indicate this.
+set_board_info needs_status_wrapper  1
+
+# We are on a very slow simulator :-)
+set_board_info slow_simulator 1
