@@ -581,7 +581,7 @@ make_check()
 	    # Start schroot sessions on target boards that support it
 	    schroot_port="$(print_schroot_port)"
 	    local schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")"
-	    schroot_boards=($(start_schroot_sessions "$target" "$schroot_port" "$schroot_sysroot"))
+	    schroot_boards=($(start_schroot_sessions "$target" "$schroot_port" "$schroot_sysroot" "$builddir"))
 	    rm -rf "$schroot_sysroot"
 	    schroot_port_opt="SCHROOT_PORT=$schroot_port"
 	fi

@@ -43,6 +43,7 @@ print_schroot_port()
 # $1 - target triplet
 # $2 - port on which to start ssh server in schroot session
 # $3 - [optional] target sysroot
+# $4 - [optional] directory on host that should be mounted on target
 start_schroot_sessions()
 {
     trace "$*"
@@ -50,6 +51,7 @@ start_schroot_sessions()
     local target="$1"
     local port="$2"
     local sysroot="$3"
+    local shared_dir="$4"
 
     local target_opt
     if ! [ -z "$target" ]; then
@@ -62,6 +64,11 @@ start_schroot_sessions()
 	multilib_dir="$(find "$sysroot" -type f -name ld-\*.so)"
 	multilib_dir="$(basename $(dirname $multilib_dir))"
 	sysroot_opt="-l $sysroot -h $multilib_dir"
+    fi
+
+    local shared_dir_opt
+    if ! [ -z "$shared_dir" ]; then
+	shared_dir_opt="-d $shared_dir"
     fi
 
     local -a board_exps
@@ -80,7 +87,7 @@ start_schroot_sessions()
 	# environment.
 	set -x
 	# Start testing schroot session.
-	dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $hostname:$port" 1>&2
+	dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $shared_dir_opt $hostname:$port" 1>&2
 	set +x
 
 	# Print the hostname to the caller
