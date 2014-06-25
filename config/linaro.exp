@@ -44,7 +44,7 @@ case "$target_triplet" in {
     }
     { "aarch64*-elf*" } {
 	set target_list { "v8model" } 
-	set env(FOUNDATION_MODEL) "/linaro/Foundation_v8pkg/Foundation_v8"
+	set env(FOUNDATION_MODEL) "/linaro/foundation_v8pkg/Foundation_v8"
     }
     { "aarch64_be*-linux*" } {
 	puts "No target hardware for $target_triplet"
