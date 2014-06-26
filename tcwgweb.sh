@@ -100,7 +100,10 @@ difftwodirs ()
 
     diffdir="${toplevel}/diffof-${pversion}-${cversion}"
     mkdir -p ${diffdir}
-    unxz ${prev}/*.sum.xz
+    local files="`ls ${prev}/*.sum.xz | wc -l`"
+    if test ${files} -gt 0; then
+	unxz ${prev}/*.sum.xz
+    fi
     unxz ${next}/*.sum.xz
     unxz ${next}/check.log.xz
     for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do

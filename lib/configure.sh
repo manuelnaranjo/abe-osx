@@ -264,7 +264,7 @@ configure_build()
 	    return $?
 	fi
 	# unset this to avoid problems later
-	unset default_configure_flags=
+	unset default_configure_flags
 	unset opts
 	unset stage1_flags
 	unset stage2_flags
