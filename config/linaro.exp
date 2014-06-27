@@ -60,15 +60,7 @@ case "$target_triplet" in {
 	    }
 	}
     }
-    { "x86_64*-linux-gnu" } {
-	set myname [get_local_hostname]
-	case "$myname" in {
-	    { tcwgbuild* toolchain64 } {
-		set target_list { unix }
-	    }
-	}
-    }
-    { "i686*-linux-gnu" } {
+    { "x86_64*-linux-gnu" "i686*-linux-gnu" } {
 	set myname [get_local_hostname]
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 } {
