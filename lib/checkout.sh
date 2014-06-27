@@ -476,9 +476,9 @@ change_branch()
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
-		dryrun "(cd ${local_snapshots}/${version} && git pull origin master)"
+		dryrun "(cd ${local_snapshots}/${version} && git_robust pull origin master)"
 	    else
-		dryrun "(cd ${local_snapshots}/${version}-${branch} && git pull origin ${branch})"
+		dryrun "(cd ${local_snapshots}/${version}-${branch} && git_robust pull origin ${branch})"
 	    fi
 	fi
     fi
