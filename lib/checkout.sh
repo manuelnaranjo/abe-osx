@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 #   Copyright (C) 2013, 2014 Linaro, Inc
 # 
@@ -163,6 +163,17 @@ checkout_all()
     return 0
 }
 
+# Try hard to get git command succeed.  Retry up to 10 times.
+# $@ - arguments passed directly to "git".
+git_robust()
+{
+    local try=1
+
+    while [ "$try" -lt "10" ]; do
+	try="$(($try+1))"
+	git "$@" && break
+    done
+}
 
 # This gets the source tree from a remote host
 # $1 - This should be a service:// qualified URL.  If you just
@@ -227,7 +238,7 @@ checkout()
 	    # update the sources.
 	    if test ! -d ${repodir}; then
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "git clone ${url} ${repodir}"
+		dryrun "git_robust clone ${url} ${repodir}"
 	    fi
 	    if test ! -d ${srcdir}; then
 		notice "Creating branch for ${tool} in ${srcdir}"
@@ -236,7 +247,7 @@ checkout()
 		    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		    return 1
 		fi
-#		dryrun "git clone --local ${local_snapshots}/${repo} ${branchdir}"
+#		dryrun "git_robust clone --local ${local_snapshots}/${repo} ${branchdir}"
 #		dryrun "(cd ${branchdir} && git checkout ${branch})"
 		if test x"${revision}" != x; then
 		    dryrun "(cd ${branchdir} && git checkout ${revision})"
@@ -246,9 +257,9 @@ checkout()
 		    if test x"${supdate}" = xyes; then
 			notice "Updating sources for ${tool} in ${srcdir}"
 			dryrun "(cd ${repodir} && git reset --hard HEAD^)"
-			dryrun "(cd ${repodir} && git pull)"
+			dryrun "(cd ${repodir} && git_robust pull)"
 			dryrun "(cd ${srcdir} && git reset --hard HEAD^)"
-			dryrun "(cd ${srcdir} && git pull)"
+			dryrun "(cd ${srcdir} && git_robust pull)"
 		    fi
 		fi
 	    fi
