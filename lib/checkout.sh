@@ -232,7 +232,7 @@ checkout()
 	    fi
 	    ;;
 	git*|http*)
-            local repodir="`echo ${srcdir} | cut -d '~' -f 1`"
+            local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
 	    local branchdir="${srcdir}"
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
