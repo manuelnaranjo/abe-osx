@@ -233,7 +233,7 @@ checkout()
 	    ;;
 	git*|http*)
             local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
-	    local branchdir="${srcdir}"
+#	    local branchdir="${srcdir}"
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${repodir}; then
@@ -242,26 +242,29 @@ checkout()
 	    fi
 	    if test ! -d ${srcdir}; then
 		notice "Creating branch for ${tool} in ${srcdir}"
-		dryrun "git-new-workdir ${local_snapshots}/${repo} ${branchdir} ${branch}"
+		dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		if test $? -gt 0; then
 		    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		    return 1
 		fi
-#		dryrun "git_robust clone --local ${local_snapshots}/${repo} ${branchdir}"
-#		dryrun "(cd ${branchdir} && git checkout ${branch})"
-		if test x"${revision}" != x; then
-		    dryrun "(cd ${branchdir} && git checkout ${revision})"
-		fi
-	    else
-		if test x"${revision}" = x; then
-		    if test x"${supdate}" = xyes; then
-			notice "Updating sources for ${tool} in ${srcdir}"
-			dryrun "(cd ${repodir} && git reset --hard HEAD^)"
-			dryrun "(cd ${repodir} && git_robust pull)"
-			dryrun "(cd ${srcdir} && git reset --hard HEAD^)"
-			dryrun "(cd ${srcdir} && git_robust pull)"
-		    fi
-		fi
+		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
+		# dryrun "(cd ${srcdir} && git checkout ${branch})"
+	    elif test x"${supdate}" = xyes; then
+		notice "Updating sources for ${tool} in ${srcdir}"
+		dryrun "(cd ${repodir} && git stash --all)"
+		dryrun "(cd ${repodir} && git_robust pull)"
+		# Update branch directory (which maybe the same as repo 
+		# directory)
+		dryrun "(cd ${srcdir} && git stash --all)"
+		# Make sure we are on the correct branch. 
+		# This is a no-op if $branch is empty.
+		dryrun "(cd ${srcdir} && git checkout ${branch})"
+		dryrun "(cd ${srcdir} && git_robust pull)"
+	    fi
+	    # Now that $srcdir is in prestine condition, checkout      264
+            # $revision if we are given one.   265
+            if test x"${supdate}" = xyes -a x"${revision}" != x; then  266
+		dryrun "(cd ${srcdir} && git checkout ${revision})"   267
 	    fi
 	    ;;
 	*)
