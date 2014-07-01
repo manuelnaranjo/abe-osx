@@ -16,18 +16,11 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# load the configure file produced by configure
-if test -e "${PWD}/host.conf"; then
-    . "${PWD}/host.conf"
-else
-    echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
-fi
+# To run, this script takes arguments in the same format as cbuild2.sh. The two
+# arguments it needs is the target archicture to build, and the gcc backport
+# branch name. Example:
+# $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
 
-if test $# -lt 2; then
-    echo "ERROR: No branches to build!"
-    echo "backport.sh [branch name]"
-    exit
-fi
 # For each revision we build the toolchain for this config triplet
 if test `echo $* | grep -c target` -eq 0; then
     echo "ERROR: No target to build!"
@@ -35,26 +28,68 @@ if test `echo $* | grep -c target` -eq 0; then
     exit
 fi
 shift
+
+if test $# -lt 2; then
+    echo "ERROR: No branches to build!"
+    echo "backport.sh [branch name]"
+    exit
+fi
+
 target=$1
 shift
+
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    echo "${PWD}"
+    exit 1
+fi
 
 # load commonly used functions
 cbuild="`which $0`"
 topdir="${cbuild_path}"
-. "${topdir}/lib/diff.sh" || exit 1
+cbuild2="`basename $0`"
+
 . "${topdir}/lib/common.sh" || exit 1
 
 # Get the list of revisions to build and compare
 
 branch=$1
 srcdir="`get_srcdir ${branch}`"
-branchdir=${srcdir}~${branch}
 repo="`get_git_repo $1`"
-#git-new-workdir ${srcdir} ${branchdir} ${branch}
-echo "FIXM: ${srcdir} ${branchdir} ${branch}"
+branch="`get_git_branch $1`"
 
-declare -a revisions=(`cd ${local_snapshots}/${repo} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
+# If the branch doesn't exist yet, create it
+dir="${PWD}"
+if ! test -e ${srcdir}; then
+    cd ${local_snapshots}/${repo} && git pull
+    git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}
+else
+    pushd ${srcdir} && git pull
+fi
+cd ${dir}
 
-# Validate does the real work
-shell="/bin/bash -x"
-${shell} validate.sh --target ${target} ${revisions[0]} ${revisions[1]}
+# Get the last two revisions
+declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
+
+i=0
+while test $i -lt ${#revisions[@]}; do
+    bash -x ${topdir}/cbuild2.sh --disable update --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
+    if test $? -gt 0; then
+	echo "ERROR: Cbuild2 failed!"
+	exit 1
+    fi
+    sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
+    if test x"${sums}" != x; then
+	mkdir -p ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
+	cp ${sums} ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
+	    # We don't need these files leftover from the DejaGnu testsuite
+            # itself.
+	xz -f ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/*.sum
+	rm ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/{x,xXx,testrun}.sum
+    fi
+    i=`expr $i + 1`
+done
+
