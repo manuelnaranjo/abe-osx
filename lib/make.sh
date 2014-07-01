@@ -591,7 +591,7 @@ make_check()
 
 	local -a schroot_boards
 	local schroot_port schroot_port_opt schroot_shared_dir_opt
-	if $exec_tests; then
+	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
 	    # Start schroot sessions on target boards that support it
 	    schroot_port="$(print_schroot_port)"
 	    local schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")"
