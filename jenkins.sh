@@ -122,8 +122,8 @@ if test x"${debug}" = x"true"; then
 fi
 
 export files="`echo ${WORKSPACE} | cut -d '/' -f 1-5`/snapshots"
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
-# $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared}/snapshots
+# $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots
 
 # Delete the previous test resut files to avoid problems.
 find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
