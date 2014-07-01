@@ -21,21 +21,19 @@
 # branch name. Example:
 # $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
 
-# For each revision we build the toolchain for this config triplet
-if test `echo $* | grep -c target` -eq 0; then
-    echo "ERROR: No target to build!"
-    echo "backport.sh --target triplet 1111 2222 [3333...]"
-    exit
-fi
-shift
-
 if test $# -lt 2; then
     echo "ERROR: No branches to build!"
     echo "backport.sh [branch name]"
     exit
 fi
 
-target=$1
+# For each revision we build the toolchain for this config triplet
+if test `echo $* | grep -c target` -eq 0; then
+    echo "ERROR: No target to build!"
+    echo "backport.sh --target triplet 1111 2222 [3333...]"
+    exit
+
+fi
 shift
 
 # load the configure file produced by configure
@@ -54,8 +52,11 @@ cbuild2="`basename $0`"
 
 . "${topdir}/lib/common.sh" || exit 1
 
-# Get the list of revisions to build and compare
+# Set the target triplet
+target="$1"
+shift
 
+# Get the list of revisions to build and compare
 branch=$1
 srcdir="`get_srcdir ${branch}`"
 repo="`get_git_repo $1`"
@@ -67,7 +68,7 @@ if ! test -e ${srcdir}; then
     cd ${local_snapshots}/${repo} && git pull
     git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}
 else
-    pushd ${srcdir} && git pull
+    cd ${srcdir} && git pull
 fi
 cd ${dir}
 
