@@ -253,18 +253,18 @@ checkout()
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git_robust pull)"
-		# Update branch directory (which maybe the same as repo 
+		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
-		# Make sure we are on the correct branch. 
+		# Make sure we are on the correct branch.
 		# This is a no-op if $branch is empty.
 		dryrun "(cd ${srcdir} && git checkout ${branch})"
 		dryrun "(cd ${srcdir} && git_robust pull)"
 	    fi
-	    # Now that $srcdir is in prestine condition, checkout      264
-            # $revision if we are given one.   265
-            if test x"${supdate}" = xyes -a x"${revision}" != x; then  266
-		dryrun "(cd ${srcdir} && git checkout ${revision})"   267
+	    # Now that $srcdir is in prestine condition, checkout
+	    # $revision if we are given one.
+	    if test x"${supdate}" = xyes -a x"${revision}" != x; then
+		dryrun "(cd ${srcdir} && git checkout ${revision})"
 	    fi
 	    ;;
 	*)
