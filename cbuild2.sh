@@ -20,7 +20,8 @@
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    echo "WARNING: no host.conf file!  Did you run configure?" 1>&2
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
 fi
 
 # load commonly used functions

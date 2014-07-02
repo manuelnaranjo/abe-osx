@@ -232,7 +232,8 @@ checkout()
 	    fi
 	    ;;
 	git*|http*)
-            local repodir="`echo ${srcdir} | cut -d '~' -f 1`"
+            local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
+#	    local branchdir="${srcdir}"
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${repodir}; then
@@ -246,11 +247,10 @@ checkout()
 		    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		    return 1
 		fi
-#		dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
-#		dryrun "(cd ${srcdir} && git checkout ${branch})"
+		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
+		# dryrun "(cd ${srcdir} && git checkout ${branch})"
 	    elif test x"${supdate}" = xyes; then
-		notice "Updating sources for ${tool} in ${srcdir} (any local changes are stashed)"
-		# Update repo clone
+		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
