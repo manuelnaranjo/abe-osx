@@ -100,8 +100,6 @@ build_all()
 		    if test ! -d ${sysroot}; then
 		        dryrun "mkdir -p /opt/linaro"
 		        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
-			echo "Hit key after debug!"
-			read foo
 		    fi
 		fi
 		;; 
@@ -443,11 +441,9 @@ make_install()
     fi
 
     if test ! -e ${sysroots}/usr/lib -a x"${tool}" = x"gcc"; then
-	local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"	
+	local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
 	dryrun "mkdir -p ${sysroots}/usr/lib/"
 	dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
-	echo "Hit any key to continue!"
-	read answer
     fi
 
     if test "`echo ${tool} | grep -c eglibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
