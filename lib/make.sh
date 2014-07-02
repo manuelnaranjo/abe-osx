@@ -27,8 +27,10 @@ build_all()
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
 	local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
+        notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
 	local builds="infrastructure binutils stage2 gdb" # native build
+        notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
 
     # See if specific component versions were specified at runtime
@@ -195,28 +197,30 @@ build()
 
     notice "Building ${tag}${2:+ $2}"
     
-    # Always grab/update the sources to see if we need to rebuild.
-    if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
-	# Don't update the compiler sources between stage1 and stage2 builds.
-	if test x"$2" != x"stage2"; then
+    # If this is a native build, we always checkout/fetch.  If it is a 
+    # cross-build we only checkout/fetch if this is stage1
+    if test x"${target}" == x"${build}" \
+	    -o "${target}" != x"${build}" -a x"$2" != x"stage2"; then
+	if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
+	    # Don't update the compiler sources between stage1 and stage2 builds if this
+	    # is a cross build.
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo} ${2:+$2}
 	    if test $? -gt 0; then
-		warning "Sources not updated, network error!"
+	        warning "Sources not updated, network error!"
 	    fi
-	fi
-    else
-	# Don't update the compiler sources between stage1 and stage2 builds.
-	if test x"$2" != x"stage2"; then
+	else
+	    # Don't update the compiler sources between stage1 and stage2 builds if this
+	    # is a cross build.
 	    fetch ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
+	        error "Couldn't fetch tarball ${gitinfo}"
+	        return 1
 	    fi
 	    extract ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
-		return 1
+	        error "Couldn't extract tarball ${gitinfo}"
+	        return 1
 	    fi
 	fi
     fi
