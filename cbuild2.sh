@@ -45,16 +45,16 @@ crosscheck_clibrary_target()
     local test_clibrary=$1
     local test_target=$2
     case ${test_target} in
-       arm*-eabi|aarch64*-*elf|i686*-mingw32|x86_64*-mingw32)
-           # Bare metal targets only support newlib.
-           if test x"${test_clibrary}" != x"newlib"; then
-               error "${test_target} is only compatible with newlib."
-               return 1
-           fi
-           ;;
-       *)
-           # No specified target, or non-baremetal targets.
-           ;;
+	arm*-eabi|aarch64*-*elf|*-mingw32)
+	    # Bare metal targets only support newlib.
+	    if test x"${test_clibrary}" != x"newlib"; then
+		error "${test_target} is only compatible with newlib."
+		return 1
+	    fi
+	    ;;
+	*)
+	    # No specified target, or non-baremetal targets.
+	    ;;
     esac
     return 0
 }
@@ -644,7 +644,8 @@ while test $# -gt 0; do
 	    # user might try to override this with --set libc={glibc|eglibc}
 	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
 	    case ${target} in
-		arm*-eabi|aarch64*-*elf|i686*-mingw32|x86_64*-mingw32)
+		arm*-eabi|aarch64*-*elf|*-mingw32)
+		    echo "MARK"
 		    clibrary="newlib"
 		    ;;
 		 *)
@@ -666,35 +667,40 @@ while test $# -gt 0; do
             shift
             ;;
 	# These steps are disabled by default but are sometimes useful.
-	--enable*)
-	    check_directive $1 "enable" "enable" $2
-	    case $2 in
-		bootstrap|b*)
-		    bootstrap=yes
+	--enable*|--disable*)
+	    case "$1" in
+		--enable*)
+		    check_directive $1 "enable" "enable" $2
+		    value="yes"
 		    ;;
-		alltests|b*)
-		    alltests=yes
+		--disable*)
+		    check_directive $1 "disable" "disable" $2
+		    value="no"
 		    ;;
-
 		*)
-		    error "$2 not recognized as a valid --enable directive."
+		    error "Internal failure.  Should never happen."
 		    build_failure
 		    ;;
 	    esac
-	    shift
-	    ;;
-	# These are enabled by default, but not always desired.
-	--disable*)
-	    check_directive $1 "disable" "disable" $2
+
 	    case $2 in
-		install|i*)
-		    install=no
+		bootstrap)
+		    bootstrap="$value"
 		    ;;
-		update|u*)
-		    supdate=no
+		alltests)
+		    alltests="$value"
+		    ;;
+		install)
+		    install="$value"
+		    ;;
+		schroot_test)
+		    schroot_test="$value"
+		    ;;
+		update)
+		    supdate="$value"
 		    ;;
 		*)
-		    error "$2 not recognized as a valid --disable directive."
+		    error "$2 not recognized as a valid $1 directive."
 		    build_failure
 		    ;;
 	    esac

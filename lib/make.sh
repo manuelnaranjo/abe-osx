@@ -27,8 +27,10 @@ build_all()
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
 	local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
+        notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
 	local builds="infrastructure binutils stage2 gdb" # native build
+        notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
 
     # See if specific component versions were specified at runtime
@@ -86,6 +88,10 @@ build_all()
 		    return 1
 		fi
 		build_all_ret=$?
+		;;
+	    stage1)
+		build ${gcc_version} stage1
+		build_all_ret=$?
 		# Don't create the sysroot if the clibrary build didn't succeed.
 		if test ${build_all_ret} -lt 1; then
 		    # If we don't install the sysroot, link to the one we built so
@@ -96,10 +102,6 @@ build_all()
 		        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
 		    fi
 		fi
-		;;
-	    stage1)
-		build ${gcc_version} stage1
-		build_all_ret=$?
 		;; 
 	    # Build stage 2 of GCC, which is the actual and fully functional compiler
 	    stage2)
@@ -195,28 +197,30 @@ build()
 
     notice "Building ${tag}${2:+ $2}"
     
-    # Always grab/update the sources to see if we need to rebuild.
-    if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
-	# Don't update the compiler sources between stage1 and stage2 builds.
-	if test x"$2" != x"stage2"; then
+    # If this is a native build, we always checkout/fetch.  If it is a 
+    # cross-build we only checkout/fetch if this is stage1
+    if test x"${target}" == x"${build}" \
+	    -o "${target}" != x"${build}" -a x"$2" != x"stage2"; then
+	if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^lp|^http|^git|\.git"` -gt 0; then	
+	    # Don't update the compiler sources between stage1 and stage2 builds if this
+	    # is a cross build.
 	    notice "Checking out ${tag}${2:+ $2}"
 	    checkout ${gitinfo} ${2:+$2}
 	    if test $? -gt 0; then
-		warning "Sources not updated, network error!"
+	        warning "Sources not updated, network error!"
 	    fi
-	fi
-    else
-	# Don't update the compiler sources between stage1 and stage2 builds.
-	if test x"$2" != x"stage2"; then
+	else
+	    # Don't update the compiler sources between stage1 and stage2 builds if this
+	    # is a cross build.
 	    fetch ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
+	        error "Couldn't fetch tarball ${gitinfo}"
+	        return 1
 	    fi
 	    extract ${gitinfo}
 	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
-		return 1
+	        error "Couldn't extract tarball ${gitinfo}"
+	        return 1
 	    fi
 	fi
     fi
@@ -233,7 +237,8 @@ build()
     elif test $ret -eq 255; then
 	# Don't proceed if the srcdir isn't present.  What's the point?
 	return 1
-    fi
+	warning "no source dir for the stamp!"
+   fi
 
     notice "Configuring ${tag}${2:+ $2}"
     configure_build ${gitinfo} $2
@@ -340,6 +345,9 @@ make_all()
 	newlib)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
+	*glibc)
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    ;;
 	*)
 	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
 	    ;;
@@ -348,7 +356,7 @@ make_all()
     local makeret=$?
 
     local errors="`egrep 'fatal error:|configure: error:|Error' ${builddir}/make.log`"
-    if test x"${errors}" != x; then
+    if test x"${errors}" != x -a ${makeret} - gt 0; then
 	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
 	    exit 1
@@ -432,28 +440,28 @@ make_install()
 	return 1
     fi
 
-    # FIXME: aarch64 needs to have libgcc* installed in the sysroot so the
-    # compiler can be run from the build directories in qemu-aarch64.
-    if test x"$2" = x"stage2" -a `echo ${target} | grep -c aarch64` -gt 0; then
-	if test -d ${sysroots}/lib64; then
-	    rsync -av ${builddir}/gcc/libgcc* ${sysroots}/lib64/
-	else
-	    rsync -av ${builddir}/gcc/libgcc* ${sysroots}/lib/
-	fi
+    if test ! -e ${sysroots}/usr/lib -a x"${tool}" = x"gcc"; then
+	local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
+	dryrun "mkdir -p ${sysroots}/usr/lib/"
+	dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
     fi
 
-    # FIXME: For some reason qemu-aarch doesn't link the symlink, so we
-    # replace it with the actual file.
-    if test "`echo ${tool} | grep -c eglibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
+    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
 	# Programmatically determine the embedded glibc version number for
 	# this version of the clibrary.
 	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
-	local dynamic_linker_name="`find ${sysroots} -type f -name ld-\*.so`"
+	local dynamic_linker="`find ${sysroots} -type f -name ld-\*.so`"
 	if test $? -ne 0; then
 	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
 	    exit 1;
 	fi
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
+
+	# aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
+	# things look for shared libraries in.
+	dryrun "mv -f ${sysroots}/lib/* ${sysroots}/lib64/"
+	dryrun "rmdir ${sysroots}/lib"
+	dryrun "ln -sfnT ${sysroots}/lib64 ${sysroots}/lib"
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
 	dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
@@ -595,12 +603,12 @@ make_check()
 
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-gdb GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    else
-		dryrun "make check-binutils CFLAGS_UNDER_TEST=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-binutils GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    fi
 	else
-	    dryrun "make check CFLAGS_FOR_TARGET=--sysroot=${sysroots} RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check FC_UNDER_TEST=\"${FC_UNDER_TEST} --sysroot=${sysroots}\" GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
 
 	# Stop schroot sessions

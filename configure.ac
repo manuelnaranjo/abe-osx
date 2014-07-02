@@ -292,6 +292,51 @@ AC_ARG_ENABLE(ssh, AC_HELP_STRING([--enable-ssh], [If you have SSH access to rem
 esac], ENABLE_SSH=no)
 AC_SUBST(ENABLE_SSH)
 
+dnl if you want to do bootstrap by default
+AC_ARG_ENABLE(bootstrap, AC_HELP_STRING([--enable-bootstrap], [If you want to do bootstrap by default]),
+[case "${enableval}" in
+  yes) ENABLE_BOOTSTRAP=yes ;;
+  no)  ENABLE_BOOTSTRAP=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-bootstrap option]) ;;
+esac], ENABLE_BOOTSTRAP=no)
+AC_SUBST(ENABLE_BOOTSTRAP)
+
+dnl if you want to run all tests by default
+AC_ARG_ENABLE(alltests, AC_HELP_STRING([--enable-alltests], [If you want to run all tests by default]),
+[case "${enableval}" in
+  yes) ENABLE_ALLTESTS=yes ;;
+  no)  ENABLE_ALLTESTS=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-alltests option]) ;;
+esac], ENABLE_ALLTESTS=no)
+AC_SUBST(ENABLE_ALLTESTS)
+
+dnl if you want to install by default
+AC_ARG_ENABLE(install, AC_HELP_STRING([--enable-install], [If you want to install by default]),
+[case "${enableval}" in
+  yes) ENABLE_INSTALL=yes ;;
+  no)  ENABLE_INSTALL=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-install option]) ;;
+esac], ENABLE_INSTALL=yes)
+AC_SUBST(ENABLE_INSTALL)
+
+dnl if you want to enable schroot-based testing by default
+AC_ARG_ENABLE(schroot-test, AC_HELP_STRING([--enable-schroot-test], [If you want to used schroot-based testing by default]),
+[case "${enableval}" in
+  yes) ENABLE_SCHROOT_TEST=yes ;;
+  no)  ENABLE_SCHROOT_TEST=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-schroot-test option]) ;;
+esac], ENABLE_SCHROOT_TEST=no)
+AC_SUBST(ENABLE_SCHROOT_TEST)
+
+dnl if you want to update sources by default
+AC_ARG_ENABLE(source-update, AC_HELP_STRING([--enable-source-update], [If you want to update sources by default]),
+[case "${enableval}" in
+  yes) ENABLE_SOURCE_UPDATE=yes ;;
+  no)  ENABLE_SOURCE_UPDATE=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-source-update option]) ;;
+esac], ENABLE_SOURCE_UPDATE=yes)
+AC_SUBST(ENABLE_SOURCE_UPDATE)
+
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
 dnl   snapshots=${withval},

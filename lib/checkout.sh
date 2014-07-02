@@ -232,8 +232,14 @@ checkout()
 	    fi
 	    ;;
 	git*|http*)
+	    #FIXME: This is an unreliable way to parse the repo directory.
             local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
-#	    local branchdir="${srcdir}"
+
+	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
+		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
+		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
+	    fi
+
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${repodir}; then
@@ -241,30 +247,63 @@ checkout()
 		dryrun "git_robust clone ${url} ${repodir}"
 	    fi
 	    if test ! -d ${srcdir}; then
-		notice "Creating branch for ${tool} in ${srcdir}"
-		dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
-		if test $? -gt 0; then
-		    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
-		    return 1
+		# By definition a git commit resides on a branch.  Therefore specifying a
+		# branch AND a commit is redundant and potentially contradictory.  For this
+		# reason we only consider the commit if both are present.
+		if test x"${revision}" != x""; then
+		    notice "Checking out revision for ${tool} in ${srcdir}"
+		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${revision}"
+		    if test $? -gt 0; then
+			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
+		    	return 1
+		    fi
+		    # git checkout of a commit leaves the head in detached state so we need to
+		    # give the current checkout a name.  Use -B so that it's only created if
+		    # it doesn't exist already.
+		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
+	        else
+		    if test x"${branch}" != x""; then
+			# Sometimes, after removing a srcdir and re-running, the branch
+			# you're trying to checkout will already be a named branch in the
+			# repodir, so we have to delete it so that the new checkout will
+			# get the latest, updated branch source.
+			notice "Checking for existing named branch ${branch} in ${repodir}"
+			existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
+			if test ${existing_branch} -gt 0; then
+			    notice "Removing previously named branch ${branch} from ${repodir}"
+			    dryrun "(cd ${repodir} && git branch -D ${branch})"
+			fi
+		    fi
+
+		    notice "Checking out ${branch:+ branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
+		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
+		    if test $? -gt 0; then
+			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+		   	return 1
+		    fi
 		fi
 		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
 		# dryrun "(cd ${srcdir} && git checkout ${branch})"
 	    elif test x"${supdate}" = xyes; then
+		# Some packages allow the build to modify the source directory and
+		# that might screw up cbuild2's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
-		# Make sure we are on the correct branch.
-		# This is a no-op if $branch is empty.
-		dryrun "(cd ${srcdir} && git checkout ${branch})"
-		dryrun "(cd ${srcdir} && git_robust pull)"
-	    fi
-	    # Now that $srcdir is in prestine condition, checkout
-	    # $revision if we are given one.
-	    if test x"${supdate}" = xyes -a x"${revision}" != x; then
-		dryrun "(cd ${srcdir} && git checkout ${revision})"
+		if test x"${revision}" != x""; then
+		    # No need to pull.  A commit is a single moment in time
+		    # and doesn't change.
+		    dryrun "(cd ${srcdir} && git checkout local_${revision})"
+		else
+		    # Make sure we are on the correct branch.
+		    # This is a no-op if $branch is empty and it
+		    # just gets master.
+		    dryrun "(cd ${srcdir} && git checkout ${branch})"
+		    dryrun "(cd ${srcdir} && git_robust pull)"
+		fi
 	    fi
 	    ;;
 	*)
