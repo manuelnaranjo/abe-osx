@@ -278,12 +278,6 @@ cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-libc="glibc"
-target="aarch64-none-elf"
-cb_commands="--target ${target} --set libc=${libc}"
-match="crosscheck_clibrary_target"
-test_failure "${cb_commands}" "${match}"
-
 cb_commands="--set=libc=glibc"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
@@ -322,6 +316,52 @@ target="aarch64-none-elf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target}"
 match=''
+test_pass "${cb_commands}" "${match}"
+
+target="aarch64-none-elf"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='newlib'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-none-linux-gnueabihf"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='eglibc'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-linux-gnueabihf"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='eglibc'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-none-linux-gnueabi"
+cb_commands="--target ${target} --dump"
+match='eglibc'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-linux-gnueabi"
+cb_commands="--target ${target} --dump"
+match='eglibc'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-none-linux-gnueabi"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='eglibc'
+test_pass "${cb_commands}" "${match}"
+
+target="armeb-none-eabi"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='newlib'
+test_pass "${cb_commands}" "${match}"
+
+target="arm-none-eabi"
+# A baremetal target should pick the right clibrary (newlib)
+cb_commands="--target ${target} --dump"
+match='newlib'
 test_pass "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
