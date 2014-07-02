@@ -27,6 +27,11 @@ distribution=@DISTRIBUTION@
 
 # various configure time flags
 enable_ssh=@ENABLE_SSH@
+boostrap=@ENABLE_BOOTSTRAP@
+alltests=@ENABLE_ALLTESTS@
+install=@ENABLE_INSTALL@
+schroot_test=@ENABLE_SCHROOT_TEST@
+supdate=@ENABLE_SOURCE_UPDATE@
 
 wget_bin=@WGET@
 bash_shell=@BASH@

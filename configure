@@ -589,6 +589,11 @@ DEJAGNU
 LIBTOOL
 AUTOMAKE
 AUTOCONF
+ENABLE_SOURCE_UPDATE
+ENABLE_SCHROOT_TEST
+ENABLE_INSTALL
+ENABLE_ALLTESTS
+ENABLE_BOOTSTRAP
 ENABLE_SSH
 REMOTE_SNAPSHOTS
 LOCAL_BUILDS
@@ -681,6 +686,11 @@ with_local_snapshots
 with_local_builds
 with_remote_snapshots
 enable_ssh
+enable_bootstrap
+enable_alltests
+enable_install
+enable_schroot_test
+enable_source_update
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1303,6 +1313,11 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-ssh            If you have SSH access to remote build host
+  --enable-bootstrap      If you want to do bootstrap by default
+  --enable-alltests       If you want to run all tests by default
+  --enable-install        If you want to install by default
+  --enable-schroot-test   If you want to used schroot-based testing by default
+  --enable-source-update  If you want to update sources by default
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3711,6 +3726,76 @@ $as_echo "$as_me: WARNING: bad value ${enableval} for enable-ssh option" >&2;} ;
 esac
 else
   ENABLE_SSH=no
+fi
+
+
+
+# Check whether --enable-bootstrap was given.
+if test "${enable_bootstrap+set}" = set; then :
+  enableval=$enable_bootstrap; case "${enableval}" in
+  yes) ENABLE_BOOTSTRAP=yes ;;
+  no)  ENABLE_BOOTSTRAP=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-bootstrap option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-bootstrap option" >&2;} ;;
+esac
+else
+  ENABLE_BOOTSTRAP=no
+fi
+
+
+
+# Check whether --enable-alltests was given.
+if test "${enable_alltests+set}" = set; then :
+  enableval=$enable_alltests; case "${enableval}" in
+  yes) ENABLE_ALLTESTS=yes ;;
+  no)  ENABLE_ALLTESTS=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-alltests option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-alltests option" >&2;} ;;
+esac
+else
+  ENABLE_ALLTESTS=no
+fi
+
+
+
+# Check whether --enable-install was given.
+if test "${enable_install+set}" = set; then :
+  enableval=$enable_install; case "${enableval}" in
+  yes) ENABLE_INSTALL=yes ;;
+  no)  ENABLE_INSTALL=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-install option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-install option" >&2;} ;;
+esac
+else
+  ENABLE_INSTALL=yes
+fi
+
+
+
+# Check whether --enable-schroot-test was given.
+if test "${enable_schroot_test+set}" = set; then :
+  enableval=$enable_schroot_test; case "${enableval}" in
+  yes) ENABLE_SCHROOT_TEST=yes ;;
+  no)  ENABLE_SCHROOT_TEST=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-schroot-test option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-schroot-test option" >&2;} ;;
+esac
+else
+  ENABLE_SCHROOT_TEST=no
+fi
+
+
+
+# Check whether --enable-source-update was given.
+if test "${enable_source_update+set}" = set; then :
+  enableval=$enable_source_update; case "${enableval}" in
+  yes) ENABLE_SOURCE_UPDATE=yes ;;
+  no)  ENABLE_SOURCE_UPDATE=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-source-update option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-source-update option" >&2;} ;;
+esac
+else
+  ENABLE_SOURCE_UPDATE=yes
 fi
 
 
