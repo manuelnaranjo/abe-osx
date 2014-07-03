@@ -16,6 +16,22 @@ set besysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64_be-linux-gnu
 set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
 set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
 
+global env
+if {[info exists env(PREFIX_UNDER_TEST)]} {
+    set prefix "$env(PREFIX_UNDER_TEST)"
+    set flags ""
+    if {[info exists env(FLAGS_UNDER_TEST)]} {
+	set flags "$env(FLAGS_UNDER_TEST)"
+    }
+
+    set GCC_UNDER_TEST "[set prefix]gcc $flags"
+    set GXX_UNDER_TEST "[set prefix]g++ $flags"
+    set GFORTRAN_UNDER_TEST "[set prefix]gfortran $flags"
+    set OBJC_UNDER_TEST "[set prefix]gcc $flags"
+    set GOC_UNDER_TEST "[set prefix]goc $flags"
+    set GNAT_UNDER_TEST "[set prefix]gnat $flags"
+}
+
 set myname [get_local_hostname]
 
 case "$target_triplet" in { 
