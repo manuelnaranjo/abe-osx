@@ -603,12 +603,12 @@ make_check()
 
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-gdb PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    else
-		dryrun "make check-binutils GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-binutils PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	    fi
 	else
-	    dryrun "make check FC_UNDER_TEST=\"${FC_UNDER_TEST} --sysroot=${sysroots}\" GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
 	fi
 
 	# Stop schroot sessions
