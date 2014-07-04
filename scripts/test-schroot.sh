@@ -45,11 +45,8 @@ triplet_to_deb_arch()
 	aarch64-*linux-gnu) echo arm64 ;;
 	arm-*linux-gnueabi*) echo armhf ;;
 	i686-*linux-gnu) echo i386 ;;
-	mips-*linux-gnu) echo mips ;;
-	mipsel-*linux-gnu) echo mipsel ;;
-	powerpc-*linux-gnu) echo powerpc ;;
 	x86_64-*linux-gnu) echo amd64 ;;
-	*) exit 1 ;;
+	*) return 1 ;;
     esac
 }
 
@@ -60,11 +57,8 @@ triplet_to_deb_dist()
 	aarch64-*linux-gnu) echo trusty ;;
 	arm-*linux-gnueabi*) echo trusty ;;
 	i686-*linux-gnu) echo trusty ;;
-	mips-*linux-gnu) echo wheezy ;;
-	mipsel-*linux-gnu) echo wheezy ;;
-	powerpc-*linux-gnu) echo wheezy ;;
 	x86_64-*linux-gnu) echo trusty ;;
-	*) exit 1 ;;
+	*) return 1 ;;
     esac
 }
 
@@ -77,6 +71,12 @@ if [ -z "$port" ]; then
     port="22"
 fi
 
+qemu_arch=""
+if ! triplet_to_deb_arch "$arch" >/dev/null 2>&1; then
+    qemu_arch="${arch%%-*}"
+    arch="native"
+fi
+
 if [ "x$arch" = "xnative" ]; then
     cpu="$(ssh $target uname -m)"
     case "$cpu" in
@@ -85,7 +85,10 @@ if [ "x$arch" = "xnative" ]; then
 	armv7*) arch=arm-linux-gnueabi ;;
 	i686) arch=i686-linux-gnu ;;
 	x86_64) arch=x86_64-linux-gnu ;;
-	*) echo ERROR: unrecognized native target $cpu ;;
+	*)
+	    echo "ERROR: unrecognized native target $cpu"
+	    exit 1
+	    ;;
     esac
 fi
 
@@ -247,13 +250,26 @@ fi
 
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
-    # Make sure that sysroot libraries are searched before any other.
-    $rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
+
+    if [ -z "$qemu_arch" ]; then
+	# Make sure that sysroot libraries are searched before any other.
+	$rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
 /$multilib_path
 /usr/$multilib_path
 EOF
-    $rsh root@$target "cat /etc/ld.so.conf >> /etc/ld.so.conf.new"
-    $rsh root@$target "mv /etc/ld.so.conf.new /etc/ld.so.conf && rsync -a --exclude=/sysroot /sysroot/ / && ldconfig"
+	$rsh root@$target "cat /etc/ld.so.conf >> /etc/ld.so.conf.new"
+	$rsh root@$target "mv /etc/ld.so.conf.new /etc/ld.so.conf && rsync -a --exclude=/sysroot /sysroot/ / && ldconfig"
+    else
+	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
+	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
+	$rsh root@$target "rm /etc/ld.so.cache"
+	qemu_bin=`which qemu-$qemu_arch-static`
+	if [ -z "$qemu_bin" ]; then
+	    echo "ERROR: cannot find qemu-$qemu_arch-static"
+	    exit 1
+	fi
+	rsync -az -e "$rsh" $qemu_bin root@$target:/sysroot/
+    fi
     echo $target:$port installed sysroot $sysroot
 fi
 
