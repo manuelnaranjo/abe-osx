@@ -105,7 +105,7 @@ difftwodirs ()
 	unxz ${prev}/*.sum.xz
     fi
     unxz ${next}/*.sum.xz
-    unxz ${next}/check.log.xz
+    unxz ${next}/check*.log.xz
     for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
 	    diff -U 0 ${prev}/$i.sum ${next}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
@@ -142,9 +142,9 @@ difftwodirs ()
 	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
 	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Build log: http://cbuild.validation.linaro.org${next}/make.log" >> ${diffdir}/$i-test-results.txt
+	    echo "Build log: http://cbuild.validation.linaro.org${next}/make-${tool}.log" >> ${diffdir}/$i-test-results.txt
 	    echo "Test summary: http://cbuild.validation.linaro.org${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
-	    echo "Test log: http://cbuild.validation.linaro.org${next}/check.log.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Test log: http://cbuild.validation.linaro.org${next}/check-${tool}.log.xz" >> ${diffdir}/$i-test-results.txt
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
@@ -154,10 +154,10 @@ difftwodirs ()
 		rm /tmp/mail$$.txt
 	    fi
 	fi
+	
+	# Scan the check log for testsuite build errors
+	scancheck ${next}/check-$i.log
     done
-
-    # Scan the check log for testsuite build errors
-    scancheck ${next}/check.log
 
     rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
@@ -235,6 +235,7 @@ mailto()
 	fi
     else
 	echo "$1"
+	echo "===================== $i ================"
 	cat $2
     fi
 }
