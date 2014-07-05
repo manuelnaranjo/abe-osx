@@ -289,10 +289,12 @@ checkout()
 		# that might screw up cbuild2's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
+		dryrun "(cd ${repodir} && git reset --hard)"
 		dryrun "(cd ${repodir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
+		dryrun "(cd ${srcdir} && git reset --hard)"
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
