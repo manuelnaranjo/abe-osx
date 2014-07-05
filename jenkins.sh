@@ -264,7 +264,11 @@ fi
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x -o x"${release}" != x; then
     if test x"${sums}" != x; then
-	scp ${sums} toolchain64.lab:${basedir}/${dir}/
+	test_logs=""
+	for s in ${sums}; do
+	    test_logs="$test_logs ${s%.sum}.log"
+	done
+	scp ${sums} $test_logs toolchain64.lab:${basedir}/${dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${WORKSPACE} -name check.log`"
