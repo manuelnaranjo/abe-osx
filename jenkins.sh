@@ -123,7 +123,7 @@ fi
 
 export files="`echo ${WORKSPACE} | cut -d '/' -f 1-5`/snapshots"
 # $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --enable-schroot-test
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --with-git-reference-dir==$shared/snapshots --enable-schroot-test
 
 # Delete the previous test resut files to avoid problems.
 find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
