@@ -20,7 +20,7 @@
 
 # The files in this directory are shared across all platforms 
 #shared="`dirname ${WORKSPACE}`/shared"
-shared="/home/buildslave/workspace/shared/"
+shared="/home/buildslave/workspace/shared"
 
 # This is the source directory for Cbuildv2. Jenkins specifies this
 # sub directory when it does a git clone or pull of Cbuildv2.
@@ -123,7 +123,7 @@ fi
 
 export files="`echo ${WORKSPACE} | cut -d '/' -f 1-5`/snapshots"
 # $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --with-git-reference-dir==$shared/snapshots
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --with-git-reference-dir=$shared/snapshots
 
 # Delete the previous test resut files to avoid problems.
 find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
