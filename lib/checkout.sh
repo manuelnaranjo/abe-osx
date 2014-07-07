@@ -243,8 +243,12 @@ checkout()
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${repodir}; then
+		local git_reference_opt
+		if ! [ -z "$git_reference_dir" ]; then
+		    git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
+		fi
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "git_robust clone ${url} ${repodir}"
+		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
 	    fi
 	    if test ! -d ${srcdir}; then
 		# By definition a git commit resides on a branch.  Therefore specifying a
