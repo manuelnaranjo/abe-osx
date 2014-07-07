@@ -243,8 +243,12 @@ checkout()
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${repodir}; then
+		local git_reference_opt
+		if ! [ -z "$git_reference_dir" ]; then
+		    git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
+		fi
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "git_robust clone ${url} ${repodir}"
+		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
 	    fi
 	    if test ! -d ${srcdir}; then
 		# By definition a git commit resides on a branch.  Therefore specifying a
@@ -289,10 +293,12 @@ checkout()
 		# that might screw up cbuild2's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
+		dryrun "(cd ${repodir} && git reset --hard)"
 		dryrun "(cd ${repodir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
+		dryrun "(cd ${srcdir} && git reset --hard)"
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.

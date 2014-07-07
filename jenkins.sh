@@ -271,14 +271,12 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	scp ${sums} $test_logs toolchain64.lab:${basedir}/${dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
-	checks="`find ${WORKSPACE} -name check.log`"
+	checks="`find ${WORKSPACE} -name check\*.log`"
 	scp ${checks} toolchain64.lab:${basedir}/${dir}/
 	
 	# Copy over the build logs
-	logs="`find ${WORKSPACE} -name make.log`"
-	rm -f ${WORKSPACE}/make.log
-	cat ${logs} > ${WORKSPACE}/make.log
-	scp ${WORKSPACE}/make.log toolchain64.lab:${basedir}/${dir}/
+	logs="`find ${WORKSPACE} -name make\*.log`"
+	scp ${logs} toolchain64.lab:${basedir}/${dir}/
 	ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
 	scp ${cbuild_dir}/tcwgweb.sh toolchain64.lab:/tmp/tcwgweb$$.sh
 	ssh toolchain64.lab /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}

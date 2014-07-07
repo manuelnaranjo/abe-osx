@@ -256,6 +256,13 @@ if test ! -d ${LOCAL_SNAPSHOTS}; then
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
+dnl The local directory where reference git repos are stored
+AC_ARG_WITH(git-reference-dir,
+  AC_HELP_STRING([--with-git-reference-dir], [Where reference git repos are stored, see git-clone --reference]),
+  GIT_REFERENCE_DIR=${withval},
+  GIT_REFERENCE_DIR="")
+AC_SUBST(GIT_REFERENCE_DIR)
+
 dnl The top directory for make install, also where all the components we build live
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),

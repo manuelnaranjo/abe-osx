@@ -597,6 +597,7 @@ ENABLE_BOOTSTRAP
 ENABLE_SSH
 REMOTE_SNAPSHOTS
 LOCAL_BUILDS
+GIT_REFERENCE_DIR
 LOCAL_SNAPSHOTS
 SYSROOTS
 CBUILD_PATH
@@ -683,6 +684,7 @@ with_toplevel
 with_sources_conf
 with_sysroot
 with_local_snapshots
+with_git_reference_dir
 with_local_builds
 with_remote_snapshots
 enable_ssh
@@ -1329,6 +1331,9 @@ Optional Packages:
   --with-sources-conf
   --with-sysroot
   --with-local-snapshots  Where downloaded tarballs are stored
+  --with-git-reference-dir
+                          Where reference git repos are stored, see git-clone
+                          --reference
   --with-local-builds
   --with-remote-snapshots
 
@@ -3678,6 +3683,16 @@ if test ! -d ${LOCAL_SNAPSHOTS}; then
 $as_echo "$as_me: WARNING: ${LOCAL_SNAPSHOTS} does not exist so creating directory!" >&2;}
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
+
+
+# Check whether --with-git-reference-dir was given.
+if test "${with_git_reference_dir+set}" = set; then :
+  withval=$with_git_reference_dir; GIT_REFERENCE_DIR=${withval}
+else
+  GIT_REFERENCE_DIR=""
+fi
+
+
 
 
 # Check whether --with-local-builds was given.

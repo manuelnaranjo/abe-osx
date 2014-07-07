@@ -335,27 +335,28 @@ make_all()
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
+    local logfile="${builddir}/make-${tool}.log"
     case ${tool} in
 	gdb)
-	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
 	    ;;
 	binutils)
-	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir}"
+	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
 	    ;;
 	newlib)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${logfile}"
 	    ;;
 	*glibc)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee  ${logfile}"
 	    ;;
 	*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${builddir}/make.log"
+	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
 	    ;;
     esac
 
     local makeret=$?
 
-    local errors="`egrep 'fatal error:|configure: error:|Error' ${builddir}/make.log`"
+    local errors="`egrep 'fatal error:|configure: error:|Error' ${logfile}`"
     if test x"${errors}" != x -a ${makeret} - gt 0; then
 	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
@@ -365,8 +366,8 @@ make_all()
 
     # Make sure the make.log file is in place before grepping or the -gt
     # statement is ill formed.  There is not make.log in a dryrun.
-    if test -e "${builddir}/make.log"; then
-       if test `grep -c "configure-target-libgcc.*ERROR" ${builddir}/make.log` -gt 0; then
+    if test -e "${builddir}/make-${tool}.log"; then
+       if test `grep -c "configure-target-libgcc.*ERROR" ${logfile}` -gt 0; then
            error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
        fi
     fi
@@ -575,8 +576,11 @@ make_check()
     fi
 
     # Run tests
+    local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}"; then
-	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	export GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\"
+	export FC_UNDER_TEST=\"${FC_UNDER_TEST} --sysroot=${sysroots}\"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	local exec_tests
 	exec_tests=false
@@ -603,12 +607,12 @@ make_check()
 
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-gdb PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    else
-		dryrun "make check-binutils PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+		dryrun "make check-binutils PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    fi
 	else
-	    dryrun "make check PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${builddir}/check.log"
+	    dryrun "make check PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	fi
 
 	# Stop schroot sessions
