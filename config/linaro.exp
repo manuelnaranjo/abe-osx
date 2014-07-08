@@ -81,7 +81,7 @@ case "$target_triplet" in {
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgbuild }
-		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0] -cpu any -L /sysroot"
+		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
 	    }
 	}
     }
