@@ -406,7 +406,7 @@ manifest()
     local srcdir="`get_srcdir ${binutils_version}`"
     local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
 
-    local cbuild_revision="`cd ${cbuild_path} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+    local cbuild_revision="`cd ${cbuild_path} && git log -n 1 | grep ^commit | cut -d ' ' -f 2`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
