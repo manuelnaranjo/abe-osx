@@ -739,6 +739,11 @@ make_target_sysroot()
     sysroot=/tmp/sysroot.$$
     rsync -a $sysroots/ $sysroot/
 
+    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
+	# Remove symlink lib64 -> lib to make sysroot debian-compatible.
+	rm $sysroot/lib
+    fi
+
     local gcc_lib_path
     gcc_lib_path="$(print_gcc_library_path "$@")"
 
