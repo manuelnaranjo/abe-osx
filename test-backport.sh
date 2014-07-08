@@ -30,7 +30,7 @@ fi
 # For each revision we build the toolchain for this config triplet
 if test `echo $* | grep -c target` -eq 0; then
     echo "ERROR: No target to build!"
-    echo "backport.sh --target triplet 1111 2222 [3333...]"
+    echo "backport.sh --target triplet branch"
     exit
 
 fi
@@ -58,39 +58,49 @@ shift
 
 # Get the list of revisions to build and compare
 branch=$1
-srcdir="`get_srcdir ${branch}`"
-repo="`get_git_repo $1`"
-branch="`get_git_branch $1`"
+#repo="`get_git_repo $1`"
+#branch="`get_git_branch $1`"
+repo="gcc.git"
 
-# If the branch doesn't exist yet, create it
-dir="${PWD}"
-if ! test -e ${srcdir}; then
-    cd ${local_snapshots}/${repo} && git pull
-    git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}
+if test x"${git_reference_dir}" != x; then
+    srcdir="${git_reference_dir}"
 else
-    cd ${srcdir} && git pull
+    # If the branch doesn't exist yet, create it
+    srcdir="${local_snapshots}/gcc.git~${branch}"
+    dir="${PWD}"
+    if ! test -e ${srcdir}; then
+	cd ${local_snapshots}/${repo} && git pull
+	git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}
+    else
+	cd ${srcdir} && git pull
+    fi
+    cd ${dir}
 fi
-cd ${dir}
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
 
+resultsdir="/tmp/cbuild@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --disable update --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
+    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all
     if test $? -gt 0; then
 	echo "ERROR: Cbuild2 failed!"
 	exit 1
     fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
+    logs="`find ${local_builds}/${build}/${target} -name \*.log`"
+    manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
     if test x"${sums}" != x; then
-	mkdir -p ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
-	cp ${sums} ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
+	mkdir -p ${resultsdir}${revisions[$i]}
+	cp ${sums} ${logs} ${manifest} ${resultsdir}${revisions[$i]}/
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
-	xz -f ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/*.sum
-	rm ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/{x,xXx,testrun}.sum
+	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
+	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.sum
     fi
     i=`expr $i + 1`
 done
 
+# Diff the two directories
+${topdir}/tcwgweb.sh --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
