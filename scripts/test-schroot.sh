@@ -71,9 +71,9 @@ if [ -z "$port" ]; then
     port="22"
 fi
 
-qemu_arch=""
+use_qemu=false
 if ! triplet_to_deb_arch "$arch" >/dev/null 2>&1; then
-    qemu_arch="${arch%%-*}"
+    use_qemu=true
     arch="native"
 fi
 
@@ -128,7 +128,7 @@ if $gen_schroot; then
 
     # Make sure machine in the lab agree on what time it is.
     ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org || true
+	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
 
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
@@ -139,19 +139,41 @@ if $gen_schroot; then
 	--include=iptables,openssh-server,rsync,sshfs \
 	--foreign \
 	$deb_dist $chroot
+    # Copy qemu binaries to handle foreign schroots.
     ssh $target_ssh_opts $target \
 	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/ || true
     ssh $target_ssh_opts $target \
 	sudo chroot $chroot ./debootstrap/debootstrap --second-stage &
     pid=$!
     while sleep 10; do
-	if ! ssh $target_ssh_opts $target ps -e -o cmd= | grep -v "grep\|ssh" | grep "./debootstrap/debootstrap --second-stage"; then
+	if ! ssh $target_ssh_opts $target ps -e -o cmd= | grep -v "grep\|ssh" | grep "./debootstrap/debootstrap --second-stage" >/dev/null; then
 	    kill $pid || true
 	    break
 	fi
     done
-    ssh $target_ssh_opts $target \
-	sudo rm -f $chroot/usr/bin/qemu-\*-static
+
+    case "$deb_arch" in
+	amd64) extra_packages="qemu-user-static" ;;
+	*) extra_packages="" ;;
+    esac
+
+    if ! [ -z "$extra_packages" ]; then
+	case "$deb_arch" in
+	    amd64) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
+	    *) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
+	esac
+	ssh $target_ssh_opts $target \
+	    sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
+	ssh $target_ssh_opts $target \
+	    sudo chroot $chroot apt-get update
+	ssh $target_ssh_opts $target \
+	    sudo chroot $chroot apt-get install -y "$extra_packages"
+    fi
+
+    if [ "$(echo "$extra_packages" | grep -c qemu-user-static)" = "0" ]; then
+	ssh $target_ssh_opts $target \
+	    sudo rm -f $chroot/usr/bin/qemu-\*-static
+    fi
 
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
@@ -181,7 +203,7 @@ fi
 if ! [ -z "$schroot_master" ]; then
     # Make sure machine in the lab agree on what time it is.
     ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org || true
+	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
 
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
@@ -251,7 +273,7 @@ fi
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
 
-    if [ -z "$qemu_arch" ]; then
+    if ! $use_qemu; then
 	# Make sure that sysroot libraries are searched before any other.
 	$rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
 /$multilib_path
@@ -263,12 +285,8 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
-	qemu_bin=`which qemu-$qemu_arch-static`
-	if [ -z "$qemu_bin" ]; then
-	    echo "ERROR: cannot find qemu-$qemu_arch-static"
-	    exit 1
-	fi
-	rsync -az -e "$rsh" $qemu_bin root@$target:/sysroot/
+	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
+	$rsh -f $target bash -c "\"while sleep 30; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
 fi
