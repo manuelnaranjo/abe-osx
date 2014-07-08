@@ -388,9 +388,9 @@ find_dynamic_linker()
 
     # Programmatically determine the embedded glibc version number for
     # this version of the clibrary.
-    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
+    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
     dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
-    if test $? -ne 0; then
+    if [ -z "$dynamic_linker" ]; then
 	error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
 	exit 1
     fi
