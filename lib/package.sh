@@ -406,6 +406,8 @@ manifest()
     local srcdir="`get_srcdir ${binutils_version}`"
     local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
 
+    local cbuild_revision="`cd ${cbuild_top} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
@@ -423,6 +425,10 @@ gcc_version=${gcc_version}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
+
+# Cbuild revision used
+cbuild_revision=${cbuild_revision}
+
 EOF
     case ${clibrary} in
 	glibc)
