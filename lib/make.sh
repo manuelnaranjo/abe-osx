@@ -466,7 +466,7 @@ make_install()
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
 	dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
-	dryrun "(cp ${sysroots}/lib64/${dynamic_linker_name} ${sysroots}/lib/ld-linux-aarch64.so.1)"
+	dryrun "(cd ${sysroots}/lib64; ln -sfnT ${dynamic_linker_name} ld-linux-aarch64.so.1)"
     fi
 
 
