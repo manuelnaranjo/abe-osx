@@ -392,7 +392,7 @@ find_dynamic_linker()
     dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
     if test $? -ne 0; then
 	error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
-	return 1
+	exit 1
     fi
     echo "$dynamic_linker"
 }
@@ -468,9 +468,6 @@ make_install()
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
 	local dynamic_linker
 	dynamic_linker="$(find_dynamic_linker "$sysroots")"
-	if [ $? != 0 ]; then
-	    exit 1
-	fi
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
 
 	# aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
