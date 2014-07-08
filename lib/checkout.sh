@@ -244,7 +244,8 @@ checkout()
 	    # update the sources.
 	    if test ! -d ${repodir}; then
 		local git_reference_opt
-		if ! [ -z "$git_reference_dir" ]; then
+		if [ x"$git_reference_dir" != x"" -a \
+		    -d "$git_reference_dir/$(basename $repodir)"]; then
 		    git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
 		fi
 		notice "Cloning $1 in ${srcdir}"
