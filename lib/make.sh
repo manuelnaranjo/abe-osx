@@ -472,8 +472,8 @@ make_install()
 
 	# aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
 	# things look for shared libraries in.
-	dryrun "mv -f ${sysroots}/lib/* ${sysroots}/lib64/"
-	dryrun "rmdir ${sysroots}/lib"
+	dryrun "rsync -a ${sysroots}/lib/ ${sysroots}/lib64/"
+	dryrun "rm -rf ${sysroots}/lib"
 	dryrun "ln -sfnT ${sysroots}/lib64 ${sysroots}/lib"
 
 	#dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
