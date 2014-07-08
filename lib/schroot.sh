@@ -61,7 +61,7 @@ start_schroot_sessions()
     local sysroot_opt
     if ! [ -z "$sysroot" ]; then
 	local multilib_dir
-	multilib_dir="$(find "$sysroot" -type f -name ld-\*.so)"
+	multilib_dir="$(find_dynamic_linker "$sysroot")"
 	multilib_dir="$(basename $(dirname $multilib_dir))"
 	sysroot_opt="-l $sysroot -h $multilib_dir"
     fi

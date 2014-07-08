@@ -760,7 +760,7 @@ make_target_sysroot()
     gcc_lib_path="$(print_gcc_library_path "$@")"
 
     local sysroot_lib_dir
-    sysroot_lib_dir="$(find "$sysroot" -type f -name ld-\*.so)"
+    sysroot_lib_dir="$(find_dynamic_linker "$sysroot")"
     sysroot_lib_dir="$(dirname $sysroot_lib_dir)"
 
     rsync -a $gcc_lib_path/ $sysroot_lib_dir/
