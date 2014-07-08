@@ -246,7 +246,7 @@ checkout()
 		local git_reference_opt
 		if [ x"$git_reference_dir" != x"" -a \
 		    -d "$git_reference_dir/$(basename $repodir)" ]; then
-		    git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
+		    local git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
 		fi
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
@@ -273,7 +273,7 @@ checkout()
 			# repodir, so we have to delete it so that the new checkout will
 			# get the latest, updated branch source.
 			notice "Checking for existing named branch ${branch} in ${repodir}"
-			existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
+			local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
 			if test ${existing_branch} -gt 0; then
 			    notice "Removing previously named branch ${branch} from ${repodir}"
 			    dryrun "(cd ${repodir} && git branch -D ${branch})"
