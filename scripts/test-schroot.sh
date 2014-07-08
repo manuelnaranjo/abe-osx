@@ -139,6 +139,7 @@ if $gen_schroot; then
 	--include=iptables,openssh-server,rsync,sshfs \
 	--foreign \
 	$deb_dist $chroot
+    # Copy qemu binaries to handle foreign schroots.
     ssh $target_ssh_opts $target \
 	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/ || true
     ssh $target_ssh_opts $target \
@@ -152,7 +153,7 @@ if $gen_schroot; then
     done
 
     case "$deb_arch" in
-	amd64) extra_packages="qemu-user" ;;
+	amd64) extra_packages="qemu-user-static" ;;
 	*) extra_packages="" ;;
     esac
 
@@ -169,8 +170,10 @@ if $gen_schroot; then
 	    sudo chroot $chroot apt-get install -y "$extra_packages"
     fi
 
-    ssh $target_ssh_opts $target \
-	sudo rm -f $chroot/usr/bin/qemu-\*-static
+    if [ "$(echo "$extra_packages" | grep -c qemu-user-static)" = "0" ]; then
+	ssh $target_ssh_opts $target \
+	    sudo rm -f $chroot/usr/bin/qemu-\*-static
+    fi
 
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
