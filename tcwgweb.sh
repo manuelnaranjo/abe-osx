@@ -65,7 +65,8 @@ diffbaseline ()
     local version="`echo $1 | grep -o "[0-9]\.[0-9]*" | head -1`"
 #    local version="`echo $1 | grep -o "[0-9]\.[0-9]*\.[0-9]"`"
     local target="`basename $1`"
-    local target="`echo ${target} | sed -e 's:-BuildFarm.*::'`"
+    # Strip -BuildFarmN from the end of results.  Strip just N for other jobs.
+    local target="`echo ${target} | sed -e 's:-BuildFarm.*::' -e 's:\(-[a-zA-Z]*\)[0-9]\+$:\1:'`"
     local build="`basename $1`"
     local build="`echo ${build} | cut -d '-' -f 1`"
 
