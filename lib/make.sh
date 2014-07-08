@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 #   Copyright (C) 2013, 2014 Linaro, Inc
 # 
@@ -379,6 +379,24 @@ make_all()
     return 0
 }
 
+# Print path to dynamic linker in sysroot
+# $1 -- sysroot path
+find_dynamic_linker()
+{
+    local sysroots="$1"
+    local dynamic_linker c_library_version
+
+    # Programmatically determine the embedded glibc version number for
+    # this version of the clibrary.
+    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
+    dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
+    if test $? -ne 0; then
+	error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
+	return 1
+    fi
+    echo "$dynamic_linker"
+}
+
 make_install()
 {
     trace "$*"
@@ -448,13 +466,10 @@ make_install()
     fi
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
-	# Programmatically determine the embedded glibc version number for
-	# this version of the clibrary.
-	local c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | cut -d ' ' -f 4`"
-	local dynamic_linker="`find ${sysroots} -type f -name ld-\*.so`"
-	if test $? -ne 0; then
-	    echo "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}/lib64"
-	    exit 1;
+	local dynamic_linker
+	dynamic_linker="$(find_dynamic_linker "$sysroots")"
+	if [ $? != 0 ]; then
+	    exit 1
 	fi
 	local dynamic_linker_name="`basename ${dynamic_linker}`"
 
