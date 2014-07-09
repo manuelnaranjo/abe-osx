@@ -323,6 +323,9 @@ make_all()
 #    else
 	    local make_flags="${make_flags} -j ${cpus}"
 #    fi
+	    
+    # Use pipes instead of /tmp for temporary files.
+    local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
@@ -583,18 +586,16 @@ make_check()
 
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}"; then
-	export GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\"
-	export FC_UNDER_TEST=\"${FC_UNDER_TEST} --sysroot=${sysroots}\"
-	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    else
-		dryrun "make check-binutils RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    fi
 	else
-	    dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	    dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	fi
     fi
     
