@@ -1,18 +1,26 @@
 # The master configuration file should be here
 
-# # target triplets sometimes have an extra field like 'unknown' that
-# # isn't used by Cbuildv2, so we remove it.
-# if {![string match *-unknown-* $target_triplet]} then {
-#     set sysroot $base_dir/sysroot/$target_triplet
-# } else {
-#     set start [string first -unknown $target_triplet]
-#     set end [expr $start + 7]
-#     set target [string replace $target_triplet $start $end]
-#     set sysroot $base_dir/sysroots/$target
-# }
+ set sysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu
+ set besysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64_be-linux-gnu
 
-set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
-set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
+ set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
+ set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
+
+ global env
+ if {[info exists env(PREFIX_UNDER_TEST)]} {
+     set prefix "$env(PREFIX_UNDER_TEST)"
+     set flags ""
+     if {[info exists env(FLAGS_UNDER_TEST)]} {
+	 set flags "$env(FLAGS_UNDER_TEST)"
+    }
+
+    set GCC_UNDER_TEST "[set prefix]gcc $flags"
+    set GXX_UNDER_TEST "[set prefix]g++ $flags"
+    set GFORTRAN_UNDER_TEST "[set prefix]gfortran $flags"
+    set OBJC_UNDER_TEST "[set prefix]gcc $flags"
+    set GOC_UNDER_TEST "[set prefix]goc $flags"
+    set GNAT_UNDER_TEST "[set prefix]gnat $flags"
+}
 
 set myname [get_local_hostname]
 
