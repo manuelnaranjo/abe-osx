@@ -161,7 +161,7 @@ fi
 
 # Setup the remote directory for tcwgweb
 if test x"${target}" = x"native"; then
-    gcc="`find ${WORKSPACE} -name gcc`"
+    gcc="`find ${WORKSPACE} -name \*-gcc`"
 else
     gcc="`find ${WORKSPACE} -name ${target}-gcc`"
 fi
