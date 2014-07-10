@@ -412,6 +412,8 @@ manifest()
     cat >> ${outfile} <<EOF 
 # Build machine data
 build=${build}
+host=${host}
+target=${target}
 kernel=${kernel}
 hostname=${hostname}
 distribution=${distribution}
