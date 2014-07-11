@@ -110,7 +110,10 @@ difftwodirs ()
     unxz ${next}/check*.log.xz
     for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
-	    diff -U 0 ${prev}/$i.sum ${next}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+           sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
+           sort ${next}/$i.sum -o ${next}/$i-sort.sum
+           diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+           rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
 	    if test -s ${diffdir}/diff-$i.txt; then
 		echo "Comparison between:" > ${diffdir}/$i-test-results.txt
 		echo "	${prev}/$i.sum and" >> ${diffdir}/$i-test-results.txt
