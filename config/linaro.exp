@@ -1,17 +1,17 @@
 # The master configuration file should be here
 
- set sysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu
- set besysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64_be-linux-gnu
+set sysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64-linux-gnu
+set besysroot /opt/linaro/sysroot-linaro_eglibc-2_18-aarch64_be-linux-gnu
 
- set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
- set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
+set newlib sysroot-newlib.git~linaro_newlib-branch-aarch64-none-elf/
+set benewlib sysroot-newlib.git~linaro_newlib-branch-aarch64_be-none-elf/
 
- global env
- if {[info exists env(PREFIX_UNDER_TEST)]} {
-     set prefix "$env(PREFIX_UNDER_TEST)"
-     set flags ""
-     if {[info exists env(FLAGS_UNDER_TEST)]} {
-	 set flags "$env(FLAGS_UNDER_TEST)"
+global env
+if {[info exists env(PREFIX_UNDER_TEST)]} {
+    set prefix "$env(PREFIX_UNDER_TEST)"
+    set flags ""
+    if {[info exists env(FLAGS_UNDER_TEST)]} {
+	set flags "$env(FLAGS_UNDER_TEST)"
     }
 
     set GCC_UNDER_TEST "[set prefix]gcc $flags"
@@ -23,6 +23,12 @@
 }
 
 set myname [get_local_hostname]
+
+case "$myname" in {
+    { localhost } {
+	set target_list { unix }
+    }
+}
 
 case "$target_triplet" in { 
     { "arm-*linux-gnueabi*"} {
@@ -57,7 +63,7 @@ case "$target_triplet" in {
 	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgapm }
 	    }
-	    { tcwg-apm-* localhost } {
+	    { tcwg-apm-* } {
 		set target_list { unix }
 	    }
 	}
