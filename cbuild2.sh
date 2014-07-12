@@ -721,6 +721,9 @@ while test $# -gt 0; do
 		install)
 		    install="${value}"
 		    ;;
+		parallel)
+		    parallel="$value"
+		    ;;
 		schroot_test)
 		    schroot_test="${value}"
 		    ;;

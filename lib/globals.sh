@@ -81,7 +81,6 @@ fi
 clobber=no
 force=no
 interactive=no
-parallel=no
 nodepends=no
 verbose=1
 network=""

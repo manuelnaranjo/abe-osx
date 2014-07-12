@@ -353,6 +353,15 @@ AC_ARG_ENABLE(source-update, AC_HELP_STRING([--enable-source-update], [If you wa
 esac], ENABLE_SOURCE_UPDATE=yes)
 AC_SUBST(ENABLE_SOURCE_UPDATE)
 
+dnl if you want to update sources by default
+AC_ARG_ENABLE(parallel, AC_HELP_STRING([--enable-parallel], [If you want to build with make -j<number of CPUs> by default]),
+[case "${enableval}" in
+  yes) ENABLE_PARALLEL=yes ;;
+  no)  ENABLE_PARALLEL=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-parallel option]) ;;
+esac], ENABLE_PARALLEL=yes)
+AC_SUBST(ENABLE_PARALLEL)
+
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
 dnl   snapshots=${withval},

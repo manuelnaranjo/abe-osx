@@ -34,6 +34,7 @@ install=@ENABLE_INSTALL@
 schroot_test=@ENABLE_SCHROOT_TEST@
 make_docs=@ENABLE_MAKE_DOCS@
 supdate=@ENABLE_SOURCE_UPDATE@
+parallel=@ENABLE_PARALLEL@
 
 wget_bin=@WGET@
 bash_shell=@BASH@
