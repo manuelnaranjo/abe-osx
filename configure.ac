@@ -290,6 +290,12 @@ AC_MSG_NOTICE([Sysroots will be installed in: ${SYSROOTS}])
 AC_MSG_NOTICE([Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}])
 echo ""
 
+AC_ARG_WITH(languages,
+  AC_HELP_STRING([--with-languages], [List of languages for the compiler]),
+  WITH_LANGUAGES=${withval},
+  WITH_LANGUAGES='default')
+AC_SUBST(WITH_LANGUAGES)
+
 dnl if you have SSH access to the remote machine
 AC_ARG_ENABLE(ssh, AC_HELP_STRING([--enable-ssh], [If you have SSH access to remote build host]),
 [case "${enableval}" in

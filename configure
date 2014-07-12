@@ -577,6 +577,7 @@ ENABLE_INSTALL
 ENABLE_ALLTESTS
 ENABLE_BOOTSTRAP
 ENABLE_SSH
+WITH_LANGUAGES
 REMOTE_SNAPSHOTS
 LOCAL_BUILDS
 GIT_REFERENCE_DIR
@@ -669,6 +670,7 @@ with_local_snapshots
 with_git_reference_dir
 with_local_builds
 with_remote_snapshots
+with_languages
 enable_ssh
 enable_bootstrap
 enable_alltests
@@ -1325,6 +1327,7 @@ Optional Packages:
                           --reference
   --with-local-builds
   --with-remote-snapshots
+  --with-languages        List of languages for the compiler
 
 Some influential environment variables:
   CC          C compiler command
@@ -3720,6 +3723,16 @@ $as_echo "$as_me: Sysroots will be installed in: ${SYSROOTS}" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&5
 $as_echo "$as_me: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&6;}
 echo ""
+
+
+# Check whether --with-languages was given.
+if test "${with_languages+set}" = set; then :
+  withval=$with_languages; WITH_LANGUAGES=${withval}
+else
+  WITH_LANGUAGES='default'
+fi
+
+
 
 # Check whether --enable-ssh was given.
 if test "${enable_ssh+set}" = set; then :
