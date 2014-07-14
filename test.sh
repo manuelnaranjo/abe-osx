@@ -613,6 +613,15 @@ else
     fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 fi
 
+cb_commands="--dry-run --target arm-none-linux-gnueabihf --march armv8-a --dump"
+match='Default march      armv8-a'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dry-run --target arm-none-linux-gnueabihf --march=armv8-a --dump"
+match="A space is expected"
+test_fail "${cb_commands}" "${match}"
+
+
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.
 if test x"${tmpdir}" = x"/tmp"; then

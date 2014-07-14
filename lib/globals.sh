@@ -34,6 +34,9 @@ configfile="default"
 dbuser="default"
 dbpasswd="default"
 
+# Don't set this unless you need to modify it.
+default_march=
+
 manifest=
 
 # The prefix for installing the toolchain

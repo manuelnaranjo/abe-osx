@@ -205,6 +205,10 @@ dump()
     echo "Install            ${install}"
     echo "Source Update      ${supdate}"
     echo "Make Documentation ${make_docs}"
+
+    if test x"${default_march}" != x; then
+	echo "Default march      ${default_march}"
+    fi
 }
 
 usage()
@@ -217,11 +221,12 @@ usage()
              [--ccache] [--check] [--enable {bootstrap}]
              [--disable {install|update}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
-             [--list] [--manifest <manifest_file>] [--parallel] [--release]
-             [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
-             [--target <target_triple>] [--usage] [--interactive]
+             [--list] [--march <march>] [--manifest <manifest_file>]
+             [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--snapshots <url>] [--target <target_triple>] [--usage]
+             [--interactive]
              [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
-		=<id|snapshot|url>]]
+               =<id|snapshot|url>]]
 
 EOF
     return 0
@@ -344,6 +349,16 @@ OPTIONS
   --interactive Interactively select packages from the snapshots file.
 
   --list	List the available snapshots or configured repositories.
+
+  --march <march>
+
+                Specify <march> to be the default target architecture for a
+                specific toolchain, overriding the default.  Example:
+
+                    --target arm-linux-gnueabihf --march armv8-a
+
+		Note: There is no cross-checking to make sure that the passed
+		--target value is compatible with the passed --march value.
 
   --manifest <manifest_file>
 
@@ -516,6 +531,11 @@ while test $# -gt 0; do
 	    do_checkout="$2"
 
 	    # Shift off the 'all' or the package identifier.
+	    shift
+	    ;;
+	--march*|-march*)
+	    check_directive $1 march "march" $2
+	    default_march=$2
 	    shift
 	    ;;
 	--host|-h*)
