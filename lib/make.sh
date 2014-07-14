@@ -277,7 +277,7 @@ build()
 	dryrun "(hello_world)"
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${gitinfo}..."
-	    #return 1
+	    return 1
 	else
 	    notice "Hello World test succeeded for ${gitinfo}..."
 	fi
