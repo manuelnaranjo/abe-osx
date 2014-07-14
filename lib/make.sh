@@ -323,7 +323,7 @@ make_all()
 #    else
 	    local make_flags="${make_flags} -j ${cpus}"
 #    fi
-	    
+
     # Use pipes instead of /tmp for temporary files.
     local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
 
@@ -586,7 +586,7 @@ make_check()
 
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}"; then
-	dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
