@@ -273,14 +273,18 @@ checkout()
 			# repodir, so we have to delete it so that the new checkout will
 			# get the latest, updated branch source.
 			notice "Checking for existing named branch ${branch} in ${repodir}"
-			local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
-			if test ${existing_branch} -gt 0; then
-			    notice "Removing previously named branch ${branch} from ${repodir}"
-			    dryrun "(cd ${repodir} && git branch -D ${branch})"
+
+			# Don't test this for dryrun because repodir probably won't exist.
+			if test x"${dryrun}" = no; then
+			    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
+			    if test ${existing_branch} -gt 0; then
+				notice "Removing previously named branch ${branch} from ${repodir}"
+				dryrun "(cd ${repodir} && git branch -D ${branch})"
+			    fi
 			fi
 		    fi
 
-		    notice "Checking out ${branch:+ branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
+		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
 		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		    if test $? -gt 0; then
 			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
