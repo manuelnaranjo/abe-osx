@@ -590,8 +590,6 @@ make_check()
     # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}"; then
-	export GCC_UNDER_TEST=\"${GCC_UNDER_TEST} --sysroot=${sysroots}\"
-	export FC_UNDER_TEST=\"${FC_UNDER_TEST} --sysroot=${sysroots}\"
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	local exec_tests
