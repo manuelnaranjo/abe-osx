@@ -96,6 +96,7 @@ build_all()
 		if test ${build_all_ret} -lt 1; then
 		    # If we don't install the sysroot, link to the one we built so
 		    # we can use the GCC we just built.
+		    # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
 		    local sysroot="`${target}-gcc -print-sysroot`"
 		    if test ! -d ${sysroot}; then
 		        dryrun "mkdir -p /opt/linaro"
@@ -261,10 +262,14 @@ build()
 	return 1
     fi
 
-    # Build the documentation.
-    make_docs ${gitinfo} $2
-    if test $? -gt 0; then
-	return 1
+    # Build the documentation, unless it has been disabled at the command line.
+    if test x"${make_docs}" = xyes; then
+	make_docs ${gitinfo} $2
+	if test $? -gt 0; then
+	    return 1
+	fi
+    else
+	notice "Skipping make docs as requested (check host.conf)."
     fi
 
     make_install ${gitinfo} $2
@@ -610,9 +615,9 @@ make_clean()
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
-	make distclean ${make_flags} -w -i -k -C ${builddir}
+	dryrun "make distclean ${make_flags} -w -i -k -C ${builddir}"
     else
-	make clean ${make_flags} -w -i -k -C ${builddir}
+	dryrun "make clean ${make_flags} -w -i -k -C ${builddir}"
     fi
     if test $? != "0"; then
 	warning "Make clean failed!"

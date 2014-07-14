@@ -204,6 +204,7 @@ dump()
     echo "Bootstrap          ${bootstrap}"
     echo "Install            ${install}"
     echo "Source Update      ${supdate}"
+    echo "Make Documentation ${make_docs}"
 }
 
 usage()
@@ -309,6 +310,9 @@ OPTIONS
 
 		update
 			Don't update source repositories before building.
+
+                make_docs
+                        Don't make the toolchain package documentation.
 
   --dryrun	Run as much of ${cbuild2} as possible without doing any
 		actual configuration, building, or installing.
@@ -702,6 +706,10 @@ while test $# -gt 0; do
 		    ;;
 		update)
 		    supdate="$value"
+		    ;;
+
+		make_docs)
+		    make_docs="$value"
 		    ;;
 		*)
 		    error "$2 not recognized as a valid $1 directive."

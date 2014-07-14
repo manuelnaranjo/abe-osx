@@ -432,6 +432,65 @@ cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
 match='arm-none-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
+# If we're running in an existing build directory we don't know WHAT the
+# user has set as the default so we set it to 'yes' explicity, and preserve
+# the original.
+indir=${PWD}
+if test x"${runintmpdir}" != x""; then
+  indir=${tmpdir}
+fi
+cp ${indir}/host.conf ${indir}/host.conf.orig
+cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=yes/' > ${indir}/host.conf.make_doc.yes
+cp ${indir}/host.conf.make_doc.yes ${indir}/host.conf
+rm ${indir}/host.conf.make_doc.yes
+
+# The default.
+cb_commands="--dump"
+match='Make Documentation yes'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dump --disable make_docs"
+match='Make Documentation no'
+test_pass "${cb_commands}" "${match}"
+
+# Change the configured default to 'no'
+cp ${indir}/host.conf ${indir}/host.conf.orig
+cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=no/' > ${indir}/host.conf.make_doc.no
+cp ${indir}/host.conf.make_doc.no ${indir}/host.conf
+rm ${indir}/host.conf.make_doc.no
+
+# Verify that it's now 'no'
+cb_commands="--dump"
+match='Make Documentation no'
+test_pass "${cb_commands}" "${match}"
+
+# Verify that 'enable make_docs' now works.
+cb_commands="--dump --enable make_docs"
+match='Make Documentation yes'
+test_pass "${cb_commands}" "${match}"
+
+# Return the default host.conf
+mv ${indir}/host.conf.orig ${indir}/host.conf
+
+# Let's make sure the make_docs stage is actually skipped.
+# --force makes sure we run through to the make docs stage even
+# if the builddir builds stamps are new.
+cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable make_docs --build all"
+match='Skipping make docs'
+test_pass "${cb_commands}" "${match}"
+
+# Let's make sure the make_docs stage is NOT skipped.
+# --force makes sure we run through to the make docs stage even
+# if the builddir builds stamps are new.
+cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable make_docs --build all"
+match='Making docs in'
+test_pass "${cb_commands}" "${match}"
+
+# Verify the default is restored.
+cb_commands="--dump"
+match='Make Documentation yes'
+test_pass "${cb_commands}" "${match}"
+
 # The default.
 cb_commands="--dump"
 match='Bootstrap          no'

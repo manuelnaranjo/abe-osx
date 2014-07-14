@@ -326,6 +326,15 @@ AC_ARG_ENABLE(install, AC_HELP_STRING([--enable-install], [If you want to instal
 esac], ENABLE_INSTALL=yes)
 AC_SUBST(ENABLE_INSTALL)
 
+dnl if you want to disable the building of the package documents.
+AC_ARG_ENABLE(make-docs, AC_HELP_STRING([--enable-make-docs], [If you want to enable making package documentation]),
+[case "${enableval}" in
+  yes) ENABLE_MAKE_DOCS=yes ;;
+  no)  ENABLE_MAKE_DOCS=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-make-docs option]) ;;
+esac], ENABLE_MAKE_DOCS=yes)
+AC_SUBST(ENABLE_MAKE_DOCS)
+
 dnl if you want to enable schroot-based testing by default
 AC_ARG_ENABLE(schroot-test, AC_HELP_STRING([--enable-schroot-test], [If you want to used schroot-based testing by default]),
 [case "${enableval}" in
