@@ -28,7 +28,7 @@ distribution=@DISTRIBUTION@
 
 # various configure time flags
 enable_ssh=@ENABLE_SSH@
-boostrap=@ENABLE_BOOTSTRAP@
+bootstrap=@ENABLE_BOOTSTRAP@
 alltests=@ENABLE_ALLTESTS@
 install=@ENABLE_INSTALL@
 schroot_test=@ENABLE_SCHROOT_TEST@
