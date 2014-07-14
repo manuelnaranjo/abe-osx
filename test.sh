@@ -457,6 +457,16 @@ cb_commands="--disable update --dump"
 match='Source Update      no'
 test_pass "${cb_commands}" "${match}"
 
+# Test dump ordering.  --target processing is immediate, so --dump
+# should work before or after --target.
+cb_commands="--target arm-linux-gnueabihf --dump"
+match='Target is\:         arm-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dump --target arm-linux-gnueabihf"
+match='Target is\:         arm-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
 # This tests that --checkout and --build can be run together.
 cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
 match=''

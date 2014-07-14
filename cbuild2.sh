@@ -481,6 +481,9 @@ fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
+# do_ switches are commands that should be executed after processing all
+# other switches.
+do_dump=
 do_checkout=
 do_build=
 do_build_stage=stage2
@@ -559,8 +562,9 @@ while test $# -gt 0; do
             dryrun=yes
             ;;
 	--dump)
-            dump ${url}
-	    shift
+	    do_dump=yes
+            #dump ${url}
+	    #shift
             ;;
 	--fetch|-d)
             fetch ${url}
@@ -806,6 +810,10 @@ wget_timeout=10
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
 wget_timeout=${timeout_save}
+
+if test ! -z ${do_dump}; then
+    dump
+fi
 
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then
