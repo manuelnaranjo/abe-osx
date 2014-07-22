@@ -713,23 +713,23 @@ while test $# -gt 0; do
 
 	    case $2 in
 		bootstrap)
-		    bootstrap="$value"
+		    bootstrap="${value}"
 		    ;;
 		alltests)
-		    alltests="$value"
+		    alltests="${value}"
 		    ;;
 		install)
-		    install="$value"
+		    install="${value}"
 		    ;;
 		schroot_test)
-		    schroot_test="$value"
+		    schroot_test="${value}"
 		    ;;
 		update)
-		    supdate="$value"
+		    supdate="${value}"
 		    ;;
 
 		make_docs)
-		    make_docs="$value"
+		    make_docs="${value}"
 		    ;;
 		*)
 		    error "$2 not recognized as a valid $1 directive."
