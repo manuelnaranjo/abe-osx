@@ -69,6 +69,11 @@ set_package()
     local setting=${in[1]}
 
     case ${package} in
+	languages|la*)
+	    with_languages="${setting}"
+	    notice "Setting languages to build to ${setting}"
+	    return 0
+	    ;;
 	cflags|cf*)
 	    append_cflags="${setting}"
 	    notice "Appending ${setting} to CFLAGS"
