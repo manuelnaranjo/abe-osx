@@ -330,7 +330,15 @@ make_all()
 #    fi
 
     # Use pipes instead of /tmp for temporary files.
-    local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
+    if test x"${append_cflags}" != x; then
+	local make_flags="${make_flags} CFLAGS=\"${append_cflags} -pipe\" CXXFLAGS=\"-pipe\""
+    else
+	local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
+    fi
+
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+    fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
@@ -433,6 +441,10 @@ make_install()
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
 	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
+    fi
+
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -579,6 +591,17 @@ make_check()
 #	make_check_installed
 #	return 0
 #    fi
+
+    # Use pipes instead of /tmp for temporary files.
+    if test x"${append_cflags}" != x; then
+	local make_flags="${make_flags} CFLAGS=\"${append_cflags} -pipe\" CXXFLAGS=\"-pipe\""
+    else
+	local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
+    fi
+
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+    fi
 
     if test x"${parallel}" = x"yes"; then
 	local make_flags="${make_flags} -j ${cpus}"

@@ -69,6 +69,16 @@ set_package()
     local setting=${in[1]}
 
     case ${package} in
+	cflags|cf*)
+	    append_cflags="${setting}"
+	    notice "Appending ${setting} to CFLAGS"
+	    return 0
+	    ;;
+	ldflags|ld*)
+	    append_ldflags="${setting}"
+	    notice "Appending ${setting} to LDFLAGS"
+	    return 0
+	    ;;
 	libc)
 	    # Range check user input against supported C libraries.
 	    case ${setting} in

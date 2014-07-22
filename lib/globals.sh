@@ -89,6 +89,9 @@ ccache=no
 
 release=""
 
+append_cflags=
+append_ldflags=
+
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
 fi
