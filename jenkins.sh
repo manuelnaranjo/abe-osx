@@ -261,6 +261,11 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
+# Test results and logs get copied to here
+if test x"${fileserver}" = x; then
+    fileserver="toolchain64.lab"
+fi
+
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x -o x"${release}" != x; then
     if test x"${sums}" != x; then
@@ -268,33 +273,33 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	for s in ${sums}; do
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
-	scp ${sums} $test_logs toolchain64.lab:${basedir}/${dir}/
+	scp ${sums} $test_logs ${fileserver}:${basedir}/${dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${WORKSPACE} -name check\*.log`"
-	scp ${checks} toolchain64.lab:${basedir}/${dir}/
+	scp ${checks} ${fileserver}:${basedir}/${dir}/
 	
 	# Copy over the build logs
 	logs="`find ${WORKSPACE} -name make\*.log`"
-	scp ${logs} toolchain64.lab:${basedir}/${dir}/
-	ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
-	scp ${cbuild_dir}/tcwgweb.sh toolchain64.lab:/tmp/tcwgweb$$.sh
-	ssh toolchain64.lab /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-	ssh toolchain64.lab rm /tmp/tcwgweb$$.sh
+	scp ${logs} ${fileserver}:${basedir}/${dir}/
+	ssh ${fileserver} xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
+	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
+	ssh ${fileserver} rm /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
+	scp ${srcfiles} ${fileserver}:/home/cbuild/var/snapshots/
 	rm ${srcfiles}
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} toolchain64.lab:/work/space/binaries/
+	scp ${binfiles} ${fileserver}:/work/space/binaries/
 	rm ${binfiles}
     fi
 
