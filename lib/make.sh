@@ -323,11 +323,13 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-#    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c arm` -gt 0; then
-#	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
-#    else
-	    local make_flags="${make_flags} -j ${cpus}"
-#    fi
+    local make_flags="${make_flags} -j ${cpus}"
+
+    # Some components require extra flags to make
+    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    if test x"${default_makeflags}" !=  x; then
+	local make_flags="${make_flags} ${default_makeflags}"
+    fi
 
     # Use pipes instead of /tmp for temporary files.
     if test x"${append_cflags}" != x; then
@@ -352,24 +354,25 @@ make_all()
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
     local logfile="${builddir}/make-${tool}.log"
-    case ${tool} in
-	gdb)
-	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	binutils)
-	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	newlib)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	*glibc)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee  ${logfile}"
-	    ;;
-	*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-    esac
+#    case ${tool} in
+#	gdb)
+#	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
+#	    ;;
+	# binutils)
+	#     dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
+	#     ;;
+#	newlib)
+#	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${logfile}"
+#	    ;;
+#	*glibc)
+#	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee  ${logfile}"
+#	    ;;
+#	*)
+#	    dryrun "make SHELL=${bash_shell} ${default_makeflags} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
+#	    ;;
+#    esac
 
+    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
     local makeret=$?
 
     local errors="`egrep 'fatal error:|configure: error:|Error' ${logfile}`"
