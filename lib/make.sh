@@ -354,24 +354,6 @@ make_all()
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
     local logfile="${builddir}/make-${tool}.log"
-#    case ${tool} in
-#	gdb)
-#	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-#	    ;;
-	# binutils)
-	#     dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	#     ;;
-#	newlib)
-#	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${logfile}"
-#	    ;;
-#	*glibc)
-#	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee  ${logfile}"
-#	    ;;
-#	*)
-#	    dryrun "make SHELL=${bash_shell} ${default_makeflags} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-#	    ;;
-#    esac
-
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
     local makeret=$?
 
@@ -457,6 +439,7 @@ make_install()
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
 	local make_flags=" tooldir=${sysroots}/usr/"
+	local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
