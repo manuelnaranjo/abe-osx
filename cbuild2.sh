@@ -16,216 +16,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# load the configure file produced by configure
-if test -e "${PWD}/host.conf"; then
-    . "${PWD}/host.conf"
-else
-    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
-    exit 1
-fi
-
-# load commonly used functions
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
-
-. "${topdir}/lib/common.sh" || exit 1
-
-# this is used to launch builds of dependant components
-command_line_arguments=$*
-
-#
-# These functions actually do something
-#
-
-# Determine whether the clibrary setting passed as $1 is compatible with the
-# designated target.
-crosscheck_clibrary_target()
-{
-    local test_clibrary=$1
-    local test_target=$2
-    case ${test_target} in
-	arm*-eabi|aarch64*-*elf|*-mingw32)
-	    # Bare metal targets only support newlib.
-	    if test x"${test_clibrary}" != x"newlib"; then
-		error "${test_target} is only compatible with newlib."
-		return 1
-	    fi
-	    ;;
-	*)
-	    # No specified target, or non-baremetal targets.
-	    ;;
-    esac
-    return 0
-}
-
-set_package()
-{
-    saveIFS=${IFS}
-    IFS='='
-    local in=($1)
-    IFS=${saveIFS}
-    local package=${in[0]}
-    local setting=${in[1]}
-
-    case ${package} in
-	languages|la*)
-	    with_languages="${setting}"
-	    notice "Setting languages to build to ${setting}"
-	    return 0
-	    ;;
-	cflags|cf*)
-	    append_cflags="${setting}"
-	    notice "Appending ${setting} to CFLAGS"
-	    return 0
-	    ;;
-	ldflags|ld*)
-	    append_ldflags="${setting}"
-	    notice "Appending ${setting} to LDFLAGS"
-	    return 0
-	    ;;
-	libc)
-	    # Range check user input against supported C libraries.
-	    case ${setting} in
-		glibc|eglibc|newlib)    
-
-		    # Verify that the user specified libc is compatible with
-		    # the user specified target.
-		    crosscheck_clibrary_target ${setting} ${target}
-		    if test $? -gt 0; then
-			return 1
-		    fi
-
-		    clibrary="${setting}"
-		    notice "Using '${setting}' as the C library as directed by \"--set libc=${setting}\"."
-		    return 0
-		    ;;
-		*)
-		    error "'${setting}' is an unsupported libc option."
-		    ;;
-	    esac
-	    ;;
-	*)
-	    error "'${package}' is not a supported package for --set."
-	    ;;
-    esac
-
-    return 1
-}
-
-build_failure()
-{
-    time="`expr ${SECONDS} / 60`"
-    error "Build process failed after ${time} minutes"
-    exit 1
-}
-
-# Switches that require a following directive need to make sure they don't
-# parse the -- of the following switch.
-check_directive()
-{
-    switch="$1"
-    long="$2"
-    short="$3"
-    directive="$4"
-
-    if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
-	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
-    elif test x"$directive" = x; then
-	error "--${long} requires a directive.  See --usage for details.' "
-	build_failure
-    elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
-	error "--${long} requires a directive.  ${cbuild2} found the next -- switch.  See --usage for details.' "
-    else
-	return 0
-    fi
-    build_failure
-}
-
-# This gets a list from a remote server of the available tarballs. We use HTTP
-# instead of SSH so it's more accessible to those behind nasty firewalls.
-# base - already checkout out source trees
-# snapshots - tarballs of various source snapshots
-# prebuilt - prebuilt executables
-get_list()
-{
-    echo "Get version list for $1..."
-
-    # http://cbuild.validation.linaro.org/snapshots
-    case $1 in
-	testcode|t*)
-	    testcode="`grep testcode ${local_snapshots}/testcode/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${testcode}"
-	    ;;
-	snapshots|s*)
-	    snapshots="`egrep -v "\.asc|\.diff|\.txt|xdelta|base|infrastructure|testcode" ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
-	    echo "${snapshots}"
-	    ;;
-	infrastructure|i*)
-	    infrastructure="`grep infrastructure ${local_snapshots}/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${infrastructure}"
-	    ;;
-    esac
-	    return 0
-}
-
-# Get some info on the build system
-# $1 - If specified, it's the hostname of the remote system
-get_build_machine_info()
-{
-    if test x"$1" = x; then
-	cpus="`getconf _NPROCESSORS_ONLN`"
-	libc="`getconf GNU_LIBC_VERSION`"
-	kernel="`uname -r`"
-	build_arch="`uname -p`"
-	hostname="`uname -n`"
-	distribution="`lsb_release -sc`"
-    else
-	# FIXME: this assumes the user has their ssh keys setup to the point
-	# where the don't need a password but is secure.
-	echo "Getting config info from $1"
-	cpus="`ssh $1 getconf _NPROCESSORS_ONLN`"
-	libc="`ssh $1 getconf GNU_LIBC_VERSION`"
-	kernel="`ssh $1 uname -r`"
-	build_arch="`ssh $1 uname -p`"
-	hostname="`ssh $1 uname -n`"
-	distribution="`ssh $1 lsb_release -sc`"	
-    fi
-}
-
-# Takes no arguments. Dumps all the important config data
-dump()
-{
-    # These variables are always determined dynamically at run time
-    echo "Target is:         ${target}"
-    echo "GCC is:            ${gcc}"
-    echo "GCC version:       ${gcc_version}"
-    echo "Sysroot is:        ${sysroots}"
-    echo "C library is:      ${clibrary}"
-
-    # These variables have default values which we don't care about
-    echo "Binutils is:       ${binutils}"
-    echo "Config file is:    ${configfile}"
-    echo "Snapshot URL is:   ${local_snapshots}"
-    echo "DB User name is:   ${dbuser}"
-    echo "DB Password is:    ${dbpasswd}"
-
-    echo "Build # cpus is:   ${cpus}"
-    echo "Kernel:            ${kernel}"
-    echo "Build Arch:        ${build_arch}"
-    echo "Hostname:          ${hostname}"
-    echo "Distribution:      ${distribution}"
-
-    echo "Bootstrap          ${bootstrap}"
-    echo "Install            ${install}"
-    echo "Source Update      ${supdate}"
-    echo "Make Documentation ${make_docs}"
-
-    if test x"${default_march}" != x; then
-	echo "Default march      ${default_march}"
-    fi
-}
-
 usage()
 {
     # Format this section with 75 columns.
@@ -238,6 +28,7 @@ usage()
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--set {cflags|ldflags}=XXX]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
              [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
@@ -513,6 +304,216 @@ if test $# -lt 1; then
     exit 1
 fi
 
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
+fi
+
+# load commonly used functions
+cbuild="`which $0`"
+topdir="${cbuild_path}"
+cbuild2="`basename $0`"
+
+. "${topdir}/lib/common.sh" || exit 1
+
+# this is used to launch builds of dependant components
+command_line_arguments=$*
+
+#
+# These functions actually do something
+#
+
+# Determine whether the clibrary setting passed as $1 is compatible with the
+# designated target.
+crosscheck_clibrary_target()
+{
+    local test_clibrary=$1
+    local test_target=$2
+    case ${test_target} in
+	arm*-eabi|aarch64*-*elf|*-mingw32)
+	    # Bare metal targets only support newlib.
+	    if test x"${test_clibrary}" != x"newlib"; then
+		error "${test_target} is only compatible with newlib."
+		return 1
+	    fi
+	    ;;
+	*)
+	    # No specified target, or non-baremetal targets.
+	    ;;
+    esac
+    return 0
+}
+
+set_package()
+{
+    saveIFS=${IFS}
+    IFS='='
+    local in=($1)
+    IFS=${saveIFS}
+    local package=${in[0]}
+    local setting=${in[1]}
+
+    case ${package} in
+	languages|la*)
+	    with_languages="${setting}"
+	    notice "Setting languages to build to ${setting}"
+	    return 0
+	    ;;
+	cflags|cf*)
+	    append_cflags="${setting}"
+	    notice "Appending ${setting} to CFLAGS"
+	    return 0
+	    ;;
+	ldflags|ld*)
+	    append_ldflags="${setting}"
+	    notice "Appending ${setting} to LDFLAGS"
+	    return 0
+	    ;;
+	libc)
+	    # Range check user input against supported C libraries.
+	    case ${setting} in
+		glibc|eglibc|newlib)    
+
+		    # Verify that the user specified libc is compatible with
+		    # the user specified target.
+		    crosscheck_clibrary_target ${setting} ${target}
+		    if test $? -gt 0; then
+			return 1
+		    fi
+
+		    clibrary="${setting}"
+		    notice "Using '${setting}' as the C library as directed by \"--set libc=${setting}\"."
+		    return 0
+		    ;;
+		*)
+		    error "'${setting}' is an unsupported libc option."
+		    ;;
+	    esac
+	    ;;
+	*)
+	    error "'${package}' is not a supported package for --set."
+	    ;;
+    esac
+
+    return 1
+}
+
+build_failure()
+{
+    time="`expr ${SECONDS} / 60`"
+    error "Build process failed after ${time} minutes"
+    exit 1
+}
+
+# Switches that require a following directive need to make sure they don't
+# parse the -- of the following switch.
+check_directive()
+{
+    switch="$1"
+    long="$2"
+    short="$3"
+    directive="$4"
+
+    if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
+	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
+    elif test x"$directive" = x; then
+	error "--${long} requires a directive.  See --usage for details.' "
+	build_failure
+    elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
+	error "--${long} requires a directive.  ${cbuild2} found the next -- switch.  See --usage for details.' "
+    else
+	return 0
+    fi
+    build_failure
+}
+
+# This gets a list from a remote server of the available tarballs. We use HTTP
+# instead of SSH so it's more accessible to those behind nasty firewalls.
+# base - already checkout out source trees
+# snapshots - tarballs of various source snapshots
+# prebuilt - prebuilt executables
+get_list()
+{
+    echo "Get version list for $1..."
+
+    # http://cbuild.validation.linaro.org/snapshots
+    case $1 in
+	testcode|t*)
+	    testcode="`grep testcode ${local_snapshots}/testcode/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	    echo "${testcode}"
+	    ;;
+	snapshots|s*)
+	    snapshots="`egrep -v "\.asc|\.diff|\.txt|xdelta|base|infrastructure|testcode" ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
+	    echo "${snapshots}"
+	    ;;
+	infrastructure|i*)
+	    infrastructure="`grep infrastructure ${local_snapshots}/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+	    echo "${infrastructure}"
+	    ;;
+    esac
+	    return 0
+}
+
+# Get some info on the build system
+# $1 - If specified, it's the hostname of the remote system
+get_build_machine_info()
+{
+    if test x"$1" = x; then
+	cpus="`getconf _NPROCESSORS_ONLN`"
+	libc="`getconf GNU_LIBC_VERSION`"
+	kernel="`uname -r`"
+	build_arch="`uname -p`"
+	hostname="`uname -n`"
+	distribution="`lsb_release -sc`"
+    else
+	# FIXME: this assumes the user has their ssh keys setup to the point
+	# where the don't need a password but is secure.
+	echo "Getting config info from $1"
+	cpus="`ssh $1 getconf _NPROCESSORS_ONLN`"
+	libc="`ssh $1 getconf GNU_LIBC_VERSION`"
+	kernel="`ssh $1 uname -r`"
+	build_arch="`ssh $1 uname -p`"
+	hostname="`ssh $1 uname -n`"
+	distribution="`ssh $1 lsb_release -sc`"	
+    fi
+}
+
+# Takes no arguments. Dumps all the important config data
+dump()
+{
+    # These variables are always determined dynamically at run time
+    echo "Target is:         ${target}"
+    echo "GCC is:            ${gcc}"
+    echo "GCC version:       ${gcc_version}"
+    echo "Sysroot is:        ${sysroots}"
+    echo "C library is:      ${clibrary}"
+
+    # These variables have default values which we don't care about
+    echo "Binutils is:       ${binutils}"
+    echo "Config file is:    ${configfile}"
+    echo "Snapshot URL is:   ${local_snapshots}"
+    echo "DB User name is:   ${dbuser}"
+    echo "DB Password is:    ${dbpasswd}"
+
+    echo "Build # cpus is:   ${cpus}"
+    echo "Kernel:            ${kernel}"
+    echo "Build Arch:        ${build_arch}"
+    echo "Hostname:          ${hostname}"
+    echo "Distribution:      ${distribution}"
+
+    echo "Bootstrap          ${bootstrap}"
+    echo "Install            ${install}"
+    echo "Source Update      ${supdate}"
+    echo "Make Documentation ${make_docs}"
+
+    if test x"${default_march}" != x; then
+	echo "Default march      ${default_march}"
+    fi
+}
+
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
 # do_ switches are commands that should be executed after processing all
@@ -687,8 +688,7 @@ while test $# -gt 0; do
 	    # user might try to override this with --set libc={glibc|eglibc}
 	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
 	    case ${target} in
-		arm*-eabi|aarch64*-*elf|*-mingw32)
-		    echo "MARK"
+		arm*-eabi*|arm*-elf|aarch64*-*elf|*-mingw32)
 		    clibrary="newlib"
 		    ;;
 		 *)
