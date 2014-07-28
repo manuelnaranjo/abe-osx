@@ -109,6 +109,12 @@ if test x"${AUTOGEN}" = x; then
    missing="${missing} autogen"
 fi
 
+AC_PATH_PROG(CCRYPT, ccrypt)
+if test x"${CCRYPT}" = x; then
+   AC_MSG_WARN([You need 'ccrypt' to run benchmarks, this can be ignored for builds])
+   missing="${missing} ccrypt"
+fi
+
 dnl Building GDB requires ncurses and termcap
 #AC_CHECK_LIB(ncurses, doupdate)
 #if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
