@@ -16,16 +16,31 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+user_snapshots=""
+user_git_repo=""
+
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  jenkins.sh [--help] [-s snapshot dir] [g git reference dir] [cbuildv2 path]
+EOF
+    return 0
+}
+
+# These
+while getopts "s:g:c:h" OPTION; do
+    case $OPTION in
+        s) user_snapshots=$OPTARG ;;
+        g) user_git_repo=$OPTARG ;;
+        c) cbuild_dir=$OPTARG ;;
+        h) usage ;;
+    esac
+done
+
 # Test the config parameters from the Jenkins Build Now page
 
-# The files in this directory are shared across all platforms 
-#shared="`dirname ${WORKSPACE}`/shared"
-shared="/home/buildslave/workspace/shared"
-
-# This is the source directory for Cbuildv2. Jenkins specifies this
-# sub directory when it does a git clone or pull of Cbuildv2.
-cbuild_dir="${WORKSPACE}/cbuildv2"
-
+# Jenkins sets environment variables rather than use command line arguments.
 if test x"${tarsrc}" = xtrue; then
     tars="--tarsrc"
 fi
@@ -41,13 +56,13 @@ fi
 
 # If there is a comand line argument, assume it's a release string. if
 # so set a few default parameters.
-if test x"$1" != x; then
-    releasestr="--release $1"
-    tars="--tarbin "
-    tarsrc=false
-    tarbin=true
-    runtests=false
-fi
+# if test x"$1" != x; then
+#     releasestr="--release $1"
+#     tars="--tarbin "
+#     tarsrc=false
+#     tarbin=true
+#     runtests=false
+# fi
 
 # Get the versions of dependant components to use
 changes=""
@@ -85,7 +100,7 @@ fi
 if test x"${libc}" != x; then
     # ELF based targets are bare metal only
     case ${target} in
-	*-*elf)
+	arm*-none-*)
 	    change="${change} --set libc=newlib"
 	    ;;
 	*)
@@ -121,11 +136,29 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-export files="`echo ${WORKSPACE} | cut -d '/' -f 1-5`/snapshots"
-# $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --with-git-reference-dir=$shared/snapshots
+# This is the source directory for Cbuildv2. Jenkins specifies this
+# sub directory when it does a git clone or pull of Cbuildv2.
+if test x"${cbuild_dir}" = x; then
+    cbuild_dir="${WORKSPACE}/cbuildv2"
+fi
 
-# Delete the previous test resut files to avoid problems.
+# This is where downloaded source tarballs and cloned git repositories live. 
+# If using git-reference-dir, this is the output directory for git.
+if test x"${user_snapshots}" = x; then
+    user_snapshots=${WORKSPACE}/snapshots
+fi
+
+# The files in this directory are shared across all platforms 
+shared="${HOME}/workspace/shared"
+
+# This is an optional directory for the master copy of the git repositories.
+if test x"${user_git_repo}" = x; then
+    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+fi
+
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} ${user_git_repo}
+
+# Delete the previous test result files to avoid problems.
 find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 # For cross build. For cross builds we build a native GCC, and then use
@@ -285,7 +318,7 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	ssh ${fileserver} xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
 	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-	ssh ${fileserver} rm /tmp/tcwgweb$$.sh
+	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
@@ -293,14 +326,14 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} ${fileserver}:/home/cbuild/var/snapshots/
-	rm ${srcfiles}
+	rm -f ${srcfiles}
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} ${fileserver}:/work/space/binaries/
-	rm ${binfiles}
+	rm -f ${binfiles}
     fi
 
 fi
