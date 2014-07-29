@@ -35,11 +35,17 @@ load_base_board_description "basic-sim"
 # The name of the directory in the build tree where the simulator lives.
 setup_sim arm
 
-# The compiler used to build for this board. This has *nothing* to do
-# with what compiler is tested if we're testing gcc.
+# When testing GCC in tree, the libgloss spec files aren't in a known location,
+# so we have to find them in the sysroot. FIXME: this may change in the near 
+# future, but for now it works.
 set compiler 	"[find_gcc]"
-catch "exec $compiler --print-sysroot" specdir
-set specdir "$specdir/usr/lib"
+set ret [local_exec "$compiler --print-sysroot" "" "" $timeout]
+if { [lindex $ret 0] == 0 } {
+    set sysroot "[lindex $ret 1]"
+    # Strip the CR or LF off the end of the line as returned by GCC
+    regsub -all "\[\n\r\]+" $sysroot "" sysroot
+}
+set specdir "$sysroot/usr/lib"
 
 # The basic set of flags needed to build "hello world" for this
 # board. This board uses libgloss and newlib.
