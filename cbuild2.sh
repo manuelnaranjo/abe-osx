@@ -24,12 +24,13 @@ usage()
              [[--build [<package> --stage {1|2}]|all]
               |[--checkout <package>|all]]
              [--ccache] [--check] [--enable {bootstrap}]
-             [--disable {install|update}] [--dryrun] [--dump]
+             [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags}=XXX]
+             [--set {package}={toolchain|gdb|sysroot}]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
              [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
@@ -126,6 +127,12 @@ OPTIONS
                 make_docs
                         Don't make the toolchain package documentation.
 
+                building
+                        Don't build anything. This is only useful when
+                        using --tarbin, --tarsrc, --tarballs.
+                        This is a debugging aid for developers, as it
+                        assumes everything built correctly...
+                        
   --dryrun	Run as much of ${cbuild2} as possible without doing any
 		actual configuration, building, or installing.
 
@@ -189,8 +196,14 @@ OPTIONS
 		other than newlib on baremetal targets is an error.
 
   --set		{cflags|ldflags}=XXX
-                This appends additional options to the defaultt values used
+                This appends additional options to the default values used
                 for CFLAGS and LDFLAGS.
+
+  --set		{package}={toolchain|gdb|sysroot}
+                This limits the default set of packages to the specified set.
+                This only applies to the --tarbin, --tarsrc, and --tarballs
+                command lines options, and are primarily to be only used by
+                developers.
 
   --set		{labguages}={c|c++|fortran|go|lto|objc|java|ada}
                 This changes the default set of GCC front ends that get built.
@@ -367,6 +380,11 @@ set_package()
     local setting=${in[1]}
 
     case ${package} in
+	packages|pa*)
+	    with_packages="${setting}"
+	    notice "Setting list of packages to build to ${setting}"
+	    return 0
+	    ;;
 	languages|la*)
 	    with_languages="${setting}"
 	    notice "Setting languages to build to ${setting}"
@@ -745,6 +763,9 @@ while test $# -gt 0; do
 		    ;;
 		install)
 		    install="${value}"
+		    ;;
+		building)
+		    building="${value}"
 		    ;;
 		parallel)
 		    parallel="$value"
