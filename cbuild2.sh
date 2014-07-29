@@ -28,6 +28,7 @@ usage()
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags}=XXX]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
@@ -186,6 +187,15 @@ OPTIONS
 		The default value is stored in lib/global.sh.  This
 		setting overrides the default.  Specifying a libc
 		other than newlib on baremetal targets is an error.
+
+  --set		{cflags|ldflags}=XXX
+                This appends additional options to the defaultt values used
+                for CFLAGS and LDFLAGS.
+
+  --set		{labguages}={c|c++|fortran|go|lto|objc|java|ada}
+                This changes the default set of GCC front ends that get built.
+                The default set for most platforms is c, c++, go, fortran,
+                and lto.
 
   --snapshots	/path/to/alternative/local_snapshots/directory
   		Use an alternative path to a local snapshots directory. 
