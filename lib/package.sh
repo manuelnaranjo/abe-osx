@@ -362,8 +362,6 @@ binary_sysroot()
     # Generate the install script
     sysroot_install_script ${destdir}
 
-    dryrun "rsync -avr ${local_builds}/destdir/${build}/lib/libz.* ${destdir}/lib/"
-
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
 
