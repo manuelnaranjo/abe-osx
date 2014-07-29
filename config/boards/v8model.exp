@@ -1,8 +1,7 @@
-# Copyright (C) 2014 Free Software Foundation, Inc.
 #
-# This file is part of DejaGnu.
+#   Copyright (C) 2013, 2014 Linaro, Inc
 #
-# DejaGnu is free software; you can redistribute it and/or modify it
+# This program is free software; you can redistribute it and/or modify
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
@@ -37,11 +36,9 @@ if { [lindex $ret 0] == 0 } {
     # Strip the CR or LF off the end of the line as returned by GCC
     regsub -all "\[\n\r\]+" $sysroot "" sysroot
 }
+set specdir "$sysroot/usr/lib"
 
-# This is needed in addition to the spec file.
-set cpuinit "$sysroot/usr/lib/cpu-init/rdimon-aem-el3.o"
-
-set_board_info cflags  "-specs=rdimon.specs -Wl,$cpuinit -Wl,-Ttext-segment=0x80000000 [libgloss_link_flags] [newlib_link_flags]"
+set_board_info cflags  "-specs=${specdir}/rdimon.specs -Wl,$cpuinit -Wl,-Ttext-segment=0x80000000"
 
 # Can't pass arguments to the program.
 set_board_info noargs 1
