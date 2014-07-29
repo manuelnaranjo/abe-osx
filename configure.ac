@@ -397,12 +397,6 @@ if test x"${DEJAGNU}" = x; then
    missing="${missing} dejagnu"
 fi
 
-dnl AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
-dnl if test x"${NEWWORKDIR}" = x; then
-dnl    AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
-dnl #   missing="${missing} git-new-workdir"
-dnl fi
-
 AC_PATH_PROG(MAKEINFO,makeinfo)
 # Texinfo 5 can't process the gcc texinfo files until they are fixed, 
 # so we have to disable it for Ubuntu 14.04 "trusty".
@@ -413,6 +407,13 @@ if test `lsb_release -i -s` = "Ubuntu"; then
    fi
 fi
 AC_SUBST(MAKEINFO)
+
+AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
+   if test x"${NEWWORKDIR}" = x; then
+      AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
+      AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
+      missing="${missing} git-new-workdir"
+fi
 
 AC_OUTPUT(host.conf)
 
