@@ -1380,6 +1380,14 @@ else
     untested "${testing}"
 fi
 
+echo "============= misc tests ================"
+testing="pipefail"
+out="`false | tee /dev/null`"
+if test $? -ne 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+fi
 
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
