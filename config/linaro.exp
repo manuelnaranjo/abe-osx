@@ -51,7 +51,7 @@ case "$target_triplet" in {
 	set SIM "qemu-arm"
 	set target_list { "arm-qemu" } 
     }
-    { "aarch64-*elf*" } {
+    { "aarch64*-none-elf*" } {
 	set target_list { "v8model" } 
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
