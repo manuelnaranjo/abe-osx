@@ -132,18 +132,26 @@ configure_build()
     if test x"${static_link}" != x"no" -a x"${tool}" != x"gcc"; then
 	local opts="--disable-shared --enable-static"
     fi
+    # If building tarballs, we always statically link everything
+    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+	local opts="--disable-shared --enable-static"
+    fi
 
     # prefix is the root everything gets installed under.
     if test x"${prefix}" = x; then
 	local prefix="${local_builds}/destdir/${host}"
     fi
 
-    # The release strig is usually the date as well, but in YYYY.MM format.
+    # The release string is usually the date as well, but in YYYY.MM format.
     # For snapshots we add the day field as well.
     if test x"${release}" = x; then
 	local date="`date "+%Y.%m"`"
     else
 	local date="${release}"
+    fi
+
+    if test x"${append_cflags}" != x; then
+	local opts="${opts} CFLAGS=\"${append_cflags} CXXFLAGS=\"${append_cflags}"
     fi
 
     # GCC and the binutils are the only toolchain components that need the
