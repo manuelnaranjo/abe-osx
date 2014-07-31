@@ -38,7 +38,7 @@ if { [lindex $ret 0] == 0 } {
 }
 set specdir "$sysroot/usr/lib"
 
-set_board_info cflags  "-specs=${specdir}/rdimon.specs -Wl,$cpuinit -Wl,-Ttext-segment=0x80000000"
+set_board_info cflags  "-specs=${specdir}/rdimon.specs"
 
 # Can't pass arguments to the program.
 set_board_info noargs 1
