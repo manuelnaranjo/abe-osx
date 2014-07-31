@@ -88,6 +88,8 @@ runtests=no
 ccache=no
 
 release=""
+with_packages="toolchain,sysroot,gdb"
+building=yes
 
 append_cflags=
 append_ldflags=
