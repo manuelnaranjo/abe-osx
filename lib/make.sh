@@ -58,90 +58,96 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
-    local build_all_ret=
-    # build each component
-    for i in ${builds}; do
-	notice "Building all, current component $i"
-	# # If an interactive build, stop betweeen each step so we can
-	# # check the build and config options.
-	# if test x"${interactive}" = x"yes"; then
-	#     echo "Hit any key to continue..."
-	#     read answer		
-	# fi
-	case $i in
-	    infrastructure)
-		infrastructure
-		build_all_ret=$?
-		;;
-	    # Build stage 1 of GCC, which is a limited C compiler used to compile
-	    # the C library.
-	    libc)
-		if test x"${clibrary}" = x"eglibc"; then
-		    build ${eglibc_version}
-		elif  test x"${clibrary}" = x"glibc"; then
-		    build ${glibc_version}
-		elif test x"${clibrary}" = x"newlib"; then
-		    build ${newlib_version}
-		    build ${newlib_version} libgloss
-		else
-		    error "\${clibrary}=${clibrary} not supported."
-		    return 1
-		fi
-		build_all_ret=$?
-		;;
-	    stage1)
-		build ${gcc_version} stage1
-		build_all_ret=$?
-		# Don't create the sysroot if the clibrary build didn't succeed.
-		if test ${build_all_ret} -lt 1; then
-		    # If we don't install the sysroot, link to the one we built so
-		    # we can use the GCC we just built.
-		    # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
-		    local sysroot="`${target}-gcc -print-sysroot`"
-		    if test ! -d ${sysroot}; then
-		        dryrun "mkdir -p /opt/linaro"
-		        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+    if test x"${building}" != xno; then
+	local build_all_ret=
+	# build each component
+	for i in ${builds}; do
+	    notice "Building all, current component $i"
+	    # If an interactive build, stop betweeen each step so we can
+	    # check the build and config options.
+	    if test x"${interactive}" = x"yes"; then
+	        echo "Hit any key to continue..."
+	        read answer		
+	    fi
+	    case $i in
+		infrastructure)
+		    infrastructure
+		    build_all_ret=$?
+		    ;;
+		# Build stage 1 of GCC, which is a limited C compiler used to compile
+		# the C library.
+		libc)
+		    if test x"${clibrary}" = x"eglibc"; then
+			build ${eglibc_version}
+		    elif  test x"${clibrary}" = x"glibc"; then
+			build ${glibc_version}
+		    elif test x"${clibrary}" = x"newlib"; then
+			build ${newlib_version}
+			build ${newlib_version} libgloss
+		    else
+			error "\${clibrary}=${clibrary} not supported."
+			return 1
 		    fi
-		fi
-		;; 
-	    # Build stage 2 of GCC, which is the actual and fully functional compiler
-	    stage2)
-		build ${gcc_version} stage2
-		build_all_ret=$?
-		;;
-	    gdb)
-		build ${gdb_version}
-		build_all_ret=$?
-		;;
-	    zlib)
-		build ${zlib_version}
-		build_all_ret=$?
-		;;
-	    gdbserver)
-		build ${gdb_version} gdbserver
-		build_all_ret=$?
-		;;
-	    # Build anything not GCC or infrastructure
-	    *)
-		build ${binutils_version}
-		build_all_ret=$?
-		;;
-	esac
-	#if test $? -gt 0; then
-	if test ${build_all_ret} -gt 0; then
-	    error "Failed building $i."
-	    return 1
-	fi
-    done
-
-    manifest ${local_builds}/${host}/${target}/manifest.txt
-
-    notice "Build took ${SECONDS} seconds"
-
+		    build_all_ret=$?
+		    ;;
+		stage1)
+		    build ${gcc_version} stage1
+		    build_all_ret=$?
+		    # Don't create the sysroot if the clibrary build didn't succeed.
+		    if test ${build_all_ret} -lt 1; then
+			# If we don't install the sysroot, link to the one we built so
+			# we can use the GCC we just built.
+			# FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
+			local sysroot="`${target}-gcc -print-sysroot`"
+			if test ! -d ${sysroot}; then
+		            dryrun "mkdir -p /opt/linaro"
+		            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+			fi
+		    fi
+		    ;; 
+		# Build stage 2 of GCC, which is the actual and fully functional compiler
+		stage2)
+		    build ${gcc_version} stage2
+		    build_all_ret=$?
+		    ;;
+		gdb)
+		    build ${gdb_version}
+		    build_all_ret=$?
+		    ;;
+		gdbserver)
+		    build ${gdb_version} gdbserver
+		    build_all_ret=$?
+		    ;;
+		# Build anything not GCC or infrastructure
+		*)
+		    build ${binutils_version}
+		    build_all_ret=$?
+		    ;;
+	    esac
+	    #if test $? -gt 0; then
+	    if test ${build_all_ret} -gt 0; then
+		error "Failed building $i."
+		return 1
+	    fi
+	done
+	
+	manifest ${local_builds}/${host}/${target}/manifest.txt
+	
+	notice "Build took ${SECONDS} seconds"
+    fi
+    
     if test x"${tarsrc}" = x"yes"; then
-        release_binutils_src
-        release_gcc_src
-        release_gdb_src
+	if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
+            release_binutils_src
+            release_gcc_src
+	fi
+	if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
+            release_gdb_src
+	fi
+# FIXME: release_sysroot isn't implemented yet, this is a reminder
+#	if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+#            release_sysroot
+#	fi
     fi
 
     if test x"${tarbin}" = x"yes"; then
@@ -153,12 +159,18 @@ build_all()
         # delete temp files from making the release
 	dryrun "rm -fr /tmp/linaro.*"
 
-	if test x"${clibrary}" != x"newlib"; then
-	    binary_runtime
+	if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
+	    if test x"${clibrary}" != x"newlib"; then
+		binary_runtime
+	    fi
+            binary_toolchain
 	fi
-        binary_toolchain
-        binary_sysroot
-        binary_gdb
+	if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+            binary_sysroot
+	fi
+	if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
+            binary_gdb
+	fi
 	notice "Packaging took ${SECONDS} seconds"
     fi
 
@@ -346,6 +358,11 @@ make_all()
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi 
 
+    # All tarballs are statically linked
+    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+	local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
+    fi
+
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
     fi
@@ -439,7 +456,9 @@ make_install()
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
 	local make_flags=" tooldir=${sysroots}/usr/"
-	local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
+#	if test x"$2" = x"libgloss"; then
+#	    local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
+#	fi
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
@@ -447,27 +466,18 @@ make_install()
 	export CONFIG_SHELL=${bash_shell}
     fi
 
-    if test x"${tool}" = x"binutils"; then
-     	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
-     	# due to an info file problem, so we ignore the error so the build
-     	# will continue.
-     	dryrun "make install-gas install-ld install-gprof install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-    else
-     	if test x"${tool}" = x"gdb"; then
-     	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-     	else
-	    dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-	fi
-    fi
-
+    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2 | sed -e 's: all-: install-:'`"
+    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
 	warning "Make install failed!"
 	return 1
     fi
 
-    if test ! -e ${sysroots}/usr/lib -a x"${tool}" = x"gcc"; then
+    if test x"${tool}" = x"gcc"; then
 	local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
-	dryrun "mkdir -p ${sysroots}/usr/lib/"
+	if test ! -e ${sysroots}/usr/lib; then
+	    dryrun "mkdir -p ${sysroots}/usr/lib/"
+	fi
 	dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
     fi
 

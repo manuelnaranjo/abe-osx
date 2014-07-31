@@ -206,7 +206,7 @@ binary_toolchain()
     dryrun "mkdir -p /tmp/linaro.$$"
 
     # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir gcc-linaro-${version}-${release} stage2`"
+    local builddir="`get_builddir ${gcc_version} stage2`"
 
     # All invocations of make in this function use these additional flags
     local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w LDFLAGS=-static"
@@ -217,55 +217,27 @@ binary_toolchain()
 	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
     fi
 
-    if test x"${gcc_static}" = x"yes"; then
-    	# If the default is a statically linked GCC, we only have to relink
-    	# the executables.
-        # GCC executables we want to relink
-#	dryrun "rsync -av ${builddir}/lto-plugin/liblto_plugin.\* ${destdir}/libexec/gcc/*/"
-     	local bins="gcc/cc1 gcc/cc1plus gcc/as gcc/collect-ld gcc/nm gcc/gcc-ranlib gcc/xgcc gcc/xg++ gcc/lto1 gcc/gcc-nm gcc/gcov-dump gcc/lto-wrapper gcc/collect2 gcc/gcc-ar gcc/cpp gcc/gcov gcc/gengtype gcc/gcc-cross gcc/g++-cross gcc/gfrtran"
-     	dryrun "(cd ${builddir} && rm -f ${bins})"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
-	if test $? -gt 0; then
-	    error "Couldn't build static GCC!"
-	    return 1
-	fi
-    	dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
-	if test $? -gt 0; then
-	    error "Couldn't install static GCC!"
-	    return 1
-	fi
-     	# Install the documentation too
-     	dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
-     else
-     	# If the default is a dynamically linked GCC, we have to recompile everything
-    	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}" 
-    	dryrun "make all SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-	if test $? -gt 0; then
-	    error "Couldn't rebuild static GCC!"
-	    return 1
-	fi
-    	dryrun "make install SHELL=${bash_shell} ${make_flags}  CXXFLAGS_FOR_BUILD=-static -C ${builddir}"
-     	dryrun "make install install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
-     fi
-
-    dryrun "ln -sfnT ${destdir}-tmp/${cbuild_top}/builds/destdir/${host} ${destdir}"
-
-    local builddir="`get_builddir ${binutils_version}`"
-    if test x"${binutils_static}" = x"yes"; then
-#	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
-	local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-static"
-        # Binutils executables we want to relink
-     	local bins="bfd/doc/chew gold/ld-new gold/incremental-dump gold/dwp binutils/ranlib binutils/objdump binutils/readelf binutils/nm-new binutils/bfdtest1 binutils/size binutils/cxxfilt binutils/addr2line binutils/elfedit binutils/ar binutils/strings binutils/bfdtest2 binutils/strip-new binutils/objcopy ld/ld-new gas/as-new" # gprof/gprof  binutils/sysinfo
-     	dryrun "(cd ${builddir} && rm -f ${bins})"
-     	# If the default is a statically linked binutils, we only have to relink
-     	# the excutables,
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-     	dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir} LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
-     else
-     	dryrun "make clean -i -k SHELL=${bash_shell} ${make_flags} -C ${builddir}"
-     	dryrun "make all SHELL=${bash_shell} ${make_flags} CFLAGS=-UFORTIFY_SOURCE -C ${builddir}  LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
-     	dryrun "make install SHELL=${bash_shell} ${make_flags} -C ${builddir}"
+    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
+    if test $? -gt 0; then
+	error "Couldn't install static GCC!"
+	return 1
     fi
+    # install in alternate directory so it's easier to build the tarball.
+    local builddir="`get_builddir ${binutils_version}`"
+    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
+    if test $? -gt 0; then
+	error "Couldn't install static binutils!"
+	return 1
+    fi
+
+    # Install the documentation too
+    dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
+    
+    dryrun "ln -sfnT ${destdir}-tmp/${cbuild_top}/builds/destdir/${host} ${destdir}"
+    
+    #	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
+#    local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-static"
+    dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir} LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
 
     # Install the documentation too. The different components unfortunately 
     # install differently, so just do the right thing.
