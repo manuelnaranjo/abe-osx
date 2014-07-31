@@ -284,15 +284,15 @@ EXAMPLES
 
   Build a Linux cross toolchain:
 
-    ${cbuild2} --target=arm-none-linux-gnueabihf --build all
+    ${cbuild2} --target arm-none-linux-gnueabihf --build all
 
   Build a Linux cross toolchain with glibc as the clibrary:
 
-    ${cbuild2} --target=arm-none-linux-gnueabihf --set libc=glibc --build all
+    ${cbuild2} --target arm-none-linux-gnueabihf --set libc=glibc --build all
 
   Build a bare metal toolchain:
 
-    ${cbuild2} --target=aarch64-none-elf --build all
+    ${cbuild2} --target aarch64-none-elf --build all
 
 PRECONDITION FILES
 
