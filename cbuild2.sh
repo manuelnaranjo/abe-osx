@@ -327,6 +327,11 @@ if test $# -lt 1; then
     exit 1
 fi
 
+if test "`echo $* | grep -c -- -help`" -gt 0; then
+    help
+    exit 0
+fi
+
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -881,6 +886,11 @@ while test $# -gt 0; do
 	shift
     fi
 done
+
+# if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+#     warning "No testsuite will be run when building tarballs!"
+#     runtests=no
+# fi
 
 timeout_save=${wget_timeout}
 wget_timeout=10
