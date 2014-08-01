@@ -11,42 +11,44 @@ else
     fixme "${in} returned ${out}"
 fi
 
-in="git://git.linaro.org/toolchain/binutils.git"
-out="`normalize_path ${in}`"
-if test x"${out}" = x"binutils.git"; then
-    pass "normalize_path: git repository"
-else
-    fail "normalize_path: git repository"
-    fixme "${in} returned ${out}"
-fi
+for transport in git ssh http; do
+  in="${transport}://git.linaro.org/toolchain/binutils.git"
+  out="`normalize_path ${in}`"
+  if test x"${out}" = x"binutils.git"; then
+      pass "normalize_path: git repository (${transport})"
+  else
+      fail "normalize_path: git repository (${transport})"
+      fixme "${in} returned ${out}"
+  fi
 
-out="`normalize_path binutils.git/binutils-2_18-branch`"
-match="binutils.git~binutils-2_18-branch"
-if test x"${out}" = x"${match}"; then
-    pass "normalize_path: git repository with branch"
-else
-    fail "normalize_path: git repository with branch"
-    fixme "${in} returned ${out}"
-fi
+  out="`normalize_path binutils.git/binutils-2_18-branch`"
+  match="binutils.git~binutils-2_18-branch"
+  if test x"${out}" = x"${match}"; then
+      pass "normalize_path: git repository with branch (${transport})"
+  else
+      fail "normalize_path: git repository with branch (${transport})"
+      fixme "${in} returned ${out}"
+  fi
 
-testing="normalize_path: git repository with ~ branch and commit"
-out="`normalize_path ${in}~binutils-2_18-branch@123456`"
-if test x"${out}" = x"binutils.git~binutils-2_18-branch@123456"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
+  testing="normalize_path: git repository with ~ branch and commit (${transport})"
+  out="`normalize_path ${in}~binutils-2_18-branch@123456`"
+  if test x"${out}" = x"binutils.git~binutils-2_18-branch@123456"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "${in} returned ${out}"
+  fi
 
-testing="normalize_path: git repository with ~ and multi-/ branch and commit"
-out="`normalize_path ${in}~binutils-2_18-branch/foo/bar@123456`"
-match="binutils.git~binutils-2_18-branch-foo-bar@123456"
-if test x"${out}" = x"${match}"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
+  testing="normalize_path: git repository with ~ and multi-/ branch and commit (${transport})"
+  out="`normalize_path ${in}~binutils-2_18-branch/foo/bar@123456`"
+  match="binutils.git~binutils-2_18-branch-foo-bar@123456"
+  if test x"${out}" = x"${match}"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "${in} returned ${out}"
+  fi
+done
 
 testing="normalize_path: git repository with ~ branch"
 in="gcc.git/linaro-4.8-branch"
@@ -58,16 +60,17 @@ else
     fixme "${in} returned ${out}"
 fi
 
-testing="normalize_path: full git url with ~ branch"
-in="http://staging.git.linaro.org/git/toolchain/gcc.git/linaro-4.8-branch"
-out="`normalize_path ${in}`"
-if test x"${out}" = x"gcc.git~linaro-4.8-branch"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
+for transport in git ssh http; do
+  testing="normalize_path: full git (${transport}) url with ~ branch"
+  in="${transport}://staging.git.linaro.org/git/toolchain/gcc.git/linaro-4.8-branch"
+  out="`normalize_path ${in}`"
+  if test x"${out}" = x"gcc.git~linaro-4.8-branch"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "${in} returned ${out}"
+  fi
+done
 
 in="gdb-7.6~20121001+git3e2e76a.tar"
 out="`normalize_path ${in}`"

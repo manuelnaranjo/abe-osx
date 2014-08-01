@@ -996,29 +996,31 @@ else
     fixme "get_source returned ${out}"
 fi
 
-testing="get_source: git direct url not ending in .git"
-in="git://git.linaro.org/toolchain/eglibc"
-out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+for transport in ssh git http; do
+  testing="get_source: git direct url not ending in .git (${transport})"
+  in="${transport}://git.linaro.org/toolchain/eglibc"
+  out="`get_source ${in}`"
+  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
 
-testing="get_source: git direct url not ending in .git with revision returns bogus url."
-in="http://git.linaro.org/git/toolchain/eglibc/branch@1234567"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+  testing="get_source: git direct url not ending in .git with revision returns bogus url. (${transport})"
+  in="${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
+done
 
 # These aren't valid if testing from a build directory.
 testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
@@ -1173,33 +1175,35 @@ fi
 
 latest=${saved_latest}
 
-testing="get_source: git direct url with a ~ branch designation."
-in="git://git.linaro.org/toolchain/eglibc.git~branch@1234567"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+for transport in ssh git http; do
+  testing="get_source: git direct url with a ~ branch designation. (${transport})"
+  in="${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
 
-testing="get_source: git direct url with a ~ branch designation."
-in="git://git.savannah.gnu.org/dejagnu.git~linaro"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"git://git.savannah.gnu.org/dejagnu.git~linaro"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+  testing="get_source: git direct url with a ~ branch designation. (${transport})"
+  in="$transport://git.savannah.gnu.org/dejagnu.git~linaro"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.savannah.gnu.org/dejagnu.git~linaro"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
+done
 
 
 

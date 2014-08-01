@@ -207,7 +207,7 @@ normalize_path()
 # FIXME: ban non-service or tarball inputs.
 
     local process=
-    if test "`echo $1 | egrep -c "^git://|^http://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
+    if test "`echo $1 | egrep -c "^git://|^http://|^ssh://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
 	# If the input is an identifier (not a service) then process \.git
 	# identifiers as git URLs
 	process="`get_URL $1`"
@@ -224,7 +224,7 @@ normalize_path()
 	    local node="`echo ${process} | sed -e 's:^.*branch/::'`"
 	    local node="`echo ${node} | sed -e 's:/:_:'`"
 	    ;;
-	git*|http*)
+	git*|http*|ssh*)
             if test "`echo ${process} | grep -c "\.tar"`" -gt 0 -o "`echo ${process} | grep -c "\.tgz"`" -gt 0; then
                 local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
 	    else
@@ -407,7 +407,7 @@ get_source()
     local url=
     # If a full URL or git repo identifier isn't passed as an argument,
     # assume we want a tarball snapshot
-    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
+    if test `echo $1 | egrep -c "^svn|^git|^http|^ssh|^bzr|^lp|\.git"` -eq 0; then
         local snapshot
 	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
@@ -540,7 +540,7 @@ get_source()
 # Get the proper source directory
 # $1 - The component name, which is one of the following:
 # 
-#   A git, http, svn, lp URL
+#   A git, http, ssh, svn, lp URL
 #   A repository identifier mapping an entry in sources.conf
 #   A tarball
 # 
