@@ -1422,6 +1422,34 @@ else
     fail "${testing}"
   fi
 fi
+testing="configure"
+tool="dejagnu"
+configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+if test x"${configure}" = xno; then
+  untested "${testing}"
+else
+  out=`configure_build ${tool}.git 2>&1`
+  echo "${out}" | grep -- '^DRYRUN: .*/configure ' > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+testing="copy instead of configure"
+tool="eembc"
+configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+if test \! x"${configure}" = xno; then
+  untested "${testing}" #implies that the tool's config no longer contains configure, or that it has a wrong value
+elif test x"${configure}" = xno; then
+  out=`configure_build ${tool}.git 2>&1`
+  echo "${out}" | grep -- '^DRYRUN: rsync -a --exclude=.git/ .\+/ ' > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
 dryrun="no"
 
 # TODO: Test checkout directly with a non URL.

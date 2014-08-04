@@ -65,7 +65,11 @@ configure_build()
 #	fi
     fi
 
-    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
+    local configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    if test x"${configure}" = x; then
+      configure="yes"
+    fi
+    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes" -a x"${configure}" != xno; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
         # then run that to create the configure script.
@@ -265,12 +269,21 @@ configure_build()
 #	if test x"${tool}" = x"zlib"; then
 #	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
 #	else
+        if test x"${configure}" = xyes; then
 	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
-#	fi
-	if test $? -gt 0; then
-	    error "Configure of $1 failed."
-	    return $?
-	fi
+	    if test $? -gt 0; then
+	        error "Configure of $1 failed."
+	        return $?
+	    fi
+        else
+            dryrun "rsync -a --exclude=.git/ ${srcdir}/ ${builddir}"
+	    if test $? -gt 0; then
+	        error "Copy of $1 failed (rsync -a ${srcdir} ${builddir})"
+	        return $?
+	    fi
+        fi
+#       fi
+        
 	# unset this to avoid problems later
 	unset default_configure_flags
 	unset opts
