@@ -173,6 +173,61 @@ test_pass()
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
+test_config_default()
+{
+  local feature="$1"
+  local feature_match="$2"
+  local skip_match="$3"
+  local perform_match="$4"
+
+  # If we're running in an existing build directory we don't know WHAT the
+  # user has set as the default so we set it to 'yes' explicity, and preserve
+  # the original.
+  indir=${PWD}
+  if test x"${runintmpdir}" != x""; then
+    indir=${tmpdir}
+  fi
+  cp ${indir}/host.conf ${indir}/host.conf.orig
+
+  sed -i -e "s/^${feature}=.*/${feature}=yes/" "${indir}/host.conf"
+
+  # The default.
+  cb_commands="--dump"
+  match="${feature_match} *yes"
+  test_pass "${cb_commands}" "${match}"
+
+  cb_commands="--dump --disable ${feature}"
+  match="${feature_match} *no"
+  test_pass "${cb_commands}" "${match}"
+
+  # Change the configured default to 'no'
+  sed -i -e "s/${feature}=.*/${feature}=no/" "${indir}/host.conf"
+
+  # Verify that it's now 'no'
+  cb_commands="--dump"
+  match="${feature_match} *no"
+  test_pass "${cb_commands}" "${match}"
+
+  # Verify that 'enable ${feature}' now works.
+  cb_commands="--dump --enable ${feature}"
+  match="${feature_match} *yes"
+  test_pass "${cb_commands}" "${match}"
+
+  # Let's make sure the stage is actually skipped.
+  # --force makes sure we run through to the stage even
+  # if the builddir builds stamps are new.
+  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable ${feature} --build all"
+  test_pass "${cb_commands}" "${skip_match}"
+
+  # Let's make sure the stage is actually NOT skipped.
+  # --force makes sure we run through to the stage even
+  # if the builddir builds stamps are new.
+  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable ${feature} --build all"
+  test_pass "${cb_commands}" "${perform_match}"
+
+  mv ${indir}/host.conf.orig ${indir}/host.conf
+}
+
 cb_commands="--dry-run"
 match=''
 test_pass "${cb_commands}" "${match}"
@@ -432,58 +487,7 @@ cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
 match='arm-none-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
-# If we're running in an existing build directory we don't know WHAT the
-# user has set as the default so we set it to 'yes' explicity, and preserve
-# the original.
-indir=${PWD}
-if test x"${runintmpdir}" != x""; then
-  indir=${tmpdir}
-fi
-cp ${indir}/host.conf ${indir}/host.conf.orig
-cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=yes/' > ${indir}/host.conf.make_doc.yes
-cp ${indir}/host.conf.make_doc.yes ${indir}/host.conf
-rm ${indir}/host.conf.make_doc.yes
-
-# The default.
-cb_commands="--dump"
-match='Make Documentation yes'
-test_pass "${cb_commands}" "${match}"
-
-cb_commands="--dump --disable make_docs"
-match='Make Documentation no'
-test_pass "${cb_commands}" "${match}"
-
-# Change the configured default to 'no'
-cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=no/' > ${indir}/host.conf.make_doc.no
-cp ${indir}/host.conf.make_doc.no ${indir}/host.conf
-rm ${indir}/host.conf.make_doc.no
-
-# Verify that it's now 'no'
-cb_commands="--dump"
-match='Make Documentation no'
-test_pass "${cb_commands}" "${match}"
-
-# Verify that 'enable make_docs' now works.
-cb_commands="--dump --enable make_docs"
-match='Make Documentation yes'
-test_pass "${cb_commands}" "${match}"
-
-# Return the default host.conf
-mv ${indir}/host.conf.orig ${indir}/host.conf
-
-# Let's make sure the make_docs stage is actually skipped.
-# --force makes sure we run through to the make docs stage even
-# if the builddir builds stamps are new.
-cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable make_docs --build all"
-match='Skipping make docs'
-test_pass "${cb_commands}" "${match}"
-
-# Let's make sure the make_docs stage is NOT skipped.
-# --force makes sure we run through to the make docs stage even
-# if the builddir builds stamps are new.
-cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable make_docs --build all"
-match='Making docs in'
-test_pass "${cb_commands}" "${match}"
+test_config_default make_docs 'Make Documentation' 'Skipping make docs'    'Making docs in'
 
 # The default.
 cb_commands="--dump"
