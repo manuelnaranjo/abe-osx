@@ -369,7 +369,7 @@ make_all()
     dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
     local makeret=$?
 
-    local errors="`egrep 'fatal error:|configure: error:|Error' ${logfile}`"
+    local errors="`egrep '[Ff]atal error:|configure: error:|Error' ${logfile}`"
     if test x"${errors}" != x -a ${makeret} -gt 0; then
 	if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
 	    error "Couldn't build ${tool}: ${errors}"
