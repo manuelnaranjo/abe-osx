@@ -283,9 +283,14 @@ build()
         notice "Skipping make docs as requested (check host.conf)."
     fi
 
-    make_install ${gitinfo} $2
-    if test $? -gt 0; then
-        return 1
+    # Install, unless it has been disabled at the command line.
+    if test x"${install}" = xyes; then
+        make_install ${gitinfo} $2
+        if test $? -gt 0; then
+            return 1
+        fi
+    else
+        notice "Skipping make install as requested (check host.conf)."
     fi
 
     # See if we can compile and link a simple test case.

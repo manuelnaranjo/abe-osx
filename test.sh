@@ -488,6 +488,7 @@ match='arm-none-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 test_config_default make_docs 'Make Documentation' 'Skipping make docs'    'Making docs in'
+test_config_default install   'Install'            'Skipping make install' 'Making install in'
 
 # The default.
 cb_commands="--dump"
