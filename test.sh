@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 testcbuild2="`basename $0`"
 topdir=`dirname $0`
@@ -454,7 +454,6 @@ match='Make Documentation no'
 test_pass "${cb_commands}" "${match}"
 
 # Change the configured default to 'no'
-cp ${indir}/host.conf ${indir}/host.conf.orig
 cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=no/' > ${indir}/host.conf.make_doc.no
 cp ${indir}/host.conf.make_doc.no ${indir}/host.conf
 rm ${indir}/host.conf.make_doc.no
@@ -484,11 +483,6 @@ test_pass "${cb_commands}" "${match}"
 # if the builddir builds stamps are new.
 cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable make_docs --build all"
 match='Making docs in'
-test_pass "${cb_commands}" "${match}"
-
-# Verify the default is restored.
-cb_commands="--dump"
-match='Make Documentation yes'
 test_pass "${cb_commands}" "${match}"
 
 # The default.
