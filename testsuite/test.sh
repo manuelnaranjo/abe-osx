@@ -1402,6 +1402,9 @@ if test x"${default_makeflags}" = x; then
   untested "${testing}" #implies that the tool's config no longer contains default_makeflags
 else
   out="`make_all ${tool}.git 2>&1`"
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
   echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
@@ -1415,6 +1418,9 @@ if test x"${default_makeflags}" = x; then
   untested "${testing}" #implies that the tool's config no longer contains default_makeflags
 else
   out="`make_install ${tool}.git 2>&1`"
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
   echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
@@ -1429,6 +1435,9 @@ if test x"${configure}" = xno; then
   untested "${testing}"
 else
   out=`configure_build ${tool}.git 2>&1`
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
   echo "${out}" | grep -- '^DRYRUN: .*/configure ' > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
@@ -1443,6 +1452,9 @@ if test \! x"${configure}" = xno; then
   untested "${testing}" #implies that the tool's config no longer contains configure, or that it has a wrong value
 elif test x"${configure}" = xno; then
   out=`configure_build ${tool}.git 2>&1`
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
   echo "${out}" | grep -- '^DRYRUN: rsync -a --exclude=.git/ .\+/ ' > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
