@@ -38,7 +38,10 @@ if { [lindex $ret 0] == 0 } {
 }
 set specdir "$sysroot/usr/lib"
 
-set_board_info cflags  "-specs=${specdir}/rdimon.specs"
+set_board_info cflags  "-specs=${specdir}/rdimon.specs [libgloss_include_flags]"
+set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags]"
+
+verbose "FIXME: ${specdir}/rdimon.specs"
 
 # Can't pass arguments to the program.
 set_board_info noargs 1
