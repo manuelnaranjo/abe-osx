@@ -55,9 +55,6 @@ case "$target_triplet" in {
 	set target_list { "v8model" } 
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
-    { "aarch64_be-*linux*" } {
-	puts "No target hardware for $target_triplet"
-    }
     { "aarch64-*linux*" } {
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 } {
