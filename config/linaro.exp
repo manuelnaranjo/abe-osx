@@ -31,11 +31,10 @@ case "$myname" in {
 }
 
 case "$target_triplet" in { 
-    { "arm-*linux-gnueabi*"} {
+    { "arm*-*linux-gnueabi*"} {
 	case "$myname" in {
 	    { tcwgrob* } {
-#               set target_list { tcwgblack tcwgchromebook }
-		set target_list { arm-odroidU2 }
+		set target_list { tcwgchromebook }
 	    }
 	    { tcwgbuild* toolchain64 } {
 		set target_list { tcwgchrome2 }
@@ -45,7 +44,7 @@ case "$target_triplet" in {
 	    }
 	}
     }
-    { "arm*-*eabi*"} {
+    { "arm*-*eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
