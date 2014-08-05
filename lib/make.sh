@@ -344,12 +344,7 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${append_cflags}" != x; then
-	local make_flags="${make_flags} CFLAGS=\"${append_cflags} -pipe\" CXXFLAGS=\"-pipe\""
-    else
-	local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
-    fi
-
+    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" ${append_cflags} CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
     if test x"${append_ldflags}" != x; then
 	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi
@@ -442,7 +437,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
+	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\"cLDFLAGS=-static-libgcc"
     fi
 
     if test x"${append_ldflags}" != x; then
@@ -458,6 +453,7 @@ make_install()
 	local make_flags=" tooldir=${sysroots}/usr/"
 #	if test x"$2" = x"libgloss"; then
 #	    local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
+#	    local builddir="${builddir}/aarch64"
 #	fi
     fi
 
@@ -590,13 +586,13 @@ make_check()
 
     # Use pipes instead of /tmp for temporary files.
     if test x"${append_cflags}" != x; then
-	local make_flags="${make_flags} CFLAGS=\"${append_cflags} -pipe\" CXXFLAGS=\"-pipe\""
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${append_cflags} -pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
     else
-	local make_flags="${make_flags} CFLAGS=-pipe CXXFLAGS=-pipe"
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
     fi
 
     if test x"${append_ldflags}" != x; then
-	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+	local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${append_ldflags}\""
     fi
 
     if test x"${parallel}" = x"yes"; then
@@ -614,12 +610,12 @@ make_check()
     else
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    else
-		dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    fi
 	else
-	    dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	    dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	fi
     fi
     
