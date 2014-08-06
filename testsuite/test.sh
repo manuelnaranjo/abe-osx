@@ -1393,6 +1393,37 @@ else
     fail "${testing}"
 fi
 
+
+dryrun="yes"
+tool="binutils" #this is a nice tool to use as it checks the substitution in make install, too
+testing="postfix make args (make_all)"
+default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+if test x"${default_makeflags}" = x; then
+  untested "${testing}" #implies that the tool's config no longer contains default_makeflags
+else
+  out="`make_all ${tool}.git 2>&1`"
+  echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+testing="postfix make args (make_install)"
+default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`" | sed -e 's:\ball-:install-:g'`"
+if test x"${default_makeflags}" = x; then
+  untested "${testing}" #implies that the tool's config no longer contains default_makeflags
+else
+  out="`make_install ${tool}.git 2>&1`"
+  echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+dryrun="no"
+
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 

@@ -341,12 +341,6 @@ make_all()
 
     local make_flags="${make_flags} -j ${cpus}"
 
-    # Some components require extra flags to make
-    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-    if test x"${default_makeflags}" !=  x; then
-        local make_flags="${make_flags} ${default_makeflags}"
-    fi
-
     # Use pipes instead of /tmp for temporary files.
     local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" ${append_cflags} CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
     if test x"${append_ldflags}" != x; then
@@ -362,6 +356,12 @@ make_all()
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
     fi
 
+    # Some components require extra flags to make: we put them at the end so that config files can override
+    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    if test x"${default_makeflags}" !=  x; then
+        local make_flags="${make_flags} ${default_makeflags}"
+    fi
+
     if test x"${CONFIG_SHELL}" = x; then
         export CONFIG_SHELL=${bash_shell}
     fi
@@ -370,7 +370,7 @@ make_all()
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
     local logfile="${builddir}/make-${tool}.log"
-    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
+    dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
 
 #    local errors="`egrep '[Ff]atal error:|configure: error:|Error:' ${logfile}`"
@@ -471,7 +471,7 @@ make_install()
     fi
 
     local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2 | sed -e 's:\ball-:install-:g'`"
-    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    dryrun "make install ${make_flags} -i -k -w -C ${builddir} ${default_makeflags} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
         warning "Make install failed!"
         return 1
