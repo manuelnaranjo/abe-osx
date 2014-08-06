@@ -188,6 +188,7 @@ test_config_default()
     indir=${tmpdir}
   fi
   cp ${indir}/host.conf ${indir}/host.conf.orig
+  trap "cp ${indir}/host.conf.orig ${indir}/host.conf" EXIT
 
   sed -i -e "s/^${feature}=.*/${feature}=yes/" "${indir}/host.conf"
 
@@ -213,6 +214,9 @@ test_config_default()
   match="${feature_match} *yes"
   test_pass "${cb_commands}" "${match}"
 
+  mv ${indir}/host.conf.orig ${indir}/host.conf
+  trap - EXIT
+
   # Let's make sure the stage is actually skipped.
   # --force makes sure we run through to the stage even
   # if the builddir builds stamps are new.
@@ -224,8 +228,6 @@ test_config_default()
   # if the builddir builds stamps are new.
   cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable ${feature} --build all"
   test_pass "${cb_commands}" "${perform_match}"
-
-  mv ${indir}/host.conf.orig ${indir}/host.conf
 }
 
 cb_commands="--dry-run"
