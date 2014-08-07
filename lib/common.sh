@@ -276,6 +276,29 @@ get_builddir()
     return 0
 }
 
+get_config()
+{
+    conf="`get_toolname $1`.conf"
+    if test $? -gt 0; then
+	return 1
+    fi
+    if test -e ${topdir}/config/${conf}; then
+	echo "${topdir}/config/${conf}"
+	return 0
+    else
+	tool="`echo ${tool} | sed -e 's:-linaro::'`"
+	if test -e ${topdir}/config/${conf}; then
+	    echo "${topdir}/config/${conf}"
+	    return 0
+	fi
+    fi
+    error "Couldn't find ${topdir}/config/${conf}"
+
+    return 1
+}
+
+# Extract the name of the toolchain component being built
+
 # Source a bourne shell config file so we can access its variables.
 #
 # $1 - the tool component that the config file needs to be sourced
@@ -291,23 +314,24 @@ source_config()
     stage1_flags=""
     stage2_flags=""
 
-    conf="`get_toolname $1`.conf"
-    if test $? -gt 0; then
-	return 1
-    fi
-    if test -e ${topdir}/config/${conf}; then
-	. ${topdir}/config/${conf}
-	return 0
+    conf="`get_config $1`"
+    if test $? -eq 0; then
+        . "${conf}"
+        return 0
     else
-	tool="`echo ${tool} | sed -e 's:-linaro::'`"
-	if test -e ${topdir}/config/${conf}; then
-	    . ${topdir}/config/${conf}
-	    return 0
-	fi
+        return 1
     fi
-    error "Couldn't find ${topdir}/config/${conf}"
-    
-    return 1
+}
+
+read_config()
+{
+    conf="`get_config $1`"
+    if test $? -eq 0; then
+	echo "`. ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Extract the name of the toolchain component being built

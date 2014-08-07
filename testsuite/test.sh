@@ -1393,19 +1393,50 @@ else
     fail "${testing}"
 fi
 
+#Do not pollute env
+testing="source_config"
+depends="`depends= && source_config isl && echo ${depends}`"
+static_link="`static_link= && source_config isl && echo ${static_link}`"
+default_configure_flags="`default_configure_flags= && source_config isl && echo ${default_configure_flags}`"
+if test x"${depends}" != xgmp; then
+  fail "${testing}"
+elif test x"${static_link}" != xyes; then
+  fail "${testing}"
+elif test x"${default_configure_flags}" != x"--with-gmp-prefix=${PWD}/${hostname}/${build}/depends"; then
+  fail "${testing}"
+else
+  pass "${testing}"
+fi
+depends=
+default_configure_flags=
+static_link=
+
+testing="read_config one arg"
+if test x"`read_config isl static_link`" = xyes; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+testing="read_config multiarg"
+if test x"`read_config glib default_configure_flags`" = x"--disable-modular-tests --disable-dependency-tracking --cache-file=/tmp/glib.cache"; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
 
 dryrun="yes"
 tool="binutils" #this is a nice tool to use as it checks the substitution in make install, too
+cmp_makeflags="`read_config ${tool} default_makeflags`"
 testing="postfix make args (make_all)"
-default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-if test x"${default_makeflags}" = x; then
-  untested "${testing}" #implies that the tool's config no longer contains default_makeflags
+if test x"${cmp_makeflags}" = x; then
+  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
 else
-  out="`make_all ${tool}.git 2>&1`"
+  out="`. ${topdir}/config/${tool}.conf && make_all ${tool}.git 2>&1`"
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
   else
@@ -1413,21 +1444,23 @@ else
   fi
 fi
 testing="postfix make args (make_install)"
-default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`" | sed -e 's:\ball-:install-:g'`"
-if test x"${default_makeflags}" = x; then
-  untested "${testing}" #implies that the tool's config no longer contains default_makeflags
+cmp_makeflags="`echo ${cmp_makeflags} | sed -e 's:\ball-:install-:g'`"
+if test x"${cmp_makeflags}" = x; then
+  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
 else
-  out="`make_install ${tool}.git 2>&1`"
+  out="`. ${topdir}/config/${tool}.conf && make_install ${tool}.git 2>&1`"
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${default_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
     pass "${testing}"
   else
     fail "${testing}"
   fi
 fi
+cmp_makeflags=
+
 testing="configure"
 tool="dejagnu"
 configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
@@ -1463,7 +1496,6 @@ elif test x"${configure}" = xno; then
   fi
 fi
 dryrun="no"
-
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 

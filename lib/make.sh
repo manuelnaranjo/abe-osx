@@ -357,7 +357,7 @@ make_all()
     fi
 
     # Some components require extra flags to make: we put them at the end so that config files can override
-    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    local default_makeflags="`read_config $1 default_makeflags`"
     if test x"${default_makeflags}" !=  x; then
         local make_flags="${make_flags} ${default_makeflags}"
     fi
@@ -470,7 +470,7 @@ make_install()
         export CONFIG_SHELL=${bash_shell}
     fi
 
-    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2 | sed -e 's:\ball-:install-:g'`"
+    local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
     dryrun "make install ${make_flags} -i -k -w -C ${builddir} ${default_makeflags} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
         warning "Make install failed!"
