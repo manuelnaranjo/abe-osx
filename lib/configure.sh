@@ -61,7 +61,7 @@ configure_build()
 #	if test x"${tool}" = x"zlib"; then
 #	    dryrun "ln -s ${srcdir} ${builddir}"
 #	else
-	    mkdir -p ${builddir}
+	    dryrun "mkdir -p \"${builddir}\""
 #	fi
     fi
 

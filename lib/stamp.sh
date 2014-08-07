@@ -69,13 +69,13 @@ create_stamp()
 
     if test ! -d "${stamp_loc}"; then
 	notice "'${stamp_loc}' doesn't exist, creating it."
-	mkdir -p "${stamp_loc}"
+	dryrun "mkdir -p \"${stamp_loc}\""
     fi
 
     local full_stamp_path=
     full_stamp_path="${stamp_loc}/${stamp_name}"
 
-    touch "${full_stamp_path}"
+    dryrun "touch \"${full_stamp_path}\""
     ret=$?
     notice "Creating stamp ${full_stamp_path} (`stat -c %Y ${full_stamp_path}`)"
     return ${ret}
