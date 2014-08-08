@@ -373,12 +373,12 @@ make_all()
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
 
-#    local errors="`egrep '[Ff]atal error:|configure: error:|Error:' ${logfile}`"
+#    local errors="`dryrun \"egrep '[Ff]atal error:|configure: error:|Error' ${logfile}\"`"
 #    if test x"${errors}" != x -a ${makeret} -gt 0; then
-#        if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
-#            error "Couldn't build ${tool}: ${errors}"
-#            exit 1
-#        fi
+#       if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
+#           error "Couldn't build ${tool}: ${errors}"
+#           exit 1
+#       fi
 #    fi
 
     # Make sure the make.log file is in place before grepping or the -gt
