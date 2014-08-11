@@ -231,7 +231,7 @@ checkout()
 		fi
 	    fi
 	    ;;
-	git*|http*)
+	git*|http*|ssh*)
 	    #FIXME: This is an unreliable way to parse the repo directory.
             local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
 
@@ -388,7 +388,7 @@ push ()
 		fi
 	    fi
 	    ;;
-	git*)
+	git*|ssh*)
 	    if test x"$3" = x; then
 		warning "No branch given, so using master or trunk"
 		local branch="master"
@@ -471,7 +471,7 @@ commit ()
 		fi
 	    fi
 	    ;;
-	git*)
+	git*|ssh*)
 	    if test x"$2" = x; then
 		warning "No files given, so commiting all"
 		local files="-a"
