@@ -244,6 +244,7 @@ edit_changelogs()
 		fi
 		;;
 	    *)
+                error "fullname not given and could not be determined"
 		;;
 	esac
     fi

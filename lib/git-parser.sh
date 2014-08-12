@@ -28,7 +28,7 @@
 # Forms:
 #
 #   get_git_service
-#      The valid git services are: 'git' and 'http'.
+#      The valid git services are: 'git', 'http' and 'ssh'.
 #
 #   get_git_user
 #      Valid usernames are: 'username' and 'multi.part.username".
@@ -128,7 +128,7 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo "${in}" | sed -n 's#\(^git\)://.*#\1#p;s#\(^http\)://.*#\1#p;s#\(^svn\)://.*#\1#p;s#\(^lp\):[/]*.*#\1#p'`"
+    local service="`echo "${in}" | sed -n ' s#\(^git\)://.*#\1#p; s#\(^ssh\)://.*#\1#p; s#\(^http\)://.*#\1#p; s#\(^svn\)://.*#\1#p; s#\(^lp\):[/]*.*#\1#p'`"
 
     # An http service with /svn in the url is actually an svn service.
     if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\/svn"`" -gt 0; then
@@ -141,7 +141,10 @@ git_parser()
 	# An http service with .git in the url is actually a git service.
 	if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\.git"`" -gt 0; then
 	    service="git"
-	fi
+        # An ssh service is actually a git service.
+        elif test x"${service}" = x"ssh"; then
+            service="git"
+        fi
 	echo ${service}
 	return 0
     fi
