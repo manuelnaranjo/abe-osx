@@ -81,7 +81,7 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 resultsdir="/tmp/cbuild@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all
+    bash -x ${topdir}/cbuild2.sh --disable update --disable make_docs --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all
     if test $? -gt 0; then
 	echo "ERROR: Cbuild2 failed!"
 	exit 1
