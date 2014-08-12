@@ -454,10 +454,14 @@ make_install()
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
         local make_flags=" tooldir=${sysroots}/usr/"
-#       if test x"$2" = x"libgloss"; then
-#           local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
-#           local builddir="${builddir}/aarch64"
-#       fi
+        if test x"$2" = x"libgloss"; then
+            local make_flags="${make_flags} install-rdimon"
+            if test `echo ${target} | grep -c aarch64` -gt 0; then  
+                local builddir="${builddir}/aarch64"
+            else
+                local builddir="${builddir}/arm"
+            fi
+        fi
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
