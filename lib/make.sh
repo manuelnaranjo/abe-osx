@@ -362,6 +362,10 @@ make_all()
 	export CONFIG_SHELL=${bash_shell}
     fi
 
+    if test x"${make_docs}" != xyes; then
+	export MAKEINFO=echo
+    fi
+
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
