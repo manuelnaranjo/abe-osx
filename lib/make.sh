@@ -366,6 +366,9 @@ make_all()
         export CONFIG_SHELL=${bash_shell}
     fi
 
+    if test x"${make_docs}" = xyes; then
+	export BUILD_INFO=""
+    fi
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
@@ -463,6 +466,10 @@ make_install()
                 local builddir="${builddir}/arm"
             fi
         fi
+    fi
+
+    if test x"${make_docs}" = xyes; then
+	export BUILD_INFO=""
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
