@@ -1425,6 +1425,16 @@ else
   fail "${testing}"
 fi
 
+testing="read_config set then unset"
+out="`default_makeflags=\`read_config binutils default_makeflags\` && default_makeflags=\`read_config newlib default_makeflags\` && echo ${default_makeflags}`"
+if test $? -gt 0; then
+  fail "${testing}"
+elif test x"${out}" != x; then
+  fail "${testing}"
+else
+  pass "${testing}"
+fi
+
 dryrun="yes"
 tool="binutils" #this is a nice tool to use as it checks the substitution in make install, too
 cmp_makeflags="`read_config ${tool} default_makeflags`"

@@ -326,11 +326,13 @@ source_config()
 read_config()
 {
     conf="`get_config $1`"
-    if test $? -eq 0; then
-	echo "`. ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
-        return 0
-    else
+    if test $? -gt 0; then
         return 1
+    else
+        local value="`export ${2}= && . ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
+        local retval=$?
+        echo "${value}"
+        return ${retval}
     fi
 }
 
