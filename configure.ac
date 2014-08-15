@@ -403,7 +403,8 @@ AC_PATH_PROG(MAKEINFO,makeinfo)
 if test `lsb_release -i -s` = "Ubuntu"; then
    texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
    if test "${texversion}" -gt 4; then
-      MAKEINFO="echo"
+dnl      MAKEINFO="echo"
+         AC_MSG_WARN(On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo)
    fi
 fi
 AC_SUBST(MAKEINFO)
@@ -414,6 +415,11 @@ AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
       AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
       missing="${missing} git-new-workdir"
 fi
+
+# A symbolic link needs to be made in this directory
+#if test -w /opt/linaro -eq 0; then
+#   AC_MSG_WARN([/opt/linaro is not writable!])
+#fi
 
 AC_OUTPUT(host.conf)
 
