@@ -444,7 +444,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\"cLDFLAGS=-static-libgcc"
+        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\" LDFLAGS=-static-libgcc"
     fi
 
     if test x"${append_ldflags}" != x; then
@@ -468,7 +468,7 @@ make_install()
         fi
     fi
 
-    if test x"${make_docs}" = xyes; then
+    if test x"${make_docs}" != xyes; then
 	export BUILD_INFO=""
     fi
 
