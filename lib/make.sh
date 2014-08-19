@@ -366,8 +366,8 @@ make_all()
         export CONFIG_SHELL=${bash_shell}
     fi
 
-    if test x"${make_docs}" = xyes; then
-	export BUILD_INFO=""
+    if test x"${make_docs}" != xyes; then
+        local make_flags="${make_flags} BUILD_INFO=\"\" MAKEINFO=echo"
     fi
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
