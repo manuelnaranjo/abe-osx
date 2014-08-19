@@ -20,7 +20,7 @@
 scancheck () 
 {
     if ! test -e $1; then
-	echo "ERROR: $1 doesn't exist!"
+#	echo "ERROR: $1 doesn't exist!"
 	return 1
     fi
 
@@ -82,6 +82,7 @@ difftwodirs ()
 	    echo "WARNING: ${prev} has no test reults!"
 	    return 0
 	fi
+    else
 	echo "WARNING:${prev} doesn't exist!"
 	return 0
     fi
@@ -161,7 +162,7 @@ difftwodirs ()
 	fi
 	
 	# Scan the check log for testsuite build errors
-	scancheck ${next}/check-$i.log
+	scancheck ${next}/check-$i.log.xz
     done
 
     rm -fr ${diffdir}
