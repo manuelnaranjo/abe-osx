@@ -109,51 +109,51 @@ difftwodirs ()
     fi
     unxz ${next}/*.sum.xz
     unxz ${next}/check*.log.xz
-    for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
+    for i in gcc g\+\+ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
            sort ${next}/$i.sum -o ${next}/$i-sort.sum
            diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
-           rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
+            rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
 	    if test -s ${diffdir}/diff-$i.txt; then
 		echo "Comparison between:" > ${diffdir}/$i-test-results.txt
 		echo "	${prev}/$i.sum and" >> ${diffdir}/$i-test-results.txt
 		echo "	${next}/$i.sum" >> ${diffdir}/$i-test-results.txt
-	    fi
-	    if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
+		if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
+		    echo "" >> ${diffdir}/$i-test-results.txt
+		    echo "Tests that were failing that now PASS" >> ${diffdir}/$i-test-results.txt
+		    echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
+		    grep ^\+PASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		fi
+		if test `grep -c ^\+FAIL ${diffdir}/diff-$i.txt` -gt 0; then
+		    echo "" >> ${diffdir}/$i-test-results.txt
+		    echo "Tests that were passing that now FAIL" >> ${diffdir}/$i-test-results.txt
+		    echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
+		    grep ^\+FAIL ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		fi
+		if test `grep -c ^\+XPASS ${diffdir}/diff-$i.txt` -gt 0; then
+		    echo "" >> ${diffdir}/$i-test-results.txt
+		    echo "Tests that were expected failures that now PASS" >> ${diffdir}/$i-test-results.txt
+		    echo "-----------------------------------------------" >> ${diffdir}/$i-test-results.txt
+		    grep ^\+XPASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		fi
+		if test `grep -c ^\+UN ${diffdir}/diff-$i.txt` -gt 0; then
+		    echo "" >> ${diffdir}/$i-test-results.txt
+		    echo "Tests that have problems" >> ${diffdir}/$i-test-results.txt
+		    echo "------------------------" >> ${diffdir}/$i-test-results.txt
+		    grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
+		fi
 		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Tests that were failing that now PASS" >> ${diffdir}/$i-test-results.txt
-		echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
-		grep ^\+PASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
-	    fi
-	    if test `grep -c ^\+FAIL ${diffdir}/diff-$i.txt` -gt 0; then
+		echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
+		grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Tests that were passing that now FAIL" >> ${diffdir}/$i-test-results.txt
-		echo "-------------------------------------" >> ${diffdir}/$i-test-results.txt
-		grep ^\+FAIL ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
-	    fi
-	    if test `grep -c ^\+XPASS ${diffdir}/diff-$i.txt` -gt 0; then
-		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Tests that were expected failures that now PASS" >> ${diffdir}/$i-test-results.txt
-		echo "-----------------------------------------------" >> ${diffdir}/$i-test-results.txt
-		grep ^\+XPASS ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
-	    fi
-	    if test `grep -c ^\+UN ${diffdir}/diff-$i.txt` -gt 0; then
-		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Tests that have problems" >> ${diffdir}/$i-test-results.txt
-		echo "------------------------" >> ${diffdir}/$i-test-results.txt
-		grep ^\+UN ${diffdir}/diff-$i.txt >> ${diffdir}/$i-test-results.txt
-	    fi
-	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
-	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
-	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Build log: http://cbuild.validation.linaro.org${next}/make-$i.log.xz" >> ${diffdir}/$i-test-results.txt
-	    echo "Test summary: http://cbuild.validation.linaro.org${next}/$i.sum.xz" >> ${diffdir}/$i-test-results.txt
-	    echo "Test log: http://cbuild.validation.linaro.org${next}/check-$i.log.xz" >> ${diffdir}/$i-test-results.txt
-	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
-	    if test -e ${diffdir}/$i-test-results.txt; then
-		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
+		echo "Build log: http://cbuild.validation.linaro.org${next}/make-$i.log.xz" >> ${diffdir}/$i-test-results.txt
+		echo "Test summary: http://cbuild.validation.linaro.org${next}/$i.sum.xz" >> ${diffdir}/$i-test-results.txt
+		echo "Test log: http://cbuild.validation.linaro.org${next}/check-$i.log.xz" >> ${diffdir}/$i-test-results.txt
+		local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
+		if test -e ${diffdir}/$i-test-results.txt; then
+		    mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
+		fi
 	    else
 		echo "$i had no regressions between ${pversion} and ${cversion}!" > /tmp/mail$$.txt
 		mailto "$i had no regressions between ${pversion} and ${cversion}!" /tmp/mail$$.txt
