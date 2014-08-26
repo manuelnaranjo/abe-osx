@@ -29,7 +29,7 @@ usage()
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
-             [--set {cflags|ldflags}=XXX]
+             [--set {cflags|ldflags|runtestflgs}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
@@ -195,9 +195,9 @@ OPTIONS
 		setting overrides the default.  Specifying a libc
 		other than newlib on baremetal targets is an error.
 
-  --set		{cflags|ldflags}=XXX
+  --set		{cflags|ldflags|runtestflags}=XXX
                 This appends additional options to the default values used
-                for CFLAGS and LDFLAGS.
+                for CFLAGS, LDFLAGS, and RUNTESTFLAGS.
 
   --set		{package}={toolchain|gdb|sysroot}
                 This limits the default set of packages to the specified set.
@@ -385,24 +385,29 @@ set_package()
     local setting=${in[1]}
 
     case ${package} in
+	languages|la*)
+	    with_languages="${setting}"
+	    notice "Setting list of languages to build to ${setting}"
+	    return 0
+	    ;;
 	packages|pa*)
 	    with_packages="${setting}"
 	    notice "Setting list of packages to build to ${setting}"
 	    return 0
 	    ;;
-	languages|la*)
-	    with_languages="${setting}"
-	    notice "Setting languages to build to ${setting}"
-	    return 0
-	    ;;
-	cflags|cf*)
-	    append_cflags="${setting}"
-	    notice "Appending ${setting} to CFLAGS"
+	runtestflags|ru*)
+	    append_runtestflags="${setting}"
+	    notice "Appending ${setting} to RUNTESTFLAGS"
 	    return 0
 	    ;;
 	ldflags|ld*)
 	    append_ldflags="${setting}"
 	    notice "Appending ${setting} to LDFLAGS"
+	    return 0
+	    ;;
+	cflags|cf*)
+	    append_cflags="${setting}"
+	    notice "Appending ${setting} to CFLAGS"
 	    return 0
 	    ;;
 	libc)

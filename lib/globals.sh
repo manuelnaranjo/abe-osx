@@ -93,6 +93,7 @@ building=yes
 
 append_cflags=
 append_ldflags=
+append_runtestflags=
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}

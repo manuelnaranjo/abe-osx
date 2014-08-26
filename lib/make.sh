@@ -612,6 +612,10 @@ make_check()
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${append_ldflags}\""
     fi
 
+    if test x"${append_runtestflags}" != x; then
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${append_runtestflags}\""
+    fi
+
     if test x"${parallel}" = x"yes"; then
         local make_flags="${make_flags} -j ${cpus}"
     fi
