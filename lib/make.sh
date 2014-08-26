@@ -344,7 +344,7 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" ${append_cflags} CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${append_cflags}\" CXXFLAGS=\"${append_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
     if test x"${append_ldflags}" != x; then
         local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi

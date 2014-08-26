@@ -155,7 +155,7 @@ configure_build()
     fi
 
     if test x"${append_cflags}" != x; then
-	local opts="${opts} CFLAGS=\"${append_cflags} CXXFLAGS=\"${append_cflags}"
+	local opts="${opts} CFLAGS=\"${append_cflags}\" CXXFLAGS=\"${append_cflags}\""
     fi
 
     # GCC and the binutils are the only toolchain components that need the
