@@ -34,7 +34,7 @@ fetch()
 	# Move the existing file to force a fresh copy to be downloaded.
 	# Otherwise this file can get stale, and new tarballs not found.
 	if test -f ${local_snapshots}/md5sums; then
-	    cp -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
+	    mv -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
 	fi
 	fetch_http md5sums
 	if test ! -s ${local_snapshots}/md5sums; then
