@@ -394,7 +394,6 @@ set_package()
 	runtestflags|ru*)
 	    append_runtestflags="${setting}"
 	    notice "Appending ${setting} to RUNTESTFLAGS"
-	    exit 0
 	    return 0
 	    ;;
 	ldflags|ld*)
