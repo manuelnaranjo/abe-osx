@@ -377,12 +377,8 @@ crosscheck_clibrary_target()
 
 set_package()
 {
-    saveIFS=${IFS}
-    IFS='='
-    local in=($1)
-    IFS=${saveIFS}
-    local package=${in[0]}
-    local setting=${in[1]}
+    local package="`echo $1 | cut -d '=' -f 1`"
+    local setting="`echo $* | cut -d '=' -f 2-3`"
 
     case ${package} in
 	languages|la*)
@@ -398,6 +394,7 @@ set_package()
 	runtestflags|ru*)
 	    append_runtestflags="${setting}"
 	    notice "Appending ${setting} to RUNTESTFLAGS"
+	    exit 0
 	    return 0
 	    ;;
 	ldflags|ld*)
