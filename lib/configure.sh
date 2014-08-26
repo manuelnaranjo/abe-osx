@@ -190,7 +190,7 @@ configure_build()
 			stage2*)
 			    notice "Building stage 2 of GCC"
 			    local opts="${opts} ${stage2_flags}"
- 			    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GCC ${date}\""
+ 			    local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\" --with-pkgversion=\"Linaro GCC ${date}\""
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
