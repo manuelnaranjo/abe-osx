@@ -339,7 +339,9 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-    local make_flags="${make_flags} -j ${cpus}"
+    if test x"${parallel}" = x"yes"; then
+	local make_flags="${make_flags} -j ${cpus}"
+    fi
 
     # Use pipes instead of /tmp for temporary files.
     local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" ${append_cflags} CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
@@ -352,7 +354,7 @@ make_all()
     fi 
 
     # All tarballs are statically linked
-    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+    if test x"${tarbin}" = x"yes"; then
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
     fi
 
