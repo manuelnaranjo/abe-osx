@@ -39,7 +39,6 @@ fileserver=""
 branch=""
 
 OPTS="`getopt -o f:t:h -l target:fileserver:help -- "$@"`"
-echo "OPTS = $OPTS"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -51,9 +50,6 @@ while test $# -gt 0; do
     esac
     shift
 done
-echo "1 = $1"
-
-echo "FIXME: $branch $target $fileserver"
 
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
