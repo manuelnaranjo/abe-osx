@@ -211,7 +211,7 @@ build()
     
     # If this is a native build, we always checkout/fetch.  If it is a 
     # cross-build we only checkout/fetch if this is stage1
-    if test x"${target}" == x"${build}" \
+    if test x"${target}" = x"${build}" \
         -o "${target}" != x"${build}" -a x"$2" != x"stage2"; then
         if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^ssh|^lp|^http|^git|\.git"` -gt 0; then     
             # Don't update the compiler sources between stage1 and stage2 builds if this
@@ -356,6 +356,8 @@ make_all()
     # All tarballs are statically linked
     if test x"${tarbin}" = x"yes"; then
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
+    else
+        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
     fi
 
     # Some components require extra flags to make: we put them at the end so that config files can override
@@ -446,7 +448,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\" LDFLAGS=-static-libgcc"
+        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
     fi
 
     if test x"${append_ldflags}" != x; then
