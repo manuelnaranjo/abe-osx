@@ -103,7 +103,7 @@ binary_runtime()
 
     # Get the binary libraries. aarch64 uses /lib64, arm uses /lib, s we use a wildcard
     # to get either.
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc_s* ${destdir}/lib/${target}/"
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc* ${destdir}/lib/${target}/"
     
     dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
 
