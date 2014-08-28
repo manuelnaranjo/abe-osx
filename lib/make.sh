@@ -135,7 +135,7 @@ build_all()
         
         notice "Build took ${SECONDS} seconds"
     fi
-    
+
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
             release_binutils_src
@@ -310,7 +310,7 @@ build()
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
-    if test x"${runtests}" = xyes; then
+    if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc"; then
         if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
             notice "Starting test run for ${tag}${2:+ $2}"
             make_check ${gitinfo}${2:+ $2}
@@ -319,7 +319,7 @@ build()
             fi
         fi
     fi
-    
+
     return 0
 }
 
@@ -355,8 +355,6 @@ make_all()
 
     # All tarballs are statically linked
     if test x"${tarbin}" = x"yes"; then
-        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
-    else
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
     fi
 
@@ -390,11 +388,11 @@ make_all()
 
     # Make sure the make.log file is in place before grepping or the -gt
     # statement is ill formed.  There is not make.log in a dryrun.
-    if test -e "${builddir}/make-${tool}.log"; then
-       if test `grep -c "configure-target-libgcc.*ERROR" ${logfile}` -gt 0; then
-           error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
-       fi
-    fi
+#    if test -e "${builddir}/make-${tool}.log"; then
+#       if test `grep -c "configure-target-libgcc.*ERROR" ${logfile}` -gt 0; then
+#           error "libgcc wouldn't compile! Usually this means you don't have a sysroot installed!"
+#       fi
+#    fi
     if test ${makeret} -gt 0; then
         warning "Make had failures!"
         return 1
@@ -506,12 +504,10 @@ make_install()
         dryrun "rsync -a ${sysroots}/lib/ ${sysroots}/lib64/"
         dryrun "rm -rf ${sysroots}/lib"
         dryrun "ln -sfnT ${sysroots}/lib64 ${sysroots}/lib"
-
-        #dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
+#        dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
         dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
-        dryrun "(cd ${sysroots}/lib64; ln -sfnT ${dynamic_linker_name} ld-linux-aarch64.so.1)"
+        dryrun "ln -sfnT ${dynamic_linker_name} ${sysroots}/lib64/ld-linux-aarch64.so.1"
     fi
-
 
     # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
     # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
@@ -590,7 +586,7 @@ make_check()
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
-    local ignore="dejagnu gmp mpc mpfr gdb"
+    local ignore="dejagnu gmp mpc mpfr gdb eglibc"
     for i in ${ignore}; do
         if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
             return 0
