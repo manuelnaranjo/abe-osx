@@ -132,12 +132,10 @@ configure_build()
 	done
     fi
 
+
     # Force static linking unless dynamic linking is specified
-    if test x"${static_link}" != x"no" -a x"${tool}" != x"gcc"; then
-	local opts="--disable-shared --enable-static"
-    fi
-    # If building tarballs, we always statically link everything
-    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+    local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
+    if test x"${static}" = x"yes" -o x"${tarbin}" = x"yes"; then
 	local opts="--disable-shared --enable-static"
     fi
 
