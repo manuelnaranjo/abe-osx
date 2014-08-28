@@ -54,3 +54,4 @@ set_board_info needs_status_wrapper  1
 
 # We are on a very slow simulator :-)
 set_board_info slow_simulator 1
+set_board_info gcc,timeout 100000
