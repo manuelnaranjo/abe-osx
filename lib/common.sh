@@ -245,6 +245,9 @@ normalize_path()
 	    local node="`echo ${process} | sed -e 's@^.*/svn/@@'`"
 	    local node="`basename ${node}`"
 	    ;;
+	*.tar.*)
+	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
+	    ;;
 	*)
 	    fixme "normalize_path should only be called with a URL or a tarball name, not a sources.conf identifier."
 	    # FIXME: This shouldn't be handled here.
