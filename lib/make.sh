@@ -136,6 +136,25 @@ build_all()
         notice "Build took ${SECONDS} seconds"
     fi
 
+    # # now run the tests if specified. We do this after a full toolchain
+    # # build because *glibc requires a full stage2 build to compile the
+    # # test cases.
+    # if test x"${runtests}" = x"yes"; then
+    # 	for i in ${builds}; do
+    # 	    local gitinfo="`get_source $i`"
+    #         case $i in
+    # 		binutils|libc|stage2|gdb) 
+    # 		    make_check ${gitinfo}${2:+ $2}
+    # 		    ;;
+    # 		*) /* do nothing */ ;;
+    # 	    esac
+    # 	    if test $? -gt 0; then
+    # 		error "Failed building $i."
+    # 		return 1
+    # 	    fi
+    # 	done
+    # fi
+    
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
             release_binutils_src
@@ -168,9 +187,9 @@ build_all()
         if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
             binary_sysroot
         fi
-        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
-            binary_gdb
-        fi
+#        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
+#            binary_gdb
+#        fi
         notice "Packaging took ${SECONDS} seconds"
     fi
     
@@ -353,6 +372,12 @@ make_all()
         local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi 
 
+    # Use LSB to produce more portable binary releases.
+    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
+	export LSB_SHAREDLIBPATH=${builddir}/gcc
+	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+    fi
+
     # All tarballs are statically linked
     if test x"${tarbin}" = x"yes"; then
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
@@ -424,7 +449,7 @@ make_install()
     trace "$*"
 
     if test x"${parallel}" = x"yes"; then
-        local make_flags="${make_flags} -j ${cpus}"
+        local make_flags="${make_flags} -j $((2*${cpus}))"
     fi
 
     local tool="`get_toolname $1`"
@@ -440,6 +465,12 @@ make_install()
             return 1
         fi
         return 0
+    fi
+
+    # Use LSB to produce more portable binary releases.
+    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
+	export LSB_SHAREDLIBPATH=${builddir}/gcc
+	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
     fi
 
     local builddir="`get_builddir $1 ${2:+$2}`"
