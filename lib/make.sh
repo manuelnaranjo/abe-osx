@@ -374,7 +374,7 @@ make_all()
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}/gcc
+	export LSB_SHAREDLIBPATH=${builddir}
 	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
     fi
 
@@ -469,7 +469,7 @@ make_install()
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}/gcc
+	export LSB_SHAREDLIBPATH=${builddir}
 	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
     fi
 
