@@ -173,12 +173,6 @@ binary_toolchain()
 	if test x"${gcc_version}" = x; then
 	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	fi
-	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	if test x"${binutils_version}" = x; then
-	    local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	fi
-	local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
 	    local branch="`basename ${gcc_version}`"
 	else
@@ -196,8 +190,6 @@ binary_toolchain()
 	local tag="`echo gcc-linaro-${version}~${revision}-${target}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
-	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
 	local tag="`echo gcc-linaro-${version}-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
 
     fi
@@ -205,60 +197,13 @@ binary_toolchain()
     local destdir="/tmp/linaro.$$/${tag}"
     dryrun "mkdir -p /tmp/linaro.$$"
 
-    # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir ${gcc_version} stage2`"
-
-    # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w LDFLAGS=-static"
-
-    # Use LSB to produce more portable binary releases.
-    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}/gcc
-	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
-    fi
-
-    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
-    if test $? -gt 0; then
-	error "Couldn't install static GCC!"
-	return 1
-    fi
-    # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir ${binutils_version}`"
-    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
-    if test $? -gt 0; then
-	error "Couldn't install static binutils!"
-	return 1
-    fi
-
-    # Install the documentation too
-    dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
-    
-    dryrun "ln -sfnT ${destdir}-tmp/${cbuild_top}/builds/destdir/${host} ${destdir}"
-    
-    #	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
-#    local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-static"
-    dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir} LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
-
-    # Install the documentation too. The different components unfortunately 
-    # install differently, so just do the right thing.
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/bfd)"
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/ld)"
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gas)"
-    dryrun "(make SHELL=${bash_shell}  diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gprof)"
-    dryrun "(make SHELL=${bash_shell} install-html install-info ${make_flags} -C ${builddir})"
-
-    dryrun "rsync -avr ${local_builds}/destdir/${build}/{lib,include} ${destdir}/"
-
-    # We build and test GCCGO, but we don't release it yet
-    # dryrun "rm -fr ${destdir}/bin/${target}-gccgo"
-
     # The manifest file records the versions of all of the components used to
     # build toolchain.
     manifest ${destdir}/manifest.txt
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
-#    dryrun "ln -sfnT ${destdir}/${cbuild_top}/destdir/${host} ${destdir}"
+    dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
