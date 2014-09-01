@@ -372,18 +372,6 @@ make_all()
         local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi 
 
-    # Use LSB to produce more portable binary releases.
-    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	case ${tool} in
-	    binutils|gdb|gcc)
-		export LSB_SHAREDLIBPATH=${builddir}
-		local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
-		;;
-	    *)
-		;;
-	esac
-    fi
-
     # All tarballs are statically linked
     if test x"${tarbin}" = x"yes"; then
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
@@ -473,10 +461,17 @@ make_install()
         return 0
     fi
 
+
     # Use LSB to produce more portable binary releases.
-    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}
-	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x -a x"${tarbin}" = x"yes"; then
+	case ${tool} in
+	    binutils|gdb|gcc)
+		export LSB_SHAREDLIBPATH=${builddir}
+		local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+		;;
+	    *)
+		;;
+	esac
     fi
 
     local builddir="`get_builddir $1 ${2:+$2}`"
