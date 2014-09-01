@@ -29,7 +29,7 @@ build_all()
         local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 gdb" # native build
+        local builds="infrastructure binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
@@ -325,7 +325,7 @@ build()
 
     create_stamp "${stampdir}" "${stamp}"
 
-    notice "Done building ${tag}${2:+ $2}"
+    notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
@@ -374,8 +374,14 @@ make_all()
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}
-	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+	case ${tool} in
+	    binutils|gdb|gcc)
+		export LSB_SHAREDLIBPATH=${builddir}
+		local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
+		;;
+	    *)
+		;;
+	esac
     fi
 
     # All tarballs are statically linked
