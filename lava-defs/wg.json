@@ -1,0 +1,39 @@
+{
+  "job_name": "bench-wg",
+  "device_type": "wg",
+  "timeout": 1800,
+  "actions": [
+    {
+      "command": "deploy_linaro_image",
+      "parameters": {
+           "hwpack": "http://releases.linaro.org/14.04/openembedded/aarch64/hwpack_linaro-vexpress64-rtsm_20140417-630_arm64_supported.tar.gz",
+           "rootfs": "http://cbuild.validation.linaro.org/binaries/linaro-image-toolchain-benchmarking-genericarmv8-20140429033553.rootfs.tar.gz"
+        }
+    },
+    {
+      "command": "lava_test_shell",
+      "parameters": {
+          "testdef_repos": [
+            {
+                "git-repo": "http://git.linaro.org/people/bernie.ogden/bench-lava.git",
+                "testdef": "bench-session-oe.yaml",
+                "parameters": {
+                    "GATEWAY": "10.0.0.1",
+                    "PUB_KEY": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDxxBKzwNVJby3AHewSvtlUE2lJj21dP1YH9vM3BxsxwxRXTcGRnCRdVT1Rx9Oij5qWWi5WTooyxDD5m032YLjTg19Sig4IlA83vFK0SCmZT6nCXuX++bOaoHjmkx9R951w2dSdbNzzX/zR09b0HWCXGXgzhco5w8PWLtio+UPlrQm/YlCGoZeFiBzDoIgI/AGq8BDouB36X6jj3lXOBlR0+7qnn+hqp4P5FkiTE8uRNlnyDdLZvFMzgVb3Buhm3bQpYAUX+agzeQPg5sw8P3ANzjyjslhlsxWoOimwBpExfxsaPAlhlRDhLX+e/VRwYxWBsN/WoUQrEyxLl9Bvl9Kv bogden"
+                }
+            }
+        ],
+	"timeout": 691200
+      }
+    },
+    {
+      "command": "submit_results",
+      "parameters":
+        {
+          "server": "https://bogden@validation.linaro.org/RPC2/",
+          "stream": "/private/team/wg/wg-private/"
+        }
+    } 
+
+  ]
+}

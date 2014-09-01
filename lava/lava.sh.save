@@ -1,0 +1,83 @@
+#!/bin/bash
+set -o pipefail
+
+lava_server=$1
+lava_json=$2
+listener_port=$3
+thing_to_run=$4
+cmd_to_run=${5//\"/\\\"}
+keyfile=$6 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
+shift 6
+
+t=`mktemp -t XXXXXXXXX` || exit 1
+t2=`mktemp -t XXXXXXXXX` || exit 1
+t3=`mktemp -t XXXXXXXXX` || exit 1
+
+#TODO: Error check, make parameterisable
+echo "\"PUB_KEY\": \"`ssh-keygen -y -f ~/.ssh/id_rsa`\"," > $t3 #TODO: embedded comma could be a problem if PUB_KEY is at end
+listener_ip=`ifconfig eth0 | grep 'inet addr:' | grep -o '\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+' | head -n1`
+
+sed \
+    -e "/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/ {r $t3" -e 'd}' \
+    -e "s/^\(.*\"LISTENER_IP\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${listener_ip}\"\2/" \
+    -e "s/^\(.*\"LISTENER_PORT\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${listener_port}\"\2/" \
+    ${lava_json} > $t2 || exit 1
+#TODO: race condition. the port could have been claimed by the time we want to use it. but might not use this approach in the end - we can just poll the output if we solve the keyring problem. alternatively, we could deal with this by forking the listener, I guess.
+#TODO submit-results/bundle stream
+
+cat $t2
+lava-tool submit-job https://${lava_server} ${t2} | tee $t
+if test $? -ne 0; then
+  echo Failed to submit job > /dev/stderr
+  rm -f $t $t2
+  exit 1
+fi
+id=`grep '^submitted as job id: [[:digit:]]\+$' $t | cut -d ' ' -f 5`
+if test $? -ne 0; then
+  rm -f $t $t2
+  echo "Failed to read job id" > /dev/stderr
+  exit 1
+fi
+rm -f $t $t2
+
+#TODO - timeout for socket approach - fork a subprocess to send a kill?
+ready_msg=`nc -l $listener_ip $listener_port` #TODO find a free port and inject it - and our IP - into the json
+if test $? -ne 0; then #TODO: I should be able to automate killing of the job
+  echo "Listening went wrong. You might want to kill the lava job that has been told about the port."
+  exit 1
+fi
+if x"${ready_msg}" != xBENCH_READY; then
+  exit 1
+fi
+#Don't trust random servers that ask for our benchmark - once we've got the signal, read the output
+#An alternative to polling the output would be to put a script in the lava image to ping us when ready
+#for i in {1..90}; do #Wait up to 90 mins for boot
+#  sleep 60
+  line=`lava-tool job-output $lava_server $id -o - | grep '^Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ for access to (.\+)'`
+  if test $? -eq 0; then
+    user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
+    echo "Found target at ${user_ip}"
+#    break
+  else
+    exit 1
+  fi
+#done
+
+#From here we are doing dispatch, not reservation. Nothing in here has anything to do with lava.
+rsync -e ssh -azvx $thing_to_run $user_ip: || exit 1
+echo ssh $user_ip "'${cmd_to_run}'" || exit 1
+ssh $user_ip "${cmd_to_run}" || exit 1
+rm -rf logs || exit 1
+for log in $@; do
+  rsync -e ssh -Razvx $user_ip:$log logs || exit 1
+  ssh $user_ip "cat $log" | ccencrypt -k $keyfile > logs/$log || exit 1
+done
+ssh $user_ip "rm -rf $thing_to_run" #clean up, we don't want to leave source or data lying around
+
+
+#And now we're back in target management
+echo ssh $user_ip stop_hacking
+
+#TODO: Basic hacking session images are nearly adeqate, but there will be some deps. How to specify? Again, cbuild2 copying would allow us to use configure.
+#      Might be best just to customize the image - I believe I can even specify packages in the .json if the OS is flexible enough.
+#      In the yaml, not the json. I just need to put a suitable yaml file in a repo. Should be able to cobble something from the hacking session scripts.
