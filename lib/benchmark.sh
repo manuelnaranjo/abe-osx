@@ -22,7 +22,6 @@ bench_run ()
     return 1
   fi
 
-  dryrun "echo \"${cmd}\" | tee -a ${runlog}"
   for i in `seq 1 "${count}"`; do
     dryrun "eval \"${cmd}\" 2>&1 | tee -a ${runlog}"
     if test $? -gt 0; then
