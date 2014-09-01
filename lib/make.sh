@@ -511,8 +511,8 @@ make_install()
         export CONFIG_SHELL=${bash_shell}
     fi
 
-    local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
-    dryrun "make install ${make_flags} -i -k -w -C ${builddir} ${default_makeflags} 2>&1 | tee ${builddir}/install.log"
+    local default_makeflags="`read_config $1 default_makeflags | sed -e 's:[\b \t]all -:install -:g'`"
+    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
         warning "Make install failed!"
         return 1
