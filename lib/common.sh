@@ -68,6 +68,7 @@ dryrun()
 	    read answer
 	    return $?
 	fi
+        echo "RUN: $1"
 	eval $1
 	return $?
     fi

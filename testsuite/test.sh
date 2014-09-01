@@ -1506,6 +1506,24 @@ elif test x"${configure}" = xno; then
   fi
 fi
 dryrun="no"
+
+testing="dryrun quote preservation (dryrun=no)"
+out=`dryrun 'echo "enquoted"'`
+if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+dryrun="yes"
+testing="dryrun quote preservation (dryrun=yes)"
+out=`dryrun 'echo "enquoted"' 2>&1`
+if test x"${out}" = 'xDRYRUN: echo "enquoted"'; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+dryrun="no"
+
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 
