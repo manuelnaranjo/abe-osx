@@ -91,9 +91,9 @@ release=""
 with_packages="toolchain,sysroot,gdb"
 building=yes
 
-append_cflags=
-append_ldflags=
-append_runtestflags=
+override_cflags=
+override_ldflags=
+override_runtestflags=
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}

@@ -196,8 +196,8 @@ OPTIONS
 		other than newlib on baremetal targets is an error.
 
   --set		{cflags|ldflags|runtestflags|makeflags}=XXX
-                This appends additional options to the default values used
-                for CFLAGS, LDFLAGS, RUNTESTFLAGS, and MAKEFLAGS.
+                This overrides the default values used for CFLAGS,
+                LDFLAGS, RUNTESTFLAGS, and MAKEFLAGS.
 
   --set		{package}={toolchain|gdb|sysroot}
                 This limits the default set of packages to the specified set.
@@ -392,24 +392,24 @@ set_package()
 	    return 0
 	    ;;
 	runtestflags|ru*)
-	    append_runtestflags="${setting}"
-	    notice "Appending ${setting} to RUNTESTFLAGS"
+	    override_runtestflags="${setting}"
+	    notice "Overriding ${setting} to RUNTESTFLAGS"
 	    return 0
 	    ;;
 	makeflags|ma*)
-#	    append_makeflags="${setting}"
+#	    override_makeflags="${setting}"
 	    set make_flags="${make_flags} ${setting}"
-	    notice "Appending ${setting} to MAKEFLAGS"
+	    notice "Overriding ${setting} to MAKEFLAGS"
 	    return 0
 	    ;;
 	ldflags|ld*)
-	    append_ldflags="${setting}"
-	    notice "Appending ${setting} to LDFLAGS"
+	    override_ldflags="${setting}"
+	    notice "Overriding ${setting} to LDFLAGS"
 	    return 0
 	    ;;
 	cflags|cf*)
-	    append_cflags="${setting}"
-	    notice "Appending ${setting} to CFLAGS"
+	    override_cflags="${setting}"
+	    notice "Overriding ${setting} to CFLAGS"
 	    return 0
 	    ;;
 	libc)
