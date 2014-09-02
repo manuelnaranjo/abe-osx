@@ -16,6 +16,322 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  ${cbuild2} [''| [--timeout <value>]
+             [[--build [<package> --stage {1|2}]|all]
+              |[--checkout <package>|all]]
+             [--ccache] [--check] [--enable {bootstrap}]
+             [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
+             [--fetch <url>] [--force] [--host <host_triple>] [--help]
+             [--list] [--march <march>] [--manifest <manifest_file>]
+             [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
+             [--set {cflags|ldflags}=XXX]
+             [--set {package}={toolchain|gdb|sysroot}]
+             [--snapshots <url>] [--target <target_triple>] [--usage]
+             [--interactive]
+             [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
+               =<id|snapshot|url>]]
+
+EOF
+    return 0
+}
+
+help()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+NAME
+
+  ${cbuild2} - the Linaro Toolchain Build Framework.
+
+SYNOPSIS
+
+EOF
+    usage
+    cat << EOF
+KEY
+
+  [--foo]	  Optional switch
+  [<foo>]	  Optional user specified field 
+  <foo>		  Non-optional user specified field.
+  {foo|bar|bat}   Non-optional choice field.
+  [{foo|bar|bat}] Optional choice field.
+  [foo]		  Optional field 
+  ['']		  Optional Empty field 
+
+DESCRIPTION
+
+  ${cbuild2} is a toolchain build framework. The primary purpose of
+  ${cbuild2} is to unify the method used to build cross, native, and
+  Canadian-cross GNU toolchains.
+
+PRECONDITIONS
+
+  Autoconf (configure) must be run in order to construct the build
+  directory and host.conf file before it is valid to run ${cbuild2}.
+
+OPTIONS
+
+  ''		Specifying no options will display synopsis information.
+
+  --build {<package>|all}
+
+                <package>
+                        To build a package version that corresponds to an
+                        identifier in sources.conf do --build <sources.conf
+                        identifier>, e.g., --build gcc.git.
+
+                        To build a package version that corresponds to a
+                        snapshot archive do --build <snapshot fragment>,
+                        e.g., --build gcc-linaro-4.7-2014.01.
+
+                        NOTE: to build GCC stage1 or stage2 use the --stage
+                        flag, as described below, along with --build gcc,
+                        e.g. --build gcc --stage 2.
+
+                all
+                        Build the entire toolchain and populate the
+                        sysroot.
+
+  --ccache	Use ccache when building packages.
+
+  --check
+		Run make check on packages.  For cross builds this will run
+		the tests on native hardware.
+
+  --checkout <package>[~branch][@revision]|all
+
+               <package>[~branch][@revision]
+                       This will checkout the package designated by the
+                       <package> source.conf identifier with an optional
+                       branch and/or revision designation.
+
+               all
+                       This will checkout all of the sources for a
+                       complete build as specified by the config/ .conf
+                       files.
+
+  --disable {install}
+
+		install
+                        Disable the make install stage of packages, which
+                        is enabled by default.
+
+		update
+			Don't update source repositories before building.
+
+                make_docs
+                        Don't make the toolchain package documentation.
+
+                building
+                        Don't build anything. This is only useful when
+                        using --tarbin, --tarsrc, --tarballs.
+                        This is a debugging aid for developers, as it
+                        assumes everything built correctly...
+                        
+  --dryrun	Run as much of ${cbuild2} as possible without doing any
+		actual configuration, building, or installing.
+
+  --dump	Dump configuration file information for this build.
+
+  --enable {bootstrap}
+
+                bootstrap
+                        Enable gcc bootstrapping, which is disabled by
+                        default.
+
+  --fetch <url>
+
+  		Fetch the specified URL into the snapshots directory.
+
+  --force	Force download packages and force rebuild packages.
+
+  --help|-h	Display this usage information.
+
+  --host <host_triple>
+
+		Set the host triple.   This represents the machine where
+		the packages being built will run.  For a cross toolchain
+		build this would represent where the compiler is run.
+
+  --infrastructure Download and install the infrastructure libraries.
+
+  --interactive Interactively select packages from the snapshots file.
+
+  --list	List the available snapshots or configured repositories.
+
+  --march <march>
+
+                Specify <march> to be the default target architecture for a
+                specific toolchain, overriding the default.  Example:
+
+                    --target arm-linux-gnueabihf --march armv8-a
+
+		Note: There is no cross-checking to make sure that the passed
+		--target value is compatible with the passed --march value.
+
+  --manifest <manifest_file>
+
+  		Source the <manifest_file> to override the default
+		configuration. This is used to reproduce an identical
+		toolchain build from manifest files generated by a previous
+		build.
+
+  --parallel	Set the make flags for parallel builds.
+
+  --prefix	Set an alternate value for the prefix used to configure.
+
+  --release <name>
+		The build system will package the resulting toolchain as a
+		release with the 'name' prefix.
+
+  --set		{libc}={glibc|eglibc|newlib}
+
+		The default value is stored in lib/global.sh.  This
+		setting overrides the default.  Specifying a libc
+		other than newlib on baremetal targets is an error.
+
+  --set		{cflags|ldflags}=XXX
+                This appends additional options to the default values used
+                for CFLAGS and LDFLAGS.
+
+  --set		{package}={toolchain|gdb|sysroot}
+                This limits the default set of packages to the specified set.
+                This only applies to the --tarbin, --tarsrc, and --tarballs
+                command lines options, and are primarily to be only used by
+                developers.
+
+  --set		{labguages}={c|c++|fortran|go|lto|objc|java|ada}
+                This changes the default set of GCC front ends that get built.
+                The default set for most platforms is c, c++, go, fortran,
+                and lto.
+
+  --snapshots	/path/to/alternative/local_snapshots/directory
+  		Use an alternative path to a local snapshots directory. 
+
+  --stage {1|2}
+                If --build <*gcc*> is passed, then --stage {1|2} will cause
+                stage1 or stage2 of gcc to be built.  If --build <*gcc*> is
+                not passed then --stage {1|2} does nothing.
+
+  --tarball
+  		Build source and binary tarballs after a successful build.
+
+  --tarsrc
+  		Build source tarballs after a successful build.
+
+  --tarbin
+  		Build binary tarballs after a successful build.
+
+  --target	[<target_triple>|'']
+
+		This sets the target triple.  The GNU target triple
+		represents where the binaries built by the toolchain will
+		execute.
+
+		''
+			Build the toolchain native to the hardware that
+			${cbuild2} is running on.
+                 
+		<target_triple>
+
+			x86_64-none-linux-gnu
+			arm-none-linux-gnueabi
+			arm-none-linux-gnueabihf
+			armeb-none-linux-gnueabihf
+			aarch64-none-linux-gnu
+			aarch64-none-elf
+			aarch64_be-none-elf
+			aarch64_be-none-linux-gnu
+
+			If <target_triple> is not the same as the hardware
+			that ${cbuild2} is running on then build the
+			toolchain as a cross toolchain.
+
+  --timeout <timeout_value>
+
+                Use <timeout_value> as the timeout value for wget when
+                fetching snapshot packages.
+
+  --usage	Display synopsis information.
+
+   [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
+
+		This option specifies a particular version of a package
+		that might differ from the default version in the
+		package config files.
+
+		For a specific package use a version tag that matches a
+		setting in a sources.conf file, a snapshots identifier,
+		or a direct repository URL.
+
+		Examples:
+
+			# Matches an identifier in sources.conf:
+			glibc=glibc.git
+
+			# Matches a tar snapshot in md5sums:
+			glibc=eglibc-linaro-2.17-2013.07
+
+			# Direct URL:
+			glibc=git://sourceware.org/git/glibc.git
+
+EXAMPLES
+
+  Build a Linux cross toolchain:
+
+    ${cbuild2} --target arm-none-linux-gnueabihf --build all
+
+  Build a Linux cross toolchain with glibc as the clibrary:
+
+    ${cbuild2} --target arm-none-linux-gnueabihf --set libc=glibc --build all
+
+  Build a bare metal toolchain:
+
+    ${cbuild2} --target aarch64-none-elf --build all
+
+PRECONDITION FILES
+
+  ~/.cbuildrc		${cbuild2} user specific configuration file
+
+  host.conf		Generated by configure from host.conf.in.
+
+CBUILD GENERATED FILES AND DIRECTORIES
+
+  builds/		All builds are stored here.
+
+  snapshots/		Package sources are stored here.
+
+  snapshots/infrastructure Infrastructure (non-distributed) sources are stored
+			here.
+
+  snapshots/md5sums	The snapshots file of maintained package tarballs.
+
+AUTHOR
+  Rob Savoye <rob.savoye@linaro.org>
+  Ryan S. Arnold <ryan.arnold@linaro.org>
+
+EOF
+    return 0
+}
+
+# If there are no command options output the usage message.
+if test $# -lt 1; then
+    echo "Usage:"
+    usage
+    echo "Run \"${cbuild2} --help\" for detailed usage information."
+    exit 1
+fi
+
+if test "`echo $* | grep -c -- -help`" -gt 0; then
+    help
+    exit 0
+fi
+
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -69,6 +385,26 @@ set_package()
     local setting=${in[1]}
 
     case ${package} in
+	packages|pa*)
+	    with_packages="${setting}"
+	    notice "Setting list of packages to build to ${setting}"
+	    return 0
+	    ;;
+	languages|la*)
+	    with_languages="${setting}"
+	    notice "Setting languages to build to ${setting}"
+	    return 0
+	    ;;
+	cflags|cf*)
+	    append_cflags="${setting}"
+	    notice "Appending ${setting} to CFLAGS"
+	    return 0
+	    ;;
+	ldflags|ld*)
+	    append_ldflags="${setting}"
+	    notice "Appending ${setting} to LDFLAGS"
+	    return 0
+	    ;;
 	libc)
 	    # Range check user input against supported C libraries.
 	    case ${setting} in
@@ -204,283 +540,18 @@ dump()
     echo "Bootstrap          ${bootstrap}"
     echo "Install            ${install}"
     echo "Source Update      ${supdate}"
+    echo "Make Documentation ${make_docs}"
+
+    if test x"${default_march}" != x; then
+	echo "Default march      ${default_march}"
+    fi
 }
-
-usage()
-{
-    # Format this section with 75 columns.
-    cat << EOF
-  ${cbuild2} [''| [--timeout <value>]
-             [[--build [<package> --stage {1|2}]|all]
-              |[--checkout <package>|all]]
-             [--ccache] [--check] [--enable {bootstrap}]
-             [--disable {install|update}] [--dryrun] [--dump]
-             [--fetch <url>] [--force] [--host <host_triple>] [--help]
-             [--list] [--manifest <manifest_file>] [--parallel] [--release]
-             [--set {libc}={glibc|eglibc|newlib}] [--snapshots <url>]
-             [--target <target_triple>] [--usage] [--interactive]
-             [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
-		=<id|snapshot|url>]]
-
-EOF
-    return 0
-}
-
-help()
-{
-    # Format this section with 75 columns.
-    cat << EOF
-NAME
-
-  ${cbuild2} - the Linaro Toolchain Build Framework.
-
-SYNOPSIS
-
-EOF
-    usage
-    cat << EOF
-KEY
-
-  [--foo]	  Optional switch
-  [<foo>]	  Optional user specified field 
-  <foo>		  Non-optional user specified field.
-  {foo|bar|bat}   Non-optional choice field.
-  [{foo|bar|bat}] Optional choice field.
-  [foo]		  Optional field 
-  ['']		  Optional Empty field 
-
-DESCRIPTION
-
-  ${cbuild2} is a toolchain build framework. The primary purpose of
-  ${cbuild2} is to unify the method used to build cross, native, and
-  Canadian-cross GNU toolchains.
-
-PRECONDITIONS
-
-  Autoconf (configure) must be run in order to construct the build
-  directory and host.conf file before it is valid to run ${cbuild2}.
-
-OPTIONS
-
-  ''		Specifying no options will display synopsis information.
-
-  --build {<package>|all}
-
-                <package>
-                        To build a package version that corresponds to an
-                        identifier in sources.conf do --build <sources.conf
-                        identifier>, e.g., --build gcc.git.
-
-                        To build a package version that corresponds to a
-                        snapshot archive do --build <snapshot fragment>,
-                        e.g., --build gcc-linaro-4.7-2014.01.
-
-                        NOTE: to build GCC stage1 or stage2 use the --stage
-                        flag, as described below, along with --build gcc,
-                        e.g. --build gcc --stage 2.
-
-                all
-                        Build the entire toolchain and populate the
-                        sysroot.
-
-  --ccache	Use ccache when building packages.
-
-  --check
-		Run make check on packages.  For cross builds this will run
-		the tests on native hardware.
-
-  --checkout <package>[~branch][@revision]|all
-
-               <package>[~branch][@revision]
-                       This will checkout the package designated by the
-                       <package> source.conf identifier with an optional
-                       branch and/or revision designation.
-
-               all
-                       This will checkout all of the sources for a
-                       complete build as specified by the config/ .conf
-                       files.
-
-  --disable {install}
-
-		install
-                        Disable the make install stage of packages, which
-                        is enabled by default.
-
-		update
-			Don't update source repositories before building.
-
-  --dryrun	Run as much of ${cbuild2} as possible without doing any
-		actual configuration, building, or installing.
-
-  --dump	Dump configuration file information for this build.
-
-  --enable {bootstrap}
-
-                bootstrap
-                        Enable gcc bootstrapping, which is disabled by
-                        default.
-
-  --fetch <url>
-
-  		Fetch the specified URL into the snapshots directory.
-
-  --force	Force download packages and force rebuild packages.
-
-  --help|-h	Display this usage information.
-
-  --host <host_triple>
-
-		Set the host triple.   This represents the machine where
-		the packages being built will run.  For a cross toolchain
-		build this would represent where the compiler is run.
-
-  --infrastructure Download and install the infrastructure libraries.
-
-  --interactive Interactively select packages from the snapshots file.
-
-  --list	List the available snapshots or configured repositories.
-
-  --manifest <manifest_file>
-
-  		Source the <manifest_file> to override the default
-		configuration. This is used to reproduce an identical
-		toolchain build from manifest files generated by a previous
-		build.
-
-  --parallel	Set the make flags for parallel builds.
-
-  --prefix	Set an alternate value for the prefix used to configure.
-
-  --release <name>
-		The build system will package the resulting toolchain as a
-		release with the 'name' prefix.
-
-  --set		{libc}={glibc|eglibc|newlib}
-
-		The default value is stored in lib/global.sh.  This
-		setting overrides the default.  Specifying a libc
-		other than newlib on baremetal targets is an error.
-
-  --snapshots	/path/to/alternative/local_snapshots/directory
-  		Use an alternative path to a local snapshots directory. 
-
-  --stage {1|2}
-                If --build <*gcc*> is passed, then --stage {1|2} will cause
-                stage1 or stage2 of gcc to be built.  If --build <*gcc*> is
-                not passed then --stage {1|2} does nothing.
-
-  --tarball
-  		Build source and binary tarballs after a successful build.
-
-  --tarsrc
-  		Build source tarballs after a successful build.
-
-  --tarbin
-  		Build binary tarballs after a successful build.
-
-  --target	[<target_triple>|'']
-
-		This sets the target triple.  The GNU target triple
-		represents where the binaries built by the toolchain will
-		execute.
-
-		''
-			Build the toolchain native to the hardware that
-			${cbuild2} is running on.
-                 
-		<target_triple>
-
-			x86_64-none-linux-gnu
-			arm-none-linux-gnueabi
-			arm-none-linux-gnueabihf
-			armeb-none-linux-gnueabihf
-			aarch64-none-linux-gnu
-			aarch64-none-elf
-			aarch64_be-none-elf
-			aarch64_be-none-linux-gnu
-
-			If <target_triple> is not the same as the hardware
-			that ${cbuild2} is running on then build the
-			toolchain as a cross toolchain.
-
-  --timeout <timeout_value>
-
-                Use <timeout_value> as the timeout value for wget when
-                fetching snapshot packages.
-
-  --usage	Display synopsis information.
-
-   [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
-
-		This option specifies a particular version of a package
-		that might differ from the default version in the
-		package config files.
-
-		For a specific package use a version tag that matches a
-		setting in a sources.conf file, a snapshots identifier,
-		or a direct repository URL.
-
-		Examples:
-
-			# Matches an identifier in sources.conf:
-			glibc=glibc.git
-
-			# Matches a tar snapshot in md5sums:
-			glibc=eglibc-linaro-2.17-2013.07
-
-			# Direct URL:
-			glibc=git://sourceware.org/git/glibc.git
-
-EXAMPLES
-
-  Build a Linux cross toolchain:
-
-    ${cbuild2} --target=arm-none-linux-gnueabihf --build all
-
-  Build a Linux cross toolchain with glibc as the clibrary:
-
-    ${cbuild2} --target=arm-none-linux-gnueabihf --set libc=glibc --build all
-
-  Build a bare metal toolchain:
-
-    ${cbuild2} --target=aarch64-none-elf --build all
-
-PRECONDITION FILES
-
-  ~/.cbuildrc		${cbuild2} user specific configuration file
-
-  host.conf		Generated by configure from host.conf.in.
-
-CBUILD GENERATED FILES AND DIRECTORIES
-
-  builds/		All builds are stored here.
-
-  snapshots/		Package sources are stored here.
-
-  snapshots/infrastructure Infrastructure (non-distributed) sources are stored
-			here.
-
-  snapshots/md5sums	The snapshots file of maintained package tarballs.
-
-AUTHOR
-  Rob Savoye <rob.savoye@linaro.org>
-  Ryan S. Arnold <ryan.arnold@linaro.org>
-
-EOF
-    return 0
-}
-
-# If there are no command options output the usage message.
-if test $# -lt 1; then
-    echo "Usage:"
-    usage
-    echo "Run \"${cbuild2} --help\" for detailed usage information."
-    exit 1
-fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
+# do_ switches are commands that should be executed after processing all
+# other switches.
+do_dump=
 do_checkout=
 do_build=
 do_build_stage=stage2
@@ -509,6 +580,11 @@ while test $# -gt 0; do
 	    do_checkout="$2"
 
 	    # Shift off the 'all' or the package identifier.
+	    shift
+	    ;;
+	--march*|-march*)
+	    check_directive $1 march "march" $2
+	    default_march=$2
 	    shift
 	    ;;
 	--host|-h*)
@@ -559,8 +635,9 @@ while test $# -gt 0; do
             dryrun=yes
             ;;
 	--dump)
-            dump ${url}
-	    shift
+	    do_dump=yes
+            #dump ${url}
+	    #shift
             ;;
 	--fetch|-d)
             fetch ${url}
@@ -644,8 +721,7 @@ while test $# -gt 0; do
 	    # user might try to override this with --set libc={glibc|eglibc}
 	    # or {glibc|eglibc}=<foo> but that will be caught elsewhere.
 	    case ${target} in
-		arm*-eabi|aarch64*-*elf|*-mingw32)
-		    echo "MARK"
+		arm*-eabi*|arm*-elf|aarch64*-*elf|*-mingw32)
 		    clibrary="newlib"
 		    ;;
 		 *)
@@ -685,19 +761,29 @@ while test $# -gt 0; do
 
 	    case $2 in
 		bootstrap)
-		    bootstrap="$value"
+		    bootstrap="${value}"
 		    ;;
 		alltests)
-		    alltests="$value"
+		    alltests="${value}"
 		    ;;
 		install)
-		    install="$value"
+		    install="${value}"
+		    ;;
+		building)
+		    building="${value}"
+		    ;;
+		parallel)
+		    parallel="$value"
 		    ;;
 		schroot_test)
-		    schroot_test="$value"
+		    schroot_test="${value}"
 		    ;;
 		update)
-		    supdate="$value"
+		    supdate="${value}"
+		    ;;
+
+		make_docs)
+		    make_docs="${value}"
 		    ;;
 		*)
 		    error "$2 not recognized as a valid $1 directive."
@@ -801,11 +887,20 @@ while test $# -gt 0; do
     fi
 done
 
+# if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+#     warning "No testsuite will be run when building tarballs!"
+#     runtests=no
+# fi
+
 timeout_save=${wget_timeout}
 wget_timeout=10
 # Get the md5sums file, which is used later to get the URL for remote files
 fetch md5sums
 wget_timeout=${timeout_save}
+
+if test ! -z ${do_dump}; then
+    dump
+fi
 
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then

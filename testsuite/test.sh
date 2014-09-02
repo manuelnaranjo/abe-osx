@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # common.sh loads all the files of library functions.
-if test `dirname "$0"` != "testsuite"; then
-    cbuild="`which cbuild2.sh`"
-    topdir="`dirname ${cbuild}`"
+if test x"`echo \`dirname "$0"\` | sed 's:^\./::'`" != x"testsuite"; then
+    echo "WARNING: Should be run from top cbuild2 dir" > /dev/stderr
+    topdir="`readlink -e \`dirname $0\`/..`"
 else
     topdir=$PWD
 fi
@@ -19,7 +19,7 @@ else
 
     remote_snapshots=http://cbuild.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
-    sources_conf=${cbuild}testsuite/test_sources.conf
+    sources_conf=${topdir}/testsuite/test_sources.conf
 fi
 echo "Testsuite using ${sources_conf}"
 
@@ -1380,6 +1380,14 @@ else
     untested "${testing}"
 fi
 
+echo "============= misc tests ================"
+testing="pipefail"
+out="`false | tee /dev/null`"
+if test $? -ne 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+fi
 
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch

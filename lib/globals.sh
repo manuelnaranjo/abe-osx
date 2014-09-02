@@ -34,6 +34,9 @@ configfile="default"
 dbuser="default"
 dbpasswd="default"
 
+# Don't set this unless you need to modify it.
+default_march=
+
 manifest=
 
 # The prefix for installing the toolchain
@@ -78,7 +81,6 @@ fi
 clobber=no
 force=no
 interactive=no
-parallel=no
 nodepends=no
 verbose=1
 network=""
@@ -86,6 +88,11 @@ runtests=no
 ccache=no
 
 release=""
+with_packages="toolchain,sysroot,gdb"
+building=yes
+
+append_cflags=
+append_ldflags=
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}

@@ -58,23 +58,21 @@ shift
 
 # Get the list of revisions to build and compare
 branch=$1
-#repo="`get_git_repo $1`"
-#branch="`get_git_branch $1`"
 repo="gcc.git"
 
 if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}"
+    srcdir="${git_reference_dir}/gcc.git~${branch}"
+    snapshots="${git_reference_dir}"
 else
-    # If the branch doesn't exist yet, create it
     srcdir="${local_snapshots}/gcc.git~${branch}"
-    dir="${PWD}"
-    if ! test -e ${srcdir}; then
-	cd ${local_snapshots}/${repo} && git pull
-	git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}
-    else
-	cd ${srcdir} && git pull
-    fi
-    cd ${dir}
+    snapshots="${local_snapshots}"
+fi
+
+if ! test -e ${srcdir}; then
+    (cd ${snapshots}/${repo} && git pull)
+    git-new-workdir ${snapshots}/${repo} ${srcdir} ${branch}
+else
+    (cd ${srcdir} && git pull)
 fi
 
 # Get the last two revisions
@@ -93,13 +91,13 @@ while test $i -lt ${#revisions[@]}; do
     manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
     if test x"${sums}" != x; then
 	mkdir -p ${resultsdir}${revisions[$i]}
-	cp ${sums} ${logs} ${manifest} ${resultsdir}${revisions[$i]}/
+	cp -f ${sums} ${logs} ${manifest} ${resultsdir}${revisions[$i]}/
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
 	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
 	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.sum
     fi
-    i=`expr $i + 1`
+    i="`expr $i + 1`"
 done
 
 # Diff the two directories

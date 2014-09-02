@@ -16,16 +16,34 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+user_snapshots=""
+user_git_repo=""
+user_workspce=""
+
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  jenkins.sh [--help] [-s snapshot dir] [g git reference dir] [cbuildv2 path] [w workspace]
+EOF
+    return 0
+}
+
+# These are used to differentiate between multiple Jenkins installations. All paths
+# must be fully qualified absolute paths.
+while getopts "s:g:c:w:h" OPTION; do
+    case $OPTION in
+        s) user_snapshots=$OPTARG ;;
+        g) user_git_repo=$OPTARG ;;
+        c) cbuild_dir=$OPTARG ;;
+        w) user_workspace=$OPTARG ;;
+        h) usage ;;
+    esac
+done
+
 # Test the config parameters from the Jenkins Build Now page
 
-# The files in this directory are shared across all platforms 
-#shared="`dirname ${WORKSPACE}`/shared"
-shared="/home/buildslave/workspace/shared"
-
-# This is the source directory for Cbuildv2. Jenkins specifies this
-# sub directory when it does a git clone or pull of Cbuildv2.
-cbuild_dir="${WORKSPACE}/cbuildv2"
-
+# Jenkins sets environment variables rather than use command line arguments.
 if test x"${tarsrc}" = xtrue; then
     tars="--tarsrc"
 fi
@@ -41,13 +59,13 @@ fi
 
 # If there is a comand line argument, assume it's a release string. if
 # so set a few default parameters.
-if test x"$1" != x; then
-    releasestr="--release $1"
-    tars="--tarbin "
-    tarsrc=false
-    tarbin=true
-    runtests=false
-fi
+# if test x"$1" != x; then
+#     releasestr="--release $1"
+#     tars="--tarbin "
+#     tarsrc=false
+#     tarbin=true
+#     runtests=false
+# fi
 
 # Get the versions of dependant components to use
 changes=""
@@ -85,7 +103,7 @@ fi
 if test x"${libc}" != x; then
     # ELF based targets are bare metal only
     case ${target} in
-	*-*elf)
+	arm*-none-*)
 	    change="${change} --set libc=newlib"
 	    ;;
 	*)
@@ -95,19 +113,24 @@ if test x"${libc}" != x; then
     esac
 fi
 
+# This is the top level directory where builds go.
+if test x"${user_workspace}" = x; then
+    user_workspace="${WORKSPACE}"
+fi
+
 # Remove the previous build if specified, default to reusing the existing
 # build directory.
 if test x"${reuse}" != x"true"; then
-    rm -fr ${WORKSPACE}/_build
+    rm -fr ${user_workspace}/_build
 fi
 
 # Create a build directory
-if test ! -d ${WORKSPACE}/_build; then
-    mkdir -p ${WORKSPACE}/_build
+if test ! -d ${user_workspace}/_build; then
+    mkdir -p ${user_workspace}/_build
 fi
 
 # Use the newly created build directory
-pushd ${WORKSPACE}/_build
+pushd ${user_workspace}/_build
 
 # Delete all local config files, so any rebuilds use the currently
 # committed versions.
@@ -121,12 +144,30 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-export files="`echo ${WORKSPACE} | cut -d '/' -f 1-5`/snapshots"
-# $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${files}
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${WORKSPACE}/snapshots --with-git-reference-dir=$shared/snapshots --enable-schroot-test
+# This is the source directory for Cbuildv2. Jenkins specifies this
+# sub directory when it does a git clone or pull of Cbuildv2.
+if test x"${cbuild_dir}" = x; then
+    cbuild_dir="${user_workspace}/cbuildv2"
+fi
 
-# Delete the previous test resut files to avoid problems.
-find ${WORKSPACE} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
+# This is where downloaded source tarballs and cloned git repositories live. 
+# If using git-reference-dir, this is the output directory for git.
+if test x"${user_snapshots}" = x; then
+    user_snapshots=${user_workspace}/snapshots
+fi
+
+# The files in this directory are shared across all platforms 
+shared="${HOME}/workspace/shared"
+
+# This is an optional directory for the master copy of the git repositories.
+if test x"${user_git_repo}" = x; then
+    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+fi
+
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} ${user_git_repo} --enable-schroot-test
+
+# Delete the previous test result files to avoid problems.
+find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 # For cross build. For cross builds we build a native GCC, and then use
 # that to compile the cross compiler to bootstrap. Since it's just
@@ -145,7 +186,7 @@ if test $? -gt 0; then
 fi
 
 # Create the BUILD-INFO file for Jenkins.
-cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
+cat << EOF > ${user_workspace}/BUILD-INFO.txt
 Format-Version: 0.5
 
 Files-Pattern: *
@@ -161,9 +202,9 @@ fi
 
 # Setup the remote directory for tcwgweb
 if test x"${target}" = x"native"; then
-    gcc="`find ${WORKSPACE} -name gcc`"
+    gcc="`find ${user_workspace} -name \*-gcc`"
 else
-    gcc="`find ${WORKSPACE} -name ${target}-gcc`"
+    gcc="`find ${user_workspace} -name ${target}-gcc`"
 fi
 
 # If we can't find GCC, our build failed, so don't continue
@@ -201,7 +242,7 @@ fi
 
 echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
 
-manifest="`find ${WORKSPACE} -name manifest.txt`"
+manifest="`find ${user_workspace} -name manifest.txt`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
@@ -232,21 +273,21 @@ if test x"${runtests}" = xtrue; then
 #if test x"${sums}" != x; then
 #    for i in ${sums}; do
 #	name="`basename $i`"
-#	${cbuild_dir}/sum2junit.sh $i $WORKSPACE/${name}.junit
-#	cp $i ${WORKSPACE}/results/${dir}
+#	${cbuild_dir}/sum2junit.sh $i $user_workspace/${name}.junit
+#	cp $i ${user_workspace}/results/${dir}
 #    done
-#    junits="`find ${WORKSPACE} -name *.junit`"
+#    junits="`find ${user_workspace} -name *.junit`"
 #    if test x"${junits}" = x; then
 #	echo "Bummer, no junit files yet..."
 #    fi
 #else
 #    echo "Bummer, no test results yet..."
 #fi
-#touch $WORKSPACE/*.junit
+#touch $user_workspace/*.junit
 fi
 
 # Find all the test result files.
-sums="`find ${WORKSPACE} -name *.sum`"
+sums="`find ${user_workspace} -name *.sum`"
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
@@ -261,6 +302,11 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
+# Test results and logs get copied to here
+if test x"${fileserver}" = x; then
+    fileserver="toolchain64.lab"
+fi
+
 # This setups all the files needed by tcwgweb
 if test x"${sums}" != x -o x"${release}" != x; then
     if test x"${sums}" != x; then
@@ -268,34 +314,34 @@ if test x"${sums}" != x -o x"${release}" != x; then
 	for s in ${sums}; do
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
-	scp ${sums} $test_logs toolchain64.lab:${basedir}/${dir}/
+	scp ${sums} $test_logs ${fileserver}:${basedir}/${dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
-	checks="`find ${WORKSPACE} -name check\*.log`"
-	scp ${checks} toolchain64.lab:${basedir}/${dir}/
+	checks="`find ${user_workspace} -name check\*.log`"
+	scp ${checks} ${fileserver}:${basedir}/${dir}/
 	
 	# Copy over the build logs
-	logs="`find ${WORKSPACE} -name make\*.log`"
-	scp ${logs} toolchain64.lab:${basedir}/${dir}/
-	ssh toolchain64.lab xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
-	scp ${cbuild_dir}/tcwgweb.sh toolchain64.lab:/tmp/tcwgweb$$.sh
-	ssh toolchain64.lab /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-	ssh toolchain64.lab rm /tmp/tcwgweb$$.sh
+	logs="`find ${user_workspace} -name make\*.log`"
+	scp ${logs} ${fileserver}:${basedir}/${dir}/
+	ssh ${fileserver} xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
+	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
+	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} toolchain64.lab:/home/cbuild/var/snapshots/
-	rm ${srcfiles}
+	scp ${srcfiles} ${fileserver}:/home/cbuild/var/snapshots/
+	rm -f ${srcfiles}
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} toolchain64.lab:/work/space/binaries/
-	rm ${binfiles}
+	scp ${binfiles} ${fileserver}:/work/space/binaries/
+	rm -f ${binfiles}
     fi
 
 fi

@@ -585,16 +585,20 @@ ac_unique_file="cbuild2.sh"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 MAKEINFO
+NEWWORKDIR
 DEJAGNU
 LIBTOOL
 AUTOMAKE
 AUTOCONF
+ENABLE_PARALLEL
 ENABLE_SOURCE_UPDATE
 ENABLE_SCHROOT_TEST
+ENABLE_MAKE_DOCS
 ENABLE_INSTALL
 ENABLE_ALLTESTS
 ENABLE_BOOTSTRAP
 ENABLE_SSH
+WITH_LANGUAGES
 REMOTE_SNAPSHOTS
 LOCAL_BUILDS
 GIT_REFERENCE_DIR
@@ -604,6 +608,7 @@ CBUILD_PATH
 SOURCES_CONF
 CBUILD_TOP
 BUILDDATE
+CCRYPT
 AUTOGEN
 BISON
 FLEX
@@ -687,12 +692,15 @@ with_local_snapshots
 with_git_reference_dir
 with_local_builds
 with_remote_snapshots
+with_languages
 enable_ssh
 enable_bootstrap
 enable_alltests
 enable_install
+enable_make_docs
 enable_schroot_test
 enable_source_update
+enable_parallel
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1318,8 +1326,11 @@ Optional Features:
   --enable-bootstrap      If you want to do bootstrap by default
   --enable-alltests       If you want to run all tests by default
   --enable-install        If you want to install by default
+  --enable-make-docs      If you want to enable making package documentation
   --enable-schroot-test   If you want to used schroot-based testing by default
   --enable-source-update  If you want to update sources by default
+  --enable-parallel       If you want to build with make -j<number of CPUs> by
+                          default
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1336,6 +1347,7 @@ Optional Packages:
                           --reference
   --with-local-builds
   --with-remote-snapshots
+  --with-languages        List of languages for the compiler
 
 Some influential environment variables:
   CC          C compiler command
@@ -3462,6 +3474,52 @@ $as_echo "$as_me: WARNING: You need 'autogen' to run configure for GCC properly!
    missing="${missing} autogen"
 fi
 
+# Extract the first word of "ccrypt", so it can be a program name with args.
+set dummy ccrypt; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_CCRYPT+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CCRYPT in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CCRYPT="$CCRYPT" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CCRYPT="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CCRYPT=$ac_cv_path_CCRYPT
+if test -n "$CCRYPT"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CCRYPT" >&5
+$as_echo "$CCRYPT" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test x"${CCRYPT}" = x; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'ccrypt' to run benchmarks, this can be ignored for builds" >&5
+$as_echo "$as_me: WARNING: You need 'ccrypt' to run benchmarks, this can be ignored for builds" >&2;}
+   missing="${missing} ccrypt"
+fi
+
 #AC_CHECK_LIB(ncurses, doupdate)
 #if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
 #   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
@@ -3731,6 +3789,16 @@ $as_echo "$as_me: Sysroots will be installed in: ${SYSROOTS}" >&6;}
 $as_echo "$as_me: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&6;}
 echo ""
 
+
+# Check whether --with-languages was given.
+if test "${with_languages+set}" = set; then :
+  withval=$with_languages; WITH_LANGUAGES=${withval}
+else
+  WITH_LANGUAGES='default'
+fi
+
+
+
 # Check whether --enable-ssh was given.
 if test "${enable_ssh+set}" = set; then :
   enableval=$enable_ssh; case "${enableval}" in
@@ -3787,6 +3855,20 @@ fi
 
 
 
+# Check whether --enable-make-docs was given.
+if test "${enable_make_docs+set}" = set; then :
+  enableval=$enable_make_docs; case "${enableval}" in
+  yes) ENABLE_MAKE_DOCS=yes ;;
+  no)  ENABLE_MAKE_DOCS=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-make-docs option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-make-docs option" >&2;} ;;
+esac
+else
+  ENABLE_MAKE_DOCS=yes
+fi
+
+
+
 # Check whether --enable-schroot-test was given.
 if test "${enable_schroot_test+set}" = set; then :
   enableval=$enable_schroot_test; case "${enableval}" in
@@ -3811,6 +3893,20 @@ $as_echo "$as_me: WARNING: bad value ${enableval} for enable-source-update optio
 esac
 else
   ENABLE_SOURCE_UPDATE=yes
+fi
+
+
+
+# Check whether --enable-parallel was given.
+if test "${enable_parallel+set}" = set; then :
+  enableval=$enable_parallel; case "${enableval}" in
+  yes) ENABLE_PARALLEL=yes ;;
+  no)  ENABLE_PARALLEL=no ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: bad value ${enableval} for enable-parallel option" >&5
+$as_echo "$as_me: WARNING: bad value ${enableval} for enable-parallel option" >&2;} ;;
+esac
+else
+  ENABLE_PARALLEL=yes
 fi
 
 
@@ -3993,6 +4089,53 @@ $as_echo "$as_me: WARNING: You should install dejagnu so you can run tests" >&2;
    missing="${missing} dejagnu"
 fi
 
+# Extract the first word of "git-new-workdir", so it can be a program name with args.
+set dummy git-new-workdir; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_NEWWORKDIR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $NEWWORKDIR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_NEWWORKDIR="$NEWWORKDIR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_NEWWORKDIR="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+NEWWORKDIR=$ac_cv_path_NEWWORKDIR
+if test -n "$NEWWORKDIR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NEWWORKDIR" >&5
+$as_echo "$NEWWORKDIR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+   if test x"${NEWWORKDIR}" = x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need to install git-new-workdir to use GIT!" >&5
+$as_echo "$as_me: WARNING: You need to install git-new-workdir to use GIT!" >&2;}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable" >&5
+$as_echo "$as_me: copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable" >&6;}
+      missing="${missing} git-new-workdir"
+fi
 
 # Extract the first word of "makeinfo", so it can be a program name with args.
 set dummy makeinfo; ac_word=$2

@@ -58,89 +58,96 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
-    local build_all_ret=
-    # build each component
-    for i in ${builds}; do
-	notice "Building all, current component $i"
-	# # If an interactive build, stop betweeen each step so we can
-	# # check the build and config options.
-	# if test x"${interactive}" = x"yes"; then
-	#     echo "Hit any key to continue..."
-	#     read answer		
-	# fi
-	case $i in
-	    infrastructure)
-		infrastructure
-		build_all_ret=$?
-		;;
-	    # Build stage 1 of GCC, which is a limited C compiler used to compile
-	    # the C library.
-	    libc)
-		if test x"${clibrary}" = x"eglibc"; then
-		    build ${eglibc_version}
-		elif  test x"${clibrary}" = x"glibc"; then
-		    build ${glibc_version}
-		elif test x"${clibrary}" = x"newlib"; then
-		    build ${newlib_version}
-		    build ${newlib_version} libgloss
-		else
-		    error "\${clibrary}=${clibrary} not supported."
-		    return 1
-		fi
-		build_all_ret=$?
-		;;
-	    stage1)
-		build ${gcc_version} stage1
-		build_all_ret=$?
-		# Don't create the sysroot if the clibrary build didn't succeed.
-		if test ${build_all_ret} -lt 1; then
-		    # If we don't install the sysroot, link to the one we built so
-		    # we can use the GCC we just built.
-		    local sysroot="`${target}-gcc -print-sysroot`"
-		    if test ! -d ${sysroot}; then
-		        dryrun "mkdir -p /opt/linaro"
-		        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+    if test x"${building}" != xno; then
+	local build_all_ret=
+	# build each component
+	for i in ${builds}; do
+	    notice "Building all, current component $i"
+	    # If an interactive build, stop betweeen each step so we can
+	    # check the build and config options.
+	    if test x"${interactive}" = x"yes"; then
+	        echo "Hit any key to continue..."
+	        read answer		
+	    fi
+	    case $i in
+		infrastructure)
+		    infrastructure
+		    build_all_ret=$?
+		    ;;
+		# Build stage 1 of GCC, which is a limited C compiler used to compile
+		# the C library.
+		libc)
+		    if test x"${clibrary}" = x"eglibc"; then
+			build ${eglibc_version}
+		    elif  test x"${clibrary}" = x"glibc"; then
+			build ${glibc_version}
+		    elif test x"${clibrary}" = x"newlib"; then
+			build ${newlib_version}
+			build ${newlib_version} libgloss
+		    else
+			error "\${clibrary}=${clibrary} not supported."
+			return 1
 		    fi
-		fi
-		;; 
-	    # Build stage 2 of GCC, which is the actual and fully functional compiler
-	    stage2)
-		build ${gcc_version} stage2
-		build_all_ret=$?
-		;;
-	    gdb)
-		build ${gdb_version}
-		build_all_ret=$?
-		;;
-	    zlib)
-		build ${zlib_version}
-		build_all_ret=$?
-		;;
-	    gdbserver)
-		build ${gdb_version} gdbserver
-		build_all_ret=$?
-		;;
-	    # Build anything not GCC or infrastructure
-	    *)
-		build ${binutils_version}
-		build_all_ret=$?
-		;;
-	esac
-	#if test $? -gt 0; then
-	if test ${build_all_ret} -gt 0; then
-	    error "Failed building $i."
-	    return 1
-	fi
-    done
-
-    manifest ${local_builds}/${host}/${target}/manifest.txt
-
-    notice "Build took ${SECONDS} seconds"
-
+		    build_all_ret=$?
+		    ;;
+		stage1)
+		    build ${gcc_version} stage1
+		    build_all_ret=$?
+		    # Don't create the sysroot if the clibrary build didn't succeed.
+		    if test ${build_all_ret} -lt 1; then
+			# If we don't install the sysroot, link to the one we built so
+			# we can use the GCC we just built.
+			# FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
+			local sysroot="`${target}-gcc -print-sysroot`"
+			if test ! -d ${sysroot}; then
+		            dryrun "mkdir -p /opt/linaro"
+		            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+			fi
+		    fi
+		    ;; 
+		# Build stage 2 of GCC, which is the actual and fully functional compiler
+		stage2)
+		    build ${gcc_version} stage2
+		    build_all_ret=$?
+		    ;;
+		gdb)
+		    build ${gdb_version}
+		    build_all_ret=$?
+		    ;;
+		gdbserver)
+		    build ${gdb_version} gdbserver
+		    build_all_ret=$?
+		    ;;
+		# Build anything not GCC or infrastructure
+		*)
+		    build ${binutils_version}
+		    build_all_ret=$?
+		    ;;
+	    esac
+	    #if test $? -gt 0; then
+	    if test ${build_all_ret} -gt 0; then
+		error "Failed building $i."
+		return 1
+	    fi
+	done
+	
+	manifest ${local_builds}/${host}/${target}/manifest.txt
+	
+	notice "Build took ${SECONDS} seconds"
+    fi
+    
     if test x"${tarsrc}" = x"yes"; then
-        release_binutils_src
-        release_gcc_src
-        release_gdb_src
+	if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
+            release_binutils_src
+            release_gcc_src
+	fi
+	if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
+            release_gdb_src
+	fi
+# FIXME: release_sysroot isn't implemented yet, this is a reminder
+#	if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+#            release_sysroot
+#	fi
     fi
 
     if test x"${tarbin}" = x"yes"; then
@@ -152,12 +159,18 @@ build_all()
         # delete temp files from making the release
 	dryrun "rm -fr /tmp/linaro.*"
 
-	if test x"${clibrary}" != x"newlib"; then
-	    binary_runtime
+	if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
+	    if test x"${clibrary}" != x"newlib"; then
+		binary_runtime
+	    fi
+            binary_toolchain
 	fi
-        binary_toolchain
-        binary_sysroot
-        binary_gdb
+	if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+            binary_sysroot
+	fi
+	if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
+            binary_gdb
+	fi
 	notice "Packaging took ${SECONDS} seconds"
     fi
 
@@ -261,10 +274,14 @@ build()
 	return 1
     fi
 
-    # Build the documentation.
-    make_docs ${gitinfo} $2
-    if test $? -gt 0; then
-	return 1
+    # Build the documentation, unless it has been disabled at the command line.
+    if test x"${make_docs}" = xyes; then
+	make_docs ${gitinfo} $2
+	if test $? -gt 0; then
+	    return 1
+	fi
+    else
+	notice "Skipping make docs as requested (check host.conf)."
     fi
 
     make_install ${gitinfo} $2
@@ -277,7 +294,7 @@ build()
 	dryrun "(hello_world)"
 	if test $? -gt 0; then
 	    error "Hello World test failed for ${gitinfo}..."
-	    #return 1
+	    return 1
 	else
 	    notice "Hello World test succeeded for ${gitinfo}..."
 	fi
@@ -318,15 +335,28 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-#    if test x"${parallel}" = x"yes" -a `echo ${build} | egrep -c arm` -gt 0; then
-#	    local make_flags="${make_flags} -j `expr ${cpus} / 2`"
-#    else
-	    local make_flags="${make_flags} -j ${cpus}"
-#    fi
+    local make_flags="${make_flags} -j ${cpus}"
+
+    # Some components require extra flags to make
+    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    if test x"${default_makeflags}" !=  x; then
+	local make_flags="${make_flags} ${default_makeflags}"
+    fi
+
+    # Use pipes instead of /tmp for temporary files.
+    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" ${append_cflags} CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+    fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
      	local make_flags="${make_flags} CC='ccache gcc' CXX='ccache g++'"
     fi 
+
+    # All tarballs are statically linked
+    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
+	local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
+    fi
 
     if test x"${CONFIG_SHELL}" = x; then
 	export CONFIG_SHELL=${bash_shell}
@@ -336,24 +366,7 @@ make_all()
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
     local logfile="${builddir}/make-${tool}.log"
-    case ${tool} in
-	gdb)
-	    dryrun "make all-gdb SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	binutils)
-	    dryrun "make all-gas all-ld all-gprof all-binutils -i -k SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	newlib)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} CFLAGS_FOR_TARGET=--sysroot=${sysroots} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-	*glibc)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee  ${logfile}"
-	    ;;
-	*)
-	    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
-	    ;;
-    esac
-
+    dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} 2>&1 | tee ${logfile}"
     local makeret=$?
 
     local errors="`egrep 'fatal error:|configure: error:|Error' ${logfile}`"
@@ -424,7 +437,11 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
+	local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\"cLDFLAGS=-static-libgcc"
+    fi
+
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -434,6 +451,10 @@ make_install()
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
 	local make_flags=" tooldir=${sysroots}/usr/"
+#	if test x"$2" = x"libgloss"; then
+#	    local make_flags="${make_flags} install-rdimon install-rdpmon install-redboot install"
+#	    local builddir="${builddir}/aarch64"
+#	fi
     fi
 
     # Don't stop on CONFIG_SHELL if it's set in the environment.
@@ -441,27 +462,18 @@ make_install()
 	export CONFIG_SHELL=${bash_shell}
     fi
 
-    if test x"${tool}" = x"binutils"; then
-     	# FIXME: binutils in the 2.23 linaro branch causes 'make install'
-     	# due to an info file problem, so we ignore the error so the build
-     	# will continue.
-     	dryrun "make install-gas install-ld install-gprof install-binutils ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-    else
-     	if test x"${tool}" = x"gdb"; then
-     	    dryrun "make install-gdb ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-     	else
-	    dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-	fi
-    fi
-
+    local default_makeflags="`grep ^default_makeflags= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2 | sed -e 's: all-: install-:'`"
+    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
 	warning "Make install failed!"
 	return 1
     fi
 
-    if test ! -e ${sysroots}/usr/lib -a x"${tool}" = x"gcc"; then
+    if test x"${tool}" = x"gcc"; then
 	local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
-	dryrun "mkdir -p ${sysroots}/usr/lib/"
+	if test ! -e ${sysroots}/usr/lib; then
+	    dryrun "mkdir -p ${sysroots}/usr/lib/"
+	fi
 	dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
     fi
 
@@ -572,6 +584,17 @@ make_check()
 #	return 0
 #    fi
 
+    # Use pipes instead of /tmp for temporary files.
+    if test x"${append_cflags}" != x; then
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${append_cflags} -pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
+    else
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
+    fi
+
+    if test x"${append_ldflags}" != x; then
+	local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${append_ldflags}\""
+    fi
+
     if test x"${parallel}" = x"yes"; then
 	local make_flags
 	case "$target" in
@@ -617,12 +640,12 @@ make_check()
 
 	if test x"${tool}" = x"binutils"; then
 	    if test x"$2" = x"gdb"; then		
-		dryrun "make check-gdb PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    else
-		dryrun "make check-binutils PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+		dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	    fi
 	else
-	    dryrun "make check PREFIX_UNDER_TEST=\"$local_builds/destdir/$host/bin/$target-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	    dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" FLAGS_UNDER_TEST=\"--sysroot=${sysroots}\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	fi
 
 	# Stop schroot sessions
@@ -640,9 +663,9 @@ make_clean()
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
-	make distclean ${make_flags} -w -i -k -C ${builddir}
+	dryrun "make distclean ${make_flags} -w -i -k -C ${builddir}"
     else
-	make clean ${make_flags} -w -i -k -C ${builddir}
+	dryrun "make clean ${make_flags} -w -i -k -C ${builddir}"
     fi
     if test $? != "0"; then
 	warning "Make clean failed!"

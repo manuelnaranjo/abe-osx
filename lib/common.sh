@@ -16,8 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-#cbuild="`which cbuild2.sh`"
-#topdir="`dirname ${cbuild}`"
+set -o pipefail
 
 # source all the library functions
 . "${topdir}/lib/globals.sh" || exit 1
@@ -70,13 +69,8 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-	eval $1 && touch /tmp/$$.tmp
-	if test -e /tmp/$$.tmp; then
-	    rm -f /tmp/$$.tmp
-	    return 0
-	else
-	    return 1
-	fi
+	eval $1
+	return $?
     fi
 
     return 0

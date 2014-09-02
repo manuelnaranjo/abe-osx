@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 testcbuild2="`basename $0`"
 topdir=`dirname $0`
@@ -432,6 +432,59 @@ cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
 match='arm-none-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
+# If we're running in an existing build directory we don't know WHAT the
+# user has set as the default so we set it to 'yes' explicity, and preserve
+# the original.
+indir=${PWD}
+if test x"${runintmpdir}" != x""; then
+  indir=${tmpdir}
+fi
+cp ${indir}/host.conf ${indir}/host.conf.orig
+cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=yes/' > ${indir}/host.conf.make_doc.yes
+cp ${indir}/host.conf.make_doc.yes ${indir}/host.conf
+rm ${indir}/host.conf.make_doc.yes
+
+# The default.
+cb_commands="--dump"
+match='Make Documentation yes'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dump --disable make_docs"
+match='Make Documentation no'
+test_pass "${cb_commands}" "${match}"
+
+# Change the configured default to 'no'
+cat ${indir}/host.conf | sed -e 's/make_docs=.*/make_docs=no/' > ${indir}/host.conf.make_doc.no
+cp ${indir}/host.conf.make_doc.no ${indir}/host.conf
+rm ${indir}/host.conf.make_doc.no
+
+# Verify that it's now 'no'
+cb_commands="--dump"
+match='Make Documentation no'
+test_pass "${cb_commands}" "${match}"
+
+# Verify that 'enable make_docs' now works.
+cb_commands="--dump --enable make_docs"
+match='Make Documentation yes'
+test_pass "${cb_commands}" "${match}"
+
+# Return the default host.conf
+mv ${indir}/host.conf.orig ${indir}/host.conf
+
+# Let's make sure the make_docs stage is actually skipped.
+# --force makes sure we run through to the make docs stage even
+# if the builddir builds stamps are new.
+cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable make_docs --build all"
+match='Skipping make docs'
+test_pass "${cb_commands}" "${match}"
+
+# Let's make sure the make_docs stage is NOT skipped.
+# --force makes sure we run through to the make docs stage even
+# if the builddir builds stamps are new.
+cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable make_docs --build all"
+match='Making docs in'
+test_pass "${cb_commands}" "${match}"
+
 # The default.
 cb_commands="--dump"
 match='Bootstrap          no'
@@ -455,6 +508,16 @@ test_pass "${cb_commands}" "${match}"
 
 cb_commands="--disable update --dump"
 match='Source Update      no'
+test_pass "${cb_commands}" "${match}"
+
+# Test dump ordering.  --target processing is immediate, so --dump
+# should work before or after --target.
+cb_commands="--target arm-linux-gnueabihf --dump"
+match='Target is\:         arm-linux-gnueabihf'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dump --target arm-linux-gnueabihf"
+match='Target is\:         arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout and --build can be run together.
@@ -543,6 +606,15 @@ if test ${out} -gt 0; then
 else
     fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 fi
+
+cb_commands="--dry-run --target arm-none-linux-gnueabihf --march armv8-a --dump"
+match='Default march      armv8-a'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dry-run --target arm-none-linux-gnueabihf --march=armv8-a --dump"
+match="A space is expected"
+test_failure "${cb_commands}" "${match}"
+
 
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.

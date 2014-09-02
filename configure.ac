@@ -109,6 +109,12 @@ if test x"${AUTOGEN}" = x; then
    missing="${missing} autogen"
 fi
 
+AC_PATH_PROG(CCRYPT, ccrypt)
+if test x"${CCRYPT}" = x; then
+   AC_MSG_WARN([You need 'ccrypt' to run benchmarks, this can be ignored for builds])
+   missing="${missing} ccrypt"
+fi
+
 dnl Building GDB requires ncurses and termcap
 #AC_CHECK_LIB(ncurses, doupdate)
 #if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
@@ -290,6 +296,12 @@ AC_MSG_NOTICE([Sysroots will be installed in: ${SYSROOTS}])
 AC_MSG_NOTICE([Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}])
 echo ""
 
+AC_ARG_WITH(languages,
+  AC_HELP_STRING([--with-languages], [List of languages for the compiler]),
+  WITH_LANGUAGES=${withval},
+  WITH_LANGUAGES='default')
+AC_SUBST(WITH_LANGUAGES)
+
 dnl if you have SSH access to the remote machine
 AC_ARG_ENABLE(ssh, AC_HELP_STRING([--enable-ssh], [If you have SSH access to remote build host]),
 [case "${enableval}" in
@@ -326,6 +338,15 @@ AC_ARG_ENABLE(install, AC_HELP_STRING([--enable-install], [If you want to instal
 esac], ENABLE_INSTALL=yes)
 AC_SUBST(ENABLE_INSTALL)
 
+dnl if you want to disable the building of the package documents.
+AC_ARG_ENABLE(make-docs, AC_HELP_STRING([--enable-make-docs], [If you want to enable making package documentation]),
+[case "${enableval}" in
+  yes) ENABLE_MAKE_DOCS=yes ;;
+  no)  ENABLE_MAKE_DOCS=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-make-docs option]) ;;
+esac], ENABLE_MAKE_DOCS=yes)
+AC_SUBST(ENABLE_MAKE_DOCS)
+
 dnl if you want to enable schroot-based testing by default
 AC_ARG_ENABLE(schroot-test, AC_HELP_STRING([--enable-schroot-test], [If you want to used schroot-based testing by default]),
 [case "${enableval}" in
@@ -343,6 +364,15 @@ AC_ARG_ENABLE(source-update, AC_HELP_STRING([--enable-source-update], [If you wa
   *)   AC_MSG_WARN([bad value ${enableval} for enable-source-update option]) ;;
 esac], ENABLE_SOURCE_UPDATE=yes)
 AC_SUBST(ENABLE_SOURCE_UPDATE)
+
+dnl if you want to update sources by default
+AC_ARG_ENABLE(parallel, AC_HELP_STRING([--enable-parallel], [If you want to build with make -j<number of CPUs> by default]),
+[case "${enableval}" in
+  yes) ENABLE_PARALLEL=yes ;;
+  no)  ENABLE_PARALLEL=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-parallel option]) ;;
+esac], ENABLE_PARALLEL=yes)
+AC_SUBST(ENABLE_PARALLEL)
 
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
@@ -367,12 +397,6 @@ if test x"${DEJAGNU}" = x; then
    missing="${missing} dejagnu"
 fi
 
-dnl AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
-dnl if test x"${NEWWORKDIR}" = x; then
-dnl    AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
-dnl #   missing="${missing} git-new-workdir"
-dnl fi
-
 AC_PATH_PROG(MAKEINFO,makeinfo)
 # Texinfo 5 can't process the gcc texinfo files until they are fixed, 
 # so we have to disable it for Ubuntu 14.04 "trusty".
@@ -383,6 +407,13 @@ if test `lsb_release -i -s` = "Ubuntu"; then
    fi
 fi
 AC_SUBST(MAKEINFO)
+
+AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
+   if test x"${NEWWORKDIR}" = x; then
+      AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
+      AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
+      missing="${missing} git-new-workdir"
+fi
 
 AC_OUTPUT(host.conf)
 

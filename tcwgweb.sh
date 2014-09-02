@@ -58,21 +58,15 @@ scancheck ()
 # $1 - the current directory to use when comparing against the baseline
 diffbaseline ()
 {
+    source $1/manifest.txt
+
     local baselines="/work/cbuildv2/baselines"
-
-    local tool="`echo $1 | cut -d '-' -f 1`"
+    local tool="`echo $2 | cut -d '-' -f 1`"
     local tool="`basename ${tool}`"
-    local version="`echo $1 | grep -o "[0-9]\.[0-9]*" | head -1`"
-#    local version="`echo $1 | grep -o "[0-9]\.[0-9]*\.[0-9]"`"
-    local target="`basename $1`"
-    # Strip -BuildFarmN from the end of results.  Strip just N for other jobs.
-    local target="`echo ${target} | sed -e 's:-BuildFarm.*::' -e 's:\(-[a-zA-Z]*\)[0-9]\+$:\1:'`"
-    local build="`basename $1`"
-    local build="`echo ${build} | cut -d '-' -f 1`"
+    local version="`echo $2 | grep -o "[0-9]\.[0-9]*" | head -1`"
+    local dir="${baselines}/${tool}-${version}/"
 
-    local dir="${baselines}/${tool}-${version}/${target}"
-
-    difftwodirs ${dir} $1
+    difftwodirs ${dir}/$1 $2
 }
 
 #
@@ -83,14 +77,21 @@ difftwodirs ()
     local prev=$1
     local next=$2
 
+    if test -d ${prev}; then
+	if ! test -e ${prev}/gcc.sum.xz; then
+	    echo "WARNING: ${prev} has no test reults!"
+	    return 0
+	fi
+	echo "WARNING:${prev} doesn't exist!"
+	return 0
+    fi
+
     # Don't diff it's already been done
     if test -e $next/testsuite-diff.txt; then
 	return 0
     fi
     
     echo "Diffing: ${prev} against ${next}..."
-#    local pbuild=`echo ${prev} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
-#    local cbuild=`echo ${next} | egrep -o "(BuildFarm|cbuild)[0-9a-z][0-9a-z]*" | sed -e 's:cbuild::'`
     local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
     if test -e ${prev}/manifest.txt; then
 	local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
@@ -99,7 +100,7 @@ difftwodirs ()
     fi
     local toplevel="`dirname ${prev}`"
 
-    diffdir="${toplevel}/diffof-${pversion}-${cversion}"
+    diffdir="/tmp/diffof-${pversion}-${cversion}"
     mkdir -p ${diffdir}
     local files="`ls ${prev}/*.sum.xz | wc -l`"
     if test ${files} -gt 0; then
@@ -109,7 +110,10 @@ difftwodirs ()
     unxz ${next}/check*.log.xz
     for i in gcc g++ libstdc++ gfortran ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
-	    diff -U 0 ${prev}/$i.sum ${next}/$i.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+           sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
+           sort ${next}/$i.sum -o ${next}/$i-sort.sum
+           diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+           rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
 	    if test -s ${diffdir}/diff-$i.txt; then
 		echo "Comparison between:" > ${diffdir}/$i-test-results.txt
 		echo "	${prev}/$i.sum and" >> ${diffdir}/$i-test-results.txt
@@ -143,9 +147,9 @@ difftwodirs ()
 	    echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
 	    grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 	    echo "" >> ${diffdir}/$i-test-results.txt
-	    echo "Build log: http://cbuild.validation.linaro.org${next}/make-${tool}.log" >> ${diffdir}/$i-test-results.txt
-	    echo "Test summary: http://cbuild.validation.linaro.org${next}/gcc.sum.xz" >> ${diffdir}/$i-test-results.txt
-	    echo "Test log: http://cbuild.validation.linaro.org${next}/check-${tool}.log.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Build log: http://cbuild.validation.linaro.org${next}/make-$i.log.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Test summary: http://cbuild.validation.linaro.org${next}/$i.sum.xz" >> ${diffdir}/$i-test-results.txt
+	    echo "Test log: http://cbuild.validation.linaro.org${next}/check-$i.log.xz" >> ${diffdir}/$i-test-results.txt
 	    local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 	    if test -e ${diffdir}/$i-test-results.txt; then
 		mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
@@ -242,9 +246,12 @@ mailto()
 
 usage()
 {
+    echo "--email          : Send email of the validation results"
     echo "--tdir dir1 dir2 : Compare the test results in 2 subdirectories"
     echo "--base dir       : Compare the test results in dir to the baseline"
-    echo "--email          : Send email of the validation results"
+    echo "These next two options are only used by --base"
+    echo "  --target triplet : Thr target triplet or 'native'"
+    echo "  --build cpu      : The cpu of the buuld machine"
 }
 
 # ----------------------------------------------------------------------
@@ -259,6 +266,7 @@ fi
 if test $# -eq 0; then
     usage
 fi
+args="$*"
 while test $# -gt 0; do
     case "$1" in
 	--email)
@@ -267,8 +275,26 @@ while test $# -gt 0; do
 	    difftwodirs "$2" "$3"
 	    shift
 	    ;;
-	--base*)	
-	    diffbaseline "$2"
+	--target*)
+	    # Set the target triplet
+	    target="$2"
+	    shift
+	    ;;
+	--build*)
+	    # Set the target triplet
+	    buildarch="`echo $2 | cut -d '-' -f 1`"
+	    shift
+	    ;;
+	--base*)
+	    # For each revision we build the toolchain for this config triplet
+	    if test x"${target}" = x; then
+		echo "ERROR: No target to compare!"
+		echo "tcwgweb.sh --target [triplet] ${args} --base [path]"
+		exit
+		
+	    fi
+	    shift
+	    diffbaseline "${buildarch}.${target}" "$1"
 	    ;;
     esac
     if test $# -gt 0; then
