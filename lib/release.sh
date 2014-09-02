@@ -73,7 +73,7 @@ release_binutils_src()
     local srcdir="`get_srcdir ${binutils_version}`"
     local builddir="`get_builddir ${binutils_version}`"
     # The new combined repository for binutils has GDB too, so we strip that off.
-    local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::'`"
+    local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::' -e 's:-binutils::'`"
 
     dryrun "mkdir -p /tmp/linaro.$$"
     local destdir="/tmp/linaro.$$/${tag}"
