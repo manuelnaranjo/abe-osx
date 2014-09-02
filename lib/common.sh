@@ -59,6 +59,12 @@ set_dbpasswd()
 # of executed.
 dryrun()
 {
+    if test x"$1" = "x-q"; then
+        local quiet=1
+        shift
+    else
+        local quiet=0
+    fi
     if test x"${dryrun}" = xyes; then
 	echo "DRYRUN: $1" 1>&2
     else
@@ -68,7 +74,9 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-        echo "RUN: $1"
+        if test ${quiet} -eq 0; then
+            echo "RUN: $1"
+        fi
 	eval $1
 	return $?
     fi
