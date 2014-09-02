@@ -29,7 +29,7 @@ usage()
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
-             [--set {cflags|ldflags|runtestflgs}=XXX]
+             [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
@@ -195,9 +195,9 @@ OPTIONS
 		setting overrides the default.  Specifying a libc
 		other than newlib on baremetal targets is an error.
 
-  --set		{cflags|ldflags|runtestflags}=XXX
+  --set		{cflags|ldflags|runtestflags|makeflags}=XXX
                 This appends additional options to the default values used
-                for CFLAGS, LDFLAGS, and RUNTESTFLAGS.
+                for CFLAGS, LDFLAGS, RUNTESTFLAGS, and MAKEFLAGS.
 
   --set		{package}={toolchain|gdb|sysroot}
                 This limits the default set of packages to the specified set.
@@ -394,6 +394,12 @@ set_package()
 	runtestflags|ru*)
 	    append_runtestflags="${setting}"
 	    notice "Appending ${setting} to RUNTESTFLAGS"
+	    return 0
+	    ;;
+	makeflags|ma*)
+#	    append_makeflags="${setting}"
+	    set make_flags="${make_flags} ${setting}"
+	    notice "Appending ${setting} to MAKEFLAGS"
 	    return 0
 	    ;;
 	ldflags|ld*)
