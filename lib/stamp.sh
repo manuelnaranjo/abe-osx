@@ -124,7 +124,7 @@ check_stamp()
        stamp_type="configur"
     fi
 
-    if test x"${dryrun}" == xyes; then
+    if test x"${dryrun}" = xyes; then
 	notice "--dryrun is being used${stamp_type:+, ${stamp_type}ing..}."
 	return 1
     fi
