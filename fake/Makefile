@@ -1,8 +1,8 @@
 all:
 	echo all
 
-rerun:
-	./run.sh > log.log
+check:
+	./controlledrun.sh $(RUNFLAGS) ./run.sh
 
 clean:
 	echo recurse
