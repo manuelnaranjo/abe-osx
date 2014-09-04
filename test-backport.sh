@@ -35,6 +35,12 @@ if test $# -lt 2; then
     exit
 fi
 
+# load commonly used functions
+cbuild="`which $0`"
+topdir="${cbuild_path}"
+cbuild2="`basename $0`"
+
+repo="gcc.git"
 fileserver=""
 branch=""
 
@@ -50,24 +56,6 @@ while test $# -gt 0; do
     esac
     shift
 done
-
-# load the configure file produced by configure
-if test -e "${PWD}/host.conf"; then
-    . "${PWD}/host.conf"
-else
-    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
-    echo "${PWD}"
-    exit 1
-fi
-
-# load commonly used functions
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
-
-. "${topdir}/lib/common.sh" || exit 1
-
-repo="gcc.git"
 
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/gcc.git~${branch}"

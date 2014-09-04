@@ -363,9 +363,9 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
-    if test x"${override_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
+    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${append_cflags}\" CXXFLAGS=\"${append_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    if test x"${append_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
@@ -379,7 +379,9 @@ make_all()
 
     # Some components require extra flags to make: we put them at the end so that config files can override
     local default_makeflags="`read_config $1 default_makeflags`"
-    local make_flags="${make_flags} ${default_makeflags}"
+    if test x"${default_makeflags}" !=  x; then
+        local make_flags="${make_flags} ${default_makeflags}"
+    fi
 
     if test x"${CONFIG_SHELL}" = x; then
         export CONFIG_SHELL=${bash_shell}
@@ -394,6 +396,14 @@ make_all()
     local logfile="${builddir}/make-${tool}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
+
+#    local errors="`dryrun \"egrep '[Ff]atal error:|configure: error:|Error' ${logfile}\"`"
+#    if test x"${errors}" != x -a ${makeret} -gt 0; then
+#       if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
+#           error "Couldn't build ${tool}: ${errors}"
+#           exit 1
+#       fi
+#    fi
 
     # Make sure the make.log file is in place before grepping or the -gt
     # statement is ill formed.  There is not make.log in a dryrun.
@@ -436,6 +446,22 @@ make_install()
         local make_flags="${make_flags} -j $((2*${cpus}))"
     fi
 
+    local tool="`get_toolname $1`"
+    if test x"${tool}" = x"linux"; then
+        local srcdir="`get_srcdir $1 ${2:+$2}`"
+        if test `echo ${target} | grep -c aarch64` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+        else
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+        fi
+        if test $? != "0"; then
+            warning "Make headers_install failed!"
+            return 1
+        fi
+        return 0
+    fi
+
+
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x -a x"${tarbin}" = x"yes"; then
 	case ${tool} in
@@ -451,12 +477,12 @@ make_install()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making install in ${builddir}"
 
-    # if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-    #     local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
-    # fi
+    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
+        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
+    fi
 
-    if test x"${override_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
+    if test x"${append_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -485,23 +511,8 @@ make_install()
         export CONFIG_SHELL=${bash_shell}
     fi
 
-    local default_makeflags="`read_config $1 default_makeflags`"
-
-    # We only install the kernel headers, which we need to do by using the Makefile
-    # in the source tree instead of the build directory.
-    local tool="`get_toolname $1`"
-    if test x"${tool}" = x"linux"; then
-        local srcdir="`get_srcdir $1 ${2:+$2}`"
-        dryrun "make SHELL=${bash_shell} ${default_makeflags} -C ${srcdir}"
-        if test $? != "0"; then
-            warning "Make headers_install failed!"
-            return 1
-        fi
-        return 0
-    fi
-
-    dryrun "make SHELL=${bash_shell} ${make_flags} ${default_makeflags:-install} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
-
+    local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
+    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     if test $? != "0"; then
         warning "Make install failed!"
         return 1
@@ -572,13 +583,13 @@ make_check_installed()
         binutils*)
             # these 
             local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
-            dryrun "make SHELL=${bash_shell} -C ${builddir}/as check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
-            dryrun "make SHELL=${bash_shell} -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
+            dryrun "make -C ${builddir}/as check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
+            dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
             ;;
         gcc*)
             local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
             for i in "c c++"; do
-                dryrun "make SHELL=${bash_shell} -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
+                dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
             done
             ;;
         *libc*)
@@ -621,18 +632,18 @@ make_check()
 #    fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${override_cflags}" != x; then
-        local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${override_cflags} -pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
+    if test x"${append_cflags}" != x; then
+        local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${append_cflags} -pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
     else
         local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
     fi
 
-    if test x"${override_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${override_ldflags}\""
+    if test x"${append_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${append_ldflags}\""
     fi
 
-    if test x"${override_runtestflags}" != x; then
-        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags}\""
+    if test x"${append_runtestflags}" != x; then
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${append_runtestflags}\""
     fi
 
     if test x"${parallel}" = x"yes"; then
@@ -646,16 +657,16 @@ make_check()
 
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}"; then
-        dryrun "make check SHELL=${bash_shell} RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+        dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
         if test x"${tool}" = x"binutils"; then
             if test x"$2" = x"gdb"; then                
-                dryrun "make check-gdb SHELL=${bash_shell} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+                dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
             else
-                dryrun "make check-binutils SHELL=${bash_shell} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+                dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
             fi
         else
-            dryrun "make check SHELL=${bash_shell} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+            dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
         fi
     fi
     
@@ -748,7 +759,7 @@ EOF
     # our sysroot isn't installed in it's final destination, pass in
     # the path to the freshly built sysroot.
     if test x"${build}" != x"${target}"; then
-        dryrun "${local_builds}/destdir/${host}/bin/${target}-g++ --sysroot=${sysroots} -o /tmp/hi /tmp/hello.cpp"
+        dryrun "${target}-g++ --sysroot=${sysroots} -o /tmp/hi /tmp/hello.cpp"
         if test -e /tmp/hi; then
             rm -f /tmp/hi
         else
