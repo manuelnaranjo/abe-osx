@@ -17,7 +17,7 @@ remote_upload()
     destfile="${sourcefile}"
   fi
   #TODO: Need some expect or timeout around this (e.g. we can hang indefinitely waiting for a password if we don't have key access)
-  dryrun "rsync -e 'ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -avzx \"${sourcefile}/\" \"${target}:${destfile}\""
+  dryrun "rsync -e 'ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -avzx \"${sourcefile}\" \"${target}:${destfile}\""
   if test $? -ne 0; then
     error "rsync of '${sourcefile}' to '${target}:${destfile}' failed"
     return 1
