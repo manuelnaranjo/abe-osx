@@ -1,9 +1,26 @@
 #!/bin/bash
 
+#TODO: Test/finish crouton support
+#TODO: Test cpufreq (need a suitable target)
+
 #Assumptions:
 #1) We have are root, or a non-root user with passwordless sudo
 #2) We don't care about cleanup. We have a cleanup handler for exit, but not
 #   for signals. If you kill it, the target could be in a messy state.
+#3) Target system is running Crouton or Ubuntu. It might well work with other
+#   distributions, though, especially the parts that don't assume upstart.
+
+#Error returns from the 'teardown' functions are ignored by default - we can
+#still run the benchmark, just with less faith in repeatability. Specifying -c
+#(cautiousness) will cause error on exit from a teardown function.
+
+#Rebuild functions just return 0 if there is nothing to do
+
+set -o pipefail
+declare -a stopped_services
+declare -a bound_processes
+declare -a downed_interfaces
+old_governor=
 
 #The chroot part is often a nop, but will get us out of chroot if necessary
 if test "${USER}" = root; then
@@ -11,83 +28,104 @@ if test "${USER}" = root; then
 else
   sudo="sudo chroot /proc/1/root"
 fi
-declare -a stopped_services
-declare -a bound_processes
-declare -a downed_interfaces
-old_governor=
 
 cleanup()
 {
+  local ret
+  local tmp
   start_services
+  ret=$?
   restore_governor
+  tmp=$?
+  if test ${tmp} -gt ${ret}; then
+    ret=${tmp}
+  fi
   unbind_processes
+  tmp=$?
+  if test ${tmp} -gt ${ret}; then
+    ret=${tmp}
+  fi
   start_network
-}
-
-#Services can have dependencies that are hard to determine. Therefore we pass
-#an ordered list of services to stop. We assume that:
-#1) User knows about the target
-#2) Target is in a known state
-
-#TODO: Temporary notes
-#Services to keep for crouton:
-#  keep="dbus\|boot-services\|shill\|wpasupplicant"
-#  keep="$keep\|tty2"
-#Services to keep for 'Linux':
-#  keep="dbus\|network"
-#  #keep="$keep\lightdm\|binfmt-support"  #For Ubuntu chroot
-#  keep="$keep\|auto-serial-console" #For Linaro dist target
-#  keep="$keep\|tty1"
-#  keep="$keep\|rcS" #For (just lava?) highbank
-
-#TODO: Check the sysv/upstart distinction - are these commands good enough?
-#      I think that stop/start/status probably are, not so sure about initctl list
-stop_services()
-{
-  if \! -f service_list; then
-    echo "No services to stop" 1>&2
-    return 1
+  tmp=$?
+  if test ${tmp} -gt ${ret}; then
+    ret=${tmp}
   fi
 
-  local service
-  for service in `cat service_list`; do
-    ${sudo} status "${service}" | grep ' stop/waiting$' > /dev/null
-    if test $? -eq 0; then
-      echo "Service '${service}' already stopped" 1>&2
-      return 1
+  if test ${ret} -gt 0; then
+    echo "Problem restoring target system" 1>&2
+    if test ${cautiousness} -eq 1; then
+      exit 1
     fi
-    ${sudo} status "${service}" | grep ' start/running$' > /dev/null
-    if test $? -ne 0; then
-      echo "Could not determine state of service '${service}'" 1>&2
-      return 1
-    fi
+  fi
+}
 
-    ${sudo} stop "${service}" 2>&1
+#Service control is a hairy land. We limit this function to handling upstart
+#services for now - experiments so far seem to show this gives enough
+#repeatability.  A little research indicates that:
+# * The service utility will let us query both upstart and SysV-style init services
+# * The service utility's output cannot necessarily be trusted
+# * systemd is coming and might change the story further
+#So we might want to improve this function in the future, or might be forced
+#to change it.
+
+#(Upstart) services can have dependencies that are hard to determine. Therefore
+#we pass an ordered list of services to stop. We assume that:
+#1) Target is in a known state
+#2) List of services to stop is in a dependency-friendly order - though we may
+#   often get away with ignoring this one for simple systems
+#3) Network servies must be left alone as we handle them separately, if only
+#   for convenience in interactive use
+
+#In the past we've kept services matching these patterns:
+#For crouton - 
+#  "dbus|boot-services|shill|wpasupplicant|tty"
+#For Linux -
+#  keep="dbus|network|tty|rcS|auto-serial-console"
+#If running on an Ubuntu desktop, keeping lightdm is sensible
+#If running in a non-native chroot, keep binfmt-support
+stop_services()
+{
+  local service
+  local ret=0
+  local service_status
+  for service in `cat $1 | grep -v '^[[:blank:]]*#'`; do
+    service_status=`${sudo} status "${service}"`
+    if test $? -ne 0; then
+      echo "Service '${service}' does not exist" 1>&2
+      ret=1
+      continue
+    fi
+    if echo "${service_status}" | grep ' stop/waiting$' > /dev/null; then
+      echo "Service '${service}' already stopped" 1>&2
+      continue
+    fi
+    if echo "${service_status}" | grep -v ' start/running$' > /dev/null; then
+      echo "Service '${service}' does not appear to be running. Will try to stop it anyway. Are you specifying services in the right order?" 1>&2
+    fi
+    ${sudo} stop "${service}" > /dev/null
     if test $? -eq 0; then
       stopped_services+=("${service}")
     else
       echo "Service '${service}' could not be stopped" 1>&2
-      return 2
+      ret=1
     fi
   done
 
-  echo "Stopped requested services"
-  echo "The following services were not requested to be stopped and are still running: "
-  service=`${sudo} initctl list`
-  if test $? -ne 0; then
-    echo "Unable to list running services" 1>&2
-  fi
+  return ${ret}
 }
 
+#Start services in reverse order, to get the dependencies right
 start_services()
 {
-  local service
-  for service in "${stopped_services[@]}"; do
-    ${sudo} start "${service}"
+  ret=0
+  for ((i=${#stopped_services[@]}-1; i>=0; i--)); do
+    ${sudo} start "${stopped_services[$i]}" > /dev/null
     if test $? -ne 0; then
       echo "Failed to restart service '${service}'" 1>&2
+      ret=1
     fi
   done
+  return ${ret}
 }
 
 set_governor()
@@ -104,7 +142,7 @@ set_governor()
 restore_governor()
 {
   #If freq scaling was unsupported then there is nothing to do
-  if x"${old_governor}" = x; then
+  if test x"${old_governor}" = x; then
     return 0
   fi
   ${sudo} cpufreq-set -g "${old_governor}"
@@ -117,17 +155,25 @@ restore_governor()
 #Note that some processes cannot be bound, for example per-cpu kernel threads.
 bind_processes()
 {
-  ${sudo} taskset -a -p $1 1 > /dev/null
+  ${sudo} taskset -a -p -c $1 1 > /dev/null
   if test $? -ne 0; then
     echo "CPU bind not supported" 1>&2
     return 1
   fi
 
   bound_processes=(1)
+  local all_processes
+  all_processes=`ps ax --format='%p' | tail -n +2`
+  if test $? -ne 0; then
+    echo "Unable to list processes" 1>&2
+    return 1
+  fi
+
   local p
+  local output
   local ret=0
-  for p in "`ps ax --format='%p' | tail -n +2`"; do
-    local output="`${sudo} taskset -a -p $1 ${p} 2>&1`"
+  for p in ${all_processes}; do
+    output="`${sudo} taskset -a -p -c $1 ${p} 2>&1`"
     if test $? -eq 0; then
       bound_processes+=("${p}")
     else
@@ -155,10 +201,13 @@ unbind_processes()
   local p
   local ret=0
   for p in "${bound_processes[@]}"; do
-    local output="`${sudo} taskset -a -p 0xFFFFFFFF ${p} 2>&1`"
-    local name="`grep Name: /proc/$p/status | cut -f 2`"
-    echo "Failed to unbind $name: $output" 1>&2
-    ret=1
+    local output
+    output="`${sudo} taskset -a -p 0xFFFFFFFF ${p} 2>&1`"
+    if test $? -ne 0; then
+      local name="`grep Name: /proc/$p/status | cut -f 2`"
+      echo "Failed to unbind $name: $output" 1>&2
+      ret=1
+    fi
   done
 
   return ${ret}
@@ -166,22 +215,28 @@ unbind_processes()
 
 #It would be more consistent to get the user to tell us how to manipulate the
 #network, but this should work fine and it is convenient.
+#We don't stop loopback, that would be madness
 stop_network()
 {
-  #Stop crouton (untested)
+  #Stop network on crouton (untested)
   if croutonversion > /dev/null 2>&1; then
     #TODO: Rather than sleep 2, we should spin until we see that those services are stopped
+    #      Although perhaps we can count on the stop command not exiting until the service is really stopped
     ${sudo} /bin/bash -c 'stop shill && stop wpasupplicant' && sleep 2
     if test $? -ne 0; then
       echo "Failed to stop network" 1>&2
       return 1
     fi
+    downed_interfaces+=("crouton")
     return 0
   fi
 
-  #Stop anything else
+  #Stop network on not-crouton
+
   #Get interfaces
-  local interfaces=`ifconfig -s | sed 1d | cut -d " " -f 1`
+  local -a interfaces
+  #TODO: Remote corner case - this'll break on interface names with a space in
+  interfaces=(`ifconfig -s | sed 1d | cut -d " " -f 1 | grep -v '^lo$'`) 
   if test $? -ne 0; then
     echo "Failed to read network interfaces" 1>&2
     return 1
@@ -189,20 +244,21 @@ stop_network()
 
   #Work out how to stop interfaces by stopping one of them
   local netcmd
-  if ${sudo} stop network-interface INTERFACE="${interfaces[0]}"; then
+  if ${sudo} stop network-interface INTERFACE="${interfaces[0]}" >/dev/null 2>&1; then
     netcmd="${sudo} stop network-interface INTERFACE="
-  elif ${sudo} ifdown "${interfaces[0]}"; then
+  elif ${sudo} ifdown "${interfaces[0]}"; then #don't redirect stderr as this is our last try and failure information would be helpful
     netcmd="${sudo} ifdown "
   else
     echo "Cannot bring down network interfaces" 1>&2
     return 1
   fi
   downed_interfaces+=("${interfaces[0]}")
+  interfaces=("${interfaces[@]:1}")
 
   #Stop any remaining interfaces
   local ret=0
   local interface
-  for interface in "${interfaces[@]:1}"; do
+  for interface in "${interfaces[@]}"; do
     bash -c "${netcmd}${interface}"
     if test $? -eq 0; then
       downed_interfaces+=("${interface}")
@@ -212,20 +268,18 @@ stop_network()
     fi
   done
 
-  #Ensure that interfaces are really down
-  for interface in "${downed_interfaces[@]}"; do
-    local i
-    for i in {0..5}; do
-      if test x"`ifconfig -s ${interface} | sed 1d | cut -d ' ' -f 1`" = x; then
-        continue 2
-      else
-        sleep 2
-      fi
-      echo "Brought-down network interface '${interface}' still up after >10s, will continue and hope for the best" 1>&2
-      ret=1
-    done
+  #Ensure that interfaces are have finished going down
+  #TODO: A little manpage scanning suggests that this isn't needed at least the upstart case
+  for i in {0..4}; do
+    if test x"`ifconfig -s | sed 1d | grep -v '^lo\b'`" = x; then
+      break
+    fi
+    sleep 2
+    echo "Brought-down network interface(s) "`ifconfig -s | sed 1d | cut -d ' ' -f 1`" still up after >10s" 1>&2
+    echo "Will continue and hope for the best unless we're being cautious (-c)" 1>&2
+    ret=1
   done
-
+    
   return ${ret}
 } 
 
@@ -245,18 +299,19 @@ start_network()
   fi
 
   local netcmd
-  if ${sudo} /bin/bash -c "start network-interface INTERFACE=${downed_interfaces[0]}"; then
+  if ${sudo} /bin/bash -c "start network-interface INTERFACE=${downed_interfaces[0]}" >/dev/null 2>&1; then
     netcmd="${sudo} start network-interface INTERFACE="
-  elif ${sudo} /bin/bash -c "ifup ${downed_interfaces[0]}"; then
+  elif ${sudo} /bin/bash -c "ifup ${downed_interfaces[0]}"; then #don't redirect stderr as this is our last try and failure information would be helpful
     netcmd="${sudo} ifup "
   else
     echo "Cannot bring up network interfaces" 1>&2
     return 1
   fi
+  downed_interfaces=("${downed_interfaces[@]:1}")
 
   local ret=0
   local interface
-  for interface in "${interfaces[@]:1}"; do
+  for interface in "${downed_interfaces[@]}"; do
     bash -c "${netcmd}${interface}"
     if test $? -ne 0; then
       echo "Failed to bring up network interface '${interface}'" 1>&2
@@ -266,84 +321,149 @@ start_network()
   return ${ret}
 } 
 
-do_services=0
+services_file=''
 do_freq=0
 bench_cpu=0
 non_bench_cpu=''
-cautiousness=1
+cautiousness=0
 do_network=0
-while getopts sfb:p:cn flag; do
+while getopts s:fb:p:cn flag; do
   case $flag in
-    s)  do_services=1;;
+    s)  services_file="${OPTARG}";;
     f)  do_freq=1;;
     b)  bench_cpu="${OPTARG}";;
     p)  non_bench_cpu="${OPTARG}";;
-    c)  cautiousness=0;;
-    n)  do_network=0;;
+    c)  cautiousness=1;;
+    n)  do_network=1;;
     *)
-	echo 'Unknown option' 1>&2
-	exit 1
+        echo 'Unknown option' 1>&2
+        exit 1
     ;;
   esac
 done
 shift $((OPTIND - 1))
 
 #Cheap sanity checks, before we start tearing the target down
-echo "$bench_cpu" | grep '^[[:digit:]]\+$'
+if test x"${services_file}" != x; then
+  if test \! -f "${services_file}"; then
+    echo "Services file '${services_file}' missing" 1>&2
+    exit 1
+  fi
+  if test x"`cat ${services_file}`" = x; then
+    echo "Services file '${services_file}' is empty" 1>&2
+    exit 1
+  fi
+fi
+
+echo "$bench_cpu" | grep '^[[:digit:]]\+$' > /dev/null
 if test $? -ne 0; then
   echo "Benchmark CPU (-b) must be a decimal number" 1>&2
   exit 1
 fi
-echo "$non_bench_cpu" | grep '^[[:digit:]]\+$'
+echo "$non_bench_cpu" | grep '^[[:digit:]]*$' > /dev/null
 if test $? -ne 0; then
   echo "Non-benchmark CPU (-p) must be null or a decimal number" 1>&2
   exit 1
 fi
-if test ${bench_cpu} -eq ${non_bench_cpu}; then
+if test x"${bench_cpu}" = x"${non_bench_cpu}"; then
   echo "Benchmark CPU (-b) and non-benchmark CPU (-p) must be different" 1>&2
   exit 1
 fi
 
-local cmd="$@"
+cmd="$@"
 
-taskset ${bench_cpu} -- true
+taskset -c ${bench_cpu} true
 if test $? -ne 0; then
   echo "Could not bind benchmark to CPU ${bench_cpu}" 1>&2
   exit 1
 fi
 
+#Put the target back in order before we quit
 trap cleanup EXIT
 
-if test ${do_services} -eq 1; then
-  stop_services
-  if test $? -gt ${cautiousness}; then
+if test x"${services_file}" != x; then
+  stop_services "${services_file}"
+  if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
 if test ${do_freq} -eq 1; then
   set_governor
-  if test $? -gt ${cautiousness}; then
+  if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
 if test x"${non_bench_cpu}" != x; then
   bind_processes ${non_bench_cpu}
-  if test $? -gt ${cautiousness}; then
+  if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
 if test ${do_network} -eq 1; then
   stop_network
-  if test $? -gt ${cautiousness}; then
+  if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
 
-taskset ${bench_cpu} -- ${cmd}
+#Report status of the target
+echo
+echo "** Target Status **"
+echo "==================="
+echo "General Information:"
+uname -a
+if test -f /etc/lsb-release; then
+  cat /etc/lsb-release
+fi
+echo
+#A little research shows that it is unclear how
+#reliable or complete the information from either
+#initctl or service is. So we make a best effort.
+echo "** (Possibly) Running Services:"
+echo "According to initctl:"
+${sudo} initctl list | grep running
+if test $? -ne 0; then
+  echo "*** initctl unable to list running services"
+fi
+echo "According to service:"
+${sudo} service --status-all 2>&1 | grep -v '^...-'
+if test $? -ne 0; then
+  echo "*** service unable to list (possibly) running services"
+fi
+echo
+echo "** CPUFreq:"
+${sudo} cpufreq-info
+if test $? -ne 0; then
+  echo "*** Unable to get CPUFreq info"
+fi
+echo
+echo "** Affinity Masks:"
+all_processes=`ps ax --format='%p' | tail -n +2`
+if test $? -eq 0; then
+  for p in ${all_processes}; do
+    ${sudo} taskset -a -p ${p}
+    if test $? -ne 0; then
+      echo "*** Unable to get affinity mast for process ${p}"
+    fi
+  done
+else
+  echo "*** Unable to get affinity mask info"
+fi
+echo
+echo "** Live Network Interfaces:"
+${sudo} ifconfig -s | sed 1d | cut -d ' ' -f 1
+if test $? -ne 0; then
+  echo "*** Unable to get network info"
+fi
+echo "==================="
+echo
+
+#Finally, run the command!
+taskset -c ${bench_cpu} ${cmd}
 if test $? -eq 0; then
   echo "Run of ${cmd} complete"
   exit 0
 else
-  echo "taskset ${bench_cpu} -- ${cmd} failed" 1>&2
+  echo "taskset -c ${bench_cpu} ${cmd} failed" 1>&2
   exit 1
 fi
