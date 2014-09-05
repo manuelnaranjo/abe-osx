@@ -97,6 +97,5 @@ for device in "${devices[@]}"; do
 done
 
 wait
-echo "***"
+echo
 echo "All runs completed"
-echo "***"
