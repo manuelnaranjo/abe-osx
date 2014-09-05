@@ -35,6 +35,7 @@ while getopts t:f:c:mdl: flag; do
   esac
 done
 shift $((OPTIND - 1))
+
 #Remaining args are log files to copy back
 
 #Make sure we delete the remote dir when we're done
@@ -64,13 +65,13 @@ if test $? -ne 0; then
 fi 
 mkdir -p "${logdir}/${uid}"
 if test $? -ne 0; then
-  error "Failed to create dir logs/${uid}"
+  error "Failed to create dir ${logdir}/${uid}"
   exit 1
 fi
 for log in "$@"; do
-  mkdir -p "logs/${uid}/`dirname ${log}`"
+  mkdir -p "${logdir}/${uid}/`dirname ${log}`"
   if test $? -ne 0; then
-    error "Failed to create dir logs/${uid}/`dirname ${log}`"
+    error "Failed to create dir ${logdir}/${uid}/`dirname ${log}`"
     exit 1
   fi
   remote_exec "${target_ip}" "cd '${target_dir}' && cat '${log}'" | ccencrypt -k ~/.ssh/id_rsa > "${logdir}/${uid}/${log}" #TODO what about ssh-agent?

@@ -321,6 +321,9 @@ start_network()
   return ${ret}
 } 
 
+echo "$@"
+echo
+
 services_file=''
 do_freq=0
 bench_cpu=0
