@@ -62,7 +62,7 @@ if test $? -ne 0; then
   error "Command to run benchmark failed: will try to get logs"
   ret=1
 fi 
-mkdir -p logs/"${uid}"
+mkdir -p "${logdir}/${uid}"
 if test $? -ne 0; then
   error "Failed to create dir logs/${uid}"
   exit 1
