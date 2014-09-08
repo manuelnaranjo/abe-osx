@@ -3,10 +3,10 @@ set -o pipefail
 
 lava_server=$1
 lava_json=$2
-thing_to_run=$3
-cmd_to_run=${4//\"/\\\"}
-keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
-shift 5
+#thing_to_run=$3
+#cmd_to_run=${4//\"/\\\"}
+#keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
+shift 2
 #Remaining args are log files to copy back
 
 #Make public key safe to use in a sed replace string
@@ -47,19 +47,19 @@ for i in {1..90}; do #Wait up to 90 mins for boot
 done
 
 #From here we are doing dispatch, not reservation. Nothing in here has anything to do with lava.
-rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -azvx $thing_to_run $user_ip: || exit 1
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "${cmd_to_run}" || exit 1
-rm -rf logs/$uid || exit 1
-mkdir -p logs/$uid || exit 1
-for log in $@; do
-  mkdir -p logs/$uid/`dirname $log` || exit 1
-  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "cat $log" | ccencrypt -k $keyfile > logs/$uid/$log || exit 1
-done
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "rm -rf $thing_to_run" #clean up, we don't want to leave source or data lying around
+#rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -azvx $thing_to_run $user_ip: || exit 1
+#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "${cmd_to_run}" || exit 1
+#rm -rf logs/$uid || exit 1
+#mkdir -p logs/$uid || exit 1
+#for log in $@; do
+#  mkdir -p logs/$uid/`dirname $log` || exit 1
+#  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "cat $log" | ccencrypt -k $keyfile > logs/$uid/$log || exit 1
+#done
+#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "rm -rf $thing_to_run" #clean up, we don't want to leave source or data lying around
 
 
 #And now we're back in target management (lava-specific)
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip stop_hacking
+#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip stop_hacking
 #TODO: Might want to collect some data here, too - git hash of the yaml files, for instance
 
 #TODO: Basic hacking session images are nearly adeqate, but there will be some deps. How to specify? Again, cbuild2 copying would allow us to use configure.

@@ -58,6 +58,7 @@ benchlog="`read_config ${benchmark}.git benchlog`"
 #And remote.sh can work with controlledrun.sh to run them for us
 for device in "${devices[@]}"; do
   (
+    lava=0
     . "${topdir}/config/boards/bench/${device}.conf" #source_config requires us to have something get_toolname can parse
     if test $? -ne 0; then
       echo "Failed to source ${topdir}/config/boards/bench/${device}.conf" 1>&2
@@ -76,12 +77,30 @@ for device in "${devices[@]}"; do
     if test x"${freqctl}" = xyes; then
       flags+=" -f"
     fi
+    echo "${ip}" | grep '\.json$'
+    if test $? -eq 0; then
+      lava=1
+      ip=`lava.sh https://bogden@validation.linaro.org/RPC2/ ${ip}`
+      if test $? -ne 0; then
+        echo "Failed to acquire lava target" 1>&2
+        exit 1
+      fi
+    fi
     "${topdir}"/scripts/remote.sh -t "${ip}" \
 -m \
       -f "${builddir}" -f "${topdir}"/scripts/controlledrun.sh \
       -f "${topdir}/config/boards/bench/${device}.services" \
       -c "./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr" \
-      -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog
+      -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog &
+    if test $? -eq 0; then
+      echo "+++ Run of ${benchmark} on ${device} succeeded"
+    else
+      echo "+++ Run of ${benchmark} on ${device} failed"
+    fi
+    if test ${lava} -eq 1; then
+      #ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ip}" stop_hacking
+      echo "+++++ Would now release"
+    fi
   )&
 
   #TODO Use a signal handler for this? - what signal does a child send on exit?
