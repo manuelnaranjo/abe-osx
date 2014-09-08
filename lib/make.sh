@@ -363,9 +363,9 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${append_cflags}\" CXXFLAGS=\"${append_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
-    if test x"${append_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    if test x"${override_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
     fi
 
     if test x"${use_ccache}" = xyes -a x"${build}" = x"${host}"; then
@@ -481,8 +481,8 @@ make_install()
         local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
     fi
 
-    if test x"${append_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS=\"${append_ldflags}\""
+    if test x"${override_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
     fi
 
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
@@ -632,18 +632,18 @@ make_check()
 #    fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${append_cflags}" != x; then
-        local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${append_cflags} -pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
+    if test x"${override_cflags}" != x; then
+        local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"${override_cflags}\""
     else
         local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
     fi
 
-    if test x"${append_ldflags}" != x; then
-        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${append_ldflags}\""
+    if test x"${override_ldflags}" != x; then
+        local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${override_ldflags}\""
     fi
 
-    if test x"${append_runtestflags}" != x; then
-        local make_flags="${make_flags} RUNTESTFLAGS=\"${append_runtestflags}\""
+    if test x"${override_runtestflags}" != x; then
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags}\""
     fi
 
     if test x"${parallel}" = x"yes"; then
@@ -659,15 +659,22 @@ make_check()
     if test x"${build}" = x"${target}"; then
         dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
-        if test x"${tool}" = x"binutils"; then
-            if test x"$2" = x"gdb"; then                
-                dryrun "make check-gdb PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
-            else
-                dryrun "make check-binutils PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
-            fi
-        else
-            dryrun "make check PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
-        fi
+	case ${tool} in
+	    binutils)
+		local check_targets="check-binutils check-gas check-ld"
+		;;
+	    gdb)
+		local check_targets="check-gdb"
+		;;
+	    gcc)
+		local check_targets="check-gcc check-c++ check-target-libstdc++-v3 check-target-libgomp"
+		;;
+	    *)
+		local check_targets="check"
+		;;
+	esac
+
+        dryrun "make ${check_targets} SYSROOT_UNDER_TEST=--sysroot=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     fi
     
     return 0
