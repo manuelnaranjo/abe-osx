@@ -60,7 +60,7 @@ svn_id=
 # config values for the build machine
 libc_version=
 kernel=
-build_arch=
+build_arch=${build_arch:+${build_arch}}
 hostname=
 distribution=
 
