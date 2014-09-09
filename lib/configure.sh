@@ -59,6 +59,7 @@ configure_build()
 	notice "The build directory '${builddir}' doesn't exist, so creating it"
 	# Zlib has to be built in it's source directory.
 #	if test x"${tool}" = x"zlib"; then
+#            dryrun "mkdir -p `dirname ${builddir}`"
 #	    dryrun "ln -s ${srcdir} ${builddir}"
 #	else
 	    dryrun "mkdir -p \"${builddir}\""
@@ -136,6 +137,9 @@ configure_build()
     # Force static linking unless dynamic linking is specified
     local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
     if test x"${static}" = x"yes" -o x"${tarbin}" = x"yes"; then
+#        if test "`echo ${tool} | grep -c '^zlib$'`" -ne 0; then
+#            local opts="--static"
+#        fi
 	if test "`echo ${tool} | grep -c glibc`" -eq 0; then
 	    local opts="--disable-shared --enable-static"
 	fi
@@ -161,10 +165,10 @@ configure_build()
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
     case ${tool} in
-	# zlib)
-	#     # zlib doesn't support most standard configure options
-	#     local opts="--prefix=${sysroots}/usr"
-	#     ;;
+#	zlib)
+#	    # zlib doesn't support most standard configure options
+#	    local opts="--prefix=${sysroots}/usr"
+#	    ;;
 	newlib*|libgloss*)
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr CC=${target}-gcc"
 	    ;;

@@ -1,13 +1,36 @@
 #!/bin/bash
+
+#Deps: lava-tool, auth token for lava-tool
 set -o pipefail
 
+release()
+{
+  if test x"${keep}" = x; then
+    lava-tool cancel-job https://"${lava_server}" "${id}"
+  else
+    echo "Did not cancel job ${id} - keep requested" 1>&2
+    echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
+  fi
+  if test $? -eq 0; then
+    echo "Cancelled job ${id}" 1>&2
+  else
+    echo "Failed to cancel job ${id}" 1>&2
+    exit 1
+  fi
+}
+
+dispatch_timeout=1 #720 #12 hours - too pessimistic for some targets, too optimistic for others
+boot_timeout=90 #1.5 hours - target-dependent pessimism
+
+#TODO: error checks here
 lava_server=$1
 lava_json=$2
+dispatch_timeout=$3
+boot_timeout=$4
+keep=$5
 #thing_to_run=$3
 #cmd_to_run=${4//\"/\\\"}
 #keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
-shift 2
-#Remaining args are log files to copy back
 
 #Make public key safe to use in a sed replace string
 #Danger - Don't change to backticks, they resolve differently and render all the matches as ampersands
@@ -18,50 +41,52 @@ t2=`mktemp -t XXXXXXXXX` || exit 1
 sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${subkey}\"/" $lava_json > $t2
 #TODO submit-results/bundle stream
 
+
 id=`lava-tool submit-job https://${lava_server} ${t2}`
 if test $? -ne 0; then
   echo Failed to submit job > /dev/stderr
   rm -f $t2
   exit 1
 fi
+trap release EXIT
 rm -f $t2
 id=`echo $id | grep '^submitted as job id: [[:digit:]]\+$' | cut -d ' ' -f 5`
 if test $? -ne 0; then
   echo "Failed to read job id" > /dev/stderr
   exit 1
 fi
-echo "LAVA job id: $id"
+echo "Dispatched LAVA job $id"
 
-for i in {1..90}; do #Wait up to 90 mins for boot
+for ((i=0; i<${dispatch_timeout}; i++)); do
   sleep 60
-  line=`lava-tool job-output $lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep '^Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)$'`
+  jobstatus=`lava-tool job-status https://${lava_server} ${id}`
+  echo "${jobstatus}" | grep '^Job Status: Running$' > /dev/null
   if test $? -eq 0; then
-    user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
-    uid=`echo $line | grep -o '(.\+)$' | sed 's/.\(.*\)./\1/'`
-    uid=lava_${uid}_`date +%s`
-    uid=`echo $uid | tr [[:blank:]] _`
-    echo "Found target at ${user_ip}"
-    echo "Will log to logs/$uid"
+    echo "Job ${id} is running, waiting for boot"
     break
   fi
 done
+if test $i -eq ${dispatch_timeout}; then
+  echo "Timed out waiting for job to dispatch (waited ${dispatch_timeout} minutes)" 1>&2
+  exit 1
+fi
 
-#From here we are doing dispatch, not reservation. Nothing in here has anything to do with lava.
-#rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -azvx $thing_to_run $user_ip: || exit 1
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "${cmd_to_run}" || exit 1
-#rm -rf logs/$uid || exit 1
-#mkdir -p logs/$uid || exit 1
-#for log in $@; do
-#  mkdir -p logs/$uid/`dirname $log` || exit 1
-#  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "cat $log" | ccencrypt -k $keyfile > logs/$uid/$log || exit 1
-#done
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip "rm -rf $thing_to_run" #clean up, we don't want to leave source or data lying around
+#TODO: A more generic approach would take a regexp to watch for boot completion as a parameter, and echo it
+#      for caller to extract interesting information from
+for ((i=0; i<${boot_timeout}; i++)); do
+  sleep 60
+  line=`lava-tool job-output https://$lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep '^Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)$'`
+  if test $? -eq 0; then
+    user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
+    echo "LAVA target ready at ${user_ip}"
+  fi
+done
 
-
-#And now we're back in target management (lava-specific)
-#ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user_ip stop_hacking
-#TODO: Might want to collect some data here, too - git hash of the yaml files, for instance
-
-#TODO: Basic hacking session images are nearly adeqate, but there will be some deps. How to specify? Again, cbuild2 copying would allow us to use configure.
-#      Might be best just to customize the image - I believe I can even specify packages in the .json if the OS is flexible enough.
-#      In the yaml, not the json. I just need to put a suitable yaml file in a repo. Should be able to cobble something from the hacking session scripts.
+#TODO: A more generic approach would be able to block forever (as we do now), OR poll for a 
+#      string indicating job completion and then exit 0
+if test $i -eq ${boot_timeout}; then
+  echo "LAVA boot failed, or abandoned after ${boot_timeout} minutes" 1>&2
+  exit 1
+else
+  sleep infinity #block until we get killed (which will release the target)
+fi

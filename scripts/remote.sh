@@ -10,11 +10,19 @@ cleanup()
     expr "${target_dir}" : '\(/tmp\)' > /dev/null
     if test $? -eq 0; then
       remote_exec "${target_ip}" "rm -rf ${target_dir}"
-      return 0
+      if test $? -eq 0; then
+        note "Removed ${target_dir} from ${target_ip}"
+        exit 0
+      else
+        error "Failed to remove ${target_dir} from ${target_ip}. You might want to go in and clean up."
+        exit 1
+      fi
     else
-      error "Cowardly refusing to delete '${target_dir}' not rooted at /tmp. You might want to go in and clean up."
-      return 1
+      error "Cowardly refusing to delete ${target_dir} from ${target_ip}. Not rooted at /tmp. You might want to go in and clean up."
+      exit 1
     fi
+  else
+    note "No directory to remove from ${target_ip}"
   fi
 }
 

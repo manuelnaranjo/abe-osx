@@ -3,12 +3,32 @@
 #implementation that will avoid wheel re-invention. Let's not
 #sink too much time into making this script beautiful.
 
-topdir="`dirname $0`/.."
+#TODO Convert as much as possible into a function, so that we don't share global namespace with cbuild2 except where we mean to
+#     Better - confine cbuild2 to a subshell
 
-while getopts t:b: flag; do
+set -o pipefail
+
+#Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
+#we should not leave lava targets reserved
+trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
+
+topdir="`dirname $0`/.." #cbuild2 global 
+#Source in cbuild2 so that we can read config files and get build location
+. "${topdir}/host.conf" 
+. "${topdir}/lib/common.sh"
+
+target='' #cbuild2 global
+keep='' #if set, don't clean up benchmark output on target, don't kill lava targets
+while getopts t:b:k flag; do
   case "${flag}" in
-    t) target="--target '${OPTARG}'";;
+    t) target="${OPTARG}";;
     b) benchmark="${OPTARG}";;
+    k)
+       keep='-m'
+       echo 'Keep (-k) set: possibly sensitive benchmark data will be left on target'
+       echo 'Press enter to confirm'
+       read
+    ;;
     *)
        echo "Bad arg" 1>&2
        exit 1
@@ -16,7 +36,12 @@ while getopts t:b: flag; do
   esac
 done
 shift $((OPTIND - 1))
-devices=("$@")
+devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine. They're not fine for ssh access, where they will just resolve to the same machine every time.
+
+confdir="${topdir}/config/boards/bench"
+lavaserver="${USER}@validation.linaro.org/RPC2/"
+builddir="`get_builddir $(get_URL ${benchmark}.git)`"
+benchlog="`read_config ${benchmark}.git benchlog`"
 
 if test x"${benchmark}" = x; then
   echo "No benchmark given (-b)" 1>&2
@@ -39,29 +64,20 @@ else #cross-build, implies we need remote devices
 fi
 
 #cbuild2 can build the benchmarks just fine
-(cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target})
+(cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" --target "${target}")
 if test $? -ne 0; then
   echo "Error while building benchmark ${benchmark}" 1>&2
   exit 1
 fi
-#TODO: Work out how I get the builddir back. Might mean that I have to source
-#cbuild2 in and call functions to build it, but hopefully there's an easier way
-builddir="${topdir}/builds/armv7l-unknown-linux-gnueabihf/armv7l-unknown-linux-gnueabihf/eembc.git"
 #devices not doing service ctrl need to have a ${device}.services file anyway, just so remote.sh doesn't complain it isn't there to copy. It'll be ignored unless we give the -s flag.
 #benchmarks must have a 'lavabench' rule
-#TODO: lava. can give a special value to ip for lava targets.
-
-. "${topdir}/lib/common.sh" #So we can read config files
-
-benchlog="`read_config ${benchmark}.git benchlog`"
 
 #And remote.sh can work with controlledrun.sh to run them for us
 for device in "${devices[@]}"; do
   (
-    lava=0
-    . "${topdir}/config/boards/bench/${device}.conf" #source_config requires us to have something get_toolname can parse
+    . "${confdir}/${device}.conf" #source_config requires us to have something get_toolname can parse
     if test $? -ne 0; then
-      echo "Failed to source ${topdir}/config/boards/bench/${device}.conf" 1>&2
+      echo "Failed to source ${confdir}/${device}.conf" 1>&2
       exit 1
     fi
     flags="-b ${benchcore}"
@@ -77,44 +93,50 @@ for device in "${devices[@]}"; do
     if test x"${freqctl}" = xyes; then
       flags+=" -f"
     fi
-    echo "${ip}" | grep '\.json$'
+    echo "${ip}" | grep '\.json$' > /dev/null
     if test $? -eq 0; then
-      lava=1
-      ip=`lava.sh https://bogden@validation.linaro.org/RPC2/ ${ip}`
+      lava_target="${ip}"
+      ip=''
+      echo "Acquiring LAVA target ${lava_target}"
+      exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${dispatch_timeout} ${boot_timeout} ${debug})
       if test $? -ne 0; then
-        echo "Failed to acquire lava target" 1>&2
+        echo "Failed to acquire LAVA target ${lava_target}" 1>&2
+        exit 1
+      fi
+      while read <&3 line; do
+        echo "${lava_target}: $line"
+        if echo "${line}" | grep '^LAVA target ready at '; then
+          ip="`echo ${line} | cut -d ' ' -f 5`"
+          break
+        fi
+      done
+      if test x"${ip}" = x; then
+        echo "Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
     fi
+    echo "${topdir}/scripts/remote.sh -t ${ip} \
+      ${keep} \
+      -f ${builddir} -f ${topdir}/scripts/controlledrun.sh \
+      -f ${confdir}/${device}.services \
+      -c ./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr \
+      -l ${topdir}/${benchmark}-log stdout stderr ${benchmark}.git/linarobenchlog &"
     "${topdir}"/scripts/remote.sh -t "${ip}" \
--m \
+      ${keep} \
       -f "${builddir}" -f "${topdir}"/scripts/controlledrun.sh \
-      -f "${topdir}/config/boards/bench/${device}.services" \
+      -f "${confdir}/${device}.services" \
       -c "./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr" \
-      -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog &
+      -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog
     if test $? -eq 0; then
       echo "+++ Run of ${benchmark} on ${device} succeeded"
     else
       echo "+++ Run of ${benchmark} on ${device} failed"
     fi
-    if test ${lava} -eq 1; then
-      #ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ip}" stop_hacking
-      echo "+++++ Would now release"
-    fi
   )&
-
-  #TODO Use a signal handler for this? - what signal does a child send on exit?
-  #{
-  #  wait $!
-  #  if test $? -eq 0; then
-  #    echo "+++ Run of ${benchmark} on ${device} succeeded"
-  #  else
-  #    echo "+++ Run of ${benchmark} on ${device} failed"
-  #  fi
-  #  echo "+++ Logs/results under ${topdir}/${benchmark}-log"
-  #}&
 done
 
 wait
 echo
 echo "All runs completed"
+
+#TODO: I suppose I might want a 'delete local copies of source/built benchmark'
