@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
+
+export runtests=true
+
+export CONFIG_SHELL="/bin/bash"
+shared="/home/buildslave/workspace/shared/"
+cbuild_dir="${WORKSPACE}/cbuildv2"
+snapshots="${WORKSPACE}/snapshots"
+snapshots_ref="$shared/snapshots"
+rsync -az --update toolchain64:snapshots/ $snapshots_ref/
+if test x"${revisions}" != x; then
+  if test ! -d ${WORKSPACE}/_build; then
+    mkdir -p ${WORKSPACE}/_build
+  fi
+  cd ${WORKSPACE}/_build
+  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=$snapshots --with-git-reference-dir=$snapshots_ref
+  $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
+else
+  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
+fi
+
+# force a failure of cbuild2 has build problems.
+if test $? -gt 0; then
+  exit 1
+fi
+
+#rm -rf ${WORKSPACE}/_build ${WORKSPACE}/snapshots
