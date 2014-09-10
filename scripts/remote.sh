@@ -8,11 +8,9 @@ cleanup()
 {
   if test x"${target_dir}" = x; then
     notice "No directory to remove from ${target_ip}"
-    exit 0
   fi
   if test ${cleanup} -eq 0; then
     notice "Not removing ${target_dir} from ${target_ip} as -m was given. You might want to go in and clean up."
-    exit 0
   fi
 
   expr "${target_dir}" : '\(/tmp\)' > /dev/null
@@ -24,7 +22,6 @@ cleanup()
   remote_exec "${target_ip}" "rm -rf ${target_dir}"
   if test $? -eq 0; then
     notice "Removed ${target_dir} from ${target_ip}"
-    exit 0
   else
     error "Failed to remove ${target_dir} from ${target_ip}. You might want to go in and clean up."
     exit 1
