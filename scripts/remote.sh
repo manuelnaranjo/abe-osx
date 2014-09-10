@@ -6,11 +6,14 @@ topdir=`dirname $0`/..
 
 cleanup()
 {
+  local error=$?
   if test x"${target_dir}" = x; then
     notice "No directory to remove from ${target_ip}"
+    exit "${error}"
   fi
   if test ${cleanup} -eq 0; then
     notice "Not removing ${target_dir} from ${target_ip} as -m was given. You might want to go in and clean up."
+    exit "${error}"
   fi
 
   expr "${target_dir}" : '\(/tmp\)' > /dev/null
@@ -22,6 +25,7 @@ cleanup()
   remote_exec "${target_ip}" "rm -rf ${target_dir}"
   if test $? -eq 0; then
     notice "Removed ${target_dir} from ${target_ip}"
+    exit "${error}"
   else
     error "Failed to remove ${target_dir} from ${target_ip}. You might want to go in and clean up."
     exit 1
@@ -107,4 +111,5 @@ for log in "$@"; do
     ret=1
   fi
 done
+echo "RRET: $ret"
 exit ${ret}
