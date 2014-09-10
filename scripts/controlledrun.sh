@@ -169,25 +169,39 @@ bind_processes()
 
   bound_processes=(1)
   local all_processes
-  all_processes=`ps ax --format='%p' | tail -n +2`
+  all_processes=`ps ax --format='%p' | tail -n +3`
   if test $? -ne 0; then
     echo "Unable to list processes" | tee /dev/stderr "${log}" > /dev/null
     return 1
   fi
 
   local p
+  local ppid
+  local ppcmd
   local output
   local ret=0
   for p in ${all_processes}; do
+    ppid="`ps -p $p -o ppid=`"
+    if test $? -ne 0; then
+      continue #Probably some process completed since we made the list
+    fi
+    if test ${ppid} -ne 0; then
+      ppcmd="`ps -p ${ppid} -o cmd=`" 
+      if test $? -ne 0; then
+        echo "Failed to get cmd for pid $ppid (parent of $pid)" 1>&2
+        ret=1
+      fi
+      if [[ "${ppcmd}" = *kthreadd* ]]; then
+        continue #don't try to change the affinity of kernel procs
+      fi
+    fi
     output="`${sudo} taskset -a -p -c $1 ${p} 2>&1`"
     if test $? -eq 0; then
       bound_processes+=("${p}")
     else
-      if test "`ps -p \`ps -p $p -o ppid=\` -o cmd=`" != '[kthreadd]'; then
-        local name="`grep Name: /proc/$p/status | cut -f 2`"
-        echo "Failed to bind $name to CPU $1: $output" | tee /dev/stderr "${log}" > /dev/null
-        ret=1
-      fi
+      local name="`grep Name: /proc/$p/status | cut -f 2`"
+      echo "Failed to bind $name to CPU $1: $output" | tee /dev/stderr "${log}" > /dev/null
+      ret=1
     fi
   done
 

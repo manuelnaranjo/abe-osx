@@ -12,20 +12,16 @@ set -o pipefail
 #we should not leave lava targets reserved
 trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
 
-topdir="`dirname $0`/.." #cbuild2 global 
-#Source in cbuild2 so that we can read config files and get build location
-. "${topdir}/host.conf" 
-if test $? -ne 0; then
+topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
+if ! test -e "${topdir}/host.conf"; then
   echo "No host.conf, did you run ./configure?" 1>&2
   exit 1
 fi
-. "${topdir}/lib/common.sh"
 
-target='' #cbuild2 global
 keep='' #if set, don't clean up benchmark output on target, don't kill lava targets
 while getopts t:b:k flag; do
   case "${flag}" in
-    t) target="${OPTARG}";;
+    t) target="${OPTARG}";; #meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
     k)
        keep='-m'
@@ -47,8 +43,8 @@ devices=("$@") #Duplicate targets are fine for lava, they will resolve to differ
 
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
-builddir="`get_builddir $(get_URL ${benchmark}.git)`"
-benchlog="`read_config ${benchmark}.git benchlog`"
+builddir="`. ${topdir}/host.conf; . ${topdir}/lib/common.sh; get_builddir $(get_URL ${benchmark}.git)`"
+benchlog="`. ${topdir}/host.conf; . ${topdir}/lib/common.sh; read_config ${benchmark}.git benchlog`"
 
 if test x"${benchmark}" = x; then
   echo "No benchmark given (-b)" 1>&2
@@ -61,17 +57,20 @@ if test x"${target}" = x; then #native build
                           #localhost. This could be fixed if anyone _really_
                           #needs it, but DejaGNU will presumably fix for free.
   #else - we're doing a native build and giving devices other than localhost
-  #       for measurement, that's fine
+  #       for measurement, that's fine. But giving both localhost and other
+  #       devices is unlikely to work, given that we'll be both shutting down
+  #       localhost and using it to dispatch benchmark jobs
   fi
 else #cross-build, implies we need remote devices
   if test ${#devices[@]} -eq 0; then
     echo "--target implies cross-compilation, but no devices given for run" 1>&2
     exit 1
   fi
+  target="--target ${target}"
 fi
 
 #cbuild2 can build the benchmarks just fine
-(cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" --target "${target}")
+(cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target})
 if test $? -ne 0; then
   echo "Error while building benchmark ${benchmark}" 1>&2
   exit 1
