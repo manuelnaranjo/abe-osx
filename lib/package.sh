@@ -467,3 +467,37 @@ binutils_src_tarball()
     return 0
 }
 
+# This installs a binary tarball produced by cbuild2, and runs make check
+test_binary_toolchain()
+{
+    # Binaries get installed here if possible
+    if test ! -w /opt/linaro; then
+	error "/opt/linaro is not writable!"
+	return 1
+    fi
+    
+    # Untar everything in the install directory
+    for i in ${local_snapshots}/*-x86_64*.xz; do
+	tar Jxvf $i --directory=/opt/linaro
+    done
+
+    local sysroot="`find /opt/linaro -name INSTALL-SYSROOT.sh`"
+    local sysroot="`dirname ${sysroot}`"
+
+#    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+#    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
+
+    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
+
+    # Put the installed toolchain first in the path so it gets picked up by make check.
+    local compiler="`find /opt/linaro -name ${target}-gcc`"
+    local compiler="`dirname ${compiler}`"
+    export PATH="${compiler}:$PATH"
+
+    # test GCC using the build we just completed, since we need access to the test cases.
+    make_clean ${binutils_version}
+    make_check ${binutils_version}
+
+    make_clean ${gcc_version} stage2
+    make_check ${gcc_version} stage2
+}
