@@ -14,13 +14,13 @@ shared="/home/buildslave/workspace/shared/"
 cbuild_dir="${WORKSPACE}/cbuildv2"
 snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="$shared/snapshots"
-rsync -az --update toolchain64:snapshots/ $snapshots_ref/
+
 if test x"${revisions}" != x; then
   if test ! -d ${WORKSPACE}/_build; then
     mkdir -p ${WORKSPACE}/_build
   fi
   cd ${WORKSPACE}/_build
-  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=$snapshots --with-git-reference-dir=$snapshots_ref
+  $CONFIG_SHELL ${cbuild_dir}/configure  --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
   $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
 else
   $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
