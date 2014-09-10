@@ -43,7 +43,7 @@ devices=("$@") #Duplicate targets are fine for lava, they will resolve to differ
 
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
-builddir="`. ${topdir}/host.conf; . ${topdir}/lib/common.sh; get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`target2="${target}"; . ${topdir}/host.conf; . ${topdir}/lib/common.sh; if test x"${target2}" != x; then target="${target2}"; fi; get_builddir $(get_URL ${benchmark}.git)`"
 benchlog="`. ${topdir}/host.conf; . ${topdir}/lib/common.sh; read_config ${benchmark}.git benchlog`"
 
 if test x"${benchmark}" = x; then
