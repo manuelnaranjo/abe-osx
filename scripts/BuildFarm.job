@@ -12,8 +12,8 @@ export runtests=true
 export CONFIG_SHELL="/bin/bash"
 shared="/home/buildslave/workspace/shared/"
 cbuild_dir="${WORKSPACE}/cbuildv2"
-snapshots="${WORKSPACE}/snapshots"
-snapshots_ref="$shared/snapshots"
+user_snapshots="${WORKSPACE}/snapshots"
+snapshots_ref="${shared}/snapshots"
 
 if test x"${revisions}" != x; then
   if test ! -d ${WORKSPACE}/_build; then
