@@ -191,6 +191,10 @@ build_all()
 #            binary_gdb
 #        fi
         notice "Packaging took ${SECONDS} seconds"
+        if test x"${runtests}" = xyes; then
+	    test_binary_toolchain
+            notice "Testing packaging took ${SECONDS} seconds"
+	fi
     fi
     
     return 0
@@ -478,7 +482,7 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0; then
-        local make_flags=" install_root=${sysroots} ${make_flags} PARALLELMFLAGS=\"-j ${cpus}\""
+        local make_flags=" install_root=${sysroots} ${make_flags} LDFLAGS=-static-libgcc PARALLELMFLAGS=\"-j ${cpus}\""
     fi
 
     if test x"${override_ldflags}" != x; then
@@ -656,25 +660,31 @@ make_check()
     fi
 
     local checklog="${builddir}/check-${tool}.log"
-    if test x"${build}" = x"${target}"; then
+    if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
         dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	case ${tool} in
 	    binutils)
-		local check_targets="check-binutils check-gas check-ld"
+		local dirs="/binutils /ld /gas"
+		local check_targets="check-DEJAGNU"
 		;;
 	    gdb)
+		local dirs="/gdb"
 		local check_targets="check-gdb"
 		;;
 	    gcc)
-		local check_targets="check-gcc check-c++ check-target-libstdc++-v3 check-target-libgomp"
+		local dirs="/gcc"
+		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
 		;;
 	    *)
+		local dirs="/"
 		local check_targets="check"
 		;;
 	esac
 
-        dryrun "make ${check_targets} SYSROOT_UNDER_TEST=--sysroot=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	for i in ${dirs}; do
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=--sysroot=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+	done
     fi
     
     return 0
