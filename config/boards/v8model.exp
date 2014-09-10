@@ -28,13 +28,8 @@ if {[info exists env(FOUNDATION_MODEL)]} {
     error "Set FOUNDATION_MODEL in your environment to execute remote tests!"
 }
 
-# Find the sysroot, so if can be used to locate the cpu init object file.
-set compiler  "[find_gcc]"
-set ret [local_exec "$compiler --print-sysroot" "" "" $timeout]
-if { [lindex $ret 0] == 0 } {
-    set sysroot "[lindex $ret 1]"
-    # Strip the CR or LF off the end of the line as returned by GCC
-    regsub -all "\[\n\r\]+" $sysroot "" sysroot
+if {[info exists env(SYSROOT_UNDER_TEST)]} {
+    set sysroot "$env(SYSROOT_UNDER_TEST)"
 }
 set specdir "$sysroot/usr/lib"
 
@@ -54,4 +49,3 @@ set_board_info needs_status_wrapper  1
 
 # We are on a very slow simulator :-)
 set_board_info slow_simulator 1
-set_board_info gcc,timeout 100000
