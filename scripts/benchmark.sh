@@ -15,6 +15,10 @@ trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
 topdir="`dirname $0`/.." #cbuild2 global 
 #Source in cbuild2 so that we can read config files and get build location
 . "${topdir}/host.conf" 
+if test $? -ne 0; then
+  echo "No host.conf, did you run ./configure?" 1>&2
+  exit 1
+fi
 . "${topdir}/lib/common.sh"
 
 target='' #cbuild2 global
@@ -26,8 +30,11 @@ while getopts t:b:k flag; do
     k)
        keep='-m'
        echo 'Keep (-k) set: possibly sensitive benchmark data will be left on target'
-       echo 'Press enter to confirm'
-       read
+       echo 'Continue? (y/N)'
+       read answer
+       if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
+         exit 0
+       fi
     ;;
     *)
        echo "Bad arg" 1>&2
@@ -77,7 +84,7 @@ for device in "${devices[@]}"; do
   (
     . "${confdir}/${device}.conf" #source_config requires us to have something get_toolname can parse
     if test $? -ne 0; then
-      echo "Failed to source ${confdir}/${device}.conf" 1>&2
+      echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
       exit 1
     fi
     flags="-b ${benchcore}"
@@ -98,9 +105,9 @@ for device in "${devices[@]}"; do
       lava_target="${ip}"
       ip=''
       echo "Acquiring LAVA target ${lava_target}"
-      exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${dispatch_timeout} ${boot_timeout} ${debug})
+      exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${dispatch_timeout} ${boot_timeout} ${keep})
       if test $? -ne 0; then
-        echo "Failed to acquire LAVA target ${lava_target}" 1>&2
+        echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
       while read <&3 line; do
@@ -111,27 +118,28 @@ for device in "${devices[@]}"; do
         fi
       done
       if test x"${ip}" = x; then
-        echo "Failed to acquire LAVA target ${lava_target}" 1>&2
+        echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
     fi
-    echo "${topdir}/scripts/remote.sh -t ${ip} \
-      ${keep} \
-      -f ${builddir} -f ${topdir}/scripts/controlledrun.sh \
-      -f ${confdir}/${device}.services \
-      -c ./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr \
-      -l ${topdir}/${benchmark}-log stdout stderr ${benchmark}.git/linarobenchlog &"
+    echo "${topdir}/scripts/remote.sh -t ${ip} \\"
+    echo "${keep} \\"
+    echo "-f ${builddir} -f ${topdir}/scripts/controlledrun.sh \\"
+    echo "-f ${confdir}/${device}.services \\"
+    echo "-c \"./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr\" \\"
+    echo "-l ${topdir}/${benchmark}-log stdout stderr ${benchmark}.git/linarobenchlog"
     "${topdir}"/scripts/remote.sh -t "${ip}" \
       ${keep} \
       -f "${builddir}" -f "${topdir}"/scripts/controlledrun.sh \
       -f "${confdir}/${device}.services" \
-      -c "./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr" \
+      -c "./controlledrun.sh -c ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench >stdout 2>stderr" \
       -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog
     if test $? -eq 0; then
       echo "+++ Run of ${benchmark} on ${device} succeeded"
     else
       echo "+++ Run of ${benchmark} on ${device} failed"
     fi
+    #TODO: Got a success report where I should have had a failure
   )&
 done
 

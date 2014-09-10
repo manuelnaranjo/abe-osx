@@ -7,15 +7,17 @@ release()
 {
   if test x"${keep}" = x; then
     lava-tool cancel-job https://"${lava_server}" "${id}"
+    if test $? -eq 0; then
+      echo "Cancelled job ${id}" 1>&2
+      exit 0
+    else
+      echo "Failed to cancel job ${id}" 1>&2
+      exit 1
+    fi
   else
     echo "Did not cancel job ${id} - keep requested" 1>&2
     echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
-  fi
-  if test $? -eq 0; then
-    echo "Cancelled job ${id}" 1>&2
-  else
-    echo "Failed to cancel job ${id}" 1>&2
-    exit 1
+    exit 0
   fi
 }
 
@@ -75,6 +77,16 @@ fi
 #      for caller to extract interesting information from
 for ((i=0; i<${boot_timeout}; i++)); do
   sleep 60
+
+  #Check job is still running - sometimes jobs just give up during boot
+  if ! lava-tool job-status https://${lava_server} ${id} | grep '^Job Status: Running$' > /dev/null; then
+    echo "LAVA target stopped running before boot completed" 1>&2
+    exit 1 #TODO A few retries would be better than quitting - perhaps:
+           #     release (would need to change the exits to returns, may be ok - would also want to force keep=0)
+           #eval "$0" "$@" (will this screw up the process relationships - eg will we still get killed when we should, will we still return error codes to parent?)
+  fi
+  
+  #Check the log to see if we are booted
   line=`lava-tool job-output https://$lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep '^Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)$'`
   if test $? -eq 0; then
     user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`

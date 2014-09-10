@@ -3,34 +3,32 @@ mountnfs-bootclean.sh
 passwd
 rc
 rsyslog
-#startpar-bridge
-#tty4
+screen-cleanup
+#tty4 KEEP
 udev
 upstart-udev-bridge
 ureadahead-other
 console-setup
 hwclock-save
-irqbalance
 plymouth-log
-#systemd-logind KEEP (can't bring down)
-#tty5
+#tty5 KEEP
 failsafe
 mountall.sh
-atd
-dbus
 mounted-var
 plymouth
 resolvconf
-udev-fallback-graphics
 ssh
+udev-fallback-graphics
 checkroot.sh
 control-alt-delete
 gator-daemon
 hwclock
 mounted-proc
-#auto-serial-console
+alsa-store
+#auto-serial-console KEEP
 setvtrgb
 shutdown
+alsa-restore
 cron
 mountall
 mounted-debugfs
@@ -43,45 +41,41 @@ kmod
 mountnfs.sh
 openvt
 plymouth-stop
-#rcS
-ufw
-#wait-for-state
+#rcS KEEP
+#wait-for-state DON'T EXPECT THIS TO BE RUNNING, IT DOESN'T BEHAVE NICELY IN RESPONSE TO SERVICE COMMANDS
 bootmisc.sh
 flush-early-job-log
-friendly-recovery
 rc-sysinit
 upstart-socket-bridge
 mountdevsubfs.sh
-tty2
+#tty2 KEEP
 udevtrigger
 upstart-file-bridge
 container-detect
 mounted-dev
 mtab.sh
-tty3
+#tty3 KEEP
 udev-finish
 hostname
 mountall-reboot
-mysql
 mountall-shell
 mounted-tmp
-#network-interface
-#network-interface
-#network-interface
-#plymouth-ready KEEP - we break if we stop this
+#network-interface KEEP
+#network-interface KEEP
+#network-interface KEEP
 plymouth-splash
 plymouth-upstart-bridge
-tty1
+#tty1 KEEP
 udevmonitor
 dmesg
 mountall-bootclean.sh
-#network-interface-security
-#network-interface-security
-#network-interface-security
-#network-interface-security
-#networking
+#network-interface-security KEEP
+#network-interface-security KEEP
+#network-interface-security KEEP
+#network-interface-security KEEP
+#networking KEEP
 procps
-#tty6
+#tty6 KEEP
 console-font
-#network-interface-container
+#network-interface-container KEEP
 ureadahead
