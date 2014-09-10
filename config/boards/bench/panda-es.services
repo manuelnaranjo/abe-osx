@@ -3,7 +3,7 @@ mountnfs-bootclean.sh
 passwd
 rc
 rsyslog
-screen-cleanup
+#screen-cleanup
 #tty4 KEEP
 udev
 upstart-udev-bridge
