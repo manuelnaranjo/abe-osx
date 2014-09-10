@@ -111,5 +111,4 @@ for log in "$@"; do
     ret=1
   fi
 done
-echo "RRET: $ret"
 exit ${ret}
