@@ -48,7 +48,7 @@ case "$target_triplet" in {
 	    }
 	}
     }
-    { "arm-*eabi*" "arm-*linux-gnueabi" } {
+    { "arm-*eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
