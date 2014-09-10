@@ -28,4 +28,8 @@ echo "88.98.47.97	 cbuild.validation.linaro.org" >> /etc/hosts
 mkdir -p /home/buildslave/.ssh/
 cp ssh-config.txt /home/buildslave/.ssh/
 
-# You then need to copy /home/buildslave/.ssh/id_* from an existing slave to the new one
+# You then need to copy /home/buildslave/.ssh/id_* from an existing slave
+# to the new one
+
+# If running make 3.81, you may have to upgrade to make 4.0, as there is a
+# bug effecting eglibc.
