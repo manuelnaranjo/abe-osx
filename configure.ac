@@ -123,6 +123,15 @@ dnl Building GDB requires ncurses and termcap
 #fi
 AC_CHECK_LIB(z, gzread)
 
+# Versions of Make before 4.0 have a bug which breaks eglibc builds when
+# using parallel jobs.
+makeversion="`make --version | head -1 | cut -d ' ' -f 3`"
+MAKEVERSION="${makeversion}"
+AC_SUBST(MAKEVERSION)
+if test $i = "make" -a ${makeversion} -lt 4; then
+   AC_MSG_WARN([Make 4.0 is missing, which is required])
+fi
+
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
@@ -404,7 +413,7 @@ if test `lsb_release -i -s` = "Ubuntu"; then
    texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
    if test "${texversion}" -gt 4; then
 dnl      MAKEINFO="echo"
-         AC_MSG_WARN(On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo)
+         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
    fi
 fi
 AC_SUBST(MAKEINFO)
