@@ -738,7 +738,7 @@ make_docs()
             dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
-        *linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*)
+        *linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*|*make*)
             # the regular make install handles all the docs.
             ;;
         *libc*) # including eglibc
