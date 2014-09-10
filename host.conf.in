@@ -36,6 +36,7 @@ schroot_test=@ENABLE_SCHROOT_TEST@
 make_docs=@ENABLE_MAKE_DOCS@
 supdate=@ENABLE_SOURCE_UPDATE@
 parallel=@ENABLE_PARALLEL@
+makeversion=@MAKEVERSION@
 
 wget_bin=@WGET@
 bash_shell=@BASH@
