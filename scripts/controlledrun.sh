@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #TODO: Test/finish crouton support
-#TODO: Test cpufreq (need a suitable target)
 
 #Assumptions:
 #1) We have are root, or a non-root user with passwordless sudo
@@ -20,7 +19,7 @@ set -o pipefail
 declare -a stopped_services
 declare -a bound_processes
 declare -a downed_interfaces
-old_governor=
+old_policy=
 
 #The chroot part is often a nop, but will get us out of chroot if necessary
 if test "${USER}" = root; then
@@ -35,7 +34,7 @@ cleanup()
   local tmp
   start_services
   ret=$?
-  restore_governor
+  restore_policy
   tmp=$?
   if test ${tmp} -gt ${ret}; then
     ret=${tmp}
@@ -128,26 +127,33 @@ start_services()
   return ${ret}
 }
 
-set_governor()
+set_policy()
 {
-  old_governor=`cpufreq-info -p | cut -f 3 -d " "`
-  if test x"${old_governor}" = x \
-      || ! ${sudo} cpufreq-set -g performance; then
-      old_governor=""
+  old_policy=(`cpufreq-info -p`) #0 = min freq, 1 = max freq, 2 = governor
+  if test $? -ne 0 || \
+     test x"${old_policy[0]}" = x || \
+     test x"${old_policy[1]}" = x || \
+     test x"${old_policy[2]}" = x; then
+    echo "Frequency scaling not supported" | tee /dev/stderr "${log}" > /dev/null
+    return 1
+  fi
+  ${sudo} cpufreq-set -g userspace -d "${freq}" -u "${freq}"
+  if test $? -ne 0; then
+      old_policy=
       echo "Frequency scaling not supported" | tee /dev/stderr "${log}" > /dev/null
       return 1
   fi
 }
 
-restore_governor()
+restore_policy()
 {
   #If freq scaling was unsupported then there is nothing to do
-  if test x"${old_governor}" = x; then
+  if test x"${old_policy}" = x; then
     return 0
   fi
-  ${sudo} cpufreq-set -g "${old_governor}"
-  if test $? -gt 0; then
-    echo "Unable to restore governor '${old_governor}'" | tee /dev/stderr "${log}" > /dev/null
+  ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}"
+  if test $? -ne 0; then
+    echo "Unable to restore policy '${old_policy}'" | tee /dev/stderr "${log}" > /dev/null
   fi
 }
 
@@ -323,15 +329,15 @@ start_network()
 
 services_file=''
 log=/dev/null
-do_freq=0
+freq=''
 bench_cpu=0
 non_bench_cpu=''
 cautiousness=0
 do_network=0
-while getopts s:fb:p:cnl: flag; do
+while getopts s:f:b:p:cnl: flag; do
   case $flag in
     s)  services_file="${OPTARG}";;
-    f)  do_freq=1;;
+    f)  freq="${OPTARG}";;
     b)  bench_cpu="${OPTARG}";;
     p)  non_bench_cpu="${OPTARG}";;
     c)  cautiousness=1;;
@@ -393,8 +399,8 @@ if test x"${services_file}" != x; then
     exit 1
   fi
 fi
-if test ${do_freq} -eq 1; then
-  set_governor
+if test x"${freq}" != x; then
+  set_policy "${freq}"
   if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
@@ -438,7 +444,7 @@ if test $? -ne 0; then
 fi
 echo | tee "${log}"
 echo "** CPUFreq:" | tee "${log}"
-${sudo} cpufreq-info | tee "${log}"
+${sudo} cpufreq-info -p | tee "${log}"
 if test $? -ne 0; then
   echo "*** Unable to get CPUFreq info" | tee "${log}"
 fi
