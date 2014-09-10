@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
@@ -7,7 +7,6 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-set -x 
 tars=
 user_workspace=${WORKSPACE}
 
@@ -23,7 +22,7 @@ if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
 fi
 
-export CONFIG_SHELL="/bin/bash -x"
+export CONFIG_SHELL="/bin/bash"
 shared="/home/buildslave/workspace/shared/"
 cbuild_dir="${user_workspace}/cbuildv2"
 user_snapshots="${user_workspace}/snapshots"
@@ -39,7 +38,7 @@ fi
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} -with-git-reference-dir=${shared}/snapshots
+  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
 fi
 $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} ${tars} gcc=${gcc_source} ${platform} -build all
 
@@ -51,3 +50,5 @@ fi
 binaries="/work/space/binaries/${release}/${target}"
 ssh toolchain64 "mkdir -p ${binaries}"
 scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc toolchain64:${binaries}/
+
+
