@@ -2,7 +2,7 @@
 
 cbuild_dir="${WORKSPACE}/cbuildv2"
 shared="/home/buildslave/workspace/shared/"
-snapshots="${WORKSPACE}/snapshots"
+user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 export CONFIG_SHELL="/bin/bash"
 
@@ -17,7 +17,7 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${snapshots} --with-git-reference-dir=${snapshots_ref}
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 $CONFIG_SHELL -x ${cbuild_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
 # force a failure of cbuild2 has build problems.
