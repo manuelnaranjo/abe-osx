@@ -622,7 +622,7 @@ make_check()
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
-    local ignore="dejagnu gmp mpc mpfr gdb eglibc"
+    local ignore="dejagnu gmp mpc mpfr gdb make eglibc"
     for i in ${ignore}; do
         if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
             return 0
