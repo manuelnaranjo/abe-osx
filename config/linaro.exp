@@ -31,7 +31,7 @@ case "$myname" in {
 }
 
 case "$target_triplet" in { 
-    { "arm*-*linux-gnueabihf"} {
+    { "arm-*linux-gnueabi*" } {
 	case "$myname" in {
 	    { tcwgrob* } {
 		set target_list { tcwgchromebook }
@@ -44,7 +44,7 @@ case "$target_triplet" in {
 	    }
 	}
     }
-    { "arm-*eabi*" "arm-*linux-gnueabi" } {
+    { "arm-*eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
@@ -56,7 +56,7 @@ case "$target_triplet" in {
 	set SIM "qemu-armeb"
 	set target_list { "arm-qemu" } 
     }
-    { "aarch64*-none-elf*" } {
+    { "aarch64*-*elf*" } {
 	set target_list { "v8model" } 
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
