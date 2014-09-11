@@ -36,19 +36,29 @@ if test $# -lt 2; then
 fi
 
 # load commonly used functions
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
+fi
 cbuild="`which $0`"
 topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
+git_reference_dir=""
+snapshots=""
 repo="gcc.git"
 fileserver=""
 branch=""
 
-OPTS="`getopt -o f:t:h -l target:fileserver:help -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:h -l target:fileserver:help:snapshots:workspace:options -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
+        -s|--snapshots) local_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
+        -w|--workspace) user_workspace=$2 ;;
+        -o|--options) user_options=$2 ;;
 	-t|--target) target=$2 ;;
         -h|--help) usage ;;
 	*) branch=$1;;
@@ -58,10 +68,10 @@ while test $# -gt 0; do
 done
 
 if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/gcc.git~${branch}"
+    srcdir="${git_reference_dir}/${branch}"
     snapshots="${git_reference_dir}"
 else
-    srcdir="${local_snapshots}/gcc.git~${branch}"
+    srcdir="${local_snapshots}/${branch}"
     snapshots="${local_snapshots}"
 fi
 
