@@ -45,7 +45,6 @@ cbuild="`which $0`"
 topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
-git_reference_dir=""
 snapshots=""
 repo="gcc.git"
 fileserver=""
@@ -77,7 +76,7 @@ fi
 
 if ! test -e ${srcdir}; then
 #    (cd ${local_snapshots}/${repo} && git pull)
-    git-new-workdir ${snapshots}/${repo} ${srcdir} ${branch}
+    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
 #else
 #    (cd ${srcdir} && git pull)
 fi
