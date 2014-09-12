@@ -1,8 +1,8 @@
 #!/bin/bash
 
 cbuild_dir="${WORKSPACE}/cbuildv2"
-shared="/home/buildslave/workspace/shared/"
 user_snapshots="${WORKSPACE}/snapshots"
+shared="/home/buildslave/workspace/shared/"
 snapshots_ref="${shared}/snapshots"
 export CONFIG_SHELL="/bin/bash"
 

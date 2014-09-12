@@ -45,18 +45,17 @@ cbuild="`which $0`"
 topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
-snapshots="${local_snapshots}"
-git_reference_dir="${snapshots}"
 repo="gcc.git"
 fileserver=""
 branch=""
 
-OPTS="`getopt -o s:r:f:w:o:t:h -l target:fileserver:help:snapshots:workspace:options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:fileserver:help:snapshots:repo:workspace:options -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
         -s|--snapshots) local_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
+	-r|--repo=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
 	-t|--target) target=$2 ;;
@@ -69,15 +68,14 @@ done
 
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/${branch}"
-    snapshots="${git_reference_dir}"
 else
+    git_reference_dir="${local_snapshots}"
     srcdir="${local_snapshots}/${branch}"
-    snapshots="${local_snapshots}"
 fi
 
 if test ! -e ${srcdir}; then
 #    (cd ${local_snapshots}/${repo} && git pull)
-    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
+    git-new-workdir $${git_reference_dir}/${repo} ${srcdir} ${branch}
 #else
 #    (cd ${srcdir} && git pull)
 fi
