@@ -52,7 +52,7 @@ if test $? -ne 0; then
 fi
 trap release EXIT
 rm -f $t2
-id=`echo $id | grep '^submitted as job id: [[:digit:]]\+$' | cut -d ' ' -f 5`
+id=`echo $id | grep 'submitted as job id: [[:digit:]]\+' | cut -d ' ' -f 5`
 if test $? -ne 0; then
   echo "Failed to read job id" > /dev/stderr
   exit 1
@@ -62,7 +62,7 @@ echo "Dispatched LAVA job $id"
 for ((i=0; i<${dispatch_timeout}; i++)); do
   sleep 60
   jobstatus=`lava-tool job-status https://${lava_server} ${id}`
-  echo "${jobstatus}" | grep '^Job Status: Running$' > /dev/null
+  echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
   if test $? -eq 0; then
     echo "Job ${id} is running, waiting for boot"
     break
@@ -79,7 +79,7 @@ for ((i=0; i<${boot_timeout}; i++)); do
   sleep 60
 
   #Check job is still running - sometimes jobs just give up during boot
-  lava-tool job-status https://${lava_server} ${id} | grep '^Job Status: Running$' > /dev/null
+  lava-tool job-status https://${lava_server} ${id} | grep 'Job Status: Running' > /dev/null
   if test $? -ne 0; then
     echo "LAVA target stopped running before boot completed" 1>&2
     exit 1 #TODO A few retries would be better than quitting - perhaps:
@@ -88,7 +88,7 @@ for ((i=0; i<${boot_timeout}; i++)); do
   fi
   
   #Check the log to see if we are booted
-  line=`lava-tool job-output https://$lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep '^Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)$'`
+  line=`lava-tool job-output https://$lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep 'Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)'`
   if test $? -eq 0; then
     user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
     echo "LAVA target ready at ${user_ip}"
