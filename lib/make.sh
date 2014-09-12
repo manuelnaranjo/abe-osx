@@ -333,7 +333,7 @@ build()
 
     # For cross testing, we need to build a C library with our freshly built
     # compiler, so any tests that get executed on the target can be fully linked.
-    if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc"; then
+    if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc" -a x"${tarbin}" != xyes; then
         if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
             notice "Starting test run for ${tag}${2:+ $2}"
             make_check ${gitinfo}${2:+ $2}
@@ -636,7 +636,7 @@ make_check()
 #    fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${override_cflags}" != x; then
+    if test x"${override_cflags}" != x -a x"$2" != x"stage2"; then
         local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"${override_cflags}\""
     else
         local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
