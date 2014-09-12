@@ -43,8 +43,16 @@ devices=("$@") #Duplicate targets are fine for lava, they will resolve to differ
 
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
-builddir="`target2="${target}"; . ${topdir}/host.conf; . ${topdir}/lib/common.sh; if test x"${target2}" != x; then target="${target2}"; fi; get_builddir $(get_URL ${benchmark}.git)`"
-benchlog="`. ${topdir}/host.conf; . ${topdir}/lib/common.sh; read_config ${benchmark}.git benchlog`"
+builddir="`target2="${target}"; . ${topdir}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+if test $? -ne 0; then
+  echo "Unable to get builddir" 1>&2
+  exit 1
+fi
+benchlog="`. ${topdir}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
+if test $? -ne 0; then
+  echo "Unable to read benchmark config file for ${benchmark}" 1>&2
+  exit 1
+fi
 
 if test x"${benchmark}" = x; then
   echo "No benchmark given (-b)" 1>&2
@@ -138,12 +146,20 @@ for device in "${devices[@]}"; do
     else
       echo "+++ Run of ${benchmark} on ${device} failed"
     fi
-    #TODO: Got a success report where I should have had a failure
   )&
+  runpids+=("$!")
 done
 
-wait
+ret=0
+for runpid in "${runpids[@]}"; do
+  wait "${runpid}"
+  if test $? -ne 0; then
+    ret=1
+  fi
+done
+
 echo
 echo "All runs completed"
+exit ${ret}
 
 #TODO: I suppose I might want a 'delete local copies of source/built benchmark'
