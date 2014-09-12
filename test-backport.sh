@@ -45,7 +45,8 @@ cbuild="`which $0`"
 topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
-snapshots=""
+snapshots="${local_snapshots}"
+git_reference_dir="${snapshots}"
 repo="gcc.git"
 fileserver=""
 branch=""
@@ -74,7 +75,7 @@ else
     snapshots="${local_snapshots}"
 fi
 
-if ! test -e ${srcdir}; then
+if test ! -e ${srcdir}; then
 #    (cd ${local_snapshots}/${repo} && git pull)
     git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
 #else
@@ -125,4 +126,4 @@ if test x"${fileserver}" != x; then
 fi
 
 # Diff the two directories
-${topdir}/tcwgweb.sh --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
+${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
