@@ -79,7 +79,8 @@ for ((i=0; i<${boot_timeout}; i++)); do
   sleep 60
 
   #Check job is still running - sometimes jobs just give up during boot
-  if ! lava-tool job-status https://${lava_server} ${id} | grep '^Job Status: Running$' > /dev/null; then
+  lava-tool job-status https://${lava_server} ${id} | grep '^Job Status: Running$' > /dev/null
+  if test $? -ne 0; then
     echo "LAVA target stopped running before boot completed" 1>&2
     exit 1 #TODO A few retries would be better than quitting - perhaps:
            #     release (would need to change the exits to returns, may be ok - would also want to force keep=0)
@@ -91,6 +92,7 @@ for ((i=0; i<${boot_timeout}; i++)); do
   if test $? -eq 0; then
     user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
     echo "LAVA target ready at ${user_ip}"
+    break
   fi
 done
 
