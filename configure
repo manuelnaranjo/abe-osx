@@ -3575,10 +3575,10 @@ fi
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | cut -d ' ' -f 3`"
+makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
 MAKEVERSION="${makeversion}"
 
-if test $i = "make" -a ${makeversion} -lt 4; then
+if test $i = "make" -a ${makeversion} -lt 400; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Make 4.0 is missing, which is required" >&5
 $as_echo "$as_me: WARNING: Make 4.0 is missing, which is required" >&2;}
 fi
