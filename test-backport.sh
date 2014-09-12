@@ -75,7 +75,7 @@ fi
 
 if test ! -e ${srcdir}; then
 #    (cd ${local_snapshots}/${repo} && git pull)
-    git-new-workdir $${git_reference_dir}/${repo} ${srcdir} ${branch}
+    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
 #else
 #    (cd ${srcdir} && git pull)
 fi
