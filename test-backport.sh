@@ -55,7 +55,7 @@ while test $# -gt 0; do
     case $1 in
         -s|--snapshots) local_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
-	-r|--repo=$2 ;;
+	-r|--repo) repo=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
 	-t|--target) target=$2 ;;
