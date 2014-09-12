@@ -125,10 +125,10 @@ AC_CHECK_LIB(z, gzread)
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | cut -d ' ' -f 3`"
+makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
 MAKEVERSION="${makeversion}"
 AC_SUBST(MAKEVERSION)
-if test $i = "make" -a ${makeversion} -lt 4; then
+if test ${makeversion} -lt 400; then
    AC_MSG_WARN([Make 4.0 is missing, which is required])
 fi
 
