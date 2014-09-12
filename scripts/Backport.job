@@ -17,7 +17,7 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${shared} --with-git-reference-dir=${snapshots_ref}
 $CONFIG_SHELL -x ${cbuild_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
 # force a failure of cbuild2 has build problems.
