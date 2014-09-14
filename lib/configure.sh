@@ -154,7 +154,7 @@ configure_build()
 	local date="${release}"
     fi
 
-    if test x"${override_cflags}" != x; then
+    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
 	local opts="${opts} CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\""
     fi
 
@@ -231,10 +231,10 @@ configure_build()
 	gdb*)
  	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
 	    if test x"$2" = x"gdbserver"; then
-		local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
+		local opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 		local srcdir="${srcdir}/gdb/gdbserver"
 	    else
-		local opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
+		local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    fi
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
