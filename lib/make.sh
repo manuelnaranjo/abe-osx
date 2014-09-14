@@ -367,7 +367,12 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    else
+	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
+    fi
+
     if test x"${override_ldflags}" != x; then
         local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
     fi
