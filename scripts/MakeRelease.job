@@ -105,4 +105,4 @@ if test x"${tarbin}" = xyes; then
 fi
 
 # Diff the two directories
-${topdir}/tcwgweb.sh --email --tdir ${bases} ${binaries}
+${cbuild_dir}/tcwgweb.sh --email --tdir ${bases} ${binaries}
