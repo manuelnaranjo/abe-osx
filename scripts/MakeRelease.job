@@ -6,6 +6,7 @@ target=""
 tarsrc=""
 tarbin=""
 check=""
+nocheck=""
 fileserver="toolchain64"
 
 OPTS="`getopt -o t:f:bs:nh -l target::fileserver:tarbin:tarsrc:help`"
@@ -16,8 +17,8 @@ while test $# -gt 0; do
 	-b|--tarbin) tarbin=yes ;;
 	-t|--target) target=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
+	-n|--nocheck) nocheck=yes ;;
         -h|--help) usage ;;
-	-n|--nocheck) check=no ;;
 	--) break ;;
     esac
     shift
@@ -56,7 +57,7 @@ if ! test -e host.conf; then
       --with-git-reference-dir=${shared}/snapshots
 fi
 
-if test x"${check}" != xno; then
+if test x"${nocheck}" != xno; then
     check="--check"
 fi
 
@@ -75,6 +76,11 @@ fi
 # force a failure if cbuild2 has build problems.
 if test $? -gt 0; then
   exit 1
+fi
+
+# If not running the testsuites, just exit.
+if test x"${nocheck}" = xyes; then
+    exit 0
 fi
 
 # Copy the source build test results to the fileserver
