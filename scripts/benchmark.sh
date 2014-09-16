@@ -135,6 +135,8 @@ for device in "${devices[@]}"; do
     echo "-f ${confdir}/${device}.services \\"
     echo "-c \"./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr\" \\"
     echo "-l ${topdir}/${benchmark}-log stdout stderr ${benchmark}.git/linarobenchlog"
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/bogden/sshd_config ${ip}:/etc/ssh/sshd_config
+    ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${ip}" -- "service ssh restart"
     "${topdir}"/scripts/remote.sh -t "${ip}" \
       ${keep} \
       -f "${builddir}" -f "${topdir}"/scripts/controlledrun.sh \
