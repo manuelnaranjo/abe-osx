@@ -112,7 +112,7 @@ for device in "${devices[@]}"; do
       lava_target="${ip}"
       ip=''
       echo "Acquiring LAVA target ${lava_target}"
-      exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${dispatch_timeout} ${boot_timeout} ${keep})
+      exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${boot_timeout} ${keep})
       if test $? -ne 0; then
         echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1

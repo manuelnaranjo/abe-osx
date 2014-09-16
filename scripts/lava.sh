@@ -21,15 +21,13 @@ release()
   fi
 }
 
-dispatch_timeout=1 #720 #12 hours - too pessimistic for some targets, too optimistic for others
 boot_timeout=90 #1.5 hours - target-dependent pessimism
 
 #TODO: error checks here
 lava_server=$1
 lava_json=$2
-dispatch_timeout=$3
-boot_timeout=$4
-keep=$5
+boot_timeout=$3
+keep=$4
 #thing_to_run=$3
 #cmd_to_run=${4//\"/\\\"}
 #keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
@@ -59,19 +57,19 @@ if test $? -ne 0; then
 fi
 echo "Dispatched LAVA job $id"
 
-for ((i=0; i<${dispatch_timeout}; i++)); do
+while true; do
   sleep 60
   jobstatus=`lava-tool job-status https://${lava_server} ${id}`
+  if test $? -ne 0; then
+    echo "Job ${id} disappeared!"
+    exit 1
+  fi
   echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
   if test $? -eq 0; then
     echo "Job ${id} is running, waiting for boot"
     break
   fi
 done
-if test $i -eq ${dispatch_timeout}; then
-  echo "Timed out waiting for job to dispatch (waited ${dispatch_timeout} minutes)" 1>&2
-  exit 1
-fi
 
 #TODO: A more generic approach would take a regexp to watch for boot completion as a parameter, and echo it
 #      for caller to extract interesting information from
