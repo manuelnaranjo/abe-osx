@@ -82,7 +82,7 @@ for log in "$@"; do
   fi
 done
 
-target_dir="`remote_exec '${target_ip}' 'mktemp -dt XXXXXXX'`"
+target_dir="`remote_exec ${target_ip} 'mktemp -dt XXXXXXX'`"
 if test $? -ne 0; then
   error "Unable to get tmpdir on target"
   exit 1
