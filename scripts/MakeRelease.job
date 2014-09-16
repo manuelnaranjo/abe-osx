@@ -7,16 +7,6 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-tars=
-user_workspace=${WORKSPACE}
-
-if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
-  tars="${tars} --tarsrc"
-fi
-
-if test x"${tarbin}" = xtrue -a x"${release}" != x; then
-  tars="${tars} --tarbin"
-fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
@@ -40,6 +30,12 @@ cd ${user_workspace}/_build
 if ! test -e host.conf; then
   $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
 fi
+
+if test x"${tarbin}"; then
+    tars="--tarbin"
+else
+    tars="--tarsrc --check"
+fi
 $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} ${tars} gcc=${gcc_source} ${platform} -build all
 
 # force a failure of cbuild2 has build problems.
@@ -47,8 +43,17 @@ if test $? -gt 0; then
   exit 1
 fi
 
-binaries="/work/space/binaries/${release}/${target}"
-ssh toolchain64 "mkdir -p ${binaries}"
-scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc toolchain64:${binaries}/
-
-
+if test x"${tarbin}"; then
+    binaries="/work/space/binaries/${release}/${target}"
+    ssh toolchain64 "mkdir -p ${binaries}"
+    scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc toolchain64:${binaries}/
+else
+    bases="/work/cbuildv2/baselines/${release}/${target}"
+    ssh toolchain64 "mkdir -p ${bases}"
+    sums="`find -name \*.sum`"
+    if test x"${sums}" != x; then
+	scp ${sums}  toolchain64:${bases}/
+    else
+	echo "ERROR: No test resultswere found!"
+    fi
+fi
