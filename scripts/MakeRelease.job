@@ -1,21 +1,45 @@
 #!/bin/bash
 
-cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
-Format-Version: 0.5
+# Set defaults
+export CONFIG_SHELL="/bin/bash"
+target=""
+tarsrc=""
+tarbin=""
+check=""
+fileserver="toolchain64"
 
-Files-Pattern: *
-License-Type: open
-EOF
-
+OPTS="`getopt -o t:f:bs:nh -l target::fileserver:tarbin:tarsrc:help`"
+while test $# -gt 0; do
+    echo 1 = "$1"
+    case $1 in
+	-s|--tarsrc) tarsrc=yes ;;
+	-b|--tarbin) tarbin=yes ;;
+	-t|--target) target=$2 ;;
+        -f|--fileserver) fileserver=$2 ;;
+        -h|--help) usage ;;
+	-n|--nocheck) check=no ;;
+	--) break ;;
+    esac
+    shift
+done
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
 fi
 
-export CONFIG_SHELL="/bin/bash"
+user_workspace="${WORKSPACE:-/home/buildslave/workspace}"
 shared="/home/buildslave/workspace/shared/"
 cbuild_dir="${user_workspace}/cbuildv2"
 user_snapshots="${user_workspace}/snapshots"
+
+if test -e ${user_workspace}; then
+    cat << EOF > ${user_workspace}/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
+fi
 
 # Create a build directory
 if test ! -d ${user_workspace}/_build; then
@@ -28,32 +52,47 @@ fi
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} \
+      --with-git-reference-dir=${shared}/snapshots
 fi
 
-if test x"${tarbin}"; then
-    tars="--tarbin"
-else
-    tars="--tarsrc --check"
+# Build a toolchain, run the tests, and the create a source release as a tarball
+if test x"${tarsrc}" = x"yes"; then
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} \
+	--tarsrc --check gcc=${gcc_source} ${platform} -build all
 fi
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} ${tars} gcc=${gcc_source} ${platform} -build all
 
-# force a failure of cbuild2 has build problems.
+# Build a biary release tarball, then run the tests on the installed binaries
+if test x"${tarbin}" = x"yes"; then
+    tars="--tarbin --check"
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin --check gcc=${gcc_source} ${platform} -build all
+fi
+
+# force a failure if cbuild2 has build problems.
 if test $? -gt 0; then
   exit 1
 fi
 
-if test x"${tarbin}"; then
-    binaries="/work/space/binaries/${release}/${target}"
-    ssh toolchain64 "mkdir -p ${binaries}"
-    scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc toolchain64:${binaries}/
-else
-    bases="/work/cbuildv2/baselines/${release}/${target}"
-    ssh toolchain64 "mkdir -p ${bases}"
-    sums="`find -name \*.sum`"
+# Copy the source build test results to the fileserver
+bases="/work/cbuildv2/baselines/${release}/${target}"
+if test x"${tarsrc}" = x"yes"; then
+    sums="`find ${user_workspace} -name \*.sum`"
+    ssh ${fileserver} "mkdir -p ${bases}"
     if test x"${sums}" != x; then
-	scp ${sums}  toolchain64:${bases}/
+	scp ${sums} ${fileserver}:${bases}/
     else
-	echo "ERROR: No test resultswere found!"
+	echo "ERROR: No test results were found!"
     fi
 fi
+
+# Copy the binary test results to the fileserver
+binaries="/work/space/binaries/${release}/${target}"
+if test x"${tarbin}" = xyes; then
+    sums="`find ${user_workspace} -name \*.sum`"
+    ssh ${fileserver} "mkdir -p ${binaries}"
+    scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
+    scp ${sums} ${fileserver}:${bases}/
+fi
+
+# Diff the two directories
+${topdir}/tcwgweb.sh --email --tdir ${bases} ${binaries}
