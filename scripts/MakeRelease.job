@@ -104,8 +104,8 @@ if test x"${tarbin}" = xyes; then
 	ssh ${fileserver} "mkdir -p ${binaries}"
 	scp ${sums} ${fileserver}:${bases}/
     fi
+    # Diff the two directories
+    scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+    ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}
 fi
 
-# Diff the two directories
-scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}
