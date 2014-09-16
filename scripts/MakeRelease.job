@@ -56,16 +56,20 @@ if ! test -e host.conf; then
       --with-git-reference-dir=${shared}/snapshots
 fi
 
+if test x"${check}" != xno; then
+    check="--check"
+fi
+
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
     $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} \
-	--tarsrc --check gcc=${gcc_source} ${platform} -build all
+	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
 # Build a biary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
     tars="--tarbin --check"
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin --check gcc=${gcc_source} ${platform} -build all
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
 # force a failure if cbuild2 has build problems.
