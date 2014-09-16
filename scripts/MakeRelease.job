@@ -87,8 +87,8 @@ fi
 bases="/work/cbuildv2/baselines/${release}/${target}"
 if test x"${tarsrc}" = x"yes"; then
     sums="`find ${user_workspace} -name \*.sum`"
-    ssh ${fileserver} "mkdir -p ${bases}"
     if test x"${sums}" != x; then
+	ssh ${fileserver} "mkdir -p ${bases}"
 	scp ${sums} ${fileserver}:${bases}/
     else
 	echo "ERROR: No test results were found!"
@@ -98,11 +98,14 @@ fi
 # Copy the binary test results to the fileserver
 binaries="/work/space/binaries/${release}/${target}"
 if test x"${tarbin}" = xyes; then
-    sums="`find ${user_workspace} -name \*.sum`"
-    ssh ${fileserver} "mkdir -p ${binaries}"
     scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
-    scp ${sums} ${fileserver}:${bases}/
+    sums="`find ${user_workspace} -name \*.sum`"
+    if test x"${sums}" != x; then
+	ssh ${fileserver} "mkdir -p ${binaries}"
+	scp ${sums} ${fileserver}:${bases}/
+    fi
 fi
 
 # Diff the two directories
-${cbuild_dir}/tcwgweb.sh --email --tdir ${bases} ${binaries}
+scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}
