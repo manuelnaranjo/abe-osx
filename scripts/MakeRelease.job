@@ -6,7 +6,7 @@ target=""
 tarsrc=""
 tarbin=""
 check=""
-nocheck=""
+nocheck="no"
 fileserver="toolchain64"
 
 OPTS="`getopt -o t:f:bs:nh -l target::fileserver:tarbin:tarsrc:help`"
@@ -57,7 +57,7 @@ if ! test -e host.conf; then
       --with-git-reference-dir=${shared}/snapshots
 fi
 
-if test x"${nocheck}" != xno; then
+if test x"${nocheck}" = xno; then
     check="--check"
 fi
 
