@@ -224,9 +224,8 @@ edit_changelogs()
     fi
 
     # Jenkins sets these to the name of the requestor. If not set, then we
-    # use git, otherwise we wind uo with buildslave@locahost.
-    if test x"${BUILD_USER_FIRST_NAME}" = x -a x"${BUILD_USER_LAST_NAME}" = x -a
- x"${BUILD_USER_ID}" = x; then
+    # use git, otherwise we wind up with buildslave@locahost.
+    if test x"${BUILD_USER_FIRST_NAME}" = x -a x"${BUILD_USER_LAST_NAME}" = x -a x"${BUILD_USER_ID}" = x; then
 	local fullname="`git config user.name`"
 	local email="`git config user.email`"
     else
