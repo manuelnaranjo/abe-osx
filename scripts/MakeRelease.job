@@ -111,7 +111,7 @@ if test x"${tarbin}" = xyes; then
     sums="`find ${user_workspace} -name \*.sum`"
     if test x"${sums}" != x; then
 	xz ${sums}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz'`"
+	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
 	ssh ${fileserver} "mkdir -p ${binaries}"
 	scp ${sums} ${fileserver}:${bases}/
     fi
