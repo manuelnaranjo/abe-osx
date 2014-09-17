@@ -90,6 +90,8 @@ if test x"${tarsrc}" = x"yes"; then
     sums="`find ${user_workspace} -name \*.sum`"
     if test x"${sums}" != x; then
 	ssh ${fileserver} "mkdir -p ${bases}"
+	xz ${sums}
+	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
 	scp ${sums} ${fileserver}:${bases}/
     else
 	echo "ERROR: No test results were found!"
@@ -112,8 +114,10 @@ if test x"${tarbin}" = xyes; then
     if test x"${sums}" != x; then
 	xz ${sums}
 	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	ssh ${fileserver} "mkdir -p ${binaries}"
-	scp ${sums} ${fileserver}:${bases}/
+	ssh ${fileserver} "mkdir -p ${binaries}/"
+	scp ${sums} ${fileserver}:${binaries}/
+    else
+	echo "ERROR: No test results were found!"
     fi
     # Diff the two directories
     scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
