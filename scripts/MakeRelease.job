@@ -87,6 +87,8 @@ fi
 bases="/work/cbuildv2/baselines/${release}/${target}"
 snaps="/home/cbuild/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
+    manifest="`find ${user_workspace} -name manifest.txt`"
+    scp ${manifest} ${fileserver}:${bases}/
     sums="`find ${user_workspace} -name \*.sum`"
     if test x"${sums}" != x; then
 	ssh ${fileserver} "mkdir -p ${bases}"
@@ -109,6 +111,8 @@ fi
 # Copy the binary test results to the fileserver
 binaries="/work/space/binaries/${release}/${target}"
 if test x"${tarbin}" = xyes; then
+    manifest="`find ${user_workspace} -name manifest.txt`"
+    scp ${manifest} ${fileserver}:${binaries}/
     scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
     sums="`find ${user_workspace} -name \*.sum`"
     if test x"${sums}" != x; then
