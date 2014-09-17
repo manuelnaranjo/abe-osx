@@ -83,8 +83,9 @@ if test x"${nocheck}" = xyes; then
     exit 0
 fi
 
-# Copy the source build test results to the fileserver
+# Copy the source build test results and tarballs to the fileserver
 bases="/work/cbuildv2/baselines/${release}/${target}"
+snaps="/home/cbuild/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
     sums="`find ${user_workspace} -name \*.sum`"
     if test x"${sums}" != x; then
@@ -92,6 +93,12 @@ if test x"${tarsrc}" = x"yes"; then
 	scp ${sums} ${fileserver}:${bases}/
     else
 	echo "ERROR: No test results were found!"
+    fi
+    tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
+    if test x"${tarballs}" != x; then
+	scp ${tarballs} ${fileserver}:${snaps}/
+    else
+	echo "ERROR: No source tarballs were found!"
     fi
 fi
 
