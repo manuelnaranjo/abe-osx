@@ -97,6 +97,8 @@ if test x"${tarsrc}" = x"yes"; then
     tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
     if test x"${tarballs}" != x; then
 	scp ${tarballs} ${fileserver}:${snaps}/
+	# make a local copy that other jobs can access
+	cp ${tarballs} ${shared}/snapshots/
     else
 	echo "ERROR: No source tarballs were found!"
     fi
