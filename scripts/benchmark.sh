@@ -133,15 +133,13 @@ for device in "${devices[@]}"; do
     echo "${keep} \\"
     echo "-f ${builddir} -f ${topdir}/scripts/controlledrun.sh \\"
     echo "-f ${confdir}/${device}.services \\"
-    echo "-c \"./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench >stdout 2>stderr\" \\"
+    echo "-c \"./controlledrun.sh -c ${flags} -- make -C ${benchmark}.git linarobench\" \\"
     echo "-l ${topdir}/${benchmark}-log stdout stderr ${benchmark}.git/linarobenchlog"
-    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/bogden/sshd_config ${ip}:/etc/ssh/sshd_config
-    ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${ip}" -- "service ssh restart"
     "${topdir}"/scripts/remote.sh -t "${ip}" \
       ${keep} \
       -f "${builddir}" -f "${topdir}"/scripts/controlledrun.sh \
       -f "${confdir}/${device}.services" \
-      -c "./controlledrun.sh -c ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench >stdout 2>stderr" \
+      -c "./controlledrun.sh -c ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench" \
       -l "${topdir}/${benchmark}-log" stdout stderr ${benchmark}.git/linarobenchlog
     if test $? -eq 0; then
       echo "+++ Run of ${benchmark} on ${device} succeeded"

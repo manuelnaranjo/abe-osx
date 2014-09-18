@@ -7,6 +7,15 @@ topdir=`dirname $0`/..
 cleanup()
 {
   local error=$?
+
+  #Make sure we sweep up the async ssh process - it should die eventually
+  #but this is a bit more tidy. We make sure that it is the same process,
+  #and not some much later process that happens to have the same id, by
+  #checking ppid.
+  if test x"`ps -p ${sshpid} -o ppid=`" = x"$$"; then
+    kill ${sshpid}
+  fi
+
   if test x"${target_dir}" = x; then
     notice "No directory to remove from ${target_ip}"
     exit "${error}"
@@ -95,15 +104,30 @@ for thing_to_run in "${things_to_run[@]}"; do
   fi
 done
 
+#We have to run the ssh command asynchronously, because having the
+#network down during a long-running benchmark will result in ssh
+#death sooner or later - we can stop ssh client and ssh server from
+#killing the connection, but the TCP layer will get it eventually.
 ret=0
-remote_exec "${target_ip}" "cd '${target_dir}' && ${cmd_to_run}"
+remote_exec_async ${target_ip} "cd ${target_dir} && ${cmd_to_run}" "${target_dir}/stdout" "${target_dir}/stderr"
+sshpid=$?
+if test ${sshpid} -lt 2; then
+  error "ssh command failed"
+  exit 1
+fi
+#TODO: Do we want a timeout around this? If stdout is not produced then
+#      we'll wedge
+while ! remote_exec "{$target_ip}" "grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout" 2>/dev/null; do
+  sleep 60
+done
+
 if test $? -ne 0; then
   error "Command failed: will try to get logs"
   error "Failing command: ${cmd_to_run}"
   error "Target: ${target_ip}:${target_dir}"
   ret=1
 fi 
-for log in "$@"; do
+for log in stdout stderr "$@"; do
   remote_exec "${target_ip}" "cd '${target_dir}' && cat '${log}'" | ccencrypt -k ~/.ssh/id_rsa > "${logdir}/${uid}/${log}" #TODO what about ssh-agent?
   if test $? -ne 0; then
     rm -f "${logdir}/${uid}/${log}" #We just encrypted nothing into this file, delete it to avoid confusion
@@ -111,4 +135,9 @@ for log in "$@"; do
     ret=1
   fi
 done
+if test ${ret} -eq 0; then
+  if test x`ccat -k ~/.ssh/id_rsa ${logdir}/${uid}/stdout | grep -c '^EXIT CODE: [[:digit:]]'` = x1; then
+    ret=`ccat -k ~/.ssh/id_rsa ${logdir}/${uid}/stdout | grep '^EXIT CODE: [[:digit:]]' | sed 's/[^[:digit:]]*//'`
+  fi
+fi
 exit ${ret}
