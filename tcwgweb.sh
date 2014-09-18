@@ -93,6 +93,7 @@ difftwodirs ()
     fi
     
     echo "Diffing: ${prev} against ${next}..."
+    local branch="`grep 'gcc_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
     if test -e ${prev}/manifest.txt; then
 	local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
@@ -116,7 +117,7 @@ difftwodirs ()
            diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
             rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
 	    if test -s ${diffdir}/diff-$i.txt; then
-		echo "Comparison between:" > ${diffdir}/$i-test-results.txt
+		echo "Comparison of ${branch} between:" > ${diffdir}/$i-test-results.txt
 		echo "	${prev}/$i.sum and" >> ${diffdir}/$i-test-results.txt
 		echo "	${next}/$i.sum" >> ${diffdir}/$i-test-results.txt
 		if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
