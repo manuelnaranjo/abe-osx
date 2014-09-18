@@ -182,7 +182,7 @@ difftwodirs ()
     fi
     xz ${next}/*.sum ${next}/*.log
 
-    echo ${RETURNSTR}
+    echo ${returnstr}
     exit ${returncode}
 }
 
