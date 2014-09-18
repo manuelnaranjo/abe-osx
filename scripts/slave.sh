@@ -33,3 +33,8 @@ cp ssh-config.txt /home/buildslave/.ssh/
 
 # If running make 3.81, you may have to upgrade to make 4.0, as there is a
 # bug effecting eglibc.
+
+# You also need to install the ARM Fastmodel for AARCH64 big-endian testing. This
+# lives in /linaro/foundation-model on all existing machines, so can just be
+# copied to the same location.
+
