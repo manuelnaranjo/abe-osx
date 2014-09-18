@@ -261,9 +261,9 @@ fi
 if test x"${runtests}" = xtrue; then
     basedir="/work/logs"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh toolchain64.lab mkdir -p ${basedir}/${dir}
+    ssh toolchain64 mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
-	scp ${manifest} toolchain64.lab:${basedir}/${dir}/
+	scp ${manifest} toolchain64:${basedir}/${dir}/
     fi
 
 # If 'make check' works, we get .sum files with the results. These we
@@ -304,7 +304,7 @@ fi
 
 # Test results and logs get copied to here
 if test x"${fileserver}" = x; then
-    fileserver="toolchain64.lab"
+    fileserver="toolchain64"
 fi
 
 # This setups all the files needed by tcwgweb
