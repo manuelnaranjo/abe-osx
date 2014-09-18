@@ -147,9 +147,10 @@ difftwodirs ()
 		echo "Revision ${cversion} Summary:" >> ${diffdir}/$i-test-results.txt
 		grep "^# of " ${next}/$i.sum >> ${diffdir}/$i-test-results.txt
 		echo "" >> ${diffdir}/$i-test-results.txt
-		echo "Build log: http://cbuild.validation.linaro.org${next}/make-$i.log.xz" >> ${diffdir}/$i-test-results.txt
-		echo "Test summary: http://cbuild.validation.linaro.org${next}/$i.sum.xz" >> ${diffdir}/$i-test-results.txt
-		echo "Test log: http://cbuild.validation.linaro.org${next}/check-$i.log.xz" >> ${diffdir}/$i-test-results.txt
+		local wwwpath="`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
+		echo "Build log: http://cbuild.validation.linaro.org${wwwpath}/make-$i.log.xz" >> ${diffdir}/$i-test-results.txt
+		echo "Test summary: http://cbuild.validation.linaro.org${wwwpath}/$i.sum.xz" >> ${diffdir}/$i-test-results.txt
+		echo "Test log: http://cbuild.validation.linaro.org${wwwpath}/check-$i.log.xz" >> ${diffdir}/$i-test-results.txt
 		local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 		if test -e ${diffdir}/$i-test-results.txt; then
 		    mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
