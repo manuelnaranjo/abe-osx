@@ -90,11 +90,13 @@ if test x"${tarsrc}" = x"yes"; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
     sums="`find ${user_workspace} -name \*.sum`"
+    logs="`find ${user_workspace} -name \*.log`"
     if test x"${sums}" != x; then
 	ssh ${fileserver} "mkdir -p ${bases}"
-	xz ${sums}
+	xz ${sums} ${logs}
 	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	scp ${sums} ${fileserver}:${bases}/
+	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
+	scp ${sums} ${logs} ${fileserver}:${bases}/
     else
 	echo "ERROR: No test results were found!"
     fi
@@ -115,9 +117,11 @@ if test x"${tarbin}" = xyes; then
     scp ${manifest} ${fileserver}:${binaries}/
     scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
     sums="`find ${user_workspace} -name \*.sum`"
+    logs="`find ${user_workspace} -name \*.log`"
     if test x"${sums}" != x; then
-	xz ${sums}
+	xz ${sums} ${logs}
 	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
+	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
 	ssh ${fileserver} "mkdir -p ${binaries}/"
 	scp ${sums} ${fileserver}:${binaries}/
     else
