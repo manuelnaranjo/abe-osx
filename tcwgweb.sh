@@ -16,7 +16,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-returncode="ALLGOOD"
+returncode="0"
+returnstr="ALLGOOD"
 
 # $1 - the check.log file to scan
 scancheck () 
@@ -157,7 +158,8 @@ difftwodirs ()
 		local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 		if test -e ${diffdir}/$i-test-results.txt; then
 		    mailto "$i had regressions between ${pversion} and ${cversion}!" ${diffdir}/$i-test-results.txt ${userid}
-		    returncode="REGRESSIONS"
+		    returncode="1"
+		    returnstr="REGRESSIONS"
 		fi
 	    else
 		echo "$i had no regressions between ${pversion} and ${cversion}!" > /tmp/mail$$.txt
@@ -180,6 +182,7 @@ difftwodirs ()
     fi
     xz ${next}/*.sum ${next}/*.log
 
+    echo ${RETURNSTR}
     exit ${returncode}
 }
 
