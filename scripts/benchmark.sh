@@ -112,23 +112,31 @@ for device in "${devices[@]}"; do
       lava_target="${ip}"
       ip=''
       echo "Acquiring LAVA target ${lava_target}"
+
+      #Downside of this approach is that bash syntax errors from lava.sh
+      #get reported as occurring at non-existent lines - but it is
+      #otherwise quite neat. And you can always run lava.sh separately to get the correct error.
       exec 3< <(${topdir}/scripts/lava.sh "${lavaserver}" "${confdir}/${lava_target}" ${boot_timeout} ${keep})
       if test $? -ne 0; then
         echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
-      while read <&3 line; do
+      while read line <&3; do
         echo "${lava_target}: $line"
         if echo "${line}" | grep '^LAVA target ready at '; then
           ip="`echo ${line} | cut -d ' ' -f 5`"
           break
         fi
       done
+      #exec 3>&- This line (falsely?) suspected of causing breakage when running on tc64 (with expect wrapper
       if test x"${ip}" = x; then
         echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
     fi
+
+    #TODO remote.sh would likely be better living inside this script. This
+    #would also allow me to reread the IP after bringing the network back up.
     echo "${topdir}/scripts/remote.sh -t ${ip} \\"
     echo "${keep} \\"
     echo "-f ${builddir} -f ${topdir}/scripts/controlledrun.sh \\"

@@ -39,18 +39,27 @@ subkey=$(ssh-keygen -y -f ~/.ssh/id_rsa | sed 's/[\/&]/\\&/g')
 #TODO: Error check, make parameterisable?
 t2=`mktemp -t XXXXXXXXX` || exit 1
 sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${subkey}\"/" $lava_json > $t2
+if test $? -ne 0; then
+  echo "Failed to populate json file with public key"
+  exit 1
+fi
 #TODO submit-results/bundle stream
 
 
-id=`lava-tool submit-job https://${lava_server} ${t2}`
+id="`lava-tool submit-job https://${lava_server} ${t2}`"
 if test $? -ne 0; then
-  echo Failed to submit job > /dev/stderr
+  echo "Failed to submit job" > /dev/stderr
   rm -f $t2
   exit 1
 fi
 trap release EXIT
 rm -f $t2
-id=`echo $id | grep 'submitted as job id: [[:digit:]]\+' | cut -d ' ' -f 5`
+
+#TODO: Should be able to use cut at the end of this pipe, but when lava-tool
+#      is invoked through expect wrapper this line ends up with a carriage return 
+#      at the end. Should be fixed on the expect side, or expect script should
+#      be discarded, but hack it here for now.
+id="`echo ${id} | grep 'submitted as job id: [[:digit:]]\+' | grep -o '[[:digit:]]\+'`"
 if test $? -ne 0; then
   echo "Failed to read job id" > /dev/stderr
   exit 1
@@ -59,7 +68,7 @@ echo "Dispatched LAVA job $id"
 
 while true; do
   sleep 60
-  jobstatus=`lava-tool job-status https://${lava_server} ${id}`
+  jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
     echo "Job ${id} disappeared!"
     exit 1
@@ -86,7 +95,7 @@ for ((i=0; i<${boot_timeout}; i++)); do
   fi
   
   #Check the log to see if we are booted
-  line=`lava-tool job-output https://$lava_server $id -o - | sed 's/[[:blank:]]*\r$//' | grep 'Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)'`
+  line="`lava-tool job-output https://$lava_server $id -o - | cat -v | sed 's/[[:blank:]]*\r$//' | grep 'Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)'`"
   if test $? -eq 0; then
     user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
     echo "LAVA target ready at ${user_ip}"

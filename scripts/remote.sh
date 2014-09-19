@@ -108,20 +108,24 @@ done
 #network down during a long-running benchmark will result in ssh
 #death sooner or later - we can stop ssh client and ssh server from
 #killing the connection, but the TCP layer will get it eventually.
-ret=0
 remote_exec_async ${target_ip} "cd ${target_dir} && ${cmd_to_run}" "${target_dir}/stdout" "${target_dir}/stderr"
 sshpid=$?
 if test ${sshpid} -lt 2; then
   error "ssh command failed"
   exit 1
 fi
-#TODO: Do we want a timeout around this? If stdout is not produced then
-#      we'll wedge
-while ! remote_exec "{$target_ip}" "grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout" 2>/dev/null; do
-  sleep 60
+#TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
+while true; do
+  ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\"`"
+  if test $? -eq 0; then
+    ret="`echo $ret | cut -d ' ' -f 3`"
+    break
+  else
+    sleep 60
+  fi
 done
 
-if test $? -ne 0; then
+if test ${ret} -ne 0; then
   error "Command failed: will try to get logs"
   error "Failing command: ${cmd_to_run}"
   error "Target: ${target_ip}:${target_dir}"
