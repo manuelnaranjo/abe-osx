@@ -379,6 +379,11 @@ EOF
 	    echo "eglibc_revision=${eglibc_revision}" >> ${outfile}
 	    ;;
     esac
+
+    local srcdir="`get_srcdir ${gcc_version}`"
+    local entry="`cd ${srcdir} && git log -n 1`"
+    echo "---------------------------------------------" >> ${outfile}
+    echo ${entry} >> ${outfile}
 }
 
 # Build a source tarball
