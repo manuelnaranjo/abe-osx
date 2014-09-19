@@ -116,7 +116,7 @@ if test ${sshpid} -lt 2; then
 fi
 #TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
 while true; do
-  ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\"`"
+  ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" > /dev/null 2>&1`"
   if test $? -eq 0; then
     ret="`echo $ret | cut -d ' ' -f 3`"
     break
