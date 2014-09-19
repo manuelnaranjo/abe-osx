@@ -85,7 +85,7 @@ remote_exec_async()
     #echo 'exec 2<&5' >> "${script}"
 
     #ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- "nohup bash ${script} 2>&1 &"&
-  ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- "nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: $? | tee /dev/console' 2>&1 &"&
+  ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- "nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$? | tee /dev/console' 2>&1 &"&
 
   return $! #$! is the last backgrounded process, so will be correct
 }
