@@ -521,7 +521,11 @@ make_install()
     fi
 
     local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
-    dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    if test x"${tool}" = x"gdb"; then
+	dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    else
+	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    fi
     if test $? != "0"; then
         warning "Make install failed!"
         return 1
