@@ -1,0 +1,10 @@
+load_generic_config unix
+load_lib "dmucs.exp"
+
+set  slave [gethost "toolchain64" "0xc0f"]
+verbose "Slave is: $slave"
+set_board_info hostname $slave
+
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
+
