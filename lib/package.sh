@@ -103,7 +103,7 @@ binary_runtime()
 
     # Get the binary libraries. aarch64 uses /lib64, arm uses /lib, s we use a wildcard
     # to get either.
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc_s* ${destdir}/lib/${target}/"
+    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc* ${destdir}/lib/${target}/"
     
     dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
 
@@ -173,12 +173,6 @@ binary_toolchain()
 	if test x"${gcc_version}" = x; then
 	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	fi
-	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	if test x"${binutils_version}" = x; then
-	    local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	fi
-	local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	
 	if test `echo ${gcc_version} | grep -c "\.git/"`; then
 	    local branch="`basename ${gcc_version}`"
 	else
@@ -193,64 +187,15 @@ binary_toolchain()
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
-	local tag="`echo gcc-linaro-${version}~${revision}-${target}-${host}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
     else
 	# use an explicit tag for the release name
-	local gcc_static="`grep ^static_link= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	local binutils_static="`grep ^static_link= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-	local tag="`echo gcc-linaro-${version}-${release}-${target}-${host} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
 
     fi
 
     local destdir="/tmp/linaro.$$/${tag}"
     dryrun "mkdir -p /tmp/linaro.$$"
-
-    # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir ${gcc_version} stage2`"
-
-    # All invocations of make in this function use these additional flags
-    local make_flags="${make_flags} DESTDIR=${destdir}-tmp -w LDFLAGS=-static"
-
-    # Use LSB to produce more portable binary releases.
-    if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
-	export LSB_SHAREDLIBPATH=${builddir}/gcc
-	local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
-    fi
-
-    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
-    if test $? -gt 0; then
-	error "Couldn't install static GCC!"
-	return 1
-    fi
-    # install in alternate directory so it's easier to build the tarball.
-    local builddir="`get_builddir ${binutils_version}`"
-    dryrun "make install SHELL=${bash_shell} ${make_flags} CXXFLAGS_FOR_BUILD=\"-static-libgcc -static\" -C ${builddir}"
-    if test $? -gt 0; then
-	error "Couldn't install static binutils!"
-	return 1
-    fi
-
-    # Install the documentation too
-    dryrun "make install-headers install-man install-html install-info SHELL=${bash_shell} ${make_flags} -C ${builddir}/gcc"
-    
-    dryrun "ln -sfnT ${destdir}-tmp/${cbuild_top}/builds/destdir/${host} ${destdir}"
-    
-    #	local make_flags="${make_flags} LDFLAGS=-all-static  LDFLAGS_FOR_BUILD=-all-static"
-#    local make_flags="${make_flags} LDFLAGS="-static -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-static"
-    dryrun "make install -i SHELL=${bash_shell} ${make_flags} -C ${builddir} LDFLAGS="-static -lz -Wl,-rpath -Wl,${sysroot}" LDFLAGS_FOR_BUILD=-all-static"
-
-    # Install the documentation too. The different components unfortunately 
-    # install differently, so just do the right thing.
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/bfd)"
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/ld)"
-    dryrun "(make SHELL=${bash_shell} diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gas)"
-    dryrun "(make SHELL=${bash_shell}  diststuff install-man install-html install-info ${make_flags} -C ${builddir}/gprof)"
-    dryrun "(make SHELL=${bash_shell} install-html install-info ${make_flags} -C ${builddir})"
-
-    dryrun "rsync -avr ${local_builds}/destdir/${build}/{lib,include} ${destdir}/"
-
-    # We build and test GCCGO, but we don't release it yet
-    # dryrun "rm -fr ${destdir}/bin/${target}-gccgo"
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
@@ -258,7 +203,7 @@ binary_toolchain()
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
-#    dryrun "ln -sfnT ${destdir}/${cbuild_top}/destdir/${host} ${destdir}"
+    dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
@@ -434,6 +379,11 @@ EOF
 	    echo "eglibc_revision=${eglibc_revision}" >> ${outfile}
 	    ;;
     esac
+
+    local srcdir="`get_srcdir ${gcc_version}`"
+    local entry="`cd ${srcdir} && git log -n 1`"
+    echo "---------------------------------------------" >> ${outfile}
+    echo ${entry} >> ${outfile}
 }
 
 # Build a source tarball
@@ -522,3 +472,37 @@ binutils_src_tarball()
     return 0
 }
 
+# This installs a binary tarball produced by cbuild2, and runs make check
+test_binary_toolchain()
+{
+    # Binaries get installed here if possible
+    if test ! -w /opt/linaro; then
+	error "/opt/linaro is not writable!"
+	return 1
+    fi
+    
+    # Untar everything in the install directory
+    for i in ${local_snapshots}/*-x86_64*.xz; do
+	tar Jxvf $i --directory=/opt/linaro
+    done
+
+    local sysroot="`find /opt/linaro -name INSTALL-SYSROOT.sh`"
+    local sysroot="`dirname ${sysroot}`"
+
+#    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+#    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
+
+    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
+
+    # Put the installed toolchain first in the path so it gets picked up by make check.
+    local compiler="`find /opt/linaro -name ${target}-gcc`"
+    local compiler="`dirname ${compiler}`"
+    export PATH="${compiler}:$PATH"
+
+    # test GCC using the build we just completed, since we need access to the test cases.
+    make_clean ${binutils_version}
+    make_check ${binutils_version}
+
+    make_clean ${gcc_version} stage2
+    make_check ${gcc_version} stage2
+}

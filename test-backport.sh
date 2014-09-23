@@ -20,68 +20,76 @@
 # arguments it needs is the target archicture to build, and the gcc backport
 # branch name. Example:
 # $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  test-backport.sh [--help] [f|--fileserver remote file server]
+EOF
+    return 0
+}
 
 if test $# -lt 2; then
     echo "ERROR: No branches to build!"
-    echo "backport.sh [branch name]"
+    usage
     exit
-fi
-
-# For each revision we build the toolchain for this config triplet
-if test `echo $* | grep -c target` -eq 0; then
-    echo "ERROR: No target to build!"
-    echo "backport.sh --target triplet branch"
-    exit
-
-fi
-shift
-
-# load the configure file produced by configure
-if test -e "${PWD}/host.conf"; then
-    . "${PWD}/host.conf"
-else
-    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
-    echo "${PWD}"
-    exit 1
 fi
 
 # load commonly used functions
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
+fi
 cbuild="`which $0`"
 topdir="${cbuild_path}"
 cbuild2="`basename $0`"
 
-. "${topdir}/lib/common.sh" || exit 1
-
-# Set the target triplet
-target="$1"
-shift
-
-# Get the list of revisions to build and compare
-branch=$1
 repo="gcc.git"
+fileserver=""
+branch=""
+
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:fileserver:help:snapshots:repo:workspace:options -- "$@"`"
+while test $# -gt 0; do
+    echo 1 = "$1"
+    case $1 in
+        -s|--snapshots) local_snapshots=$2 ;;
+        -f|--fileserver) fileserver=$2 ;;
+	-r|--repo) repo=$2 ;;
+        -w|--workspace) user_workspace=$2 ;;
+        -o|--options) user_options=$2 ;;
+	-t|--target) target=$2 ;;
+        -h|--help) usage ;;
+	*) branch=$1;;
+	--) break ;;
+    esac
+    shift
+done
 
 if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/gcc.git~${branch}"
-    snapshots="${git_reference_dir}"
+    srcdir="${git_reference_dir}/${branch}"
 else
-    srcdir="${local_snapshots}/gcc.git~${branch}"
-    snapshots="${local_snapshots}"
+    git_reference_dir="${local_snapshots}"
+    srcdir="${local_snapshots}/${branch}"
 fi
 
-if ! test -e ${srcdir}; then
-    (cd ${snapshots}/${repo} && git pull)
-    git-new-workdir ${snapshots}/${repo} ${srcdir} ${branch}
-else
-    (cd ${srcdir} && git pull)
+if test ! -e ${srcdir}; then
+#    (cd ${local_snapshots}/${repo} && git pull)
+    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
+#else
+#    (cd ${srcdir} && git pull)
 fi
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
 
+# Force GCC to not build the docs
+export BUILD_INFO=""
+
 resultsdir="/tmp/cbuild@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all
+    bash -x ${topdir}/cbuild2.sh --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Cbuild2 failed!"
 	exit 1
@@ -100,5 +108,20 @@ while test $i -lt ${#revisions[@]}; do
     i="`expr $i + 1`"
 done
 
+# Test results and logs optionally get copied to this fileserver.
+if test x"${fileserver}" != x; then
+    # Get a list of all files that need to be copied
+    basedir="/work/logs"
+    dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+    ssh ${fileserver} mkdir -p ${basedir}/${dir}
+    # Compress and copy ll files from the first build
+    xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
+    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${basedir}/${dir}/
+    
+# Compress and copy ll files from the first build
+    xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
+    scp ${resultsdir}${revisions[1]}/* ${fileserver}:${basedir}/${dir}/
+fi
+
 # Diff the two directories
-${topdir}/tcwgweb.sh --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
+${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}

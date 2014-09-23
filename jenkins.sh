@@ -16,10 +16,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-user_snapshots=""
-user_git_repo=""
-user_workspce=""
-
 usage()
 {
     # Format this section with 75 columns.
@@ -29,43 +25,79 @@ EOF
     return 0
 }
 
-# These are used to differentiate between multiple Jenkins installations. All paths
-# must be fully qualified absolute paths.
-while getopts "s:g:c:w:h" OPTION; do
-    case $OPTION in
-        s) user_snapshots=$OPTARG ;;
-        g) user_git_repo=$OPTARG ;;
-        c) cbuild_dir=$OPTARG ;;
-        w) user_workspace=$OPTARG ;;
-        h) usage ;;
+if test $# -lt 1; then
+    echo "ERROR: No options for build!"
+    usage
+#    exit
+fi
+
+# This is where all the builds go
+if test x"${WORKSPACE}" = x; then
+    WORKSPACE="`pwd`"
+fi
+user_workspace="${WORKSPACE}"
+
+# The files in this directory are shared across all platforms 
+shared="${HOME}/workspace/shared"
+
+# This is where all the git repositories live
+user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+
+# set default values for options to make life easier
+user_snapshots="${user_workspace}/snapshots"
+
+# This is the top level directory for the cbuild2 sources.
+cbuild_dir="${user_workspace}/cbuildv2"
+
+# Test results and logs get copied to here
+fileserver="toolchain64.lab"
+
+# The release version string, usually a date
+releasestr=
+
+# This is a string of optional extra arguments to pass to cbuild at runtime
+user_options=""
+
+OPTS="`getopt -o s:g:c:w:o:f:h -l snapshots:repo:cbuild:workspace:options:fileserver:help -- "$@"`"
+while test $# -gt 0; do
+    echo 1 = "$1"
+    case $1 in
+        -s|--snapshots) user_snapshots=$2 ;;
+        -g|--repo) user_git_repo=$2 ;;
+        -c|--cbuild) cbuild_dir=$2 ;;
+        -w|--workspace) user_workspace=$2 ;;
+        -o|--options) user_options=$2 ;;
+        -f|--fileserver) fileserver=$2 ;;
+	-h|--help) usage ;;
     esac
+    shift
 done
 
 # Test the config parameters from the Jenkins Build Now page
 
-# Jenkins sets environment variables rather than use command line arguments.
-if test x"${tarsrc}" = xtrue; then
+# See if we're supposed to build a source tarball
+if test x"${tarsrc}" = xtrue -o "`echo $user_options | grep -c -- --tarsrc`" -gt 0; then
     tars="--tarsrc"
 fi
 
-if test x"${tarbin}" = xtrue; then
+# See if we're supposed to build a binary tarball
+if test x"${tarbin}" = xtrue -o "`echo $user_options | grep -c -- --tarbin`" -gt 0; then
     tars="${tars} --tarbin "
 fi
 
-releasestr=
-if ! test x"${release}" = xsnapshot -o x"${release}" = x; then
+# Set the release string if specefied
+if ! test x"${release}" = xsnapshot -o x"${release}"; then
+    releasestr="--release ${release}"
+fi
+if test "`echo $user_options | grep -c -- --release`" -gt 0; then
+    release="`echo  $user_options | grep -o -- "--release [a-zA-Z0-9]* " | cut -d ' ' -f 2`"
     releasestr="--release ${release}"
 fi
 
-# If there is a comand line argument, assume it's a release string. if
-# so set a few default parameters.
-# if test x"$1" != x; then
-#     releasestr="--release $1"
-#     tars="--tarbin "
-#     tarsrc=false
-#     tarbin=true
-#     runtests=false
-# fi
+# This is an optional directory for the master copy of the git repositories.
+if test x"${user_git_repo}" = x; then
+    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+fi
 
 # Get the versions of dependant components to use
 changes=""
@@ -78,12 +110,15 @@ fi
 if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
     change="${change} mpfr=${mpfr_snapshot}"
 fi
-if test x"${gcc_snapshot}" != x"latest" -a x"${gcc_snapshot}" != x; then
-    change="${change} gcc=${gcc_snapshot}"
-    branch="`echo ${gcc_snapshot} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
+
+# Get the version of GCC we're supposed to build
+if test x"${gcc_branch}" != x"latest" -a x"${gcc_branch}" != x; then
+    change="${change} gcc=${gcc_branch}"
+    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
 else
     branch=
 fi
+
 if test x"${binutils_snapshot}" != x"latest" -a x"${binutils_snapshot}" != x; then
     change="${change} binutils=${binutils_snapshot}"
 fi
@@ -107,8 +142,7 @@ if test x"${libc}" != x; then
 	    change="${change} --set libc=newlib"
 	    ;;
 	*)
-#	    change="${change} --set libc=${libc}"
-	    change="${change} --set libc=glibc"
+	    change="${change} --set libc=${libc}"
 	    ;;
     esac
 fi
@@ -116,12 +150,6 @@ fi
 # This is the top level directory where builds go.
 if test x"${user_workspace}" = x; then
     user_workspace="${WORKSPACE}"
-fi
-
-# Remove the previous build if specified, default to reusing the existing
-# build directory.
-if test x"${reuse}" != x"true"; then
-    rm -fr ${user_workspace}/_build
 fi
 
 # Create a build directory
@@ -132,10 +160,6 @@ fi
 # Use the newly created build directory
 pushd ${user_workspace}/_build
 
-# Delete all local config files, so any rebuilds use the currently
-# committed versions.
-rm -f localhost/${target}/*/*.conf
-
 # Configure Cbuildv2 itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
@@ -144,27 +168,8 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-# This is the source directory for Cbuildv2. Jenkins specifies this
-# sub directory when it does a git clone or pull of Cbuildv2.
-if test x"${cbuild_dir}" = x; then
-    cbuild_dir="${user_workspace}/cbuildv2"
-fi
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --enable-schroot-test
 
-# This is where downloaded source tarballs and cloned git repositories live. 
-# If using git-reference-dir, this is the output directory for git.
-if test x"${user_snapshots}" = x; then
-    user_snapshots=${user_workspace}/snapshots
-fi
-
-# The files in this directory are shared across all platforms 
-shared="${HOME}/workspace/shared"
-
-# This is an optional directory for the master copy of the git repositories.
-if test x"${user_git_repo}" = x; then
-    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
-fi
-
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} ${user_git_repo} --enable-schroot-test
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
@@ -302,13 +307,8 @@ if test x"${canadian}" = x"true"; then
     fi
 fi
 
-# Test results and logs get copied to here
-if test x"${fileserver}" = x; then
-    fileserver="toolchain64"
-fi
-
 # This setups all the files needed by tcwgweb
-if test x"${sums}" != x -o x"${release}" != x; then
+if test x"${sums}" != x -o x"${runtests}" != x"true"; then
     if test x"${sums}" != x; then
 	test_logs=""
 	for s in ${sums}; do

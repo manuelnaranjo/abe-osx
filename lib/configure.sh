@@ -61,11 +61,15 @@ configure_build()
 #	if test x"${tool}" = x"zlib"; then
 #	    dryrun "ln -s ${srcdir} ${builddir}"
 #	else
-	    mkdir -p ${builddir}
+	    dryrun "mkdir -p \"${builddir}\""
 #	fi
     fi
 
-    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
+    local configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+    if test x"${configure}" = x; then
+      configure="yes"
+    fi
+    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes" -a x"${configure}" != xno; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
         # then run that to create the configure script.
@@ -128,13 +132,13 @@ configure_build()
 	done
     fi
 
+
     # Force static linking unless dynamic linking is specified
-    if test x"${static_link}" != x"no" -a x"${tool}" != x"gcc"; then
-	local opts="--disable-shared --enable-static"
-    fi
-    # If building tarballs, we always statically link everything
-    if test x"${tarbin}" = x"yes" -o x"${tarsrc}" = x"yes"; then
-	local opts="--disable-shared --enable-static"
+    local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
+    if test x"${static}" = x"yes" -o x"${tarbin}" = x"yes"; then
+	if test "`echo ${tool} | grep -c glibc`" -eq 0; then
+	    local opts="--disable-shared --enable-static"
+	fi
     fi
 
     # prefix is the root everything gets installed under.
@@ -150,8 +154,8 @@ configure_build()
 	local date="${release}"
     fi
 
-    if test x"${append_cflags}" != x; then
-	local opts="${opts} CFLAGS=\"${append_cflags} CXXFLAGS=\"${append_cflags}"
+    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
+	local opts="${opts} CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\""
     fi
 
     # GCC and the binutils are the only toolchain components that need the
@@ -186,7 +190,7 @@ configure_build()
 			stage2*)
 			    notice "Building stage 2 of GCC"
 			    local opts="${opts} ${stage2_flags}"
- 			    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GCC ${date}\""
+ 			    local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\" --with-pkgversion=\"Linaro GCC ${date}\""
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
@@ -227,10 +231,10 @@ configure_build()
 	gdb*)
  	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
 	    if test x"$2" = x"gdbserver"; then
-		local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
+		local opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
 		local srcdir="${srcdir}/gdb/gdbserver"
 	    else
-		local opts="${opts} --build=${build} --host=${host} --prefix=${prefix}"
+		local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    fi
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
@@ -265,12 +269,21 @@ configure_build()
 #	if test x"${tool}" = x"zlib"; then
 #	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
 #	else
-	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure ${default_configure_flags} ${opts})"
-#	fi
-	if test $? -gt 0; then
-	    error "Configure of $1 failed."
-	    return $?
-	fi
+        if test x"${configure}" = xyes; then
+	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
+	    if test $? -gt 0; then
+	        error "Configure of $1 failed."
+	        return $?
+	    fi
+        else
+            dryrun "rsync -a --exclude=.git/ ${srcdir}/ ${builddir}"
+	    if test $? -gt 0; then
+	        error "Copy of $1 failed (rsync -a ${srcdir} ${builddir})"
+	        return $?
+	    fi
+        fi
+#       fi
+        
 	# unset this to avoid problems later
 	unset default_configure_flags
 	unset opts

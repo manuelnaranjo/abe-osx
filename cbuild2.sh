@@ -29,7 +29,7 @@ usage()
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
-             [--set {cflags|ldflags}=XXX]
+             [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
@@ -195,9 +195,9 @@ OPTIONS
 		setting overrides the default.  Specifying a libc
 		other than newlib on baremetal targets is an error.
 
-  --set		{cflags|ldflags}=XXX
-                This appends additional options to the default values used
-                for CFLAGS and LDFLAGS.
+  --set		{cflags|ldflags|runtestflags|makeflags}=XXX
+                This overrides the default values used for CFLAGS,
+                LDFLAGS, RUNTESTFLAGS, and MAKEFLAGS.
 
   --set		{package}={toolchain|gdb|sysroot}
                 This limits the default set of packages to the specified set.
@@ -377,32 +377,39 @@ crosscheck_clibrary_target()
 
 set_package()
 {
-    saveIFS=${IFS}
-    IFS='='
-    local in=($1)
-    IFS=${saveIFS}
-    local package=${in[0]}
-    local setting=${in[1]}
+    local package="`echo $1 | cut -d '=' -f 1`"
+    local setting="`echo $* | cut -d '=' -f 2-3`"
 
     case ${package} in
+	languages|la*)
+	    with_languages="${setting}"
+	    notice "Setting list of languages to build to ${setting}"
+	    return 0
+	    ;;
 	packages|pa*)
 	    with_packages="${setting}"
 	    notice "Setting list of packages to build to ${setting}"
 	    return 0
 	    ;;
-	languages|la*)
-	    with_languages="${setting}"
-	    notice "Setting languages to build to ${setting}"
+	runtestflags|ru*)
+	    override_runtestflags="${setting}"
+	    notice "Overriding ${setting} to RUNTESTFLAGS"
 	    return 0
 	    ;;
-	cflags|cf*)
-	    append_cflags="${setting}"
-	    notice "Appending ${setting} to CFLAGS"
+	makeflags|ma*)
+#	    override_makeflags="${setting}"
+	    set make_flags="${make_flags} ${setting}"
+	    notice "Overriding ${setting} to MAKEFLAGS"
 	    return 0
 	    ;;
 	ldflags|ld*)
-	    append_ldflags="${setting}"
-	    notice "Appending ${setting} to LDFLAGS"
+	    override_ldflags="${setting}"
+	    notice "Overriding ${setting} to LDFLAGS"
+	    return 0
+	    ;;
+	cflags|cf*)
+	    override_cflags="${setting}"
+	    notice "Overriding ${setting} to CFLAGS"
 	    return 0
 	    ;;
 	libc)

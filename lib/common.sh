@@ -69,6 +69,7 @@ dryrun()
 	    read answer
 	    return $?
 	fi
+        echo "RUN: $1"
 	eval $1
 	return $?
     fi
@@ -208,7 +209,7 @@ normalize_path()
 # FIXME: ban non-service or tarball inputs.
 
     local process=
-    if test "`echo $1 | egrep -c "^git://|^http://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
+    if test "`echo $1 | egrep -c "^git://|^http://|^ssh://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
 	# If the input is an identifier (not a service) then process \.git
 	# identifiers as git URLs
 	process="`get_URL $1`"
@@ -225,7 +226,7 @@ normalize_path()
 	    local node="`echo ${process} | sed -e 's:^.*branch/::'`"
 	    local node="`echo ${node} | sed -e 's:/:_:'`"
 	    ;;
-	git*|http*)
+	git*|http*|ssh*)
             if test "`echo ${process} | grep -c "\.tar"`" -gt 0 -o "`echo ${process} | grep -c "\.tgz"`" -gt 0; then
                 local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
 	    else
@@ -245,6 +246,9 @@ normalize_path()
 	svn*)
 	    local node="`echo ${process} | sed -e 's@^.*/svn/@@'`"
 	    local node="`basename ${node}`"
+	    ;;
+	*.tar.*)
+	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
 	    ;;
 	*)
 	    fixme "normalize_path should only be called with a URL or a tarball name, not a sources.conf identifier."
@@ -277,6 +281,29 @@ get_builddir()
     return 0
 }
 
+get_config()
+{
+    conf="`get_toolname $1`.conf"
+    if test $? -gt 0; then
+	return 1
+    fi
+    if test -e ${topdir}/config/${conf}; then
+	echo "${topdir}/config/${conf}"
+	return 0
+    else
+	tool="`echo ${tool} | sed -e 's:-linaro::'`"
+	if test -e ${topdir}/config/${conf}; then
+	    echo "${topdir}/config/${conf}"
+	    return 0
+	fi
+    fi
+    error "Couldn't find ${topdir}/config/${conf}"
+
+    return 1
+}
+
+# Extract the name of the toolchain component being built
+
 # Source a bourne shell config file so we can access its variables.
 #
 # $1 - the tool component that the config file needs to be sourced
@@ -292,23 +319,26 @@ source_config()
     stage1_flags=""
     stage2_flags=""
 
-    conf="`get_toolname $1`.conf"
-    if test $? -gt 0; then
-	return 1
-    fi
-    if test -e ${topdir}/config/${conf}; then
-	. ${topdir}/config/${conf}
-	return 0
+    conf="`get_config $1`"
+    if test $? -eq 0; then
+        . "${conf}"
+        return 0
     else
-	tool="`echo ${tool} | sed -e 's:-linaro::'`"
-	if test -e ${topdir}/config/${conf}; then
-	    . ${topdir}/config/${conf}
-	    return 0
-	fi
+        return 1
     fi
-    error "Couldn't find ${topdir}/config/${conf}"
-    
-    return 1
+}
+
+read_config()
+{
+    conf="`get_config $1`"
+    if test $? -gt 0; then
+        return 1
+    else
+        local value="`export ${2}= && . ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
+        local retval=$?
+        echo "${value}"
+        return ${retval}
+    fi
 }
 
 # Extract the name of the toolchain component being built
@@ -408,7 +438,7 @@ get_source()
     local url=
     # If a full URL or git repo identifier isn't passed as an argument,
     # assume we want a tarball snapshot
-    if test `echo $1 | egrep -c "^svn|^git|^http|^bzr|^lp|\.git"` -eq 0; then
+    if test `echo $1 | egrep -c "^svn|^git|^http|^ssh|^bzr|^lp|\.git"` -eq 0; then
         local snapshot
 	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
@@ -541,7 +571,7 @@ get_source()
 # Get the proper source directory
 # $1 - The component name, which is one of the following:
 # 
-#   A git, http, svn, lp URL
+#   A git, http, ssh, svn, lp URL
 #   A repository identifier mapping an entry in sources.conf
 #   A tarball
 # 

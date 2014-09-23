@@ -60,7 +60,7 @@ svn_id=
 # config values for the build machine
 libc_version=
 kernel=
-build_arch=
+build_arch=${build_arch:+${build_arch}}
 hostname=
 distribution=
 
@@ -91,8 +91,9 @@ release=""
 with_packages="toolchain,sysroot,gdb"
 building=yes
 
-append_cflags=
-append_ldflags=
+override_cflags=
+override_ldflags=
+override_runtestflags=
 
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}

@@ -1,7 +1,5 @@
-load_generic_config "arm-linux"
-
+load_generic_config fastssh
+set_board_info protocol fastssh
+set_board_info gcc,timeout 100000
+set_board_info needs_status_wrapper  1
 set_board_info hostname chromebook
-
-# Name of the computer whose socket will be used, if required.
-set_board_info sockethost "chromebook:"
-

@@ -76,19 +76,21 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 
 # No expected errors.
 errmatch=0
-in="git://address.com/directory/repo.git"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match='git'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='repo'
-test_parser tool "${in}" "${match}" "${errmatch}"
-match='git://address.com/directory/repo.git'
-test_parser url "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
+for transport in git ssh http; do
+  in="${transport}://address.com/directory/repo.git"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match='git'
+  test_parser service "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match='repo'
+  test_parser tool "${in}" "${match}" "${errmatch}"
+  match="${transport}://address.com/directory/repo.git"
+  test_parser url "${in}" "${match}" "${errmatch}"
+  match=''
+  test_parser revision "${in}" "${match}" "${errmatch}"
+done
 
 # Minor variation with a different service
 in="http://address.com/directory/repo.git"
@@ -174,241 +176,237 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
 
-in="git://address.com/directory/repo.git/branch"
-match='branch'
-test_parser branch "${in}" "${match}" "${errmatch}"
+for transport in git ssh http; do
+  errmatch=0
+  in="${transport}://address.com/directory/repo.git/branch"
+  match='branch'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test with ~ style branch designation
-in="git://address.com/directory/repo.git~branch"
-match='branch'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test with ~ style branch designation
+  in="${transport}://address.com/directory/repo.git~branch"
+  match='branch'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test with ~ style branch designation. Introduce a type and look
-# for correct output but error condition.
-in="git://address.com/directory/repo.git~/branch"
-match='branch'
-errmatch=1
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test with ~ style branch designation. Introduce a type and look
+  # for correct output but error condition.
+  in="${transport}://address.com/directory/repo.git~/branch"
+  match='branch'
+  errmatch=1
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-errmatch=0
+  errmatch=0
 
-# Test multi-/ branches with ~ style branch designation
-in="git://address.com/directory/repo.git~branch/name/foo"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with ~ style branch designation
+  in="${transport}://address.com/directory/repo.git~branch/name/foo"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test multi-/ branches with / style branch designation
-in="git://address.com/directory/repo.git/branch/name/foo"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with / style branch designation
+  in="${transport}://address.com/directory/repo.git/branch/name/foo"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test with not .git suffix and ~ style branch designation
-in="git://address.com/directory/repo~branch"
-match='branch'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test with not .git suffix and ~ style branch designation
+  in="${transport}://address.com/directory/repo~branch"
+  match='branch'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test with not .git suffix and ~ style branch designation with multi-/ branches.
-in="git://address.com/directory/repo~branch/name/foo"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  # Test with not .git suffix and ~ style branch designation with multi-/ branches.
+  in="${transport}://address.com/directory/repo~branch/name/foo"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
 
-# Test with not .git suffix and ~ style branch designation
-# KNOWN LIMITATION.  This can't know that 'branch' is a branch
-# and repo is a repo.  So it will report erroneously.
-in="git://address.com/directory/repo/branch"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='branch'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Test with not .git suffix and ~ style branch designation
+  # KNOWN LIMITATION.  This can't know that 'branch' is a branch
+  # and repo is a repo.  So it will report erroneously.
+  in="${transport}://address.com/directory/repo/branch"
+  match=''
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='branch'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Test multi-/ branches with ~ style branch designation with revisions.
-in="git://address.com/directory/repo.git~branch/name/foo@1234567"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with ~ style branch designation with revisions.
+  in="${transport}://address.com/directory/repo.git~branch/name/foo@1234567"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
 
-# Test multi-/ branches with ~ style branch designation with revisions.
-in="git://address.com/directory/repo.git~branch/name/foo@1234567"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with ~ style branch designation with revisions.
+  in="${transport}://address.com/directory/repo.git~branch/name/foo@1234567"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
 
-# Test multi-/ branches with / style branch designation with revisions.
-in="git://address.com/directory/repo.git/branch/name/foo@1234567"
-match='branch/name/foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with / style branch designation with revisions.
+  in="${transport}://address.com/directory/repo.git/branch/name/foo@1234567"
+  match='branch/name/foo'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
 
-# Test multi-/ branches with / style branch designation with revisions
-# and no .git suffix on the repo.  This will be bogus because we can't
-# know about this situation.
-in="git://address.com/directory/repo/branch/name/foo@1234567"
-match='' 
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='foo'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
- 
-# Test single name branches with ~ style branch designation with revisions.
-in="git://address.com/directory/repo.git~branch@1234567"
-match='branch'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Test multi-/ branches with / style branch designation with revisions
+  # and no .git suffix on the repo.  This will be bogus because we can't
+  # know about this situation.
+  in="${transport}://address.com/directory/repo/branch/name/foo@1234567"
+  match='' 
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='foo'
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+   
+  # Test single name branches with ~ style branch designation with revisions.
+  in="${transport}://address.com/directory/repo.git~branch@1234567"
+  match='branch'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Test single name branches with / style branch designation with revisions.
-in="git://address.com/directory/repo.git/branch@1234567"
-match='branch'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Test single name branches with / style branch designation with revisions.
+  in="${transport}://address.com/directory/repo.git/branch@1234567"
+  match='branch'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Test single name branches with / style branch designation with
-# revisions but no .git suffixed repo.  We can't know this!
-in="git://address.com/directory/repo/branch@1234567"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='branch'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Test single name branches with / style branch designation with
+  # revisions but no .git suffixed repo.  We can't know this!
+  in="${transport}://address.com/directory/repo/branch@1234567"
+  match=''
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='branch'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Test .git suffixed repo with revisions.
-in="git://address.com/directory/repo.git@1234567"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='repo'
-test_parser tool "${in}" "${match}" "${errmatch}"
+  # Test .git suffixed repo with revisions.
+  in="${transport}://address.com/directory/repo.git@1234567"
+  match=''
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match='repo'
+  test_parser tool "${in}" "${match}" "${errmatch}"
 
-# Test .git suffixed repo with revisions and empty ~ branch.
-in="git://address.com/directory/repo.git~@1234567"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
+  # Test .git suffixed repo with revisions and empty ~ branch.
+  in="${transport}://address.com/directory/repo.git~@1234567"
+  match=''
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
 
-# Test .git suffixed repo with revisions and empty / branch.
-in="git://address.com/directory/repo.git/@1234567"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='1234567'
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Test .git suffixed repo with revisions and empty / branch.
+  in="${transport}://address.com/directory/repo.git/@1234567"
+  match=''
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match='1234567'
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Introduce 'user@'
-in="git://user@address.com/directory/repo.git/branch"
-match='user'
-test_parser user "${in}" "${match}" "${errmatch}"
+  # Introduce 'user@'
+  in="${transport}://user@address.com/directory/repo.git/branch"
+  match='user'
+  test_parser user "${in}" "${match}" "${errmatch}"
 
-# Introduce 'user.name@'
-in="git://user.name@address.com/directory/repo.git/branch"
-match='user.name'
-test_parser user "${in}" "${match}" "${errmatch}"
+  # Introduce 'user.name@'
+  in="${transport}://user.name@address.com/directory/repo.git/branch"
+  match='user.name'
+  test_parser user "${in}" "${match}" "${errmatch}"
 
-# Test with different service
-in="http://user@address.com/directory/repo.git/branch"
-match='git'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='user'
-test_parser user "${in}" "${match}" "${errmatch}"
+  # Start adding in superfluous @ symbols
+  errmatch=1
+  in="${transport}://user@address.com/directory@/repo.git/branch@1234567"
+  match="user"
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match="repo.git"
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match="${transport}://user@address.com/directory@/repo.git"
+  test_parser url "${in}" "${match}" "${errmatch}"
 
-# Start adding in superfluous @ symbols
-errmatch=1
-in="git://user@address.com/directory@/repo.git/branch@1234567"
-match="user"
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match="repo.git"
-test_parser repo "${in}" "${match}" "${errmatch}"
-match="git://user@address.com/directory@/repo.git"
-test_parser url "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and / branch.
+  in="${transport}://address.com/directory@/repo.git/branch@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match="repo.git"
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match="${transport}://address.com/directory@/repo.git"
+  test_parser url "${in}" "${match}" "${errmatch}"
 
-# Superfluous @ symbols but no 'user' and / branch.
-in="git://address.com/directory@/repo.git/branch@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match="repo.git"
-test_parser repo "${in}" "${match}" "${errmatch}"
-match="git://address.com/directory@/repo.git"
-test_parser url "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and multi-/ / branch.
+  in="${transport}://address.com/directory@/repo.git/branch/name/foo@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch/name/foo"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match="repo.git"
+  test_parser repo "${in}" "${match}" "${errmatch}"
+  match="${transport}://address.com/directory@/repo.git"
+  test_parser url "${in}" "${match}" "${errmatch}"
 
-# Superfluous @ symbols but no 'user' and multi-/ / branch.
-in="git://address.com/directory@/repo.git/branch/name/foo@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch/name/foo"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match="repo.git"
-test_parser repo "${in}" "${match}" "${errmatch}"
-match="git://address.com/directory@/repo.git"
-test_parser url "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and ~ branch.
+  in="${transport}://address.com/directory@/repo.git~branch@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Superfluous @ symbols but no 'user' and ~ branch.
-in="git://address.com/directory@/repo.git~branch@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and non .git suffixed repo.
+  in="${transport}://address.com/directory@/repo@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match=""
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Superfluous @ symbols but no 'user' and non .git suffixed repo.
-in="git://address.com/directory@/repo@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match=""
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and ~ branch and non .git suffixed repo.
+  in="${transport}://address.com/directory@/repo~branch@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-# Superfluous @ symbols but no 'user' and ~ branch and non .git suffixed repo.
-in="git://address.com/directory@/repo~branch@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo'
-test_parser repo "${in}" "${match}" "${errmatch}"
-
-# Superfluous @ symbols but no 'user' and ~ branch and non .git suffixed repo and multi-/ branches.
-in="git://address.com/directory@/repo~branch/name/foo@1234567"
-match=''
-test_parser user "${in}" "${match}" "${errmatch}"
-match="branch/name/foo"
-test_parser branch "${in}" "${match}" "${errmatch}"
-match="1234567"
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='repo'
-test_parser repo "${in}" "${match}" "${errmatch}"
+  # Superfluous @ symbols but no 'user' and ~ branch and non .git suffixed repo and multi-/ branches.
+  in="${transport}://address.com/directory@/repo~branch/name/foo@1234567"
+  match=''
+  test_parser user "${in}" "${match}" "${errmatch}"
+  match="branch/name/foo"
+  test_parser branch "${in}" "${match}" "${errmatch}"
+  match="1234567"
+  test_parser revision "${in}" "${match}" "${errmatch}"
+  match='repo'
+  test_parser repo "${in}" "${match}" "${errmatch}"
+done
 
 # This one will bail early even though it's malformed so the error case won't be set.
 errmatch=0
@@ -980,23 +978,25 @@ in="http://user.name@git.linaro.org/git/toolchain/repo.git@1234567"
 match='repo.git@1234567'
 test_parser tag "${in}" "${match}" "${errmatch}"
 
-errmatch=
-in="git://git.savannah.gnu.org/dejagnu.git~linaro"
-match='dejagnu.git'
-test_parser repo "${in}" "${match}" "${errmatch}"
+for transport in git ssh http; do
+  errmatch=
+  in="${transport}://git.savannah.gnu.org/dejagnu.git~linaro"
+  match='dejagnu.git'
+  test_parser repo "${in}" "${match}" "${errmatch}"
 
-match='linaro'
-test_parser branch "${in}" "${match}" "${errmatch}"
+  match='linaro'
+  test_parser branch "${in}" "${match}" "${errmatch}"
+
+  errmatch=0
+  in="${transport}://git.linaro.org/toolchain/binutils-gdb.git/gdb_7_6-branch"
+  match='binutils-gdb'
+  test_parser tool "${in}" "${match}" "${errmatch}"
+done
 
 errmatch=0
 # This will strip the superflous / in between ~ and multi
 in="infrastructure/linux-linaro-3.11-rc6-2013.08.tar.bz2"
 match='linux'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-errmatch=0
-in="git://git.linaro.org/toolchain/binutils-gdb.git/gdb_7_6-branch"
-match='binutils-gdb'
 test_parser tool "${in}" "${match}" "${errmatch}"
 
 errmatch=0
@@ -1047,9 +1047,11 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
 
-in="git://git.linaro.org/toolchain/binutils-gdb.git~linaro_binutils-2_24-branch"
-match='binutils-gdb'
-test_parser tool "${in}" "${match}" "${errmatch}"
+for transport in git ssh http; do
+  in="${transport}://git.linaro.org/toolchain/binutils-gdb.git~linaro_binutils-2_24-branch"
+  match='binutils-gdb'
+  test_parser tool "${in}" "${match}" "${errmatch}"
+done
 
 in="git://git.linaro.org/toolchain/binutils-gdb.git/linaro_binutils-2_24-branch"
 match='binutils-gdb'

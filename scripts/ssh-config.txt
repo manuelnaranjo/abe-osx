@@ -1,0 +1,223 @@
+Host toolchain64
+   HostName lab.validation.linaro.org
+   Port 24001
+
+Host tcwg-chrome2-01
+    HostName lab.validation.linaro.org
+    Port 41043
+
+Host tcwg-chrome2-02
+    HostName lab.validation.linaro.org
+    Port 41044
+
+Host tcwg-apm-01
+    HostName lab.validation.linaro.org
+    Port 41037
+
+Host tcwg-apm-02
+    HostName lab.validation.linaro.org
+    Port 41038
+
+Host tcwg-apm-03
+    HostName lab.validation.linaro.org
+    Port 41039
+
+Host tcwg-apm-04
+    HostName lab.validation.linaro.org
+    Port 41045
+
+Host tcwg-d01-01
+    HostName lab.validation.linaro.org
+    Port 41040
+
+Host tcwg-d01-02
+    HostName lab.validation.linaro.org
+    Port 41041
+
+Host tcwg-d01-03
+    HostName lab.validation.linaro.org
+    Port 41042
+
+Host tcwg-d01-04
+    HostName lab.validation.linaro.org
+    Port 41049
+
+Host tcwgblack01
+    HostName lab.validation.linaro.org
+    Port 41007
+
+Host tcwgblack02
+    HostName lab.validation.linaro.org
+    Port 41008
+
+Host tcwgblack03
+    HostName lab.validation.linaro.org
+    Port 41009
+
+Host tcwgblack04
+    HostName lab.validation.linaro.org
+    Port 41010
+
+Host tcwgblack05
+    HostName lab.validation.linaro.org
+    Port 41011
+
+Host tcwgblack06
+    HostName lab.validation.linaro.org
+    Port 41012
+
+Host tcwgblack07
+    HostName lab.validation.linaro.org
+    Port 41013
+
+Host tcwgblack08
+    HostName lab.validation.linaro.org
+    Port 41014
+
+Host tcwgblack09
+    HostName lab.validation.linaro.org
+    Port 41015
+
+Host tcwgblack10
+    HostName lab.validation.linaro.org
+    Port 41016
+
+Host tcwgblack11
+    HostName lab.validation.linaro.org
+    Port 41017
+
+Host tcwgblack12
+    HostName lab.validation.linaro.org
+    Port 41018
+
+Host tcwgblack13
+    HostName lab.validation.linaro.org
+    Port 41019
+
+Host tcwgblack14
+    HostName lab.validation.linaro.org
+    Port 41020
+
+Host tcwgblack15
+    HostName lab.validation.linaro.org
+    Port 41021
+
+Host tcwgblack16
+    HostName lab.validation.linaro.org
+    Port 41022
+
+Host tcwgblack17
+    HostName lab.validation.linaro.org
+    Port 41023
+
+Host tcwgblack18
+    HostName lab.validation.linaro.org
+    Port 41024
+
+Host tcwgblack19
+    HostName lab.validation.linaro.org
+    Port 41025
+
+Host tcwgblack20
+    HostName lab.validation.linaro.org
+    Port 41026
+
+Host tcwgblack21
+    HostName lab.validation.linaro.org
+    Port 41027
+
+Host tcwgblack22
+    HostName lab.validation.linaro.org
+    Port 41027
+
+Host tcwgblack23
+    HostName lab.validation.linaro.org
+    Port 41028
+
+Host tcwgblack24
+    HostName lab.validation.linaro.org
+    Port 41029
+
+Host tcwgblack25
+    HostName lab.validation.linaro.org
+    Port 41030
+
+Host tcwgblack26
+    HostName lab.validation.linaro.org
+    Port 41031
+
+Host tcwgblack27
+    HostName lab.validation.linaro.org
+    Port 41032
+
+Host tcwgchromebook01
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40001
+
+Host tcwgchromebook02
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40002
+
+Host tcwgchromebook03
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40003
+
+Host tcwgchromebook04
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40004
+
+Host tcwgchromebook05
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40005
+
+Host tcwgchromebook06
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40006
+
+Host tcwgchromebook07
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40007
+
+Host tcwgchromebook08
+    HostName lab.validation.linaro.org
+    StrictHostKeyChecking no
+    Port 40008
+
+Host tcwgbuild01
+    HostName lab.validation.linaro.org
+    Port 41001
+
+Host tcwgbuild02
+    HostName lab.validation.linaro.org
+    Port 41002
+
+Host tcwgbuild03
+    HostName lab.validation.linaro.org
+    Port 41003
+
+Host tcwgbuild04
+    HostName lab.validation.linaro.org
+    Port 41004
+
+Host tcwgbuild05
+    HostName lab.validation.linaro.org
+    Port 41005
+
+Host tcwgbuild06
+    HostName lab.validation.linaro.org
+    Port 41006
+
+Host *
+   ForwardAgent yes
+   ForwardX11 yes
+   ControlMaster auto
+   ControlPath /tmp/ssh-%u-%r@%h:%p
+   StrictHostKeyChecking no
+#   ControlPersist yes

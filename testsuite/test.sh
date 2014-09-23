@@ -996,29 +996,31 @@ else
     fixme "get_source returned ${out}"
 fi
 
-testing="get_source: git direct url not ending in .git"
-in="git://git.linaro.org/toolchain/eglibc"
-out="`get_source ${in}`"
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+for transport in ssh git http; do
+  testing="get_source: git direct url not ending in .git (${transport})"
+  in="${transport}://git.linaro.org/toolchain/eglibc"
+  out="`get_source ${in}`"
+  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
 
-testing="get_source: git direct url not ending in .git with revision returns bogus url."
-in="http://git.linaro.org/git/toolchain/eglibc/branch@1234567"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+  testing="get_source: git direct url not ending in .git with revision returns bogus url. (${transport})"
+  in="${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
+done
 
 # These aren't valid if testing from a build directory.
 testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
@@ -1173,33 +1175,35 @@ fi
 
 latest=${saved_latest}
 
-testing="get_source: git direct url with a ~ branch designation."
-in="git://git.linaro.org/toolchain/eglibc.git~branch@1234567"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"git://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+for transport in ssh git http; do
+  testing="get_source: git direct url with a ~ branch designation. (${transport})"
+  in="${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
 
-testing="get_source: git direct url with a ~ branch designation."
-in="git://git.savannah.gnu.org/dejagnu.git~linaro"
-if test x"${debug}" = x"yes"; then
-    out="`get_source ${in}`"
-else
-    out="`get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"git://git.savannah.gnu.org/dejagnu.git~linaro"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
+  testing="get_source: git direct url with a ~ branch designation. (${transport})"
+  in="$transport://git.savannah.gnu.org/dejagnu.git~linaro"
+  if test x"${debug}" = x"yes"; then
+      out="`get_source ${in}`"
+  else
+      out="`get_source ${in} 2>/dev/null`"
+  fi
+  if test x"${out}" = x"${transport}://git.savannah.gnu.org/dejagnu.git~linaro"; then
+      pass "${testing}"
+  else
+      fail "${testing}"
+      fixme "get_source returned ${out}"
+  fi
+done
 
 
 
@@ -1388,6 +1392,137 @@ if test $? -ne 0; then
 else
     fail "${testing}"
 fi
+
+#Do not pollute env
+testing="source_config"
+depends="`depends= && source_config isl && echo ${depends}`"
+static_link="`static_link= && source_config isl && echo ${static_link}`"
+default_configure_flags="`default_configure_flags= && source_config isl && echo ${default_configure_flags}`"
+if test x"${depends}" != xgmp; then
+  fail "${testing}"
+elif test x"${static_link}" != xyes; then
+  fail "${testing}"
+elif test x"${default_configure_flags}" != x"--with-gmp-prefix=${PWD}/${hostname}/${build}/depends"; then
+  fail "${testing}"
+else
+  pass "${testing}"
+fi
+depends=
+default_configure_flags=
+static_link=
+
+testing="read_config one arg"
+if test x"`read_config isl static_link`" = xyes; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+testing="read_config multiarg"
+if test x"`read_config glib default_configure_flags`" = x"--disable-modular-tests --disable-dependency-tracking --cache-file=/tmp/glib.cache"; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+testing="read_config set then unset"
+out="`default_makeflags=\`read_config binutils default_makeflags\` && default_makeflags=\`read_config newlib default_makeflags\` && echo ${default_makeflags}`"
+if test $? -gt 0; then
+  fail "${testing}"
+elif test x"${out}" != x; then
+  fail "${testing}"
+else
+  pass "${testing}"
+fi
+
+dryrun="yes"
+tool="binutils" #this is a nice tool to use as it checks the substitution in make install, too
+cmp_makeflags="`read_config ${tool} default_makeflags`"
+testing="postfix make args (make_all)"
+if test x"${cmp_makeflags}" = x; then
+  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
+else
+  out="`. ${topdir}/config/${tool}.conf && make_all ${tool}.git 2>&1`"
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
+  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+testing="postfix make args (make_install)"
+cmp_makeflags="`echo ${cmp_makeflags} | sed -e 's:\ball-:install-:g'`"
+if test x"${cmp_makeflags}" = x; then
+  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
+else
+  out="`. ${topdir}/config/${tool}.conf && make_install ${tool}.git 2>&1`"
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
+  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+cmp_makeflags=
+
+testing="configure"
+tool="dejagnu"
+configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+if test x"${configure}" = xno; then
+  untested "${testing}"
+else
+  out=`configure_build ${tool}.git 2>&1`
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
+  echo "${out}" | grep -- '^DRYRUN: .*/configure ' > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+testing="copy instead of configure"
+tool="eembc"
+configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
+if test \! x"${configure}" = xno; then
+  untested "${testing}" #implies that the tool's config no longer contains configure, or that it has a wrong value
+elif test x"${configure}" = xno; then
+  out=`configure_build ${tool}.git 2>&1`
+  if test x"${debug}" = x"yes"; then
+    echo "${out}"
+  fi
+  echo "${out}" | grep -- '^DRYRUN: rsync -a --exclude=.git/ .\+/ ' > /dev/null
+  if test $? -eq 0; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+dryrun="no"
+
+testing="dryrun quote preservation (dryrun=no)"
+out=`dryrun 'echo "enquoted"'`
+if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+dryrun="yes"
+testing="dryrun quote preservation (dryrun=yes)"
+out=`dryrun 'echo "enquoted"' 2>&1`
+if test x"${out}" = 'xDRYRUN: echo "enquoted"'; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+dryrun="no"
 
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch

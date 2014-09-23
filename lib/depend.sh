@@ -173,6 +173,10 @@ infrastructure()
 	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
 	    continue
 	fi
+	# if make 4.0 is already installed, we don't need to build it everytime.
+	if test $i = "make" -a "${makeversion}" = "4.0"; then
+	    continue
+	fi
 	build ${name}
 	buildret=$?
 	if test ${buildret} -gt 0; then

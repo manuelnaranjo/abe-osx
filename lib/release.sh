@@ -73,7 +73,7 @@ release_binutils_src()
     local srcdir="`get_srcdir ${binutils_version}`"
     local builddir="`get_builddir ${binutils_version}`"
     # The new combined repository for binutils has GDB too, so we strip that off.
-    local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::'`"
+    local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::' -e 's:-binutils::'`"
 
     dryrun "mkdir -p /tmp/linaro.$$"
     local destdir="/tmp/linaro.$$/${tag}"
@@ -222,30 +222,15 @@ edit_changelogs()
     else
 	warning "${destdir} doesn't exist!"
     fi
-    
-    if test x"${fullname}" = x; then
-	case $1 in
-	    bzr*|lp*)
-	    # Pull the author and email from bzr whoami
-		local fullname="`bzr whoami | sed -e 's: <.*::'`"
-		local email="`bzr whoami --email`"
-		;;
-	    svn*)
-		local trunk="`echo $1 |grep -c trunk`"
-		if test ${trunk} -gt 0; then
-		    local dir="`dirname $1`"
-		    local dir="`basename ${dir}`/trunk"
-		fi
-		;;
-	    git*)
-		if test -f ~/.gitconfig; then
-		    local fullname="`grep "name = " ~/.gitconfig | cut -d ' ' -f 3-6`"
-		    local email="`grep "email = " ~/.gitconfig | cut -d ' ' -f 3-6`"
-		fi
-		;;
-	    *)
-		;;
-	esac
+
+    # Jenkins sets these to the name of the requestor. If not set, then we
+    # use git, otherwise we wind up with buildslave@locahost.
+    if test x"${BUILD_USER_FIRST_NAME}" = x -a x"${BUILD_USER_LAST_NAME}" = x -a x"${BUILD_USER_ID}" = x; then
+	local fullname="`git config user.name`"
+	local email="`git config user.email`"
+    else
+	local fullname="${BUILD_USER_FIRST_NAME}.${BUILD_USER_LAST_NAME}"
+	local email="${BUILD_USER_ID}"
     fi
 
     local date="`date +%Y-%m-%d`"
@@ -370,7 +355,7 @@ if test ! -d /opt/linaro/; then
   echo "to /opt is required. The files will stay where they are, only a symbolic"
   echo "is created, which can be changed to swap sysroots at compile time."
   echo ""
-  echo "Continue ? Hit any key..."
+-  echo "Continue ? Hit any key..."
   read answer
 
   mkdir -p /opt/linaro
