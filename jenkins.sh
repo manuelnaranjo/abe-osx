@@ -170,6 +170,11 @@ fi
 
 $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --enable-schroot-test
 
+# Double parallelism for tcwg-ex40-* machines to compensate for really-remote
+# target execution.  GCC testsuites will run with -j 32.
+case "$(hostname)" in
+    "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
+esac
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
