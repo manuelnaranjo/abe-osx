@@ -10,17 +10,25 @@ EOF
 export runtests=true
 
 export CONFIG_SHELL="/bin/bash"
-shared="/home/buildslave/workspace/shared/"
+shared="/home/buildslave/workspace/shared"
 cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
+
+rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
+rm -rf ${snapshots_ref}/*~*
+
+rm -rf ${WORKSPACE}/_build ${user_snapshots}
+
+mkdir -p ${user_snapshots}/
+rsync -a ${snapshots_ref}/infrastructure/ ${user_snapshots}/infrastructure/
 
 if test x"${revisions}" != x; then
   if test ! -d ${WORKSPACE}/_build; then
     mkdir -p ${WORKSPACE}/_build
   fi
   cd ${WORKSPACE}/_build
-  $CONFIG_SHELL ${cbuild_dir}/configure  --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+  $CONFIG_SHELL ${cbuild_dir}/configure  --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
   $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
 else
   $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
@@ -31,4 +39,7 @@ if test $? -gt 0; then
   exit 1
 fi
 
-#rm -rf ${WORKSPACE}/_build ${WORKSPACE}/snapshots
+case "${JOB_NAME}" in
+    *"Farm") ;;
+    *) rm -rf ${WORKSPACE}/_build ${user_snapshots} ;;
+esac
