@@ -50,7 +50,7 @@ user_snapshots="${user_workspace}/snapshots"
 cbuild_dir="${user_workspace}/cbuildv2"
 
 # Test results and logs get copied to here
-fileserver="toolchain64.lab"
+fileserver="toolchain64"
 
 # The release version string, usually a date
 releasestr=

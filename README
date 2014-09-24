@@ -32,7 +32,7 @@ time. For example:
 $CBUILD-PATH/configure
 --with-local-snapshots=$CBUILD_PATH/snapshots 
 --with-local-builds=$CBUILD-PATH/destdir
---with-remote-snapshots=cbuild@toolchain64.lab:/home/cbuild/var/snapshots/
+--with-remote-snapshots=cbuild@toolchain64:/home/cbuild/var/snapshots/
 
   This changes the 3 primary paths, including changing the remote host
 to use rsync or ssh to download tarballs instead of HTTP. You can
