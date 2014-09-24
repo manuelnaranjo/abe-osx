@@ -28,10 +28,10 @@ if test x"${revisions}" != x; then
     mkdir -p ${WORKSPACE}/_build
   fi
   cd ${WORKSPACE}/_build
-  $CONFIG_SHELL ${cbuild_dir}/configure  --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-languages=${languages} --enable-schroot-test
   $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
 else
-  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
+  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release} -l ${languages}
 fi
 
 # force a failure of cbuild2 has build problems.
