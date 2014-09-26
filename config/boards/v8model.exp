@@ -29,14 +29,11 @@ if {[info exists env(FOUNDATION_MODEL)]} {
 }
 
 if {[info exists env(SYSROOT_UNDER_TEST)]} {
-    set sysroot "$env(SYSROOT_UNDER_TEST)"
+    set specdir "$env(SYSROOT_UNDER_TEST)/usr/lib"
 }
-set specdir "$sysroot/usr/lib"
 
-set_board_info cflags  "-specs=${specdir}/rdimon.specs [libgloss_include_flags]"
+set_board_info cflags  "-specs=${specdir}/aem-ve.specs [libgloss_include_flags]"
 set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags]"
-
-verbose "FIXME: ${specdir}/rdimon.specs"
 
 # Can't pass arguments to the program.
 set_board_info noargs 1
