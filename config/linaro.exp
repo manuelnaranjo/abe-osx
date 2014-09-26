@@ -34,7 +34,7 @@ case "$myname" in {
 }
 
 case "$target_triplet" in { 
-    { "arm*-*linux-gnueabihf"} {
+    { "arm-*linux-gnueabi*"} {
 	case "$myname" in {
 	    { tcwgrob* } {
 		set target_list { tcwgchromebook }
@@ -57,7 +57,7 @@ case "$target_triplet" in {
     { "armeb-*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
-	set SIM "qemu-armeb"
+	set SIM "qemu-armeb-static"
 	set target_list { "arm-qemu" } 
     }
     { "aarch64*-none-elf*" } {
