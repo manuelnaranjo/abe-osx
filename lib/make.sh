@@ -648,7 +648,7 @@ make_check()
     if test x"${override_cflags}" != x -a x"$2" != x"stage2"; then
         local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"${override_cflags}\""
     else
-        local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"pipe CXXFLAGS_FOR_BUILD=-pipe\""
+        local make_flags="${make_flags} CFLAGS_FOR_BUILD=-\"-pipe\" CXXFLAGS_FOR_BUILD=\"-pipe\""
     fi
 
     if test x"${override_ldflags}" != x; then
@@ -681,10 +681,10 @@ make_check()
 		local dirs="/gdb"
 		local check_targets="check-gdb"
 		;;
-	    gcc)
-		local dirs="/gcc"
-		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
-		;;
+#	    gcc)
+#		local dirs="/gcc"
+#		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
+#		;;
 	    *)
 		local dirs="/"
 		local check_targets="check"
@@ -692,7 +692,7 @@ make_check()
 	esac
 
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=--sysroot=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
 	done
     fi
     
