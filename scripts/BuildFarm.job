@@ -15,20 +15,14 @@ cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 
-if test x"${revisions}" != x; then
-  if test ! -d ${WORKSPACE}/_build; then
-    mkdir -p ${WORKSPACE}/_build
-  fi
-  cd ${WORKSPACE}/_build
-  $CONFIG_SHELL ${cbuild_dir}/configure  --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
-  $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
-else
-  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
-fi
+rm -fr ${WORKSPACE}/_build
+mkdir -p ${WORKSPACE}/_build
+
+cd ${WORKSPACE}/_build
+$CONFIG_SHELL ${cbuild_dir}/configure --disable update --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+$CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
 
 # force a failure of cbuild2 has build problems.
 if test $? -gt 0; then
   exit 1
 fi
-
-#rm -rf ${WORKSPACE}/_build ${WORKSPACE}/snapshots
