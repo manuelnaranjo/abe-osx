@@ -66,6 +66,10 @@ while test $# -gt 0; do
     shift
 done
 
+if text "`echo ${branch} | grep -v gcc.git`" -gt 0; then
+    branch="echo ${branch} | sed -e 's:gcc.git~::'"
+fi
+
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/${branch}"
 else
@@ -118,7 +122,7 @@ if test x"${fileserver}" != x; then
     xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
     scp ${resultsdir}${revisions[0]}/* ${fileserver}:${basedir}/${dir}/
     
-# Compress and copy ll files from the first build
+# Compress and copy all files from the first build
     xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
     scp ${resultsdir}${revisions[1]}/* ${fileserver}:${basedir}/${dir}/
 fi
