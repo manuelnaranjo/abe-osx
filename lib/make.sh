@@ -715,10 +715,6 @@ make_check()
 		local dirs="/gdb"
 		local check_targets="check-gdb"
 		;;
-	    gcc)
-		local dirs="/gcc"
-		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
-		;;
 	    *)
 		local dirs="/"
 		local check_targets="check"
