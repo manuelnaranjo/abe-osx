@@ -152,18 +152,20 @@ if $gen_schroot; then
 	fi
     done
 
+    # Configure APT sources.
     case "$deb_arch" in
-	amd64) extra_packages="qemu-user-static" ;;
-	*) extra_packages="" ;;
+	amd64) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
+	*) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
+    esac
+    ssh $target_ssh_opts $target \
+	sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
+
+    case "$deb_arch" in
+	amd64) extra_packages="qemu-user-static gdb gdbserver" ;;
+	*) extra_packages="gdb gdbserver" ;;
     esac
 
     if ! [ -z "$extra_packages" ]; then
-	case "$deb_arch" in
-	    amd64) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
-	    *) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
-	esac
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
 	ssh $target_ssh_opts $target \
 	    sudo chroot $chroot apt-get update
 	ssh $target_ssh_opts $target \
@@ -173,6 +175,14 @@ if $gen_schroot; then
     if [ "$(echo "$extra_packages" | grep -c qemu-user-static)" = "0" ]; then
 	ssh $target_ssh_opts $target \
 	    sudo rm -f $chroot/usr/bin/qemu-\*-static
+    fi
+
+    # Install foundation model in x86_64 chroots for bare-metal testing
+    if [ x"$deb_arch" = x"amd64" ]; then
+	ssh $target_ssh_opts $target \
+	    sudo mkdir -p $chroot/linaro/foundation-model/Foundation_v8pkg
+	ssh $target_ssh_opts $target \
+	    sudo rsync -a /linaro/foundation-model/Foundation_v8pkg/ $chroot/linaro/foundation-model/Foundation_v8pkg/
     fi
 
     ssh $target_ssh_opts $target \
@@ -188,8 +198,8 @@ if $gen_schroot; then
 [$schroot_id]
 type=file
 file=/var/chroots/$schroot_id.tgz
-groups=buildslave,users
-root-groups=buildslave,users
+groups=buildslave,tcwg,users
+root-groups=buildslave,tcwg,users
 profile=tcwg-test
 EOF
 
