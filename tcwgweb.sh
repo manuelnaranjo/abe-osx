@@ -119,7 +119,7 @@ difftwodirs ()
     fi
     unxz ${next}/*.sum.xz
     unxz ${next}/check*.log.xz
-    # FIXME: gfortran has problems in the testsuite, so it's temporarily not
+    # FIXME: LD and gfortran has problems in the testsuite, so it's temporarily not
     # analyzed for errors.
     local resultsfile="/tmp/test-results$$.txt"
     local regressions=0
@@ -127,7 +127,7 @@ difftwodirs ()
     echo "Comparison of ${gcc_version} between:" >> ${resultsfile}
     echo "	${prev} and" >> ${resultsfile}
     echo "	${next}" >> ${resultsfile}
-    for i in gcc g\+\+ libstdc++ ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
+    for i in gcc g\+\+ libstdc++ gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
            sort ${next}/$i.sum -o ${next}/$i-sort.sum
@@ -184,6 +184,10 @@ difftwodirs ()
 
     echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
+    local lineo="`grep -n -- "----" ${next}/manifest.txt | grep -o "[0-9]*"`"
+    sed -e '1,${lineno}d' ${next}/manifest.txt >> ${resultsfile}
+    echo "" >> ${resultsfile}
+
     mailto "Test results for ${gcc_version}" ${resultsfile} ${userid}
     rm -f ${resultsfile}
 
@@ -260,10 +264,9 @@ mailto()
 {
     if test x"${email}" = xyes; then
 	echo "Mailing test results!"
+	mail -s "$1" tcwg-test-results@gnashdev.org < $2
 	if test x"$3" != x; then
 	    mail -s "$1" $3 < $2	
-	else
-	    mail -s "$1" tcwg-test-results@gnashdev.org < $2
 	fi
     else
 	echo "$1"
