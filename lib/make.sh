@@ -531,14 +531,6 @@ make_install()
         return 1
     fi
 
-    if test x"${tool}" = x"gcc"; then
-        local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
-        if test ! -e ${sysroots}/usr/lib; then
-            dryrun "mkdir -p ${sysroots}/usr/lib/"
-        fi
-        dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
-    fi
-
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
         local dynamic_linker
         dynamic_linker="$(find_dynamic_linker "$sysroots")"
