@@ -14,7 +14,7 @@ if {[info exists env(PREFIX_UNDER_TEST)]} {
 	set flags "$env(FLAGS_UNDER_TEST)"
     }
     if {[info exists env(SYSROOT_UNDER_TEST)]} {
-	set flags "${flags} $env(SYSROOT_UNDER_TEST)"
+	set flags "${flags} --sysroot=$env(SYSROOT_UNDER_TEST)"
     }
 
     set GCC_UNDER_TEST "[set prefix]gcc $flags"

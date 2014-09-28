@@ -695,7 +695,11 @@ make_check()
 	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
 	    # Start schroot sessions on target boards that support it
 	    schroot_port="$(print_schroot_port)"
-	    local schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")"
+	    local schroot_sysroot
+	    case "${target}" in
+		*"-elf"*) schroot_sysroot="" ;;
+		*) schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")" ;;
+	    esac
 	    schroot_boards=($(start_schroot_sessions "$target" "$schroot_port" "$schroot_sysroot" "$builddir"))
 	    rm -rf "$schroot_sysroot"
 	    schroot_port_opt="SCHROOT_PORT=$schroot_port"
@@ -722,7 +726,7 @@ make_check()
 	esac
 
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=--sysroot=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" $schroot_port_opt $schroot_shared_dir_opt ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
 	done
 
 	# Stop schroot sessions
