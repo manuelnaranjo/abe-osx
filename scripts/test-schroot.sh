@@ -271,7 +271,7 @@ if ! [ -z "$shared_dir" ]; then
     test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
-    $rsh $target sshfs -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
+    $rsh $target sshfs -C -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
 
     # Remove temporary key and delete extra empty lines at the end of file.
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
