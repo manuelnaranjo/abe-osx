@@ -88,14 +88,15 @@ start_schroot_sessions()
 	set -x
 	# Start testing schroot session.
 	dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $shared_dir_opt $hostname:$port" 1>&2
+	local result="$?"
 	set +x
-	if test "$?" != "0"; then
-	    stop_schroot_sessions "$port" "$hostname"
-	    return 1
-	fi
 
 	# Print the hostname to the caller
 	echo $hostname
+
+	if test "$result" != "0"; then
+	    return 1
+	fi
     done
 }
 
