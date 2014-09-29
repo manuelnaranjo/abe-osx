@@ -77,12 +77,8 @@ else
     srcdir="${local_snapshots}/${branch}"
 fi
 
-if test ! -e ${srcdir}; then
-#    (cd ${local_snapshots}/${repo} && git pull)
-    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
-#else
-#    (cd ${srcdir} && git pull)
-fi
+rm -fr ${srcdir}
+git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
