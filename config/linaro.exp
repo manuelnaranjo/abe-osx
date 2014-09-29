@@ -41,7 +41,7 @@ case "$target_triplet" in {
 #		set target_list { arm-chromebook }
 	    }
 	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgchrome2 }
+		set target_list { tcwgchromebook }
 	    }
 	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
 		set target_list { unix }
