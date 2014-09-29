@@ -29,7 +29,7 @@ fetch()
     fi
 
     if test x"${supdate}" = xno; then
-	note "Updating files disabled by user, not downloading $1"
+	warning "Updating files disabled by user, not downloading $1"
 	return 0
     fi
 
