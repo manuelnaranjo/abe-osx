@@ -128,4 +128,4 @@ if test x"${fileserver}" != x; then
 fi
 
 # Diff the two directories
-${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
+/bin/bash -x ${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
