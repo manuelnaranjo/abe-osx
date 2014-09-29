@@ -692,7 +692,11 @@ make_check()
 		*"-elf"*) schroot_sysroot="" ;;
 		*) schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")" ;;
 	    esac
-	    schroot_boards=($(start_schroot_sessions "$target" "$schroot_port" "$schroot_sysroot" "$builddir"))
+	    schroot_boards=($(start_schroot_sessions "${target}" "${schroot_port}" "${schroot_sysroot}" "${builddir}"))
+	    if test "$?" != "0"; then
+		stop_schroot_sessions "${schroot_port}" "${schroot_boards[@]}"
+		return 1
+	    fi
 	    rm -rf "$schroot_sysroot"
 	    schroot_port_opt="SCHROOT_PORT=$schroot_port"
 	    schroot_shared_dir_opt="SCHROOT_SHARED_DIR=$builddir"
