@@ -66,7 +66,7 @@ while test $# -gt 0; do
     shift
 done
 
-if test "`echo ${branch} | grep -v gcc.git`" -gt 0; then
+if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
     branch="echo ${branch} | sed -e 's:gcc.git~::'"
 fi
 
