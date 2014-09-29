@@ -460,8 +460,15 @@ make_install()
         local srcdir="`get_srcdir $1 ${2:+$2}`"
         if test `echo ${target} | grep -c aarch64` -gt 0; then
             dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
-        else
+        elif test `echo ${target} | grep -c i.86` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=i386 INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | grep -c x86_64` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | grep -c arm` -gt 0; then
             dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+        else
+            warning "Unknown arch for make headers_install!"
+            return 1
         fi
         if test $? != "0"; then
             warning "Make headers_install failed!"
