@@ -14,7 +14,7 @@ if {[info exists env(PREFIX_UNDER_TEST)]} {
 	set flags "$env(FLAGS_UNDER_TEST)"
     }
     if {[info exists env(SYSROOT_UNDER_TEST)]} {
-	set flags "${flags} $env(SYSROOT_UNDER_TEST)"
+	set flags "${flags} --sysroot=$env(SYSROOT_UNDER_TEST)"
     }
 
     set GCC_UNDER_TEST "[set prefix]gcc $flags"
@@ -66,7 +66,7 @@ case "$target_triplet" in {
     }
     { "aarch64-*linux*" } {
 	case "$myname" in {
-	    { tcwgbuild* toolchain64 tcwg-ex40-*} {
+	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-*} {
 		set target_list { tcwgapm }
 	    }
 	    { tcwg-apm-* } {
@@ -76,14 +76,14 @@ case "$target_triplet" in {
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$myname" in {
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
+	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "*linux-gnu*" } {
 	case "$myname" in {
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
+	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
 		set target_list { tcwgbuild  tcwg-ex40 }
 		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
 	    }
