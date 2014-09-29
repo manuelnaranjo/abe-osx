@@ -362,7 +362,7 @@ make_all()
     local builddir="`get_builddir $1 ${2:+$2}`"
     notice "Making all in ${builddir}"
 
-    if test x"${parallel}" = x"yes"; then
+    if test x"${parallel}" = x"yes" -a "`echo ${tool} | grep -c glibc`" -eq 0; then
 	local make_flags="${make_flags} -j ${cpus}"
     fi
 
