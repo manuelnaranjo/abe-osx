@@ -34,7 +34,7 @@ case "$myname" in {
 }
 
 case "$target_triplet" in { 
-    { "arm-*linux-gnueabi*" } {
+    { "arrm-*linux-gnueabi*" } {
 	case "$myname" in {
 	    { tcwgrob* } {
 		set target_list { tcwgchromebook }
