@@ -1,3 +1,6 @@
-load_generic_config tcwg-common
+load_generic_config arm-linux
 
-set_board_info hostname tcwg-apm-02
+set_board_info protocol ssh
+set_board_info hostname lab.validation.linaro.org
+set_board_info name tcwg-apm-02
+set_board_info port 41038
