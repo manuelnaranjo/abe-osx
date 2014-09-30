@@ -110,6 +110,10 @@ start_schroot_sessions()
 	fi
     done
 
+    if [ -z "$schroot_boards" ]; then
+	return 0
+    fi
+
     schroot_make_opts="SCHROOT_PORT=$port"
     if $shared_dir_ok; then
 	schroot_make_opts="$schroot_make_opts SCHROOT_SHARED_DIR=$shared_dir"
