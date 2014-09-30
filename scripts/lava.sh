@@ -5,7 +5,7 @@ set -o pipefail
 
 release()
 {
-  if test x"${keep}" = x; then
+  if test ${keep} -eq 0; then
     lava-tool cancel-job https://"${lava_server}" "${id}"
     if test $? -eq 0; then
       echo "Cancelled job ${id}" 1>&2
@@ -27,7 +27,7 @@ boot_timeout=90 #1.5 hours - target-dependent pessimism
 lava_server=$1
 lava_json=$2
 boot_timeout=$3
-keep=$4
+keep={$4:-0}
 #thing_to_run=$3
 #cmd_to_run=${4//\"/\\\"}
 #keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
