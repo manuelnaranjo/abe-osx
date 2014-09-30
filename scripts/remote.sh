@@ -2,7 +2,6 @@
 
 topdir=`dirname $0`/..
 . ${topdir}/lib/common.sh
-. ${topdir}/lib/remote.sh
 
 cleanup()
 {
@@ -12,10 +11,6 @@ cleanup()
   #but this is a bit more tidy. We make sure that it is the same process,
   #and not some much later process that happens to have the same id, by
   #checking ppid.
-  if test x"`ps -p ${sshpid} -o ppid=`" = x"$$"; then
-    kill ${sshpid}
-  fi
-
   if test x"${target_dir}" = x; then
     notice "No directory to remove from ${target_ip}"
     exit "${error}"
@@ -109,11 +104,6 @@ done
 #death sooner or later - we can stop ssh client and ssh server from
 #killing the connection, but the TCP layer will get it eventually.
 remote_exec_async ${target_ip} "cd ${target_dir} && ${cmd_to_run}" "${target_dir}/stdout" "${target_dir}/stderr"
-sshpid=$?
-if test ${sshpid} -lt 2; then
-  error "ssh command failed"
-  exit 1
-fi
 #TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
 while true; do
   ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" > /dev/null 2>&1`"
