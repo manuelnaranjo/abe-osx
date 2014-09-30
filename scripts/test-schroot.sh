@@ -271,13 +271,18 @@ if ! [ -z "$shared_dir" ]; then
     test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
-    $rsh $target sshfs -C -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
+    $rsh $target sshfs -C -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
+    res="${PIPESTATUS[0]}"
 
     # Remove temporary key and delete extra empty lines at the end of file.
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
     rm ~/.ssh/id_rsa-test-schroot.$$*
 
-    echo $target:$port shared directory $shared_dir
+    if [ x"$res" = x"0" ]; then
+	echo "$target:$port shared directory $shared_dir: SUCCESS"
+    else
+	echo "$target:$port shared directory $shared_dir: FAIL"
+    fi
 fi
 
 if ! [ -z "$sysroot" ]; then

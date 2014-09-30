@@ -67,8 +67,10 @@ start_schroot_sessions()
     fi
 
     local shared_dir_opt
+    local shared_dir_ok=false
     if ! [ -z "$shared_dir" ]; then
 	shared_dir_opt="-d $shared_dir"
+	shared_dir_ok=true
     fi
 
     local -a board_exps
@@ -83,21 +85,35 @@ start_schroot_sessions()
 	    continue
 	fi
 
+	local log=$(mktemp)
+	local result
 	# This command is very handy to have in logs to reproduce test
 	# environment.
 	set -x
 	# Start testing schroot session.
-	dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $shared_dir_opt $hostname:$port" 1>&2
-	local result="$?"
+	dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $shared_dir_opt $hostname:$port" > $log 2>&1; result="$?"
 	set +x
 
+	cat $log >&2
+
+	if ! grep -q "shared directory .*: SUCCESS" $log; then
+	    shared_dir_ok=false
+	fi
+
+	rm -f $log
+
 	# Print the hostname to the caller
-	echo $hostname
+	schroot_boards="$schroot_boards $hostname"
 
 	if test "$result" != "0"; then
 	    return 1
 	fi
     done
+
+    schroot_make_opts="SCHROOT_PORT=$port"
+    if $shared_dir_ok; then
+	schroot_make_opts="$schroot_make_opts SCHROOT_SHARED_DIR=$shared_dir"
+    fi
 }
 
 # Stop schroot sessions on given boards/ports
