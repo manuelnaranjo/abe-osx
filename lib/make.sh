@@ -538,6 +538,10 @@ make_install()
         return 1
     fi
 
+    if test x"$2" = x"stage2"; then
+	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
+    fi
+
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
         local dynamic_linker
         dynamic_linker="$(find_dynamic_linker "$sysroots")"
@@ -699,7 +703,7 @@ make_check()
 	    local schroot_sysroot
 	    case "${target}" in
 		*"-elf"*) schroot_sysroot="" ;;
-		*) schroot_sysroot="$(make_target_sysroot "${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}")" ;;
+		*) schroot_sysroot="$(make_target_sysroot)" ;;
 	    esac
 	    start_schroot_sessions "${target}" "${schroot_port}" "${schroot_sysroot}" "${builddir}"
 	    if test "$?" != "0"; then
@@ -857,14 +861,17 @@ make_target_sysroot()
 	rm $sysroot/lib
     fi
 
+    echo $sysroot
+}
+
+copy_gcc_libs_to_sysroot()
+{
     local gcc_lib_path
     gcc_lib_path="$(print_gcc_library_path "$@")"
 
     local sysroot_lib_dir
-    sysroot_lib_dir="$(find_dynamic_linker "$sysroot")"
+    sysroot_lib_dir="$(find_dynamic_linker "$sysroots")"
     sysroot_lib_dir="$(dirname $sysroot_lib_dir)"
 
     rsync -a $gcc_lib_path/ $sysroot_lib_dir/
-
-    echo $sysroot
 }
