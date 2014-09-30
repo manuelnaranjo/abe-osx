@@ -50,16 +50,14 @@ AC_SUBST(DBHOST)
 
 CPUS="`getconf _NPROCESSORS_ONLN`"
 AC_SUBST(CPUS)
+CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
+AC_SUBST(CORES)
 LIBC="`getconf GNU_LIBC_VERSION`"
 AC_SUBST(LIBC)
 KERNEL="`uname -r`"
 AC_SUBST(KERNEL)
 BUILDHOST="`${srcdir}/config.guess`"
 BUILD_ARCH="`uname -m`"
-if test x"${BUILD_ARCH}" = x"x86_64" -a -f /etc/debian_chroot; then
-   BUILD_ARCH=i486
-   BUILDHOST="`echo ${BUILDHOST} | sed -e 's:x86_64:i486:'`"
-fi
 AC_SUBST(BUILD_ARCH)
 AC_SUBST(BUILDHOST)
 HOSTNAME="`uname -n`"
@@ -111,26 +109,27 @@ if test x"${AUTOGEN}" = x; then
    missing="${missing} autogen"
 fi
 
-dnl Building GDB requires ncurses and termcap
-AC_CHECK_LIB(ncurses, doupdate)
-if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
-   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
-   missing="${missing} libncurses5-dev"
-fi
-AC_CHECK_LIB(z, gzread)
-
 AC_PATH_PROG(CCRYPT, ccrypt)
 if test x"${CCRYPT}" = x; then
-   AC_MSG_WARN([You need 'ccrypt' to run benchmarks!])
+   AC_MSG_WARN([You need 'ccrypt' to run benchmarks, this can be ignored for builds])
    missing="${missing} ccrypt"
 fi
 
-#The more specific these get, the more it would make sense to have a
-#switch to enable/disable benchmarks, and specific benchmarks
-AC_PATH_PROG(GFORTRAN, gfortran)
-if test x"${GFORTRAN}" = x; then
-   AC_MSG_WARN([You need 'gfortran' to run spec!])
-   missing="${missing} gfortran"
+dnl Building GDB requires ncurses and termcap
+#AC_CHECK_LIB(ncurses, doupdate)
+#if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
+#   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
+#   missing="${missing} libncurses5-dev"
+#fi
+AC_CHECK_LIB(z, gzread)
+
+# Versions of Make before 4.0 have a bug which breaks eglibc builds when
+# using parallel jobs.
+makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+MAKEVERSION="${makeversion}"
+AC_SUBST(MAKEVERSION)
+if test ${makeversion} -lt 400; then
+   AC_MSG_WARN([Make 4.0 is missing, which is required])
 fi
 
 dnl Look for packages that do not have executables, so we are forced
@@ -145,7 +144,7 @@ result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
-       packages="${packages} gcc-multilib g++-multilib"   
+       packages="${packages} gcc-multilib g++-multilib libncurses5-dev"
     fi
     for i in ${packages}; do
     AC_MSG_CHECKING([if $i is installed])
@@ -164,6 +163,7 @@ else
 yum="`which yum 2> /dev/null`"
 result=$?
 if test ${result} -eq 0; then
+    packages="${packages} ncurses-devel"
     for i in ${packages}; do
         AC_MSG_CHECKING([if $i is installed])
         exists="`rpm -q -a $i| grep -c $i`"
@@ -242,7 +242,7 @@ AC_ARG_WITH(sources-conf,
   SOURCES_CONF="${srcdir}/config/sources.conf")
 AC_SUBST(SOURCES_CONF)
 
-CBUILD_PATH=${srcdir}
+CBUILD_PATH=$(readlink -f ${srcdir})
 AC_SUBST(CBUILD_PATH)
 
 dnl The top of the cbuild tree
@@ -271,6 +271,13 @@ if test ! -d ${LOCAL_SNAPSHOTS}; then
    mkdir -p ${LOCAL_SNAPSHOTS}
 fi
 
+dnl The local directory where reference git repos are stored
+AC_ARG_WITH(git-reference-dir,
+  AC_HELP_STRING([--with-git-reference-dir], [Where reference git repos are stored, see git-clone --reference]),
+  GIT_REFERENCE_DIR=${withval},
+  GIT_REFERENCE_DIR="")
+AC_SUBST(GIT_REFERENCE_DIR)
+
 dnl The top directory for make install, also where all the components we build live
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
@@ -298,6 +305,12 @@ AC_MSG_NOTICE([Sysroots will be installed in: ${SYSROOTS}])
 AC_MSG_NOTICE([Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}])
 echo ""
 
+AC_ARG_WITH(languages,
+  AC_HELP_STRING([--with-languages], [List of languages for the compiler]),
+  WITH_LANGUAGES=${withval},
+  WITH_LANGUAGES='default')
+AC_SUBST(WITH_LANGUAGES)
+
 dnl if you have SSH access to the remote machine
 AC_ARG_ENABLE(ssh, AC_HELP_STRING([--enable-ssh], [If you have SSH access to remote build host]),
 [case "${enableval}" in
@@ -306,6 +319,69 @@ AC_ARG_ENABLE(ssh, AC_HELP_STRING([--enable-ssh], [If you have SSH access to rem
   *)   AC_MSG_WARN([bad value ${enableval} for enable-ssh option]) ;;
 esac], ENABLE_SSH=no)
 AC_SUBST(ENABLE_SSH)
+
+dnl if you want to do bootstrap by default
+AC_ARG_ENABLE(bootstrap, AC_HELP_STRING([--enable-bootstrap], [If you want to do bootstrap by default]),
+[case "${enableval}" in
+  yes) ENABLE_BOOTSTRAP=yes ;;
+  no)  ENABLE_BOOTSTRAP=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-bootstrap option]) ;;
+esac], ENABLE_BOOTSTRAP=no)
+AC_SUBST(ENABLE_BOOTSTRAP)
+
+dnl if you want to run all tests by default
+AC_ARG_ENABLE(alltests, AC_HELP_STRING([--enable-alltests], [If you want to run all tests by default]),
+[case "${enableval}" in
+  yes) ENABLE_ALLTESTS=yes ;;
+  no)  ENABLE_ALLTESTS=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-alltests option]) ;;
+esac], ENABLE_ALLTESTS=no)
+AC_SUBST(ENABLE_ALLTESTS)
+
+dnl if you want to install by default
+AC_ARG_ENABLE(install, AC_HELP_STRING([--enable-install], [If you want to install by default]),
+[case "${enableval}" in
+  yes) ENABLE_INSTALL=yes ;;
+  no)  ENABLE_INSTALL=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-install option]) ;;
+esac], ENABLE_INSTALL=yes)
+AC_SUBST(ENABLE_INSTALL)
+
+dnl if you want to disable the building of the package documents.
+AC_ARG_ENABLE(make-docs, AC_HELP_STRING([--enable-make-docs], [If you want to enable making package documentation]),
+[case "${enableval}" in
+  yes) ENABLE_MAKE_DOCS=yes ;;
+  no)  ENABLE_MAKE_DOCS=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-make-docs option]) ;;
+esac], ENABLE_MAKE_DOCS=yes)
+AC_SUBST(ENABLE_MAKE_DOCS)
+
+dnl if you want to enable schroot-based testing by default
+AC_ARG_ENABLE(schroot-test, AC_HELP_STRING([--enable-schroot-test], [If you want to used schroot-based testing by default]),
+[case "${enableval}" in
+  yes) ENABLE_SCHROOT_TEST=yes ;;
+  no)  ENABLE_SCHROOT_TEST=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-schroot-test option]) ;;
+esac], ENABLE_SCHROOT_TEST=no)
+AC_SUBST(ENABLE_SCHROOT_TEST)
+
+dnl if you want to update sources by default
+AC_ARG_ENABLE(source-update, AC_HELP_STRING([--enable-source-update], [If you want to update sources by default]),
+[case "${enableval}" in
+  yes) ENABLE_SOURCE_UPDATE=yes ;;
+  no)  ENABLE_SOURCE_UPDATE=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-source-update option]) ;;
+esac], ENABLE_SOURCE_UPDATE=yes)
+AC_SUBST(ENABLE_SOURCE_UPDATE)
+
+dnl if you want to update sources by default
+AC_ARG_ENABLE(parallel, AC_HELP_STRING([--enable-parallel], [If you want to build with make -j<number of CPUs> by default]),
+[case "${enableval}" in
+  yes) ENABLE_PARALLEL=yes ;;
+  no)  ENABLE_PARALLEL=no ;;
+  *)   AC_MSG_WARN([bad value ${enableval} for enable-parallel option]) ;;
+esac], ENABLE_PARALLEL=yes)
+AC_SUBST(ENABLE_PARALLEL)
 
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
@@ -330,22 +406,29 @@ if test x"${DEJAGNU}" = x; then
    missing="${missing} dejagnu"
 fi
 
-AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
-if test x"${NEWWORKDIR}" = x; then
-   AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
-#   missing="${missing} git-new-workdir"
-fi
-
 AC_PATH_PROG(MAKEINFO,makeinfo)
 # Texinfo 5 can't process the gcc texinfo files until they are fixed, 
 # so we have to disable it for Ubuntu 14.04 "trusty".
 if test `lsb_release -i -s` = "Ubuntu"; then
    texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
    if test "${texversion}" -gt 4; then
-      MAKEINFO="echo"
+dnl      MAKEINFO="echo"
+         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
    fi
 fi
 AC_SUBST(MAKEINFO)
+
+AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
+   if test x"${NEWWORKDIR}" = x; then
+      AC_MSG_WARN([You need to install git-new-workdir to use GIT!])
+      AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
+      missing="${missing} git-new-workdir"
+fi
+
+# A symbolic link needs to be made in this directory
+#if test -w /opt/linaro -eq 0; then
+#   AC_MSG_WARN([/opt/linaro is not writable!])
+#fi
 
 AC_OUTPUT(host.conf)
 
