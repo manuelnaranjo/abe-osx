@@ -176,7 +176,9 @@ $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} -
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
-case "$(hostname)" in
+case "$(hostname):${target}" in
+    # !!! Temporarily reduce to 4 so that tcwg-chrome2-01 doesn't crash.
+    "tcwg-ex40-"*":arm-linux-gnueabi"*) sed -i -e "s/cpus=8/cpus=4/" host.conf ;;
     "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
 esac
 
