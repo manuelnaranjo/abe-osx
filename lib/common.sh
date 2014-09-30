@@ -31,6 +31,7 @@ set -o pipefail
 . "${topdir}/lib/testcode.sh" || exit 1
 . "${topdir}/lib/git-parser.sh" || exit 1
 . "${topdir}/lib/stamp.sh" || exit 1
+. "${topdir}/lib/remote.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -69,7 +70,7 @@ dryrun()
 	    return $?
 	fi
         echo "RUN: $1"
-	eval $1
+	eval "$1"
 	return $?
     fi
 
