@@ -107,7 +107,7 @@ done
 remote_exec_async ${target_ip} "cd ${target_dir} && ${cmd_to_run}" "${target_dir}/stdout" "${target_dir}/stderr"
 #TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
 while true; do
-  ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" > /dev/null 2>&1`"
+  ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" 2>/dev/null`"
   if test $? -eq 0; then
     ret="`echo $ret | cut -d ' ' -f 3`"
     break
