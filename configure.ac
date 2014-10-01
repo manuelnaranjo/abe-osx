@@ -125,12 +125,12 @@ AC_CHECK_LIB(z, gzread)
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
-MAKEVERSION="${makeversion}"
-AC_SUBST(MAKEVERSION)
-if test ${makeversion} -lt 400; then
-   AC_MSG_WARN([Make 4.0 is missing, which is required])
-fi
+#makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+#MAKEVERSION="${makeversion}"
+#AC_SUBST(MAKEVERSION)
+#if test ${makeversion} -lt 400; then
+#   AC_MSG_WARN([Make 4.0 is missing, which is required])
+#fi
 
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
