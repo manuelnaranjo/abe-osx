@@ -325,7 +325,6 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	done
 
 	logs_dir=$(mktemp -d)
-	mkdir -p ${logs_dir}
 	cp ${sums} ${test_logs} ${logs_dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
