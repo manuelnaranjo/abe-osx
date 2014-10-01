@@ -431,16 +431,20 @@ make_all()
 
 # Print path to dynamic linker in sysroot
 # $1 -- sysroot path
+# $2 -- whether dynamic linker is expected to exist
 find_dynamic_linker()
 {
     local sysroots="$1"
+    local strict="$2"
     local dynamic_linker c_library_version
 
     # Programmatically determine the embedded glibc version number for
     # this version of the clibrary.
-    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
-    dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
-    if [ -z "$dynamic_linker" ]; then
+    if test -x "${sysroots}/usr/bin/ldd"; then
+	c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
+	dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
+    fi
+    if $strict && [ -z "$dynamic_linker" ]; then
         error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
         exit 1
     fi
@@ -544,7 +548,7 @@ make_install()
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
         local dynamic_linker
-        dynamic_linker="$(find_dynamic_linker "$sysroots")"
+        dynamic_linker="$(find_dynamic_linker "$sysroots" true)"
         local dynamic_linker_name="`basename ${dynamic_linker}`"
 
         # aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
@@ -870,8 +874,12 @@ copy_gcc_libs_to_sysroot()
     gcc_lib_path="$(print_gcc_library_path "$@")"
 
     local sysroot_lib_dir
-    sysroot_lib_dir="$(find_dynamic_linker "$sysroots")"
-    sysroot_lib_dir="$(dirname $sysroot_lib_dir)"
+    sysroot_lib_dir="$(find_dynamic_linker "${sysroots}" false)"
+    if ! test -z "${sysroot_lib_dir}"; then
+	sysroot_lib_dir="$(dirname ${sysroot_lib_dir})"
+    else
+	sysroot_lib_dir="${sysroots}/usr/lib"
+    fi
 
     rsync -a $gcc_lib_path/ $sysroot_lib_dir/
 }
