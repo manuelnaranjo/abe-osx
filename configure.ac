@@ -424,6 +424,7 @@ AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
       AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
       missing="${missing} git-new-workdir"
 fi
+AC_SUBST(NEWWORKDIR)
 
 # A symbolic link needs to be made in this directory
 #if test -w /opt/linaro -eq 0; then
