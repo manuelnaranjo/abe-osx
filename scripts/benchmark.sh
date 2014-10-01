@@ -33,7 +33,7 @@ clean_benchmark()
     exit 1
   fi
 
-  (. ${topdir}/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
+  (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
   if test $? -eq 0; then
     echo "Removed ${target_dir} from ${ip}" 1>&2
     exit "${error}"
@@ -58,6 +58,7 @@ run_benchmark()
       local lava_target="${ip}"
       ip=''
       echo "Acquiring LAVA target ${lava_target}"
+      echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout} ${keep}" 1>&2
 
       #Downside of this approach is that bash syntax errors from lava.sh get reported as occurring at non-existent lines - but it is
       #otherwise quite neat. And you can always run lava.sh separately to get the correct error.
@@ -68,7 +69,7 @@ run_benchmark()
       fi
       while read line <&3; do
         echo "${lava_target}: $line"
-        if echo "${line}" | grep '^LAVA target ready at '; then
+        if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
           ip="`echo ${line} | cut -d ' ' -f 5`"
           break
         fi
@@ -78,7 +79,7 @@ run_benchmark()
         exit 1
       fi
     fi
-    #Now LAVA-agnostic
+    #LAVA-agnostic from here
 
     #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
     #having an ssh config equivalent to TODO wikiref

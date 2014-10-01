@@ -58,7 +58,7 @@ fi
 #security issue here.)
 if test x"$key" = x; then
   if ssh-add -l; then
-    key="`ssh-add -L | head -n1`"
+    key="`ssh-add -L | head -n1 2>/dev/null`"
     if test $? -ne 0; then
       echo "Failed to get public key from ssh-agent" 1>&2
       exit 1
@@ -94,24 +94,22 @@ fi
 #Danger - Don't change the sed runes to backticks, they resolve differently and render all the matches as ampersands
 key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 
-#TODO: Error check, make parameterisable?
-t2=`mktemp -t XXXXXXXXX` || exit 1
-sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"/" $lava_json > $t2
+json_copy=`mktemp -t XXXXXXXXX` || exit 1
+sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"/" ${lava_json} > "${json_copy}"
 if test $? -ne 0; then
-  echo "Failed to populate json file with public key"
+  echo "Failed to populate json file with public key" 1>&2
+  rm -f "${json_copy}"
   exit 1
 fi
-#TODO submit-results/bundle stream
 
-
-id="`lava-tool submit-job https://${lava_server} ${t2}`"
+id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
-  echo "Failed to submit job" > /dev/stderr
-  rm -f $t2
+  echo "Failed to submit job" 1>&2
+  rm -f "${json_copy}"
   exit 1
 fi
 trap release EXIT
-rm -f $t2
+rm -f "${json_copy}"
 
 #TODO: Should be able to use cut at the end of this pipe, but when lava-tool
 #      is invoked through expect wrapper this line ends up with a carriage return 
@@ -119,16 +117,16 @@ rm -f $t2
 #      be discarded, but hack it here for now.
 id="`echo ${id} | grep 'submitted as job id: [[:digit:]]\+' | grep -o '[[:digit:]]\+'`"
 if test $? -ne 0; then
-  echo "Failed to read job id" > /dev/stderr
+  echo "Failed to read job id" 1>&2
   exit 1
 fi
-echo "Dispatched LAVA job $id"
+echo "Dispatched LAVA job ${id}"
 
 while true; do
   sleep 60
   jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
-    echo "Job ${id} disappeared!"
+    echo "Job ${id} disappeared!" 1>&2
     exit 1
   fi
   echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
