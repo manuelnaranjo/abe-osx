@@ -4197,6 +4197,7 @@ $as_echo "$as_me: copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /us
       missing="${missing} git-new-workdir"
 fi
 
+
 # A symbolic link needs to be made in this directory
 #if test -w /opt/linaro -eq 0; then
 #   AC_MSG_WARN([/opt/linaro is not writable!])
