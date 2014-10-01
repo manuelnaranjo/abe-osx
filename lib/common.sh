@@ -69,7 +69,7 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-        echo "RUN: $1"
+        echo "RUN: $1" 1>&2
 	eval "$1"
 	return $?
     fi
