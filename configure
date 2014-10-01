@@ -608,7 +608,6 @@ CBUILD_PATH
 SOURCES_CONF
 CBUILD_TOP
 BUILDDATE
-MAKEVERSION
 CCRYPT
 AUTOGEN
 BISON
@@ -3575,13 +3574,12 @@ fi
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
-MAKEVERSION="${makeversion}"
-
-if test ${makeversion} -lt 400; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Make 4.0 is missing, which is required" >&5
-$as_echo "$as_me: WARNING: Make 4.0 is missing, which is required" >&2;}
-fi
+#makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+#MAKEVERSION="${makeversion}"
+#AC_SUBST(MAKEVERSION)
+#if test ${makeversion} -lt 400; then
+#   AC_MSG_WARN([Make 4.0 is missing, which is required])
+#fi
 
 #packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="texinfo gawk"
