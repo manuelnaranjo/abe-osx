@@ -20,6 +20,7 @@ cleanup()
     exit "${error}"
   fi
 
+  #TODO: This is getting false negatives
   expr "${target_dir}" : '\(/tmp\)' > /dev/null
   if test $? -ne 0; then
     error "Cowardly refusing to delete ${target_dir} from ${target_ip}. Not rooted at /tmp. You might want to go in and clean up."
