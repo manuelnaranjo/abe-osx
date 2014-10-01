@@ -37,11 +37,12 @@ case "$target_triplet" in {
     { "arm-*linux-gnueabi*"} {
 	case "$myname" in {
 	    { tcwgrob* } {
-		set target_list { tcwgchromebook }
+#		set target_list { tcwgchromebook }
 #		set target_list { arm-chromebook }
+		set target_list { tcwgd01 }
 	    }
 	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgchrome2 }
+		set target_list { tcwgd01 }
 	    }
 	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
 		set target_list { unix }
