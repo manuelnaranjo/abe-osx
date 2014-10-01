@@ -324,7 +324,7 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
 
-	logs_dir=$(mktemp)
+	logs_dir=$(mktemp -d)
 	mkdir -p ${logs_dir}
 	cp ${sums} ${test_logs} ${logs_dir}/
 	
@@ -341,6 +341,7 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 
 	xz ${logs_dir}/*
 	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
+	rm -rf ${logs_dir}
 	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
