@@ -3,7 +3,6 @@ load_generic_config arm-linux
 set_board_info protocol ssh
 set_board_info hostname lab.validation.linaro.org
 set_board_info name tcwg-d01-01
-set_board_info username tcwg
 set_board_info port 41040
 set_board_info gcc,timeout 1000
 
