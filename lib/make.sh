@@ -840,15 +840,6 @@ EOF
     return 0
 }
 
-# Print path to GCC's shared libraries
-# $1 - compiler and its flags
-print_gcc_library_path()
-{
-    local compiler="$1"
-    lib_path="$($compiler -print-file-name=libgcc_s.so)"
-    dirname "$lib_path"
-}
-
 # Make a single-use target sysroot with all shared libraries for testing.
 # NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
 # $1 - compiler (and any compiler flags) to query multilib information
@@ -868,18 +859,29 @@ make_target_sysroot()
     echo $sysroot
 }
 
+# $1 - compiler (and any compiler flags) to query multilib information
 copy_gcc_libs_to_sysroot()
 {
+    local libgcc
+    local ldso
     local gcc_lib_path
-    gcc_lib_path="$(print_gcc_library_path "$@")"
-
     local sysroot_lib_dir
-    sysroot_lib_dir="$(find_dynamic_linker "${sysroots}" false)"
-    if ! test -z "${sysroot_lib_dir}"; then
-	sysroot_lib_dir="$(dirname ${sysroot_lib_dir})"
+
+    ldso="$(find_dynamic_linker "${sysroots}" false)"
+    if ! test -z "${ldso}"; then
+	libgcc="libgcc_s.so"
+    else
+	libgcc="libgcc.a"
+    fi
+
+    libgcc="$($@ -print-file-name=${libgcc})"
+    gcc_lib_path="$(dirname "${libgcc}")"
+
+    if ! test -z "${ldso}"; then
+	sysroot_lib_dir="$(dirname ${ldso})"
     else
 	sysroot_lib_dir="${sysroots}/usr/lib"
     fi
 
-    rsync -a $gcc_lib_path/ $sysroot_lib_dir/
+    rsync -a ${gcc_lib_path}/ ${sysroot_lib_dir}/
 }
