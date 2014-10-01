@@ -21,24 +21,82 @@ release()
   fi
 }
 
-boot_timeout=90 #1.5 hours - target-dependent pessimism
+lava_server="${LAVA_SERVER}"
+lava_json=
+boot_timeout=120 #2 hours
+keep=0
+key=
+while getopts s:j:b:kp: flag; do
+  case "${flag}" in
+    s) lava_server="${OPTARG}";;
+    j) lava_json="${OPTARG}";;
+    b) boot_timeout="${OPTARG}";;
+    k) keep=1;;
+    p) key="${OPTARG}";;
+    *)
+       echo 'Unknown option' 1>&2
+       exit 1
+    ;;
+  esac
+done
 
-#TODO: error checks here
-lava_server=$1
-lava_json=$2
-boot_timeout=$3
-keep={$4:-0}
-#thing_to_run=$3
-#cmd_to_run=${4//\"/\\\"}
-#keyfile=$5 #Must have suitable permissions. Could be the same private key we're using for ssh authentication.
+expr ${lava_server:?'Must give a lava server (-l) or set $LAVA_SERVER'} > /dev/null
 
-#Make public key safe to use in a sed replace string
-#Danger - Don't change to backticks, they resolve differently and render all the matches as ampersands
-subkey=$(ssh-keygen -y -f ~/.ssh/id_rsa | sed 's/[\/&]/\\&/g')
+if ! test -f ${lava_json:?'Must give a json file (-j)'}; then
+  echo "JSON file ${lava_json} not a file"
+  exit 1
+fi
+
+shift $((OPTIND - 1))
+if test ${#@} -ne 0; then
+  echo "Unknown option(s): $@" 1>&2
+  exit 1
+fi
+
+#Store the public key in key - if no public key file given on CLI, try a few
+#sensible defaults. (We only ever end up sharing a public key, so there's no
+#security issue here.)
+if test x"$key" = x; then
+  if ssh-add -l; then
+    key="`ssh-add -L | head -n1`"
+    if test $? -ne 0; then
+      echo "Failed to get public key from ssh-agent" 1>&2
+      exit 1
+    fi
+  elif test -f ~/.ssh/id_rsa; then
+    key="`ssh-keygen -y -f ~/.ssh/id_rsa`"
+    if test $? -ne 0; then
+      echo "Failed to get public key from private key file" 1>&2
+      exit 1
+    fi
+  else
+    echo "Could not find a key to authenticate with target (tried ssh-agent, ~/.ssd/id_rsa)" 1>&2
+    exit 1
+  fi
+else
+  if test -f "${key}"; then
+    #Build in a little protection against accidental private key publication
+    if head -n 1 "${key}" | grep PRIVATE > /dev/null; then
+      echo "Given key file appears to be a private key"
+      exit 1
+    elif head -n 1 "${key}" | grep -v ^ssh-; then
+      echo "Given key file does not look like an ssh public key"
+      exit 1
+    fi
+    key="`cat ${key}`"
+  else
+    echo "Public key file ${key} does not exist or is not a file" 1>&2
+    exit 1
+  fi
+fi
+
+#Convert key into a sed-friendly replacement string (i.e. escape chars that are special on the RHS of s//)
+#Danger - Don't change the sed runes to backticks, they resolve differently and render all the matches as ampersands
+key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 
 #TODO: Error check, make parameterisable?
 t2=`mktemp -t XXXXXXXXX` || exit 1
-sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${subkey}\"/" $lava_json > $t2
+sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"/" $lava_json > $t2
 if test $? -ne 0; then
   echo "Failed to populate json file with public key"
   exit 1
