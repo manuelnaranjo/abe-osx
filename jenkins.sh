@@ -335,6 +335,10 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	# Copy over the build logs
 	logs="`find ${user_workspace} -name make\*.log`"
 	cp ${logs} ${logs_dir}/
+
+	# Copy stdout and stderr output from cbuild2.
+	cp ${user_workspace}/build.out ${user_workspace}/build.err ${logs_dir}/
+
 	xz ${logs_dir}/*
 	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
 	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
