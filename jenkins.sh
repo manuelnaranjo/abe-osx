@@ -192,7 +192,7 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --timeout 100 --build all > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If cbuild2 returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
