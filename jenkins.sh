@@ -323,16 +323,20 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	for s in ${sums}; do
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
-	scp ${sums} $test_logs ${fileserver}:${basedir}/${dir}/
+
+	logs_dir=$(mktemp)
+	mkdir -p ${logs_dir}
+	cp ${sums} ${test_logs} ${logs_dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${user_workspace} -name check\*.log`"
-	scp ${checks} ${fileserver}:${basedir}/${dir}/
+	cp ${checks} ${logs_dir}/
 	
 	# Copy over the build logs
 	logs="`find ${user_workspace} -name make\*.log`"
-	scp ${logs} ${fileserver}:${basedir}/${dir}/
-	ssh ${fileserver} xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
+	cp ${logs} ${logs_dir}/
+	xz ${logs_dir}/*
+	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
 	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
