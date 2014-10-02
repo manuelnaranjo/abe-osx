@@ -19,7 +19,9 @@
                 "testdef": "bench-session-debian.yaml",
                 "parameters": {
                     "GATEWAY": "10.0.0.1",
-                    "PUB_KEY": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDxxBKzwNVJby3AHewSvtlUE2lJj21dP1YH9vM3BxsxwxRXTcGRnCRdVT1Rx9Oij5qWWi5WTooyxDD5m032YLjTg19Sig4IlA83vFK0SCmZT6nCXuX++bOaoHjmkx9R951w2dSdbNzzX/zR09b0HWCXGXgzhco5w8PWLtio+UPlrQm/YlCGoZeFiBzDoIgI/AGq8BDouB36X6jj3lXOBlR0+7qnn+hqp4P5FkiTE8uRNlnyDdLZvFMzgVb3Buhm3bQpYAUX+agzeQPg5sw8P3ANzjyjslhlsxWoOimwBpExfxsaPAlhlRDhLX+e/VRwYxWBsN/WoUQrEyxLl9Bvl9Kv"
+                    "PUB_KEY": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDxxBKzwNVJby3AHewSvtlUE2lJj21dP1YH9vM3BxsxwxRXTcGRnCRdVT1Rx9Oij5qWWi5WTooyxDD5m032YLjTg19Sig4IlA83vFK0SCmZT6nCXuX++bOaoHjmkx9R951w2dSdbNzzX/zR09b0HWCXGXgzhco5w8PWLtio+UPlrQm/YlCGoZeFiBzDoIgI/AGq8BDouB36X6jj3lXOBlR0+7qnn+hqp4P5FkiTE8uRNlnyDdLZvFMzgVb3Buhm3bQpYAUX+agzeQPg5sw8P3ANzjyjslhlsxWoOimwBpExfxsaPAlhlRDhLX+e/VRwYxWBsN/WoUQrEyxLl9Bvl9Kv",
+                    "LISTENER_ADDR": "",
+                    "LISTENER_PORT": ""
                 }
             }
         ],

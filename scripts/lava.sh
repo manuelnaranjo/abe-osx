@@ -11,6 +11,12 @@ release()
       echo "Failed to delete temporary file store ${temps}" 1>&2
     fi
   fi
+  if test x"${listener_pid}" != x; then
+    if ps -p "${listener_pid}"; then
+      kill "${listener_pid}"
+      wait "${listener_pid}"
+    fi
+  fi
   if test ${keep} -eq 0; then
     lava-tool cancel-job https://"${lava_server}" "${id}"
     if test $? -eq 0; then
@@ -29,14 +35,14 @@ release()
 
 lava_server="${LAVA_SERVER}"
 lava_json=
-boot_timeout=120 #2 hours
+boot_timeout="$((120*60))" #2 hours
 keep=0
 key=
 while getopts s:j:b:kp: flag; do
   case "${flag}" in
     s) lava_server="${OPTARG}";;
     j) lava_json="${OPTARG}";;
-    b) boot_timeout="${OPTARG}";;
+    b) boot_timeout="$((OPTARG*60))";;
     k) keep=1;;
     p) key="${OPTARG}";;
     *)
@@ -103,9 +109,72 @@ key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 trap "if test -d ${temps}; then rm -rf ${temps}; fi" EXIT
 json_copy="${temps}/job.json"
+listener_file="${temps}/listener_file"
 sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" ${lava_json} > "${json_copy}"
 if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
+  exit 1
+fi
+
+listener_addr=`hostname -I`
+if test x"`echo ${listener_addr} | wc -l`" != x1; then
+  echo "Warning: Multiple IPs found for current host, will use first one" 1>&2
+fi
+listener_addr="`hostname -I | head -n1 | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'`"
+if ! echo "${listener_addr}" | grep '^\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+$' > /dev/null; then
+  echo "${listener_addr} does not look like an IP address" 1>&2
+  exit 1
+fi
+
+for listener_port in {4100..5100}; do
+  #Try to listen on the port. nc will fail if something has snatched it.
+  echo "Attempting to establish listener on ${listener_addr}:${listener_port}" 1>&2
+  nc -kl "${listener_addr}" "${listener_port}" > "${listener_file}"&
+  listener_pid=$!
+
+  #nc doesn't confirm that it's got the port, so we spin until either:
+  #1) We see that the port has been taken by our process
+  #2) We see our process exit (implying that the port was taken)
+  #3) We've waited long enough
+  #(listener_pid can't be reused until we wait on it)
+  for j in {1..5}; do
+    if test x"`lsof -i tcp@${listener_addr}:${listener_port} | sed 1d | awk '{print $2}'`" = x"${listener_pid}"; then
+      break 2; #success, exit outer loop
+    elif ! ps -p "${listener_pid}" > /dev/null; then
+      #listener has exited, reap it and go back to start of outer loop
+      wait "${listener_pid}"
+      listener_pid=
+      continue 2
+    else
+      sleep 1
+    fi
+  done
+
+  #We gave up waiting, kill and reap the nc process
+  kill "${listener_pid}"
+  wait "${listener_pid}"
+  listener_pid=
+done
+
+#Pretty much use this as a fifo - had trouble when using an actual fifo,
+#either in netcat or in my fingers
+exec 4< <(tail -f "${listener_file}")
+
+if test x"${listener_pid}" != x; then
+  echo "Listener pid ${listener_pid} at ${listener_addr}:${listener_port}, writing to file ${listener_file}"
+else
+  echo "Failed to find a free port in range 4100-5100" 1>&2
+  exit 1
+fi
+
+sed -i "s/^\(.*\"LISTENER_ADDR\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${listener_addr}\"\2/" "${json_copy}"
+if test $? -ne 0; then
+  echo "Failed to populate json file with listener ip" 1>&2
+  exit 1
+fi
+sed -i "s/^\(.*\"LISTENER_PORT\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${listener_port}\"\2/" "${json_copy}"
+if test $? -ne 0; then
+  echo "Failed to populate json file with listener port" 1>&2
   exit 1
 fi
 
@@ -141,34 +210,20 @@ while true; do
   fi
 done
 
-#TODO: A more generic approach would take a regexp to watch for boot completion as a parameter, and echo it
-#      for caller to extract interesting information from
-for ((i=0; i<${boot_timeout}; i++)); do
-  sleep 60
+read -t "${boot_timeout}" user_ip <&4
 
-  #Check job is still running - sometimes jobs just give up during boot
-  lava-tool job-status https://${lava_server} ${id} | grep 'Job Status: Running' > /dev/null
-  if test $? -ne 0; then
-    echo "LAVA target stopped running before boot completed" 1>&2
-    exit 1 #TODO A few retries would be better than quitting - perhaps:
-           #     release (would need to change the exits to returns, may be ok - would also want to force keep=0)
-           #eval "$0" "$@" (will this screw up the process relationships - eg will we still get killed when we should, will we still return error codes to parent?)
-  fi
-  
-  #Check the log to see if we are booted
-  line="`lava-tool job-output https://$lava_server $id -o - | cat -v | sed 's/[[:blank:]]*\r$//' | grep 'Please connect to: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+ (.\+)'`"
-  if test $? -eq 0; then
-    user_ip=`echo $line | grep -o '[^[:blank:]]\+@\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+'`
-    echo "LAVA target ready at ${user_ip}"
-    break
-  fi
-done
-
-#TODO: A more generic approach would be able to block forever (as we do now), OR poll for a 
-#      string indicating job completion and then exit 0
-if test $i -eq ${boot_timeout}; then
-  echo "LAVA boot failed, or abandoned after ${boot_timeout} minutes" 1>&2
+if test $? -ne 0; then
+  echo "read -t ${boot_timeout} user_ip < ${listener_file}"
   exit 1
-else
-  sleep infinity #block until we get killed (which will release the target)
 fi
+if test x"${user_ip}" = x; then
+  echo "LAVA boot failed, or abandoned after $((boot_timeout/60)) minutes" 1>&2
+  exit 1
+fi
+
+echo "LAVA target ready at ${user_ip}"
+#Continue to report whatever comes across the listener
+while true; do
+  read line <&4
+  echo "${line}"
+done
