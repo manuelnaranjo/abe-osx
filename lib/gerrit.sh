@@ -22,25 +22,36 @@
 
 add_gerrit_comment ()
 {
-    ssh review.linaro.org gerrit review --code-review %s -m "\"%s"\" %s' % (gerrit_server, review, message, GERRIT_PATCHSET_REVISION)'
+    local manifest=$1
+    local revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
+
+    ssh review.linaro.org gerrit review --code-review %s -m "\"%s"\" %s' % (gerrit_server, review, message, ${revision})'
 
 }
 
 notify_committer ()
 {
-#    message_list= []
-#    message_list.append('* Hello %s' % os.environ['GERRIT_CHANGE_OWNER_NAME'])
-#    message_list.append('* Your patch set %s has triggered automated testing.' % os.environ['GERRIT_PATCHSET_REVISION'])
-#    message_list.append('* Please do not merge this commit until after I have reviewed the results with you.')
-#    message_list.append('* %s' % os.environ['BUILD_URL'])
-#    message = '\n'.join(message_list)
-#    if debug:
-#        print message
-#    add_gerrit_comment(message, 0)
+    local manifest=$1
+
+    # The email address of the requester is only added by Jenkins, so this will fail
+    # for a manual build.
+    local userid="`grep 'email=' ${manifest} | cut -d '=' -f 2`"
+    local revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
+
+    cat <<EOF > /tmp/notify$.txt
+Hello ${userid})
+Your patch set ${revision} has triggered automated testing.'
+Please do not merge this commit until after I have reviewed the results with you.'
+EOF
+
+    add_gerrit_comment /tmp/notify$.txt
 }
 
 publish_results ()
 {
+    local manifest=$1
+    local build_url="`grep 'build_url=' ${manifest} | cut -d '=' -f 2`"
+
 #    test_results = os.environ['BUILD_URL'] + 'console'
 #    result_message_list.append('* TEST RESULTS: %s' % test_results)
 #    result_message = '\n'.join(result_message_list)
