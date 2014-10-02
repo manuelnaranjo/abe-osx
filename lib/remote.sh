@@ -40,6 +40,33 @@
 ##grep "\"" ~/file
 ##So x ends up as the non-expanded, non-globbed output of that grep command
 
+remote_download()
+{
+  local target="$1"
+  local sourcefile="$2"
+  local destfile="$3"
+  if test x"${target}" = x; then
+    error "target not specified"
+    return 1
+  fi
+  if test x"${sourcefile}" = x; then
+    error "file/dir to copy not specified"
+    return 1
+  fi
+  if test x"${destfile}" = x; then
+    destfile="${sourcefile}"
+  fi
+  dryrun "rsync -e 'ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR' -avzx '${target}:${sourcefile}' '${destfile}' > /dev/null 2>&1"
+  if test $? -ne 0; then
+    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
+    if test $? -ne 0; then
+      error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
+      return 1
+    fi
+  fi
+  return 0
+}
+
 remote_upload()
 {
   local target="$1"

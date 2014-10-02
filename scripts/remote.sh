@@ -123,10 +123,9 @@ if test ${ret} -ne 0; then
   ret=1
 fi 
 for log in stdout stderr "$@"; do
-  remote_exec "${target_ip}" "cd '${target_dir}' && cat '${log}'" | ccencrypt -k ~/.ssh/id_rsa > "${logdir}/${uid}/${log}" #TODO what about ssh-agent?
+  remote_download "${target_ip}" "${target_dir}/${log}" "${logdir}/${uid}/${log}"
   if test $? -ne 0; then
-    rm -f "${logdir}/${uid}/${log}" #We just encrypted nothing into this file, delete it to avoid confusion
-    error "Failed to get encrypted log ${log}: will try to get others"
+    error "Error while getting log ${log}: will try to get others"
     ret=1
   fi
 done
