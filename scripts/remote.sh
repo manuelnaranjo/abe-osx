@@ -130,9 +130,4 @@ for log in stdout stderr "$@"; do
     ret=1
   fi
 done
-if test ${ret} -eq 0; then
-  if test x`ccat -k ~/.ssh/id_rsa ${logdir}/${uid}/stdout | grep -c '^EXIT CODE: [[:digit:]]'` = x1; then
-    ret=`ccat -k ~/.ssh/id_rsa ${logdir}/${uid}/stdout | grep '^EXIT CODE: [[:digit:]]' | sed 's/[^[:digit:]]*//'`
-  fi
-fi
 exit ${ret}
