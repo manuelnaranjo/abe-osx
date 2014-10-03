@@ -6,4 +6,6 @@ set_board_info name tcwg-d01-01
 set_board_info port 41040
 set_board_info gcc,timeout 1000
 
+set_board_info ldflags "-static"
+
 set timeout 1000

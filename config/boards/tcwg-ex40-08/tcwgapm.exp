@@ -1,3 +1,4 @@
 load_generic_config arm-linux
 
+set_board_info ldflags "-static"
 set_board_info hostname tcwg-apm-01
