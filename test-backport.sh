@@ -86,7 +86,7 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
-resultsdir="/tmp/cbuild@"
+resultsdir="/tmp/cbuild-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
     bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
