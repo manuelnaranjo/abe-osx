@@ -58,83 +58,81 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
-    if test x"${building}" != xno; then
-        local build_all_ret=
-        # build each component
-        for i in ${builds}; do
-            notice "Building all, current component $i"
-            # If an interactive build, stop betweeen each step so we can
-            # check the build and config options.
-            if test x"${interactive}" = x"yes"; then
-                echo "Hit any key to continue..."
-                read answer             
-            fi
-            case $i in
-                infrastructure)
-                    infrastructure
-                    build_all_ret=$?
-                    ;;
-                # Build stage 1 of GCC, which is a limited C compiler used to compile
-                # the C library.
-                libc)
-                    if test x"${clibrary}" = x"eglibc"; then
-                        build ${eglibc_version}
-                    elif  test x"${clibrary}" = x"glibc"; then
-                        build ${glibc_version}
-                    elif test x"${clibrary}" = x"newlib"; then
-                        build ${newlib_version}
-                        build ${newlib_version} libgloss
-                    else
-                        error "\${clibrary}=${clibrary} not supported."
-                        return 1
+    local build_all_ret=
+    # build each component
+    for i in ${builds}; do
+        notice "Building all, current component $i"
+        # If an interactive build, stop betweeen each step so we can
+        # check the build and config options.
+        if test x"${interactive}" = x"yes"; then
+            echo "Hit any key to continue..."
+            read answer
+        fi
+        case $i in
+            infrastructure)
+                infrastructure
+                build_all_ret=$?
+                ;;
+            # Build stage 1 of GCC, which is a limited C compiler used to compile
+            # the C library.
+            libc)
+                if test x"${clibrary}" = x"eglibc"; then
+                    build ${eglibc_version}
+                elif  test x"${clibrary}" = x"glibc"; then
+                    build ${glibc_version}
+                elif test x"${clibrary}" = x"newlib"; then
+                    build ${newlib_version}
+                    build ${newlib_version} libgloss
+                else
+                    error "\${clibrary}=${clibrary} not supported."
+                    return 1
+                fi
+                build_all_ret=$?
+                ;;
+            stage1)
+                build ${gcc_version} stage1
+                build_all_ret=$?
+                # Don't create the sysroot if the clibrary build didn't succeed.
+                if test ${build_all_ret} -lt 1; then
+                    # If we don't install the sysroot, link to the one we built so
+                    # we can use the GCC we just built.
+                    # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
+                    local sysroot="`${target}-gcc -print-sysroot`"
+                    if test ! -d ${sysroot}; then
+                        dryrun "mkdir -p /opt/linaro"
+                        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
                     fi
-                    build_all_ret=$?
-                    ;;
-                stage1)
-                    build ${gcc_version} stage1
-                    build_all_ret=$?
-                    # Don't create the sysroot if the clibrary build didn't succeed.
-                    if test ${build_all_ret} -lt 1; then
-                        # If we don't install the sysroot, link to the one we built so
-                        # we can use the GCC we just built.
-                        # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
-                        local sysroot="`${target}-gcc -print-sysroot`"
-                        if test ! -d ${sysroot}; then
-                            dryrun "mkdir -p /opt/linaro"
-                            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
-                        fi
-                    fi
-                    ;; 
-                # Build stage 2 of GCC, which is the actual and fully functional compiler
-                stage2)
-                    build ${gcc_version} stage2
-                    build_all_ret=$?
-                    ;;
-                gdb)
-                    build ${gdb_version}
-                    build_all_ret=$?
-                    ;;
-                gdbserver)
-                    build ${gdb_version} gdbserver
-                    build_all_ret=$?
-                    ;;
-                # Build anything not GCC or infrastructure
-                *)
-                    build ${binutils_version}
-                    build_all_ret=$?
-                    ;;
-            esac
-            #if test $? -gt 0; then
-            if test ${build_all_ret} -gt 0; then
-                error "Failed building $i."
-                return 1
-            fi
-        done
-        
-        manifest ${local_builds}/${host}/${target}/manifest.txt
-        
-        notice "Build took ${SECONDS} seconds"
-    fi
+                fi
+                ;; 
+            # Build stage 2 of GCC, which is the actual and fully functional compiler
+            stage2)
+                build ${gcc_version} stage2
+                build_all_ret=$?
+                ;;
+            gdb)
+                build ${gdb_version}
+                build_all_ret=$?
+                ;;
+            gdbserver)
+                build ${gdb_version} gdbserver
+                build_all_ret=$?
+                ;;
+            # Build anything not GCC or infrastructure
+            *)
+                build ${binutils_version}
+                build_all_ret=$?
+                ;;
+        esac
+        #if test $? -gt 0; then
+        if test ${build_all_ret} -gt 0; then
+            error "Failed building $i."
+            return 1
+        fi
+    done
+
+    manifest ${local_builds}/${host}/${target}/manifest.txt
+
+    notice "Build took ${SECONDS} seconds"
 
     # # now run the tests if specified. We do this after a full toolchain
     # # build because *glibc requires a full stage2 build to compile the
@@ -275,64 +273,67 @@ build()
         warning "no source dir for the stamp!"
    fi
 
-    notice "Configuring ${tag}${2:+ $2}"
-    configure_build ${gitinfo} $2
-    if test $? -gt 0; then
-        error "Configure of $1 failed!"
-        return $?
-    fi
-    
-    # Clean the build directories when forced
-    if test x"${force}" = xyes; then
-        make_clean ${gitinfo} $2
-        if test $? -gt 0; then
+    if test x"${building}" != xno; then
+	notice "Configuring ${tag}${2:+ $2}"
+	configure_build ${gitinfo} $2
+	if test $? -gt 0; then
+            error "Configure of $1 failed!"
+            return $?
+	fi
+	
+	# Clean the build directories when forced
+	if test x"${force}" = xyes; then
+            make_clean ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	fi
+	
+	# Finally compile and install the libaries
+	make_all ${gitinfo} $2
+	if test $? -gt 0; then
             return 1
-        fi
+	fi
+	
+	# Build the documentation, unless it has been disabled at the command line.
+	if test x"${make_docs}" = xyes; then
+            make_docs ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	else
+            notice "Skipping make docs as requested (check host.conf)."
+	fi
+	
+	# Install, unless it has been disabled at the command line.
+	if test x"${install}" = xyes; then
+            make_install ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	else
+            notice "Skipping make install as requested (check host.conf)."
+	fi
+	
+	# See if we can compile and link a simple test case.
+	if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
+            dryrun "(hello_world)"
+            if test $? -gt 0; then
+		error "Hello World test failed for ${gitinfo}..."
+		return 1
+            else
+		notice "Hello World test succeeded for ${gitinfo}..."
+            fi
+	fi
+	
+	create_stamp "${stampdir}" "${stamp}"
+	
+	notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
+	
+	# For cross testing, we need to build a C library with our freshly built
+	# compiler, so any tests that get executed on the target can be fully linked.
     fi
-    
-    # Finally compile and install the libaries
-    make_all ${gitinfo} $2
-    if test $? -gt 0; then
-        return 1
-    fi
 
-    # Build the documentation, unless it has been disabled at the command line.
-    if test x"${make_docs}" = xyes; then
-        make_docs ${gitinfo} $2
-        if test $? -gt 0; then
-            return 1
-        fi
-    else
-        notice "Skipping make docs as requested (check host.conf)."
-    fi
-
-    # Install, unless it has been disabled at the command line.
-    if test x"${install}" = xyes; then
-        make_install ${gitinfo} $2
-        if test $? -gt 0; then
-            return 1
-        fi
-    else
-        notice "Skipping make install as requested (check host.conf)."
-    fi
-
-    # See if we can compile and link a simple test case.
-    if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
-        dryrun "(hello_world)"
-        if test $? -gt 0; then
-            error "Hello World test failed for ${gitinfo}..."
-            return 1
-        else
-            notice "Hello World test succeeded for ${gitinfo}..."
-        fi
-    fi
-
-    create_stamp "${stampdir}" "${stamp}"
-
-    notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
-
-    # For cross testing, we need to build a C library with our freshly built
-    # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc" -a x"${tarbin}" != xyes; then
         if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
             notice "Starting test run for ${tag}${2:+ $2}"
