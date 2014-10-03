@@ -451,7 +451,7 @@ make_install()
 {
     trace "$*"
 
-    if test x"${parallel}" = x"yes"; then
+    if test x"${parallel}" = x"yes" -a "`echo ${tool} | grep -c glibc`" -eq 0; then
         local make_flags="${make_flags} -j $((2*${cpus}))"
     fi
 
@@ -539,7 +539,7 @@ make_install()
     fi
 
     if test x"${tool}" = x"gcc"; then
-        local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
+        local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
         if test ! -e ${sysroots}/usr/lib; then
             dryrun "mkdir -p ${sysroots}/usr/lib/"
         fi
@@ -671,9 +671,7 @@ make_check()
     fi
 
     # load the config file for Linaro build farms
-    if test x"${DEJAGNU}" = x; then
-        export DEJAGNU=${topdir}/config/linaro.exp
-    fi
+    export DEJAGNU=${topdir}/config/linaro.exp
 
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
