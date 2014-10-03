@@ -185,7 +185,7 @@ difftwodirs ()
     echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
     local lineo="`grep -n -- "----" ${next}/manifest.txt | grep -o "[0-9]*"`"
-    sed -e '1,${lineno}d' ${next}/manifest.txt >> ${resultsfile}
+    sed -e "1,${lineno}d" ${next}/manifest.txt >> ${resultsfile}
     echo "" >> ${resultsfile}
 
     mailto "Test results for ${gcc_version}" ${resultsfile} ${userid}
