@@ -1,3 +1,5 @@
+                        README
+
 Cbuildv2 is a bourne shell rewrite of the existing cbuild system as
 used by Linaro. While being oriented to the Linaro way of doing
 things, Cbuildv2 should be usable by others by just reconfiguring.
