@@ -1,4 +1,4 @@
-load_generic_config arm-linux
+load_generic_config arm-linaro
 
 set_board_info ldflags "-static"
 set_board_info hostname tcwg-d01-01

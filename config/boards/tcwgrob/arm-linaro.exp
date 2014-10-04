@@ -9,7 +9,7 @@ case "$target_triplet" in {
     { "arm*-*-*eabi*"} {
 	case "$hostname" in {
 	    { "linaro.*" } {
-		set target_list { arm-linux }
+		set target_list { arm-linaro }
 	    }
 	    { "tcwgbuild*" } {
 		set target_list { arm-chromebook }
