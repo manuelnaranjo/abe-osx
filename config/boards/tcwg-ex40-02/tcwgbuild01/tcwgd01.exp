@@ -1,4 +1,3 @@
 load_generic_config arm-linaro
 
-set_board_info protocol ssh
 set_board_info hostname tcwg-d01-01
