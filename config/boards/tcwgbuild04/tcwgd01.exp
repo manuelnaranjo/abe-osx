@@ -1,4 +1,4 @@
-load_generic_config tcwg-common
+load_generic_config tcwg-schroot
 
 set_board_info ldflags "-static"
 set_board_info hostname tcwg-d01-02
