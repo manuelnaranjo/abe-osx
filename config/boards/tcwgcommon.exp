@@ -1,0 +1,11 @@
+load_generic_config unix
+
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
+#set_board_info username buildslave
+set_board_info gcc,timeout 100000
+
+# If we statically link test cases, some components fail to link
+# without specifying a few libraries.
+set_board_info ldflags "-static -lpthread -ldl"
+set timeout 1000

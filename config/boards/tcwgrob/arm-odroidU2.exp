@@ -5,8 +5,6 @@ load_generic_config fastssh
 set_board_info hostname arm-odroidU2
 
 set_board_info protocol fastssh
-set_board_info rsh_prog /usr/bin/ssh
-set_board_info rcp_prog /usr/bin/scp
 # Enable ControlMaster and ControlPath
 set_board_info rsh_opts "-o ControlMaster=auto -o ControlPath=\"/tmp/cbuild-%u@%h:[pid]\" -o ControlPersist=6h"
 
