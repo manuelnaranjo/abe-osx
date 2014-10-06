@@ -202,6 +202,9 @@ if test $? -ne 0; then
 fi
 echo "Dispatched LAVA job ${id}"
 
+#Monitor job status until it starts running or fails
+#TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
+#TODO: In principle we want a timeout here, but we could be queued for a very long time, and that could be fine
 while true; do
   sleep 60
   jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
@@ -213,6 +216,12 @@ while true; do
   if test $? -eq 0; then
     echo "Job ${id} is running, waiting for boot"
     break
+  fi
+  echo "${jobstatus}" | grep 'Job Status: Submitted' > /dev/null
+  if test $? -ne 0; then
+    echo "Job ${id} has surprising status, giving up" 1>&2
+    echo -e "${jobstatus}" 1>&2
+    exit 1
   fi
 done
 
