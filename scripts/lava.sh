@@ -181,6 +181,9 @@ fi
 id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
+  echo "SERVER: https://${lava_server}" 1>&2
+  echo "JSON: " 1>&2
+  cat "${json_copy}" 1>&2
   exit 1
 fi
 trap release EXIT
@@ -192,6 +195,9 @@ trap release EXIT
 id="`echo ${id} | grep 'submitted as job id: [[:digit:]]\+' | grep -o '[[:digit:]]\+'`"
 if test $? -ne 0; then
   echo "Failed to read job id" 1>&2
+  echo "Input string was: ${id}" 1>&2
+  echo "JSON: " 1>&2
+  cat "${json_copy}" 1>&2
   exit 1
 fi
 echo "Dispatched LAVA job ${id}"
