@@ -51,12 +51,14 @@ run_benchmark()
       echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
       exit 1
     fi
+    local tee_output=/dev/null
 
     #Handle LAVA case
     echo "${ip}" | grep '\.json$' > /dev/null
     if test $? -eq 0; then
       local lava_target="${ip}"
       ip=''
+      tee_output=/dev/console
       echo "Acquiring LAVA target ${lava_target}"
       echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout} ${keep}" 1>&2
 
@@ -138,7 +140,7 @@ run_benchmark()
     fi
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench" \
+                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2

@@ -123,9 +123,9 @@ remote_exec_async()
   #no actual need for nohup.
 
   #Logging command that docs say is needed to work
-  #dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$? | tee /dev/console' &\""
+  #dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$?' &\""
 
   #Using command that experiments show is sufficient
-  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$? | tee /dev/console\" &"
+  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$? \" &"
   return $?
 }
