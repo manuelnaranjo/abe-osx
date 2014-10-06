@@ -109,7 +109,7 @@ if test $? -ne 0; then
   error "Something went wrong when we tried to dispatch job"
   exit 1
 fi
-#TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
+#TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge. Timeout target and workload dependent.
 while true; do
   ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" 2>/dev/null`"
   if test $? -eq 0; then

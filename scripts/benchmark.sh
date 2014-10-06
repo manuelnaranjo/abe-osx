@@ -21,7 +21,7 @@ fi
 keep='' #if set, don't clean up benchmark output on target, don't kill lava targets
 while getopts t:b:k flag; do
   case "${flag}" in
-    t) target="${OPTARG}";; #meaningful to sourced cbuild2 files in subshells below
+    t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
     k)
        keep='-m'
@@ -39,7 +39,9 @@ while getopts t:b:k flag; do
   esac
 done
 shift $((OPTIND - 1))
-devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine. They're not fine for ssh access, where they will just resolve to the same machine every time.
+devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine.
+               #Duplicate targets not fine for ssh access, where they will just resolve to the same machine every time.
+               #TODO: Check for multiple instances of a given non-lava target
 
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
