@@ -138,7 +138,7 @@ run_benchmark()
     fi
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir} && ./controlledrun.sh -c ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench" \
+                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l /dev/console -- make -C ${benchmark}.git linarobench" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2
@@ -186,11 +186,13 @@ if ! test -e "${topdir}/host.conf"; then
   exit 1
 fi
 
+cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
-while getopts t:b:k flag; do
+while getopts t:b:kc flag; do
   case "${flag}" in
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
+    c) cautious=;;
     k)
        keep='-k'
        echo 'Keep (-k) set: possibly sensitive benchmark data will be left on target'
