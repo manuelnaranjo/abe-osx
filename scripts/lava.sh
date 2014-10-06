@@ -5,6 +5,12 @@ set -o pipefail
 
 release()
 {
+  if test -d "${temps}"; then
+    rm -rf "${temps}"
+    if test $? -ne 0; then
+      echo "Failed to delete temporary file store ${temps}" 1>&2
+    fi
+  fi
   if test ${keep} -eq 0; then
     lava-tool cancel-job https://"${lava_server}" "${id}"
     if test $? -eq 0; then
@@ -94,22 +100,21 @@ fi
 #Danger - Don't change the sed runes to backticks, they resolve differently and render all the matches as ampersands
 key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 
-json_copy=`mktemp -t XXXXXXXXX` || exit 1
+temps="`mktemp -dt XXXXXXXXX`" || exit 1
+trap "if test -d ${temps}; then rm -rf ${temps}; fi" EXIT
+json_copy="${temps}/job.json"
 sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"/" ${lava_json} > "${json_copy}"
 if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
-  rm -f "${json_copy}"
   exit 1
 fi
 
 id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
-  rm -f "${json_copy}"
   exit 1
 fi
 trap release EXIT
-rm -f "${json_copy}"
 
 #TODO: Should be able to use cut at the end of this pipe, but when lava-tool
 #      is invoked through expect wrapper this line ends up with a carriage return 
