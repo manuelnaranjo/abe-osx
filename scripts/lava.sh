@@ -202,11 +202,12 @@ if test $? -ne 0; then
 fi
 echo "Dispatched LAVA job ${id}"
 
+sleep 15 #A short delay here is handy when debugging (if the LAVA queues are empty then we'll dispatch fast, but not instantly)
+
 #Monitor job status until it starts running or fails
 #TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
 #TODO: In principle we want a timeout here, but we could be queued for a very long time, and that could be fine
 while true; do
-  sleep 60
   jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
     echo "Job ${id} disappeared!" 1>&2
@@ -223,6 +224,7 @@ while true; do
     echo -e "${jobstatus}" 1>&2
     exit 1
   fi
+  sleep 60
 done
 
 read -t "${boot_timeout}" user_ip <&4
