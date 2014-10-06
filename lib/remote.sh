@@ -56,13 +56,10 @@ remote_download()
   if test x"${destfile}" = x; then
     destfile="${sourcefile}"
   fi
-  dryrun "rsync -e 'ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR' -avzx '${target}:${sourcefile}' '${destfile}' > /dev/null 2>&1"
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
   if test $? -ne 0; then
-    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
-    if test $? -ne 0; then
-      error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
-      return 1
-    fi
+    error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
+    return 1
   fi
   return 0
 }
@@ -83,13 +80,10 @@ remote_upload()
   if test x"${destfile}" = x; then
     destfile="${sourcefile}"
   fi
-  dryrun "rsync -e 'ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR' -avzx '${sourcefile}' '${target}:${destfile}' > /dev/null 2>&1"
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${sourcefile}' '${target}:${destfile}' > /dev/null"
   if test $? -ne 0; then
-    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${sourcefile}' '${target}:${destfile}' > /dev/null"
-    if test $? -ne 0; then
-      error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
-      return 1
-    fi
+    error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
+    return 1
   fi
   return 0
 }

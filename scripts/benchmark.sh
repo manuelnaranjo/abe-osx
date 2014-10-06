@@ -116,7 +116,7 @@ run_benchmark()
     fi
     local thing
     for thing in "${builddir}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
-      (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}")
+      (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}/`basename ${thing}`")
       if test $? -ne 0; then
 	echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
 	exit 1
