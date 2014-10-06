@@ -105,6 +105,10 @@ done
 #death sooner or later - we can stop ssh client and ssh server from
 #killing the connection, but the TCP layer will get it eventually.
 remote_exec_async ${target_ip} "cd ${target_dir} && ${cmd_to_run}" "${target_dir}/stdout" "${target_dir}/stderr"
+if test $? -ne 0; then
+  error "Something went wrong when we tried to dispatch job"
+  exit 1
+fi
 #TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge
 while true; do
   ret="`remote_exec ${target_ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" 2>/dev/null`"
