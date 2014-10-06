@@ -103,7 +103,7 @@ key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 trap "if test -d ${temps}; then rm -rf ${temps}; fi" EXIT
 json_copy="${temps}/job.json"
-sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"/" ${lava_json} > "${json_copy}"
+sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" ${lava_json} > "${json_copy}"
 if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
