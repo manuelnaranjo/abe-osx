@@ -50,7 +50,8 @@ clean_benchmark()
   fi
 }
 
-#Called from a subshell (important for the trap, and for avoiding env pollution)
+#Called from a subshell. One consequence is that the 'global' variables are
+#only global within the subshell - which some of them need to be for the exit trap.
 run_benchmark()
 {
     . "${topdir}"/scripts/listener.sh
