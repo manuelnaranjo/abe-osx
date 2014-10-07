@@ -61,7 +61,11 @@ fi
 
 shift $((OPTIND - 1))
 if test ${#@} -ne 0; then
-  echo "Unknown option(s): $@" 1>&2
+  echo -n "Unknown option(s): " 1>&2
+  for opt in "$@"; do
+    echo -n " '${opt}'" 1>&2
+  done
+  echo 1>&2
   exit 1
 fi
 
