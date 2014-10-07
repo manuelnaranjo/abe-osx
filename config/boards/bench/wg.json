@@ -15,7 +15,7 @@
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "git://git.linaro.org/people/bernie.ogden/bench-lava.git",
+                        "git-repo": "git://git.linaro.org/toolchain/lavabench.git",
                         "testdef": "bench-session-oe.yaml",
                         "parameters": {
                            "GATEWAY": "10.0.0.1",
