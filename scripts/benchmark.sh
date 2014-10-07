@@ -17,6 +17,13 @@ clean_benchmark()
 {
   local error=$?
 
+  if test -f "${listener_file}"; then
+    rm -f "${listener_file}"
+    if test $? -ne 0; then
+      echo "Failed to delete ${listener_file}" 1>&2
+    fi
+  fi
+
   if test x"${target_dir}" = x; then
     echo "No directory to remove from ${ip}" 1>&2
     exit "${error}"
@@ -46,6 +53,8 @@ clean_benchmark()
 #Called from a subshell (important for the trap, and for avoiding env pollution)
 run_benchmark()
 {
+    . "${topdir}"/scripts/listener.sh
+
     . "${confdir}/${device}.conf" #We can't use cbuild2's source_config here as it requires us to have something get_toolname can parse
     if test $? -ne 0; then
       echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
@@ -96,6 +105,20 @@ run_benchmark()
     #Make sure we delete the remote dir when we're done
     trap clean_benchmark EXIT
 
+    listener_file="`mktemp -t XXXXXXXXX`" || exit 1
+    listener_addr="`get_addr`"
+    if test $? -ne 0; then
+      echo "Unable to get IP for listener" 1>&2
+      exit 1
+    fi
+    listener_port="`establish_listener ${listener_addr} ${listener_file} 4200 5200`"
+    if test $? -ne 0; then
+      echo "Unable to establish listener" 1>&2
+      exit 1
+    fi
+    #Pretty much use this as a pipe - using an actual fifo seems to give nc fits
+    exec 5< <(tail -f "${listener_file}")
+
     #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
     local logdir="${topdir}/${benchmark}-log/${ip}_`date +%s`"
     if test -e "${logdir}"; then
@@ -138,26 +161,30 @@ run_benchmark()
     if test x"${freqctl}" = xyes; then
       flags+=" -f"
     fi
+    #TODO: Strictly, hostname -I might return multiple IP addresses
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench" \
+                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench; hostname -I | nc ${listener_addr} ${listener_port}" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2
       exit 1
     fi
 
-    #TODO: Do we want a timeout around this? If stdout is not produced then we'll wedge. Timeout target and workload dependent.
-    local ret=0
-    while true; do
-      ret="`. ${topdir}/lib/common.sh; remote_exec ${ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\" 2> /dev/null`"
-      if test $? -eq 0; then
-	ret="`echo $ret | cut -d ' ' -f 3`"
-	break
-      else
-	sleep 60
-      fi
-    done
+    local user=
+    if echo "${ip}" | grep '@'; then
+      user="`echo ${ip} | sed 's/@.*/@/'`"
+    fi
+    #TODO: Do we want a timeout around this? Timeout target and workload dependent.
+    read ip <&5
+    ip="${user}${ip}"
+    ret="`. ${topdir}/lib/common.sh; remote_exec ${ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\"`"
+    if test $? -ne 0; then
+      echo "Unable to determine exit code, assuming the worst." 1>&2
+      ret=1
+    else
+      ret="`echo $ret | cut -d ' ' -f 3`"
+    fi
 
     if test ${ret} -ne 0; then
       echo "Command failed: will try to get logs" 1>&2
