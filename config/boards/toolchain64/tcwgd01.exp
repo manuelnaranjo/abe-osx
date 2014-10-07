@@ -1,3 +1,0 @@
-load_generic_config tcwgcommon
-
-set_board_info hostname tcwg-d01-03
