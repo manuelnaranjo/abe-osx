@@ -95,7 +95,7 @@ while test $i -lt ${#revisions[@]}; do
 	exit 1
     fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
-    logs="`find ${local_builds}/${build}/${target} -name \*.log`"
+    logs="`echo ${sums} | sed 's/\.sum/.log/g'`"
     manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
     if test x"${sums}" != x; then
 	mkdir -p ${resultsdir}${revisions[$i]}
@@ -103,7 +103,7 @@ while test $i -lt ${#revisions[@]}; do
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
 	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
-	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.sum
+	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.*
     fi
     mv ${manifest} ${manifest}.${revisions[$i]}
     i="`expr $i + 1`"
@@ -115,11 +115,11 @@ if test x"${fileserver}" != x; then
     basedir="/work/logs"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
     ssh ${fileserver} mkdir -p ${basedir}/${dir}
-    # Compress and copy ll files from the first build
+    # Compress and copy all files from the first build
     xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
     scp ${resultsdir}${revisions[0]}/* ${fileserver}:${basedir}/${dir}/
     
-# Compress and copy all files from the first build
+# Compress and copy all files from the second build
     xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
     scp ${resultsdir}${revisions[1]}/* ${fileserver}:${basedir}/${dir}/
 fi
