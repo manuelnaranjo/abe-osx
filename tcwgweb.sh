@@ -129,6 +129,7 @@ difftwodirs ()
     echo "	${next}" >> ${resultsfile}
     echo "	" >> ${resultsfile}
     echo "For branch: ${gcc_version}" >> ${resultsfile}
+    echo "	" >> ${resultsfile}
     for i in gcc g\+\+ libstdc++ gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
@@ -186,9 +187,9 @@ difftwodirs ()
 
     echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
-    local lineo="`grep -n -- "----" ${next}/manifest.txt | grep -o "[0-9]*"`"
+    local lineo="`grep -n -- "----" ${prev}/manifest.txt | grep -o "[0-9]*"`"
     if test x"${lineno}" != x; then
-	sed -e "1,${lineno}d" ${next}/manifest.txt >> ${resultsfile}
+	sed -e "1,${lineno}d" ${prev}/manifest.txt >> ${resultsfile}
 	echo "" >> ${resultsfile}
     fi
 
