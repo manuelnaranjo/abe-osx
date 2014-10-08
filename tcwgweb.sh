@@ -202,8 +202,10 @@ difftwodirs ()
     if test ${files} -gt 0; then
 	xz ${prev}/*.sum
     fi
-    xz ${next}/*.sum ${next}/*.log
-
+    local files="`ls ${next}/*.sum | wc -l`"
+    if test ${files} -gt 0; then
+	xz ${next}/*.sum
+    fi
     echo ${returnstr}
     exit ${returncode}
 }
@@ -285,7 +287,7 @@ usage()
     echo "--base dir       : Compare the test results in dir to the baseline"
     echo "These next two options are only used by --base"
     echo "  --target triplet : Thr target triplet or 'native'"
-    echo "  --build cpu      : The cpu of the buuld machine"
+    echo "  --build cpu      : The cpu of the build machine"
 }
 
 # ----------------------------------------------------------------------
@@ -315,7 +317,7 @@ while test $# -gt 0; do
 	    shift
 	    ;;
 	--build*)
-	    # Set the target triplet
+	    # Set the build triplet
 	    buildarch="`echo $2 | cut -d '-' -f 1`"
 	    shift
 	    ;;
