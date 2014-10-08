@@ -196,7 +196,9 @@ $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr}
 
 # If cbuild2 returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
+    echo "================= TAIL OF LOG: BEGIN ================="
     tail -n 50 build.out
+    echo "================= TAIL OF LOG: FINISH ================="
     exit 1
 fi
 
