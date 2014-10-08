@@ -128,8 +128,6 @@ difftwodirs ()
     echo "	${prev} and" >> ${resultsfile}
     echo "	${next}" >> ${resultsfile}
     echo "	" >> ${resultsfile}
-    echo "For branch: ${gcc_version}" >> ${resultsfile}
-    echo "	" >> ${resultsfile}
     for i in gcc g\+\+ libstdc++ gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
