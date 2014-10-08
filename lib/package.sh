@@ -315,6 +315,22 @@ manifest()
 	mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
     fi
     
+    if test x"${gdb_version}" = x; then
+	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+    fi
+    local srcdir="`get_srcdir ${gdb_version}`"
+    local gdb_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    
+    if test x"${dejagnu_version}" = x; then
+	dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+    fi
+    local srcdir="`get_srcdir ${dejagnu_version}`"
+    local dejagnu_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    
+    if test x"${linux_version}" = x; then
+	linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
+    fi
+    
     if test x"${binutils_version}" = x; then
 	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
@@ -342,6 +358,11 @@ gcc_version=${gcc_version}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
+dejagnu_version=${dejagnu_version}
+dejagnu_revsion=${dejagnu_revision}
+gdb_version=${gdb_version}
+gdb_revsion=${gdb_revision}
+linux_version=${linux_version}
 
 # Cbuild revision used
 cbuild_revision=${cbuild_revision}
@@ -381,9 +402,8 @@ EOF
     esac
 
     local srcdir="`get_srcdir ${gcc_version}`"
-    local entry="`cd ${srcdir} && git log -n 1`"
     echo "---------------------------------------------" >> ${outfile}
-    echo ${entry} >> ${outfile}
+    cd ${srcdir} && git log -n 1 >> ${outfile}
 }
 
 # Build a source tarball
