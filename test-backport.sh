@@ -105,6 +105,7 @@ while test $i -lt ${#revisions[@]}; do
 	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
 	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.sum
     fi
+    mv ${manifest} ${manifest}.${revisions[$i]}
     i="`expr $i + 1`"
 done
 
