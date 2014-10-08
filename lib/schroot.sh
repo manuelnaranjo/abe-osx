@@ -59,11 +59,13 @@ start_schroot_sessions()
     fi
 
     local sysroot_opt
+    local sysroot_env
     if ! [ -z "$sysroot" ]; then
 	local multilib_dir
 	multilib_dir="$(find_dynamic_linker "$sysroot" true)"
 	multilib_dir="$(basename $(dirname $multilib_dir))"
 	sysroot_opt="-l $sysroot -h $multilib_dir"
+	sysroot_env="SYSROOT_UNDER_TEST=$sysroot"
     fi
 
     local shared_dir_opt
@@ -74,7 +76,7 @@ start_schroot_sessions()
     fi
 
     local -a board_exps
-    board_exps=($(print_schroot_board_files "$target"))
+    board_exps=($(eval $sysroot_env print_schroot_board_files "$target"))
     for board_exp in "${board_exps[@]}"; do
 	local hostname sysroot lib_path multilib_dir
 
