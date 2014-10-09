@@ -32,8 +32,8 @@ if { [board_info $board obj_format] == "pe" } {
 # basic-sim.exp is a basic description for the standard Cygnus simulator.
 load_base_board_description "basic-sim"
 
-# set library path enviornment variable for qemu
-setenv QEMU_LD_PREFIX "$sysroot”
+# set library path environment variable for qemu
+set env(QEMU_LD_PREFIX) $sysroot
 
 # The name of the directory in the build tree where the simulator lives.
 setup_sim arm
