@@ -315,7 +315,8 @@ if $ssh_master; then
     ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -fMN $target
 fi
 
-if $finish_session; then
+# Keep the session alive when file /dont_kill_me is present
+if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     $schroot /etc/init.d/ssh stop || true
     ssh $target_ssh_opts $target schroot -e -c session:tcwg-test-$port
