@@ -133,6 +133,6 @@ stop_schroot_sessions()
     shift 1
 
     for hostname in "$@"; do
-	dryrun "${topdir}/scripts/test-schroot.sh -f $hostname:$port"
+	dryrun "${topdir}/scripts/test-schroot.sh -v -f $hostname:$port"
     done
 }
