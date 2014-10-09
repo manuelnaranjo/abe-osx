@@ -124,6 +124,8 @@ if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
 fi
+sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${USER}@validation.linaro.org/RPC2/\"\2+" "${json_copy}"
+sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${USER}/\"\2+" "${json_copy}"
 
 listener_addr="`get_addr`"
 if test $? -ne 0; then
