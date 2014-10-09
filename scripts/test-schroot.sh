@@ -319,7 +319,14 @@ fi
 if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     $schroot /etc/init.d/ssh stop || true
-    ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port
+    ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port | true
+    if [ x"${PIPESTATUS[0]}" != x"0" ]; then
+	# tcwgbuildXX machines have a kernel problem that a bind mount will be
+	# forever busy if it had an sshfs under it.  Seems like fuse is not
+	# cleaning up somethings.  The workaround is to lazy unmount the bind.
+	$schroot umount -l /
+	ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port
+    fi
     echo $target:$port finished session
 fi
 
