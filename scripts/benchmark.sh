@@ -11,6 +11,7 @@ set -o pipefail
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
 trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
+trap 'exit 1' TERM INT HUP QUIT
 
 #To be called from exit trap in run_benchmark
 clean_benchmark()
@@ -54,6 +55,7 @@ clean_benchmark()
 #only global within the subshell - which some of them need to be for the exit trap.
 run_benchmark()
 {
+    trap 'exit 1' TERM INT HUP QUIT
     . "${topdir}"/scripts/listener.sh
 
     . "${confdir}/${device}.conf" #We can't use cbuild2's source_config here as it requires us to have something get_toolname can parse

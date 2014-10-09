@@ -6,6 +6,7 @@ set -o pipefail
 if test $? -ne 0; then
   echo "Unable to source `dirname $0`/listener.sh"
 fi
+trap 'exit 1' TERM INT HUP QUIT
 
 release()
 {
@@ -29,7 +30,7 @@ release()
     echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
     ret=0
   fi
-  kill -- -$BASHPID
+  kill -- -$BASHPID >/dev/null 2>&1 #This only makes sense when we were invoked directly, but should be harmless otherwise
   exit ${ret}
 }
 
