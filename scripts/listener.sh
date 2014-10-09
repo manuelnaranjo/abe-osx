@@ -28,8 +28,9 @@ function establish_listener
   fi
 
   listener_addr="$1"
-  if ! echo "${listener_addr}" | grep '^\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+$' > /dev/null; then
-    echo "${listener_addr} does not look like an IP address" 1>&2
+  ping -c 1 "${listener_addr}" > /dev/null
+  if test $? -ne 0; then
+    echo "Unable to ping host ${listener_addr}" 1>&2
     return 1
   fi
   listener_file="$2"
