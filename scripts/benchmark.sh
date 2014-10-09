@@ -208,6 +208,30 @@ run_benchmark()
     exit ${ret}
 }
 
+function usage
+{
+  cat << EOF
+$0 [-tckh] -b <benchmark> <board...>
+
+  -b   Identify the benchmark to build, e.g. fakebench, eembc. Compulsory.
+  -c   Cautious. If this is set, failure in any stage of target setup will
+       be treated as an error, even if recoverable. On by default.
+  -h   Show this help.
+  -k   Keep. If this is set, benchmark sources and results will be left on
+       target. LAVA targets will not be released.
+  -t   Target triple to build benchmark for e.g. arm-linux-gnueabihf. Used
+       only for building. Blank implies native build.
+
+  <board...> may be anything that has a file in config/boards/bench, e.g. the
+  existence of arndale.conf means that you can put arndale here. At least one
+  target may be specified. ssh targets must only be specified once. LAVA
+  targets can be specified as many times as you like.
+
+  If building natively, board is optional. If not given, the benchmark will
+  run on localhost.
+EOF
+}
+
 topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
 if ! test -e "${topdir}/host.conf"; then
   echo "No host.conf, did you run ./configure?" 1>&2
@@ -216,7 +240,7 @@ fi
 
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
-while getopts t:b:kc flag; do
+while getopts t:b:kch flag; do
   case "${flag}" in
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
@@ -229,6 +253,10 @@ while getopts t:b:kc flag; do
        if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
          exit 0
        fi
+    ;;
+    h)
+       usage
+       exit 0
     ;;
     *)
        echo "Bad arg" 1>&2
