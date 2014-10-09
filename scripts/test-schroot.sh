@@ -319,7 +319,7 @@ fi
 if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     $schroot /etc/init.d/ssh stop || true
-    ssh $target_ssh_opts $target schroot -e -c session:tcwg-test-$port
+    ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port
     echo $target:$port finished session
 fi
 
