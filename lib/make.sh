@@ -59,6 +59,10 @@ build_all()
     # the C library, can then be reconfigured to be fully functional.
 
     local build_all_ret=
+
+    # Checkout all the sources
+    checkout_all
+
     # build each component
     for i in ${builds}; do
         notice "Building all, current component $i"
