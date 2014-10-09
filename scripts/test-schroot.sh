@@ -112,6 +112,9 @@ if [ "x$board_exp" != "x" ] ; then
     fi
 fi
 
+orig_target_ssh_opts="$target_ssh_opts"
+target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-tcwg-test-$port-%u-%r@%h:%p"
+
 deb_arch="$(triplet_to_deb_arch $arch)"
 deb_dist="$(triplet_to_deb_dist $arch)"
 
@@ -301,16 +304,19 @@ EOF
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
-	$rsh -f $target bash -c "\"while sleep 30; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
+	# Note the "-S none" option -- ssh does not always detach from process
+	# when multiplexing is used.  I think this is a bug in ssh.
+	$rsh -f -S none $target bash -c "\"while sleep 30; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
 fi
 
 if $ssh_master; then
-    $rsh -fMN $target
+    ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -fMN $target
 fi
 
-if $finish_session; then
+# Keep the session alive when file /dont_kill_me is present
+if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     $schroot /etc/init.d/ssh stop || true
     ssh $target_ssh_opts $target schroot -e -c session:tcwg-test-$port
