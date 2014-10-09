@@ -112,6 +112,9 @@ if [ "x$board_exp" != "x" ] ; then
     fi
 fi
 
+orig_target_ssh_opts="$target_ssh_opts"
+target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-tcwg-test-$port-%u-%r@%h:%p"
+
 deb_arch="$(triplet_to_deb_arch $arch)"
 deb_dist="$(triplet_to_deb_dist $arch)"
 
@@ -307,7 +310,7 @@ EOF
 fi
 
 if $ssh_master; then
-    $rsh -fMN $target
+    ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -fMN $target
 fi
 
 if $finish_session; then
