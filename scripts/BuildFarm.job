@@ -39,6 +39,7 @@ if test $? -gt 0; then
   exit 1
 fi
 
+echo "JOB_NAME = ${JOB_NAME}"
 case "${JOB_NAME}" in
     *"Farm") ;;
     *) rm -rf ${WORKSPACE}/_build ${user_snapshots} ;;
