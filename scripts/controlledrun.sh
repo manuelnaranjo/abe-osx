@@ -51,7 +51,7 @@ cleanup()
   fi
 
   if test ${ret} -gt 0; then
-    echo "Problem restoring target system" | tee /dev/stderr "${log}" > /dev/null
+    echo "Problem restoring target system" | tee -a /dev/stderr "${log}" > /dev/null
     if test ${cautiousness} -eq 1; then
       exit 1
     fi
@@ -90,22 +90,22 @@ stop_services()
   for service in `cat $1 | grep -v '^[[:blank:]]*#'`; do
     service_status=`${sudo} status "${service}"`
     if test $? -ne 0; then
-      echo "Service '${service}' does not exist" | tee /dev/stderr "${log}" > /dev/null
+      echo "Service '${service}' does not exist" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
       continue
     fi
     if echo "${service_status}" | grep ' stop/waiting$' > /dev/null; then
-      echo "Service '${service}' already stopped" | tee /dev/stderr "${log}" > /dev/null
+      echo "Service '${service}' already stopped" | tee -a /dev/stderr "${log}" > /dev/null
       continue
     fi
     if echo "${service_status}" | grep -v ' start/running$' > /dev/null; then
-      echo "Service '${service}' does not appear to be running. Will try to stop it anyway. Are you specifying services in the right order?" | tee /dev/stderr "${log}" > /dev/null
+      echo "Service '${service}' does not appear to be running. Will try to stop it anyway. Are you specifying services in the right order?" | tee -a /dev/stderr "${log}" > /dev/null
     fi
     ${sudo} stop "${service}" > /dev/null
     if test $? -eq 0; then
       stopped_services+=("${service}")
     else
-      echo "Service '${service}' could not be stopped" | tee /dev/stderr "${log}" > /dev/null
+      echo "Service '${service}' could not be stopped" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -120,7 +120,7 @@ start_services()
   for ((i=${#stopped_services[@]}-1; i>=0; i--)); do
     ${sudo} start "${stopped_services[$i]}" > /dev/null
     if test $? -ne 0; then
-      echo "Failed to restart service '${stopped_service[$i]}'" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to restart service '${stopped_service[$i]}'" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -134,13 +134,13 @@ set_policy()
      test x"${old_policy[0]}" = x || \
      test x"${old_policy[1]}" = x || \
      test x"${old_policy[2]}" = x; then
-    echo "Frequency scaling not supported" | tee /dev/stderr "${log}" > /dev/null
+    echo "Frequency scaling not supported" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
   ${sudo} cpufreq-set -g userspace -d "${freq}" -u "${freq}"
   if test $? -ne 0; then
       old_policy=
-      echo "Frequency scaling not supported" | tee /dev/stderr "${log}" > /dev/null
+      echo "Frequency scaling not supported" | tee -a /dev/stderr "${log}" > /dev/null
       return 1
   fi
 }
@@ -153,7 +153,7 @@ restore_policy()
   fi
   ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}"
   if test $? -ne 0; then
-    echo "Unable to restore policy '${old_policy}'" | tee /dev/stderr "${log}" > /dev/null
+    echo "Unable to restore policy '${old_policy}'" | tee -a /dev/stderr "${log}" > /dev/null
   fi
 }
 
@@ -163,7 +163,7 @@ bind_processes()
 {
   ${sudo} taskset -a -p -c $1 1 > /dev/null
   if test $? -ne 0; then
-    echo "CPU bind not supported" | tee /dev/stderr "${log}" > /dev/null
+    echo "CPU bind not supported" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
 
@@ -171,7 +171,7 @@ bind_processes()
   local all_processes
   all_processes=`ps ax --format='%p' | tail -n +3`
   if test $? -ne 0; then
-    echo "Unable to list processes" | tee /dev/stderr "${log}" > /dev/null
+    echo "Unable to list processes" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
 
@@ -200,7 +200,7 @@ bind_processes()
       bound_processes+=("${p}")
     else
       local name="`grep Name: /proc/$p/status | cut -f 2`"
-      echo "Failed to bind $name to CPU $1: $output" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to bind $name to CPU $1: $output" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -225,7 +225,7 @@ unbind_processes()
     output="`${sudo} taskset -a -p 0xFFFFFFFF ${p} 2>&1`"
     if test $? -ne 0; then
       local name="`grep Name: /proc/$p/status | cut -f 2`"
-      echo "Failed to unbind $name: $output" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to unbind $name: $output" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -244,7 +244,7 @@ stop_network()
     #      Although perhaps we can count on the stop command not exiting until the service is really stopped
     ${sudo} /bin/bash -c 'stop shill && stop wpasupplicant' && sleep 2
     if test $? -ne 0; then
-      echo "Failed to stop network" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to stop network" | tee -a /dev/stderr "${log}" > /dev/null
       return 1
     fi
     downed_interfaces+=("crouton")
@@ -258,7 +258,7 @@ stop_network()
   #TODO: Remote corner case - this'll break on interface names with a space in
   interfaces=(`ifconfig -s | sed 1d | cut -d " " -f 1 | grep -v '^lo$'`) 
   if test $? -ne 0; then
-    echo "Failed to read network interfaces" | tee /dev/stderr "${log}" > /dev/null
+    echo "Failed to read network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
 
@@ -269,7 +269,7 @@ stop_network()
   elif ${sudo} ifdown "${interfaces[0]}"; then #don't redirect stderr as this is our last try and failure information would be helpful
     netcmd="${sudo} ifdown "
   else
-    echo "Cannot bring down network interfaces" | tee /dev/stderr "${log}" > /dev/null
+    echo "Cannot bring down network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
   downed_interfaces+=("${interfaces[0]}")
@@ -283,7 +283,7 @@ stop_network()
     if test $? -eq 0; then
       downed_interfaces+=("${interface}")
     else
-      echo "Failed to bring down network interface '${interface}'" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to bring down network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -295,8 +295,8 @@ stop_network()
       break
     fi
     sleep 2
-    echo "Brought-down network interface(s) "`ifconfig -s | sed 1d | cut -d ' ' -f 1`" still up after >10s" | tee /dev/stderr "${log}" > /dev/null
-    echo "Will continue and hope for the best unless we're being cautious (-c)" | tee /dev/stderr "${log}" > /dev/null
+    echo "Brought-down network interface(s) "`ifconfig -s | sed 1d | cut -d ' ' -f 1`" still up after >10s" | tee -a /dev/stderr "${log}" > /dev/null
+    echo "Will continue and hope for the best unless we're being cautious (-c)" | tee -a /dev/stderr "${log}" > /dev/null
     ret=1
   done
     
@@ -312,7 +312,7 @@ start_network()
   if croutonversion > /dev/null 2>&1; then
     ${sudo} /bin/bash -c 'start wpasupplicant && start shill' && ${sudo} /sbin/iptables -P INPUT ACCEPT
     if test $? -ne 0; then
-      echo "Failed to restart network" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to restart network" | tee -a /dev/stderr "${log}" > /dev/null
       return 1
     fi
     return 0
@@ -324,7 +324,7 @@ start_network()
   elif ${sudo} /bin/bash -c "ifup ${downed_interfaces[0]}"; then #don't redirect stderr as this is our last try and failure information would be helpful
     netcmd="${sudo} ifup "
   else
-    echo "Cannot bring up network interfaces" | tee /dev/stderr "${log}" > /dev/null
+    echo "Cannot bring up network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
   downed_interfaces=("${downed_interfaces[@]:1}")
@@ -334,7 +334,7 @@ start_network()
   for interface in "${downed_interfaces[@]}"; do
     bash -c "${netcmd}${interface}"
     if test $? -ne 0; then
-      echo "Failed to bring up network interface '${interface}'" | tee /dev/stderr "${log}" > /dev/null
+      echo "Failed to bring up network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
   done
@@ -358,41 +358,41 @@ while getopts s:f:b:p:cnl: flag; do
     n)  do_network=1;;
     l)  log="${OPTARG}";;
     *)
-        echo 'Unknown option' | tee /dev/stderr "${log}" > /dev/null
+        echo 'Unknown option' | tee -a /dev/stderr "${log}" > /dev/null
         exit 1
     ;;
   esac
 done
 
-echo "$@" | tee "${log}"
-echo | tee "${log}"
+echo "$@" | tee -a "${log}"
+echo | tee -a "${log}"
 
 shift $((OPTIND - 1))
 
 #Cheap sanity checks, before we start tearing the target down
 if test x"${services_file}" != x; then
   if test \! -f "${services_file}"; then
-    echo "Services file '${services_file}' missing" | tee /dev/stderr "${log}" > /dev/null
+    echo "Services file '${services_file}' missing" | tee -a /dev/stderr "${log}" > /dev/null
     exit 1
   fi
   if test x"`cat ${services_file}`" = x; then
-    echo "Services file '${services_file}' is empty" | tee /dev/stderr "${log}" > /dev/null
+    echo "Services file '${services_file}' is empty" | tee -a /dev/stderr "${log}" > /dev/null
     exit 1
   fi
 fi
 
 echo "$bench_cpu" | grep '^[[:digit:]]\+$' > /dev/null
 if test $? -ne 0; then
-  echo "Benchmark CPU (-b) must be a decimal number" | tee /dev/stderr "${log}" > /dev/null
+  echo "Benchmark CPU (-b) must be a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 echo "$non_bench_cpu" | grep '^[[:digit:]]*$' > /dev/null
 if test $? -ne 0; then
-  echo "Non-benchmark CPU (-p) must be null or a decimal number" | tee /dev/stderr "${log}" > /dev/null
+  echo "Non-benchmark CPU (-p) must be null or a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 if test x"${bench_cpu}" = x"${non_bench_cpu}"; then
-  echo "Benchmark CPU (-b) and non-benchmark CPU (-p) must be different" | tee /dev/stderr "${log}" > /dev/null
+  echo "Benchmark CPU (-b) and non-benchmark CPU (-p) must be different" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 
@@ -400,7 +400,7 @@ cmd="$@"
 
 taskset -c ${bench_cpu} true
 if test $? -ne 0; then
-  echo "Could not bind benchmark to CPU ${bench_cpu}" | tee /dev/stderr "${log}" > /dev/null
+  echo "Could not bind benchmark to CPU ${bench_cpu}" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 
@@ -433,65 +433,65 @@ if test ${do_network} -eq 1; then
 fi
 
 #Report status of the target
-echo | tee "${log}"
-echo "** Target Status **" | tee "${log}"
-echo "===================" | tee "${log}"
-echo "General Information:" | tee "${log}"
-uname -a | tee "${log}"
+echo | tee -a "${log}"
+echo "** Target Status **" | tee -a "${log}"
+echo "===================" | tee -a "${log}"
+echo "General Information:" | tee -a "${log}"
+uname -a | tee -a "${log}"
 if test -f /etc/lsb-release; then
-  cat /etc/lsb-release | tee "${log}"
+  cat /etc/lsb-release | tee -a "${log}"
 fi
-echo | tee "${log}"
+echo | tee -a "${log}"
 #A little research shows that it is unclear how
 #reliable or complete the information from either
 #initctl or service is. So we make a best effort.
-echo "** (Possibly) Running Services:" | tee "${log}"
-echo "According to initctl:" | tee "${log}"
-${sudo} initctl list | grep running | tee "${log}"
+echo "** (Possibly) Running Services:" | tee -a "${log}"
+echo "According to initctl:" | tee -a "${log}"
+${sudo} initctl list | grep running | tee -a "${log}"
 if test $? -ne 0; then
-  echo "*** initctl unable to list running services" | tee "${log}"
+  echo "*** initctl unable to list running services" | tee -a "${log}"
 fi
-echo "According to service:" | tee "${log}"
-${sudo} service --status-all 2>&1 | grep -v '^...-' | tee "${log}"
+echo "According to service:" | tee -a "${log}"
+${sudo} service --status-all 2>&1 | grep -v '^...-' | tee -a "${log}"
 if test $? -ne 0; then
-  echo "*** service unable to list (possibly) running services" | tee "${log}"
+  echo "*** service unable to list (possibly) running services" | tee -a "${log}"
 fi
-echo | tee "${log}"
-echo "** CPUFreq:" | tee "${log}"
-${sudo} cpufreq-info -p | tee "${log}"
+echo | tee -a "${log}"
+echo "** CPUFreq:" | tee -a "${log}"
+${sudo} cpufreq-info -p | tee -a "${log}"
 if test $? -ne 0; then
-  echo "*** Unable to get CPUFreq info" | tee "${log}"
+  echo "*** Unable to get CPUFreq info" | tee -a "${log}"
 fi
-echo | tee "${log}"
-echo "** Affinity Masks:" | tee "${log}"
+echo | tee -a "${log}"
+echo "** Affinity Masks:" | tee -a "${log}"
 all_processes=`ps ax --format='%p' | tail -n +2`
 if test $? -eq 0; then
   for p in ${all_processes}; do
-    ${sudo} taskset -a -p ${p} | tee "${log}"
+    ${sudo} taskset -a -p ${p} | tee -a "${log}"
     if test $? -ne 0; then
-      echo "*** Unable to get affinity mask for process ${p}" | tee "${log}"
+      echo "*** Unable to get affinity mask for process ${p}" | tee -a "${log}"
     fi
   done
 else
-  echo "*** Unable to get affinity mask info" | tee "${log}"
+  echo "*** Unable to get affinity mask info" | tee -a "${log}"
 fi
-echo | tee "${log}"
-echo "** Live Network Interfaces:" | tee "${log}"
-${sudo} ifconfig -s | sed 1d | cut -d ' ' -f 1 | tee "${log}"
+echo | tee -a "${log}"
+echo "** Live Network Interfaces:" | tee -a "${log}"
+${sudo} ifconfig -s | sed 1d | cut -d ' ' -f 1 | tee -a "${log}"
 if test $? -ne 0; then
-  echo "*** Unable to get network info" | tee "${log}"
+  echo "*** Unable to get network info" | tee -a "${log}"
 fi
-echo "===================" | tee "${log}"
-echo | tee "${log}"
+echo "===================" | tee -a "${log}"
+echo | tee -a "${log}"
 
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
-echo "Running taskset -c ${bench_cpu} ${cmd}" | tee "${log}"
+echo "Running taskset -c ${bench_cpu} ${cmd}" | tee -a "${log}"
 taskset -c ${bench_cpu} ${cmd}
 if test $? -eq 0; then
-  echo "Run of  taskset -c ${bench_cpu} ${cmd} complete" | tee "${log}"
+  echo "Run of  taskset -c ${bench_cpu} ${cmd} complete" | tee -a "${log}"
   exit 0
 else
-  echo "taskset -c ${bench_cpu} ${cmd} failed" | tee /dev/stderr "${log}" > /dev/null
+  echo "taskset -c ${bench_cpu} ${cmd} failed" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
