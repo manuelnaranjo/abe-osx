@@ -168,20 +168,15 @@ run_benchmark()
     #TODO: Strictly, hostname -I might return multiple IP addresses
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench; hostname -I | nc ${listener_addr} ${listener_port}" \
+                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench; echo \"\\\${USER}@\\\`hostname -I\\\`\" | nc ${listener_addr} ${listener_port}" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2
       exit 1
     fi
 
-    local user=
-    if echo "${ip}" | grep '@'; then
-      user="`echo ${ip} | sed 's/@.*/@/'`"
-    fi
     #TODO: Do we want a timeout around this? Timeout target and workload dependent.
     read ip <&5
-    ip="${user}${ip}"
     ret="`. ${topdir}/lib/common.sh; remote_exec ${ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\"`"
     if test $? -ne 0; then
       echo "Unable to determine exit code, assuming the worst." 1>&2
