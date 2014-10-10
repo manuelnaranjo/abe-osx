@@ -119,6 +119,7 @@ run_benchmark()
       echo "Unable to establish listener" 1>&2
       exit 1
     fi
+    echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"
     #Pretty much use this as a pipe - using an actual fifo seems to give nc fits
     exec 5< <(tail -f "${listener_file}")
 
