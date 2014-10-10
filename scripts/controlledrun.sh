@@ -319,6 +319,7 @@ start_network()
   fi
 
   local netcmd
+  local i
   if ${sudo} /bin/bash -c "start network-interface INTERFACE=${downed_interfaces[0]}" >/dev/null 2>&1; then
     netcmd="${sudo} start network-interface INTERFACE="
   elif ${sudo} /bin/bash -c "ifup ${downed_interfaces[0]}"; then #don't redirect stderr as this is our last try and failure information would be helpful
@@ -326,6 +327,18 @@ start_network()
   else
     echo "Cannot bring up network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
+  fi
+  for i in {1..10}; do
+    echo "Ping ${downed_interfaces[0]}: $i" | tee -a /dev/stderr "${log}" > /dev/null
+    ping -c 1 "`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
+    if test $? -eq 0; then
+      break
+    fi
+    sleep 1
+    false
+  done
+  if test $? -ne 0; then
+    echo "Restored interface ${downed_interfaces[0]} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
   fi
   downed_interfaces=("${downed_interfaces[@]:1}")
 
@@ -336,6 +349,17 @@ start_network()
     if test $? -ne 0; then
       echo "Failed to bring up network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
+    fi
+    for i in {1..10}; do
+      ping -c 1 "`ip -f inet -o addr show ${interface} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
+      if test $? -eq 0; then
+	break
+      fi
+      sleep 1
+      false
+    done
+    if test $? -ne 0; then
+      echo "Restored interface ${interface} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
     fi
   done
   return ${ret}
