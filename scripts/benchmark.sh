@@ -166,9 +166,11 @@ run_benchmark()
       flags+=" -f"
     fi
     #TODO: Strictly, hostname -I might return multiple IP addresses
+    #TODO: Repetition of hostname echoing is ugly, but seems to be needed -
+    #      perhaps there is some delay after the interface comes up
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench; echo \"\\\${USER}@\\\`hostname -I\\\`\" | nc ${listener_addr} ${listener_port}" \
+                       "cd ${target_dir} && ./controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- make -C ${benchmark}.git linarobench; ret=\\\$?; for i in {1..10}; do echo \"\\\${USER}@\\\`hostname -I\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; done" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2
@@ -177,12 +179,16 @@ run_benchmark()
 
     #TODO: Do we want a timeout around this? Timeout target and workload dependent.
     read ip <&5
-    ret="`. ${topdir}/lib/common.sh; remote_exec ${ip} \"grep '^EXIT CODE: [[:digit:]]' ${target_dir}/stdout\"`"
+
+    ret="`echo ${ip} | sed 's/.*://'`"
     if test $? -ne 0; then
       echo "Unable to determine exit code, assuming the worst." 1>&2
       ret=1
-    else
-      ret="`echo $ret | cut -d ' ' -f 3`"
+    fi
+    ip="`echo ${ip} | sed 's/:.*//'`"
+    if test $? -ne 0; then
+      echo "Unable to determine IP, giving up." 1>&2
+      exit 1
     fi
 
     if test ${ret} -ne 0; then
