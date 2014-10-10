@@ -119,7 +119,8 @@ if test $? -ne 0; then
   echo "Failed to create ${listener_file}" 1>&2
   exit
 fi
-sed "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" ${lava_json} > "${json_copy}"
+cp "${lava_json}" "${json_copy}"
+sed -i "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" "${json_copy}"
 if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
