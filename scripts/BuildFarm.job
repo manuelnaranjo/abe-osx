@@ -41,6 +41,6 @@ fi
 
 echo "JOB_NAME = ${JOB_NAME}"
 case "${JOB_NAME}" in
-    *"Farm") ;;
+    *"Farm"*) ;;
     *) rm -rf ${WORKSPACE}/_build ${user_snapshots} ;;
 esac
