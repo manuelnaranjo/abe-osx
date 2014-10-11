@@ -185,7 +185,7 @@ find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
 if test x"${bootstrap}" = xtrue; then
     # Attempt to bootstrap GCC is build and target are compatible
-    build1="$(grep "build=" host.conf | sed -e "s/\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
+    build1="$(grep "^build=" host.conf | sed -e "s/build=\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
     target1="$(echo ${target} | sed -e "s/\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
     if test x"${build1}" = x"${target1}" -o x"${platform}" = x""; then
 	bootstrap="--enable bootstrap"
