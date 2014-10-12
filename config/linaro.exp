@@ -93,8 +93,7 @@ case "$target_triplet" in {
     { "*linux-gnu*" } {
 	case "$myname" in {
 	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgbuild }
-		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
+		set target_list { tcwgqemu }
 	    }
 	}
     }
