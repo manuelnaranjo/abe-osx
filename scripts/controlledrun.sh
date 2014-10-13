@@ -442,6 +442,7 @@ fi
 
 #Put the target back in order before we quit
 trap cleanup EXIT
+trap 'exit 1' TERM INT HUP QUIT
 
 if test x"${services_file}" != x; then
   stop_services "${services_file}"
