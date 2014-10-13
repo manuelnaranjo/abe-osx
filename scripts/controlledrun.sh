@@ -30,10 +30,22 @@ fi
 
 cleanup()
 {
-  local ret
+  local ret=$?
   local tmp
+
+  if test x"${rva_setting}" != x; then
+    echo "${rva_setting}" > /proc/sys/kernel/randomize_va_space
+    if test $? -ne 0; then
+      echo "Failed to restore ASLR setting" | tee -a /dev/stderr "${log}"
+      ret=1
+    fi
+  fi
+
   start_services
-  ret=$?
+  tmp=$?
+  if test ${tmp} -gt ${ret}; then
+    ret=${tmp}
+  fi
   restore_policy
   tmp=$?
   if test ${tmp} -gt ${ret}; then
@@ -507,6 +519,18 @@ if test $? -ne 0; then
 fi
 echo "===================" | tee -a "${log}"
 echo | tee -a "${log}"
+
+#"setarch `uname -m` -R" would be a tidier way to run our benchmark without ASLR,
+#but doesn't work on our machines (setarch rejects the value of uname -m, and some
+#obvious alternatives, as invalid).
+rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
+echo 0 > /proc/sys/kernel/randomize_va_space
+if test $? -ne 0; then
+  echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
+  if test "${cautiousness}" -eq 1; then
+    exit 1
+  fi
+fi
 
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
