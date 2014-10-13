@@ -534,12 +534,18 @@ fi
 
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
-echo "Running taskset -c ${bench_cpu} ${cmd}" | tee -a "${log}"
-taskset -c ${bench_cpu} ${cmd}
+niceness="`nice`"
+if test $? -ne 0; then
+  echo "Could not determine current niceness: will not set nice value" 1>&2
+else
+  niceness="sudo nice -n -$((niceness+19))" #Don't use $sudo, we don't want to break out of chroot here
+fi
+echo "Running taskset -c ${bench_cpu} ${niceness} ${cmd}" | tee -a "${log}"
+taskset -c ${bench_cpu} ${niceness} ${cmd}
 if test $? -eq 0; then
-  echo "Run of  taskset -c ${bench_cpu} ${cmd} complete" | tee -a "${log}"
+  echo "Run of  taskset -c ${bench_cpu} ${niceness} ${cmd} complete" | tee -a "${log}"
   exit 0
 else
-  echo "taskset -c ${bench_cpu} ${cmd} failed" | tee -a /dev/stderr "${log}" > /dev/null
+  echo "taskset -c ${bench_cpu} ${niceness} ${cmd} failed" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
