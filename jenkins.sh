@@ -183,16 +183,22 @@ esac
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
-# For cross build. For cross builds we build a native GCC, and then use
-# that to compile the cross compiler to bootstrap. Since it's just
-# used to build the cross compiler, we don't bother to run 'make check'.
 if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${change} --bootstrap --build all
+    # Attempt to bootstrap GCC is build and target are compatible
+    build1="$(grep "^build=" host.conf | sed -e "s/build=\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
+    target1="$(echo ${target} | sed -e "s/\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
+    if test x"${build1}" = x"${target1}" -o x"${platform}" = x""; then
+	bootstrap="--enable bootstrap"
+    else
+	bootstrap="--disable bootstrap"
+    fi
+else
+    bootstrap=""
 fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If cbuild2 returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then

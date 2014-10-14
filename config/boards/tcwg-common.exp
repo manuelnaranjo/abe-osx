@@ -3,5 +3,8 @@ load_generic_config schroot-ssh
 
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
-#set_board_info username buildslave
-set_board_info gcc,timeout 100000
+
+# Compilation timeout 10min
+set_board_info gcc,timeout 600
+# Execution timeout 10min
+set_board_info timeout 600
