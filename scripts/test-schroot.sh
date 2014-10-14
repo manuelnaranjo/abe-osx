@@ -232,6 +232,7 @@ fi
 
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
+    $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
     # Set ssh port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
@@ -318,7 +319,6 @@ fi
 # Keep the session alive when file /dont_kill_me is present
 if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
-    $schroot /etc/init.d/ssh stop || true
     ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be
