@@ -19,6 +19,18 @@
 returncode="0"
 returnstr="ALLGOOD"
 
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+--email          : Send email of the validation results
+--tdir dir1 dir2 : Compare the test results in 2 subdirectories
+--branch NAME    : Specify a branch name for the log file
+  Note: BRANCH is only used for the notification email.
+EOF
+    return 0
+}
+
 # $1 - the check.log file to scan
 scancheck () 
 {
@@ -280,61 +292,24 @@ mailto()
     fi
 }
 
-usage()
-{
-    echo "--email          : Send email of the validation results"
-    echo "--tdir dir1 dir2 : Compare the test results in 2 subdirectories"
-    echo "--base dir       : Compare the test results in dir to the baseline"
-    echo "These next two options are only used by --base"
-    echo "  --target triplet : Thr target triplet or 'native'"
-    echo "  --build cpu      : The cpu of the build machine"
-}
-
 # ----------------------------------------------------------------------
 # Start to actually do something
-
-# The top level is usually something like /space/build/gcc-linaro-4.8.3-2014.02
-
-if test "`echo $* | grep -c email`" -gt 0; then
-    email=yes    
-fi
 
 if test $# -eq 0; then
     usage
 fi
-args="$*"
+
+OPTS="`getopt -o etb:h -l email:tdir:help:branch -- "$@"`"
 while test $# -gt 0; do
-    case "$1" in
-	--email)
-	    ;;
-	--tdir*)
-	    difftwodirs "$2" "$3"
-	    shift
-	    ;;
-	--target*)
-	    # Set the target triplet
-	    target="$2"
-	    shift
-	    ;;
-	--build*)
-	    # Set the build triplet
-	    buildarch="`echo $2 | cut -d '-' -f 1`"
-	    shift
-	    ;;
-	--base*)
-	    # For each revision we build the toolchain for this config triplet
-	    if test x"${target}" = x; then
-		echo "ERROR: No target to compare!"
-		echo "tcwgweb.sh --target [triplet] ${args} --base [path]"
-		exit
-		
-	    fi
-	    shift
-	    diffbaseline "${buildarch}.${target}" "$1"
-	    ;;
+    echo 1 = "$1"
+    case $1 in
+	-e|--email) email=yes ;;
+	-b|--branch) branch=$2 ;;
+	-t|--tdir) difftwodirs "$2" "$3"
+	    shift ; shift ;;
+        -h|--help) usage ;;
+	--) break ;;
     esac
-    if test $# -gt 0; then
-	shift
-    fi
+    shift
 done
 
