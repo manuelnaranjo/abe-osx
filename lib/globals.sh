@@ -104,3 +104,7 @@ fi
 if test -e ~/.cbuildrc; then
     . ~/.cbuildrc
 fi
+
+gerrit_host=""
+gerrit_project=""
+gerrit_username=""
