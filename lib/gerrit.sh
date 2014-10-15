@@ -26,17 +26,32 @@
     # this uses the git commit SHA-1
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --code-review 0 -m "foo" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
-    # --code-review N            : score for Code-Review
-    #                           -2 Do not submit
-    #                           -1 I would prefer that you didn't submit this
-    #                            0 No score
-    #                           +1 Looks good to me, but someone else must approve
-    #                           +2 Looks good to me, approved
-    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
+
+# The number used for code reviews looks like this, it's passed as a string to
+# these functions:
+#   -2 Do not submit
+#   -1 I would prefer that you didn't submit this
+#   0 No score
+#   +1 Looks good to me, but someone else must approve
+#   +2 Looks good to me, approved
+
+
+# ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
 
     # local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 
 # These extract_gerrit_* functions get needed information from a .gitreview file.
+
+# Extract info we need from a ,gitreview file, which sets the globals
+gerrit_info()
+{
+    local srcdir=$1
+    extract_gerrit_host ${srcdir}
+    extract_gerrit_port ${srcdir}
+    extract_gerrit_project ${srcdir}
+    extract_gerrit_username ${srcdir}
+}
+
 extract_gerrit_host()
 {
     local srcdir=$1
@@ -116,41 +131,56 @@ extract_gerrit_port()
 
 add_gerrit_comment ()
 {
-    local revision=$1
-    ssh -p 29418 review.linaro.org gerrit review --code-review 0 --message "\"%s"\" %s' % (message, ${revision})'
+    trace "$*"
 
+    local revision="$1"
+    local message="`cat $2`"
+    local code="${3:-0}"
+
+    notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}"
 }
 
-notify_committer ()
+submit_gerrit()
 {
-    local manifest=$1
+    local message="`cat $1`"
+    local code="${2:-0}"
+    local revision="${3:-}"
+    notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
+}
 
-    # The email address of the requester is only added by Jenkins, so this will fail
-    # for a manual build.
-    local userid="`grep 'email=' ${manifest} | cut -d '=' -f 2`"
-    local revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
+# $1 - the version of the toolname
+# $2 - the build status, 0 success, 1 failure, 2 no regressions, 3 regressions
+# $3 - the file of test results, if any
+gerrit_build_status()
+{
+    trace "$*"
 
-    cat <<EOF > /tmp/notify$.txt
-Hello ${userid})
-Your patch set ${revision} has triggered automated testing.'
-Please do not merge this commit until after I have reviewed the results with you.'
+    local srcdir="`get_srcdir $1`"
+    local status="$2"
+    local resultsfile="${3:-}"
+    local revision="`get_git_revision ${srcdir}`"
+    local msgfile="/tmp/notify$$.txt"
+    local code="0"
+
+    declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions")
+
+    cat<<EOF > ${msgfile}
+Your patch is being reviewed. The build step has completed with a status
+of: ${statusmsg[${status}]}
+ 
 EOF
 
-    add_gerrit_comment /tmp/notify$.txt
-}
+    if test x"${resultsfile}" != x; then
+	cat ${resultsfile} >> ${msgfile}
+    fi
 
-publish_results ()
-{
-    local manifest=$1
-    local build_url="`grep 'build_url=' ${manifest} | cut -d '=' -f 2`"
+#http://cbuild.validation.linaro.org/logs/gcc-linaro-5.0.0/
 
-#    test_results = os.environ['BUILD_URL'] + 'console'
-#    result_message_list.append('* TEST RESULTS: %s' % test_results)
-#    result_message = '\n'.join(result_message_list)
-#    if result is None:
-#        add_gerrit_comment(result_message, 0)
-#    elif result:
-#        add_gerrit_comment(result_message, +1)
-#    else:
-#        add_gerrit_comment(result_message, -1)
+    add_gerrit_comment ${revision} ${msgfile} ${code}
+    if test $? -gt 0; then
+	error "Couldn't add Gerrit comment!"
+	rm -f  ${msgfile}
+	return 1
+    fi
+    rm -f  ${msgfile}
 }
