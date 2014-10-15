@@ -24,7 +24,7 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  test-backport.sh [--help] [f|--fileserver remote file server]
+  test-backport.sh [--help] [f|--fileserver remote file server] --target triplet branch
 EOF
     return 0
 }
