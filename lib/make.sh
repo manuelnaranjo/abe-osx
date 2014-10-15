@@ -136,26 +136,28 @@ build_all()
 
     manifest ${local_builds}/${host}/${target}/manifest.txt
 
-    notice "Build took ${SECONDS} seconds"
+    # Notify that the build completed successfully
+    build_success
 
-    # # now run the tests if specified. We do this after a full toolchain
-    # # build because *glibc requires a full stage2 build to compile the
-    # # test cases.
-    # if test x"${runtests}" = x"yes"; then
-    # 	for i in ${builds}; do
-    # 	    local gitinfo="`get_source $i`"
-    #         case $i in
-    # 		binutils|libc|stage2|gdb) 
-    # 		    make_check ${gitinfo}${2:+ $2}
-    # 		    ;;
-    # 		*) /* do nothing */ ;;
-    # 	    esac
-    # 	    if test $? -gt 0; then
-    # 		error "Failed building $i."
-    # 		return 1
-    # 	    fi
-    # 	done
-    # fi
+    if test x"${gerrit}" = xyes -a x"${runtests}" = xyes; then
+	local sumsfile="/tmp/sums$$.txt"
+	local sums="`find ${local_builds}/${host}/${target} -name \*.sum`"
+	for i in ${sums}; do
+	    local lineno="`grep -n -- "Summary" $i | grep -o "[0-9]*"`"
+	    local lineno="`expr ${lineno} - 2`"
+	    sed -e "1,${lineno}d" $i >> ${sumsfile}
+	    local status="`grep -c unexpected $i`"
+	    if test ${status} -gt 0; then
+		local hits="yes"
+	    fi
+	done
+	if test x"${hits}" = xyes; then
+	    gerrit_build_status ${gcc_version} 3 ${sumsfile}
+	else
+	    gerrit_build_status ${gcc_version} 2 ${sumsfile}
+	fi
+    fi
+    rm -f ${sumsfile}
     
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
@@ -165,10 +167,6 @@ build_all()
         if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
             release_gdb_src
         fi
-# FIXME: release_sysroot isn't implemented yet, this is a reminder
-#       if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
-#            release_sysroot
-#       fi
     fi
 
     if test x"${tarbin}" = x"yes"; then
@@ -345,7 +343,7 @@ build()
             if test $? -gt 0; then
                 return 1
             fi
-        fi
+	fi
     fi
 
     return 0
