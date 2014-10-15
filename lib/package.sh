@@ -291,53 +291,59 @@ binary_sysroot()
 # used for this build.
 manifest()
 {
+    trace "$*"
+
     if test x"$1" = x; then
 	local outfile=/tmp/linaro.$$/manifest.txt
     else
 	local outfile=$1
     fi
 
-    if test x"${gcc_version}" = x; then
-	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
     if test x"${gmp_version}" = x; then
-	gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
+	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${mpc_version}" = x; then
-	mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
+	local mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${mpfr_version}" = x; then
-	mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
+	local mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${gdb_version}" = x; then
-	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
     fi
+    if test x"${gcc_version}" = x; then
+	local gcc_branch="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+    else
+	local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
+    fi
+
+    local srcdir="`get_srcdir ${gcc_version}`"
+    local gcc_version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' '`"
+    local gcc_revision="`get_git_revision ${srcdir}`"
+
     local srcdir="`get_srcdir ${gdb_version}`"
-    local gdb_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    local gdb_revision="`get_git_revision ${srcdir}`"
     
     if test x"${dejagnu_version}" = x; then
-	dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${dejagnu_version}`"
-    local dejagnu_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    local dejagnu_revision="`get_git_revision ${srcdir}`"
     
     if test x"${linux_version}" = x; then
-	linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
+	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${binutils_version}" = x; then
-	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
+	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    local binutils_revision=="`get_git_revision ${srcdir}`"
 
-    local cbuild_revision="`cd ${cbuild_path} && git log -n 1 | grep ^commit | cut -d ' ' -f 2`"
+    local cbuild_revision="`get_git_revision ${cbuild_path}`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -354,6 +360,7 @@ host_gcc="${host_gcc_version}"
 gmp_version=${gmp_version}
 mpc_version=${mpc_version}
 mpfr_version=${mpfr_version}
+gcc_branch=${gcc_branch}
 gcc_version=${gcc_version}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
