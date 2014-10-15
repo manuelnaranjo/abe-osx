@@ -36,6 +36,7 @@
 
     # local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 
+# These extract_gerrit_* functions get needed information from a .gitreview file.
 extract_gerrit_host()
 {
     local srcdir=$1
@@ -91,6 +92,26 @@ extract_gerrit_username()
     fi
     
     echo ${gerrit_username}
+}
+
+extract_gerrit_port()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_port}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    
+    echo ${gerrit_port}
 }
 
 add_gerrit_comment ()
