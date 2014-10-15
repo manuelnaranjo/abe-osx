@@ -31,6 +31,7 @@ set -o pipefail
 . "${topdir}/lib/testcode.sh" || exit 1
 . "${topdir}/lib/git-parser.sh" || exit 1
 . "${topdir}/lib/stamp.sh" || exit 1
+. "${topdir}/lib/gerrit.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -756,3 +757,12 @@ create_release_tag()
     return 0
 }
 
+# Get the SHA-1 for the latest commit to the git repository
+get_git_revision()
+{
+    local srcdir=$1
+    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
+    
+    echo ${revision}
+    return 0
+}
