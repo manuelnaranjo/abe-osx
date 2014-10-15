@@ -138,12 +138,20 @@ EOF
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
+# $1 - the subject for the email
+# $2 - the body of the email
+# $3 - optional user to send email to
 mailto()
 {
-
-    notice "Mailing test results!"
-    mail -s "$1" tcwg-test-results@linaro.org < $2
-    # Hack till the mailing list lets me get messages, which it won't do
-    # cause I'm the admin.
-    mail -s "$1" rob.savoye@linaro.org < $2
+    if test x"${email}" = xyes; then
+	echo "Mailing test results!"
+	mail -s "$1" tcwg-test-results@gnashdev.org < $2
+	if test x"$3" != x; then
+	    mail -s "$1" $3 < $2	
+	fi
+    else
+	echo "$1"
+	echo "===================== $1 ================"
+	cat $2
+    fi
 }
