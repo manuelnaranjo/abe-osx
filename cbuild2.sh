@@ -464,7 +464,8 @@ build_success()
     if test x"${gerrit}" = xyes; then
 	gerrit_build_status ${gcc_version} 0
     fi
-    exit 1
+
+    return 0
 }
 
 # Switches that require a following directive need to make sure they don't
