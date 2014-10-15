@@ -23,7 +23,7 @@ usage()
   ${cbuild2} [''| [--timeout <value>]
              [[--build [<package> --stage {1|2}]|all]
               |[--checkout <package>|all]]
-             [--ccache] [--check] [--enable {bootstrap}]
+             [--ccache] [--check] [--enable {bootstrap|gerrit}]
              [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
@@ -143,6 +143,10 @@ OPTIONS
                 bootstrap
                         Enable gcc bootstrapping, which is disabled by
                         default.
+
+                gerrit
+                        Enable posting comments to Gerrit on the build
+                        progress.
 
   --fetch <url>
 
@@ -445,6 +449,21 @@ build_failure()
 {
     time="`expr ${SECONDS} / 60`"
     error "Build process failed after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 1
+    fi
+    exit 1
+}
+
+build_success()
+{
+    time="`expr ${SECONDS} / 60`"
+    error "Build process succeeded after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 0
+    fi
     exit 1
 }
 
@@ -545,6 +564,7 @@ dump()
     echo "Distribution:      ${distribution}"
 
     echo "Bootstrap          ${bootstrap}"
+    echo "Gerrit             ${gerrit}"
     echo "Install            ${install}"
     echo "Source Update      ${supdate}"
     echo "Make Documentation ${make_docs}"
@@ -769,6 +789,9 @@ while test $# -gt 0; do
 	    case $2 in
 		bootstrap)
 		    bootstrap="${value}"
+		    ;;
+		gerrit)
+		    gerrit="${value}"
 		    ;;
 		alltests)
 		    alltests="${value}"

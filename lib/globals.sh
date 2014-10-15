@@ -86,6 +86,7 @@ verbose=1
 network=""
 runtests=no
 ccache=no
+gerrit=no
 
 release=""
 with_packages="toolchain,sysroot,gdb"
@@ -99,13 +100,14 @@ if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
 fi
 
+gerrit_host="review.linaro.org"
+gerrit_port="29418"
+gerrit_username=""
+gerrit_project=""
+
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
 if test -e ~/.cbuildrc; then
     . ~/.cbuildrc
 fi
 
-gerrit_host="review.linaro.org"
-gerrit_port="29418"
-gerrit_username=""
-gerrit_project=""
