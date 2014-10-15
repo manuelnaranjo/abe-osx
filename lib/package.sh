@@ -314,14 +314,10 @@ manifest()
     if test x"${gdb_version}" = x; then
 	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
     fi
-    if test x"${gcc_version}" = x; then
-	local gcc_branch="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    else
-	local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
-    fi
+    local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
 
     local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' '`"
+    local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' '`"
     local gcc_revision="`get_git_revision ${srcdir}`"
 
     local srcdir="`get_srcdir ${gdb_version}`"
@@ -361,7 +357,7 @@ gmp_version=${gmp_version}
 mpc_version=${mpc_version}
 mpfr_version=${mpfr_version}
 gcc_branch=${gcc_branch}
-gcc_version=${gcc_version}
+gcc_version=${gcc_versionnum}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
