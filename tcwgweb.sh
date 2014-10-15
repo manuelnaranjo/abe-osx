@@ -16,17 +16,31 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
+fi
+
+# load commonly used functions
+cbuild="`which $0`"
+topdir="${cbuild_path}"
+cbuild2="`basename $0`"
+
+. "${topdir}/lib/common.sh" || exit 1
+
+# Globals shared between email and gerrit notifications
 returncode="0"
 returnstr="ALLGOOD"
+resultsfile="/tmp/test-results$$.txt"
 
 usage()
 {
-    # Format this section with 75 columns.
     cat << EOF
 --email          : Send email of the validation results
 --tdir dir1 dir2 : Compare the test results in 2 subdirectories
---branch NAME    : Specify a branch name for the log file
-  Note: BRANCH is only used for the notification email.
 EOF
     return 0
 }
@@ -108,12 +122,15 @@ difftwodirs ()
     fi
     
     echo "Diffing: ${prev} against ${next}..."
+
     local gcc_version="`grep 'gcc_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
+    if test x"${gcc_version}" = x"gcc.git"; then
+	local gcc_branch="gcc.git~master"
+    else
+	local gcc_branch="${gcc_version}"
+    fi
     local binutils_version="`grep 'binutils_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local binutils_revision="`grep 'binutils_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
-    if test x"${gcc_version}" = x"gcc.git"; then
-	local gcc_version="gcc.git~master"
-    fi
     local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
     if test -e ${prev}/manifest.txt; then
 	local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
@@ -133,10 +150,9 @@ difftwodirs ()
     unxz ${next}/check*.log.xz
     # FIXME: LD and gfortran has problems in the testsuite, so it's temporarily not
     # analyzed for errors.
-    local resultsfile="/tmp/test-results$$.txt"
     local regressions=0
     touch ${resultsfile}
-    echo "Comparison of ${gcc_version} between:" >> ${resultsfile}
+    echo "Comparison of ${gcc_branch} between:" >> ${resultsfile}
     echo "	${prev} and" >> ${resultsfile}
     echo "	${next}" >> ${resultsfile}
     echo "	" >> ${resultsfile}
@@ -178,7 +194,6 @@ difftwodirs ()
 		echo "" >> ${resultsfile}
 		grep "^# of " ${next}/$i.sum >> ${resultsfile}
 		echo "" >> ${resultsfile}
-		local wwwpath="`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
 		local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 		if test ${regressions} -gt 0; then
 		    echo "$i had regressions between ${pversion} and ${cversion}!" >> ${resultsfile}
@@ -195,16 +210,16 @@ difftwodirs ()
 	scancheck ${next}/check-$i.log.xz
     done
 
+    local wwwpath="/logs/gcc-linaro-${gcc_version}/`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
     echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
-    local lineo="`grep -n -- "----" ${prev}/manifest.txt | grep -o "[0-9]*"`"
+    local lineno="`grep -n -- "----" ${prev}/manifest.txt | grep -o "[0-9]*"`"
     if test x"${lineno}" != x; then
 	sed -e "1,${lineno}d" ${prev}/manifest.txt >> ${resultsfile}
 	echo "" >> ${resultsfile}
     fi
 
-    mailto "Test results for ${gcc_version}" ${resultsfile} ${userid}
-    rm -f ${resultsfile}
+    mailto "Test results for ${gcc_branch}" ${resultsfile} ${userid}
 
     rm -fr ${diffdir}
     local incr=`expr ${incr} + 1`
@@ -219,7 +234,6 @@ difftwodirs ()
 	xz ${next}/*.sum
     fi
     echo ${returnstr}
-    exit ${returncode}
 }
 
 #
@@ -274,24 +288,6 @@ EOF
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
-# $1 - the subject for the email
-# $2 - the body of the email
-# $3 - optional user to send email to
-mailto()
-{
-    if test x"${email}" = xyes; then
-	echo "Mailing test results!"
-	mail -s "$1" tcwg-test-results@gnashdev.org < $2
-	if test x"$3" != x; then
-	    mail -s "$1" $3 < $2	
-	fi
-    else
-	echo "$1"
-	echo "===================== $1 ================"
-	cat $2
-    fi
-}
-
 # ----------------------------------------------------------------------
 # Start to actually do something
 
@@ -313,3 +309,9 @@ while test $# -gt 0; do
     shift
 done
 
+srcdir="linaro/shared/snapshots/gcc.git"
+gerrit_info ${srcdir}
+gerrit_build_status ${srcdir} 0 ${resultsfile}
+
+rm -fr ${resultsfile}
+# cat ${resultsfile}
