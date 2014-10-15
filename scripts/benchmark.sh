@@ -238,16 +238,40 @@ $0 [-tckh] -b <benchmark> <board...>
 EOF
 }
 
+set_toolchain()
+{
+  local target_gcc="${target:+${target}-}gcc"
+  if test x"${toolchain_path}" = x; then
+    which "${target_gcc}" > /dev/null 2>&1
+    if test $? -ne 0; then
+      echo "No toolchain specified and unable to find a suitable gcc on the path" 1>&2
+      echo "Looked for ${target:+${target}-}gcc" 1>&2
+      exit 1
+    else
+      echo "No toolchain specified, using `which ${target_gcc}`, found on PATH" 1>&2
+    fi
+  else
+    if test -f "${toolchain_path}/bin/${target_gcc}"; then
+      PATH="${toolchain_path}/bin:$PATH"
+    else
+      echo "Toolchain directory ${toolchain_path} does not contain bin/${target_gcc}" 1>&2
+      exit 1
+    fi
+  fi
+}
+
 topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
 if ! test -e "${topdir}/host.conf"; then
   echo "No host.conf, did you run ./configure?" 1>&2
   exit 1
 fi
 
+toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
-while getopts t:b:kch flag; do
+while getopts i:t:b:kch flag; do
   case "${flag}" in
+    i) toolchain_path="${OPTARG}";;
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
     c) cautious=;;
@@ -274,6 +298,7 @@ shift $((OPTIND - 1))
 devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine.
                #Duplicate targets not fine for ssh access, where they will just resolve to the same machine every time.
                #TODO: Check for multiple instances of a given non-lava target
+set_toolchain
 
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
