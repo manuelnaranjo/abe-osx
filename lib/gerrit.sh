@@ -14,18 +14,89 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 
 # These functions are roughly based on the python script the LAVA team uses. That script
 # is available at:
 # https://git.linaro.org/lava-team/lava-ci.git/blob_plain/HEAD:/lava-project-ci.py
 
+# https://review.openstack.org/Documentation/cmd-index.html
+
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit version
+    # this uses the git commit SHA-1
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --code-review 0 -m "foo" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
+    # --code-review N            : score for Code-Review
+    #                           -2 Do not submit
+    #                           -1 I would prefer that you didn't submit this
+    #                            0 No score
+    #                           +1 Looks good to me, but someone else must approve
+    #                           +2 Looks good to me, approved
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
+
+    # local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
+
+extract_gerrit_host()
+{
+    local srcdir=$1
+
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+    else
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    
+    gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    echo ${gerrit_host}
+}
+
+extract_gerrit_project()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+    else
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    
+    gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    echo ${gerrit_project}
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    
+    echo ${gerrit_username}
+}
+
 add_gerrit_comment ()
 {
-    local manifest=$1
-    local revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2`"
-
-    ssh review.linaro.org gerrit review --code-review %s -m "\"%s"\" %s' % (gerrit_server, review, message, ${revision})'
+    local revision=$1
+    ssh -p 29418 review.linaro.org gerrit review --code-review 0 --message "\"%s"\" %s' % (message, ${revision})'
 
 }
 
