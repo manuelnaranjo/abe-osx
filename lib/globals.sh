@@ -105,6 +105,7 @@ if test -e ~/.cbuildrc; then
     . ~/.cbuildrc
 fi
 
-gerrit_host=""
-gerrit_project=""
+gerrit_host="review.linaro.org"
+gerrit_port="29418"
 gerrit_username=""
+gerrit_project=""
