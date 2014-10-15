@@ -147,7 +147,7 @@ mailto()
 	echo "Mailing test results!"
 	mail -s "$1" tcwg-test-results@gnashdev.org < $2
 	if test x"$3" != x; then
-	    mail -s "$1" $3 < $2	
+	    mail -s "$1" $3 < $2
 	fi
     else
 	echo "$1"
