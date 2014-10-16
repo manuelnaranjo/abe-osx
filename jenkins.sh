@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+
 usage()
 {
     # Format this section with 75 columns.
@@ -170,6 +171,10 @@ fi
 
 $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
 
+# load commonly used varibles
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+fi
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
@@ -197,6 +202,8 @@ Format-Version: 0.5
 Files-Pattern: *
 License-Type: open
 EOF
+
+env
 
 if test x"${tars}" = x; then
     # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
@@ -258,6 +265,7 @@ if test x"${manifest}" != x; then
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
+    echo "build_url=${BUILD_URL}" >> ${manifest}
 else
     echo "ERROR: No manifest file, build probably failed!"
 fi
