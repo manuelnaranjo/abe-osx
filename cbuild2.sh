@@ -459,7 +459,7 @@ build_failure()
 build_success()
 {
     time="`expr ${SECONDS} / 60`"
-    error "Build process succeeded after ${time} minutes"
+    notice "Build process succeeded after ${time} minutes"
     
     if test x"${gerrit}" = xyes; then
 	gerrit_build_status ${gcc_version} 0
