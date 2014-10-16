@@ -42,7 +42,9 @@
 
 # These extract_gerrit_* functions get needed information from a .gitreview file.
 
-# Extract info we need from a ,gitreview file, which sets the globals
+# Extract info we need. For a Gerrit triggered build, info is in
+# environment variables. Otherwise we scrap a gitreview file for
+# the requireed information.
 gerrit_info()
 {
     local srcdir=$1
@@ -50,43 +52,61 @@ gerrit_info()
     extract_gerrit_port ${srcdir}
     extract_gerrit_project ${srcdir}
     extract_gerrit_username ${srcdir}
+
+    # These only come from Gerrit triggers
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
 }
 
 extract_gerrit_host()
 {
-    local srcdir=$1
-
-    if test -e ${srcdir}/.gitreview; then
-	local review=${srcdir}/.gitreview
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
     else
-	if test -e ${HOME}/.gitreview; then
-	    local review=${HOME}/.gitreview
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
 	else
-	    error "No ${srcdir}/.gitreview file!"
-	    return 1
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
 	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
     fi
     
-    gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
     echo ${gerrit_host}
+    return 0
 }
 
 extract_gerrit_project()
 {
-    local srcdir=$1
-    if test -e ${srcdir}/.gitreview; then
-	local review=${srcdir}/.gitreview
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
     else
-	if test -e ${HOME}/.gitreview; then
-	    local review=${HOME}/.gitreview
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
 	else
-	    error "No ${srcdir}/.gitreview file!"
-	    return 1
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
 	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
     fi
-    
-    gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+
     echo ${gerrit_project}
+    return 0
 }
 
 extract_gerrit_username()
@@ -105,24 +125,406 @@ extract_gerrit_username()
 	    return 1
 	fi
     fi
+    if test x"${gerrit_username}" != x; then
+	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+    fi
+
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+}
+
+extract_gerrit_host()
+{
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    fi
     
+    echo ${gerrit_host}
+    return 0
+}
+
+extract_gerrit_project()
+{
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    fi
+
+    echo ${gerrit_project}
+    return 0
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    if test x"${gerrit_username}" != x; then
+	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+    fi
+
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+}
+
+extract_gerrit_host()
+{
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    fi
+    
+    echo ${gerrit_host}
+    return 0
+}
+
+extract_gerrit_project()
+{
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    fi
+
+    echo ${gerrit_project}
+    return 0
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    if test x"${gerrit_username}" != x; then
+	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+    fi
+
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+}
+
+extract_gerrit_host()
+{
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    fi
+    
+    echo ${gerrit_host}
+    return 0
+}
+
+extract_gerrit_project()
+{
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    fi
+
+    echo ${gerrit_project}
+    return 0
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    if test x"${gerrit_username}" != x; then
+	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+    fi
+
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+}
+
+extract_gerrit_host()
+{
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    fi
+    
+    echo ${gerrit_host}
+    return 0
+}
+
+extract_gerrit_project()
+{
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    fi
+
+    echo ${gerrit_project}
+    return 0
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    if test x"${gerrit_username}" != x; then
+	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+    fi
+
+    gerrit_branch="${GERRIT_TOPIC}"
+    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+}
+
+extract_gerrit_host()
+{
+    if test x"${GERRIT_HOST}" != x; then
+	gerrit_host="${GERRIT_HOST}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+    fi
+    
+    echo ${gerrit_host}
+    return 0
+}
+
+extract_gerrit_project()
+{
+    if test x"${GERRIT_PROJECT}" != x; then
+	gerrit_project="${GERRIT_PROJECT}"
+    else
+	local srcdir=$1
+	
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
+	else
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
+	fi
+	
+	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+    fi
+
+    echo ${gerrit_project}
+    return 0
+}
+
+extract_gerrit_username()
+{
+    local srcdir=$1
+    if test -e ${srcdir}/.gitreview; then
+	local review=${srcdir}/.gitreview
+	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+    fi
+    if test x"${gerrit_username}" = x; then
+	if test -e ${HOME}/.gitreview; then
+	    local review=${HOME}/.gitreview
+	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	else
+	    error "No ${srcdir}/.gitreview file!"
+	    return 1
+	fi
+    fi
+    # The user name may differ from the uploader email address
+    if test x"${gerrit_username}" = x; then
+	gerrit_username="`echo ${GERRIT_PATCHSET_UPLOADER_EMAIL} | cut -d '@' -f 1`"
+    fi
     echo ${gerrit_username}
 }
 
 extract_gerrit_port()
 {
-    local srcdir=$1
-    if test -e ${srcdir}/.gitreview; then
-	local review=${srcdir}/.gitreview
-	gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
-    fi
-    if test x"${gerrit_port}" = x; then
-	if test -e ${HOME}/.gitreview; then
-	    local review=${HOME}/.gitreview
+    if test x"${GERRIT_PORT}" != x; then
+	gerrit_port="${GERRIT_PORT}"
+    else
+	local srcdir=$1
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
 	    gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
-	else
-	    error "No ${srcdir}/.gitreview file!"
-	    return 1
+	fi
+	if test x"${gerrit_port}" = x; then
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+		gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
+	    else
+		error "No ${srcdir}/.gitreview file!"
+		return 1
+	    fi
 	fi
     fi
     
@@ -137,7 +539,9 @@ add_gerrit_comment ()
     local message="`cat $2`"
     local code="${3:-0}"
 
-    notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}"
+    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+
+    return 0
 }
 
 submit_gerrit()
@@ -146,6 +550,8 @@ submit_gerrit()
     local code="${2:-0}"
     local revision="${3:-}"
     notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
+
+    return 0
 }
 
 # $1 - the version of the toolname
@@ -159,20 +565,21 @@ gerrit_build_status()
     local status="$2"
     local resultsfile="${3:-}"
     local revision="`get_git_revision ${srcdir}`"
-    local msgfile="/tmp/notify$$.txt"
+    local msgfile="${local_builds}/${host}/${target}/test-results.txt"
     local code="0"
+
+    # Initialize setting for gerrit if not done so already
+    if test x"${gerrit_username}" = x; then
+	gerrit_info ${rcdir}
+    fi
 
     declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions")
 
+    rm -f  ${msgfile}
     cat<<EOF > ${msgfile}
-Your patch is being reviewed. The build step has completed with a status
-of: ${statusmsg[${status}]}
+Your patch is being reviewed. The build step has completed with a status of: ${statusmsg[${status}]}
  
 EOF
-
-    if test x"${resultsfile}" != x; then
-	cat ${resultsfile} >> ${msgfile}
-    fi
 
 #http://cbuild.validation.linaro.org/logs/gcc-linaro-5.0.0/
 
@@ -182,5 +589,10 @@ EOF
 	rm -f  ${msgfile}
 	return 1
     fi
-    rm -f  ${msgfile}
+
+    if test x"${resultsfile}" != x; then
+	cat ${resultsfile} >> ${msgfile}
+    fi
+
+    return 0
 }
