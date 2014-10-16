@@ -203,8 +203,6 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-env
-
 if test x"${tars}" = x; then
     # date="`${gcc} --version | head -1 | cut -d ' ' -f 4 | tr -d ')'`"
     date="`date +%Y%m%d`"
