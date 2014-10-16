@@ -122,7 +122,6 @@ extract_gerrit_username()
 	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
 	else
 	    error "No ${srcdir}/.gitreview file!"
-	    return 1
 	fi
     fi
     if test x"${gerrit_username}" != x; then
