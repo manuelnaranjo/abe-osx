@@ -4,7 +4,7 @@ load_generic_config schroot-ssh
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
 
-# Compilation timeout 10min
-set_board_info gcc,timeout 600
-# Execution timeout 10min
-set_board_info timeout 600
+# Compilation timeout 3min
+set_board_info gcc,timeout 180
+# Execution timeout 3min
+set_board_info timeout 180
