@@ -351,12 +351,6 @@ cbuild2="`basename $0`"
 
 . "${topdir}/lib/common.sh" || exit 1
 
-# Initialize settings for gerrit
-gerrit_info $HOME
-if test x"${gerrit_branch}" != x; then
-    gcc_version="gcc.git~${gerrit_branch}@${gerrit_revision}"
-fi
-
 # this is used to launch builds of dependant components
 command_line_arguments=$*
 
@@ -799,6 +793,11 @@ while test $# -gt 0; do
 		    ;;
 		gerrit)
 		    gerrit="${value}"
+		    # Initialize settings for gerrit
+		    gerrit_info $HOME
+		    if test x"${gerrit_branch}" != x; then
+			gcc_version="gcc.git~${gerrit_branch}@${gerrit_revision}"
+		    fi
 		    ;;
 		alltests)
 		    alltests="${value}"
