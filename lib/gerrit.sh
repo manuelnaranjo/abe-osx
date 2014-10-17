@@ -47,7 +47,6 @@
 # the requireed information.
 gerrit_info()
 {
-    set -x
     local srcdir=$1
     extract_gerrit_host ${srcdir}
     extract_gerrit_port ${srcdir}
@@ -57,7 +56,6 @@ gerrit_info()
     # These only come from Gerrit triggers
     gerrit_branch="${GERRIT_TOPIC}"
     gerrit_revision="${GERRIT_PATCHSET_REVISION}"
-    set +x
 }
 
 extract_gerrit_host()
@@ -184,8 +182,9 @@ submit_gerrit()
 # $3 - the file of test results, if any
 gerrit_build_status()
 {
-    trace "$*"
-
+    if test x"${gerrit}" != xyes; then
+	return 0
+    fi
     local srcdir="`get_srcdir $1`"
     local status="$2"
     local resultsfile="${3:-}"
