@@ -255,6 +255,9 @@ if $begin_session; then
     $rsh root@$target rsync -a /root/ $home/
     $rsh root@$target chown -R $user $home/
 
+    $rsh $target touch /dont_keep_session
+    $rsh $target chmod 0666 /dont_keep_session
+
     echo $target:$port started schroot: $rsh $target
 fi
 
@@ -317,7 +320,7 @@ if $ssh_master; then
 fi
 
 # Keep the session alive when file /dont_kill_me is present
-if $finish_session && `$schroot test ! -f "/dont_kill_me"`; then
+if $finish_session && `$schroot test -f /dont_keep_session`; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
