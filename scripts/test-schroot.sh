@@ -255,8 +255,8 @@ if $begin_session; then
     $rsh root@$target rsync -a /root/ $home/
     $rsh root@$target chown -R $user $home/
 
-    $rsh $target touch /dont_keep_session
-    $rsh $target chmod 0666 /dont_keep_session
+    $rsh root@$target touch /dont_keep_session
+    $rsh root@$target chmod 0666 /dont_keep_session
 
     echo $target:$port started schroot: $rsh $target
 fi
