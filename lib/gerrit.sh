@@ -26,6 +26,7 @@
     # this uses the git commit SHA-1
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --code-review 0 -m "foo" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set gcc status:open limit:1 --format JSON
 
 # The number used for code reviews looks like this, it's passed as a string to
 # these functions:
@@ -56,6 +57,9 @@ gerrit_info()
     # These only come from Gerrit triggers
     gerrit_branch="${GERRIT_TOPIC}"
     gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+
+    # Query the Gerrit server
+    gerrit_query gcc
 }
 
 extract_gerrit_host()
@@ -218,5 +222,44 @@ EOF
 	cat ${resultsfile} >> ${msgfile}
     fi
 
+    return 0
+}
+
+# $1 - the toolchain component t
+gerrit_query()
+{
+
+    local tool=$1
+
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
+    gerrit_username=robert.savoye
+    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} status:open --format JSON > /tmp/query$$.txt
+    local i=0
+    declare -a out
+    while read line
+    do
+	out[$i]="echo ${line} | tr -d '\n'"
+	local i=`expr $i + 1`
+    done < /tmp/query$$.txt
+
+    echo "===================================================="
+    echo "${out[33]}"
+    echo "----------------------------------------------------"
+    gerrit_extract_keyword "revision" "${out[33]}"
+
+    return 0;
+}
+
+# $1 - the key word to look for
+# $2 - The query return string in JSON format to seaarch through
+gerrit_extract_keyword()
+{
+    local keyword="$1"
+    local query="$2"
+
+#    local answer="`echo ${query} | grep -o "\\"${keyword}\\":\\"\[a-z0-9\]\*\\"" | tr -d '\"'`"
+    local answer="`echo ${query} | grep -o ${keyword}\\":\\"[A-Za-z0-9\ ]*\\" | tr -d '\\"' | cut -d ':' -f 2`"
+
+    echo ${answer}
     return 0
 }
