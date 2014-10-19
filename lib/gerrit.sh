@@ -225,15 +225,43 @@ EOF
     return 0
 }
 
-# $1 - the toolchain component t
+# $1 - the key word to look for
+# $2 - The query return string in JSON format to seaarch through
+gerrit_extract_keyword()
+{
+    local keyword="$1"
+    local query="$2"
+
+    local answer="`echo ${query} | grep -o ${keyword}\\":\\"[A-Za-z0-9\ ]*\\" | tr -d '\\"' | cut -d ':' -f 2`"
+
+    echo ${answer}
+    return 0
+}
+
+# $1 the array of records
+gerrit_get_record()
+{
+    local pattern="$1"
+    local records="$2"
+    local count="${#records[*]}"
+    for i in `seq 0 34`; do
+	if test `echo ${records[$i]} | grep -c ${pattern}` -gt 0; then
+	    echo "${records[$i]}"
+	    return 0
+	fi
+    done
+}
+
+# $1 - the toolchain component to query
+# $2 - the status to query, default to all open patches
 gerrit_query()
 {
-
     local tool=$1
+    local status=${2:-status:open}
 
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
     gerrit_username=robert.savoye
-    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} status:open --format JSON > /tmp/query$$.txt
+    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a out
     while read line
@@ -245,21 +273,10 @@ gerrit_query()
     echo "===================================================="
     echo "${out[33]}"
     echo "----------------------------------------------------"
-    gerrit_extract_keyword "revision" "${out[33]}"
+#    local record="`gerrit_get_record 73e60b77b497f699d8a2a818e2ecaa7ca57e5d1d "${out}"`"
+
+#    local revision="`gerrit_extract_keyword "revision" "${out[33]}"`"
 
     return 0;
 }
 
-# $1 - the key word to look for
-# $2 - The query return string in JSON format to seaarch through
-gerrit_extract_keyword()
-{
-    local keyword="$1"
-    local query="$2"
-
-#    local answer="`echo ${query} | grep -o "\\"${keyword}\\":\\"\[a-z0-9\]\*\\"" | tr -d '\"'`"
-    local answer="`echo ${query} | grep -o ${keyword}\\":\\"[A-Za-z0-9\ ]*\\" | tr -d '\\"' | cut -d ':' -f 2`"
-
-    echo ${answer}
-    return 0
-}
