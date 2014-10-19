@@ -104,6 +104,14 @@ gerrit_host="review.linaro.org"
 gerrit_port="29418"
 gerrit_username=""
 gerrit_project=""
+gerrit_branch=""
+gerrit_revision=""
+gerrit_change_subject=""
+gerrit_change_id=""
+gerrit_change_number=""
+gerrit_event_type=""
+jenkins_job_name=""
+jenkins_job_url=""
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.

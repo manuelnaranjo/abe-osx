@@ -57,6 +57,12 @@ gerrit_info()
     # These only come from Gerrit triggers
     gerrit_branch="${GERRIT_TOPIC}"
     gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+    gerrit_change_subject="${GERRIT_CHANGE_SUBJECT}"
+    gerrit_change_id="${GERRIT_CHANGE_ID}"
+    gerrit_change_number="${GERRIT_CHANGE_NUMBER}"
+    gerrit_event_type="${GERRIT_EVENT_TYPE}"
+    jenkins_job_name="${JOB_NAME}"
+    jenkins_job_url="${JOB_URL}"
 
     # Query the Gerrit server
     gerrit_query gcc
@@ -263,19 +269,17 @@ gerrit_query()
     gerrit_username=robert.savoye
     ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
-    declare -a out
+    declare -a records
     while read line
     do
-	out[$i]="echo ${line} | tr -d '\n'"
+	records[$i]="echo ${line} | tr -d '\n'"
 	local i=`expr $i + 1`
     done < /tmp/query$$.txt
+    rm -f /tmp/query$$.txt
 
-    echo "===================================================="
-    echo "${out[33]}"
-    echo "----------------------------------------------------"
-#    local record="`gerrit_get_record 73e60b77b497f699d8a2a818e2ecaa7ca57e5d1d "${out}"`"
+    local record="`gerrit_get_record 73e60b77b497f699d8a2a818e2ecaa7ca57e5d1d "${records}"`"
 
-#    local revision="`gerrit_extract_keyword "revision" "${out[33]}"`"
+    local revision="`gerrit_extract_keyword "revision" "${records[33]}"`"
 
     return 0;
 }
