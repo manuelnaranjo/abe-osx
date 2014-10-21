@@ -251,6 +251,24 @@ checkout()
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
 	    fi
+
+	    if test x"${branch}" != x""; then
+		# Sometimes, after removing a srcdir and re-running, the branch
+		# you're trying to checkout will already be a named branch in the
+		# repodir, so we have to delete it so that the new checkout will
+		# get the latest, updated branch source.
+		notice "Checking for existing named branch ${branch} in ${repodir}"
+
+		# Don't test this for dryrun because repodir probably won't exist.
+		if test x"${dryrun}" = no; then
+		    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
+		    if test ${existing_branch} -gt 0; then
+			notice "Removing previously named branch ${branch} from ${repodir}"
+			dryrun "(cd ${repodir} && git branch -D ${branch})"
+		    fi
+		fi
+	    fi
+
 	    if test ! -d ${srcdir}; then
 		# By definition a git commit resides on a branch.  Therefore specifying a
 		# branch AND a commit is redundant and potentially contradictory.  For this
@@ -267,23 +285,6 @@ checkout()
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    if test x"${branch}" != x""; then
-			# Sometimes, after removing a srcdir and re-running, the branch
-			# you're trying to checkout will already be a named branch in the
-			# repodir, so we have to delete it so that the new checkout will
-			# get the latest, updated branch source.
-			notice "Checking for existing named branch ${branch} in ${repodir}"
-
-			# Don't test this for dryrun because repodir probably won't exist.
-			if test x"${dryrun}" = no; then
-			    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
-			    if test ${existing_branch} -gt 0; then
-				notice "Removing previously named branch ${branch} from ${repodir}"
-				dryrun "(cd ${repodir} && git branch -D ${branch})"
-			    fi
-			fi
-		    fi
-
 		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
 		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		    if test $? -gt 0; then
