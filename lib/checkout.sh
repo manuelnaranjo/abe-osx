@@ -252,7 +252,7 @@ checkout()
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
 	    fi
 
-	    if test x"${branch}" != x""; then
+	    if test x"${branch}" != x"" && test x"${supdate}" = x"yes" -o ! -d ${srcdir}; then
 		# Sometimes, after removing a srcdir and re-running, the branch
 		# you're trying to checkout will already be a named branch in the
 		# repodir, so we have to delete it so that the new checkout will
