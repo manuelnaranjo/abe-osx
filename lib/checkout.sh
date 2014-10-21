@@ -260,7 +260,7 @@ checkout()
 		notice "Checking for existing named branch ${branch} in ${repodir}"
 
 		# Don't test this for dryrun because repodir probably won't exist.
-		if test x"${dryrun}" = no; then
+		if test x"${dryrun}" = x"no"; then
 		    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
 		    if test ${existing_branch} -gt 0; then
 			notice "Removing previously named branch ${branch} from ${repodir}"
