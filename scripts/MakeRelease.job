@@ -57,11 +57,12 @@ if ! test -e host.conf; then
       --with-git-reference-dir=${shared}/snapshots
 fi
 
-if test x"${nocheck}" = xno; then
-    check="--check"
+gcc_source="gcc-linaro-${version}-${release}.tar.xz"
+if test x"${runtests}" = xtrue; then
+    check=--check
+else
+    check=""
 fi
-
-gcc_source="gcc-linaro-4.9-${release}.tar.xz"
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
@@ -69,9 +70,9 @@ if test x"${tarsrc}" = x"yes"; then
 	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
-# Build a biary release tarball, then run the tests on the installed binaries
+# Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
-    tars="--tarbin --check"
+    tars="--tarbin"
     $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
