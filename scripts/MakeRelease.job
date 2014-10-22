@@ -96,8 +96,8 @@ if test x"${tarsrc}" = x"yes"; then
     if test x"${sums}" != x; then
 	ssh ${fileserver} "mkdir -p ${bases}"
 	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
+	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
 	scp ${sums} ${logs} ${fileserver}:${bases}/
     else
 	echo "ERROR: No test results were found!"
@@ -122,8 +122,8 @@ if test x"${tarbin}" = xyes; then
     logs="`find ${user_workspace} -name \*.log`"
     if test x"${sums}" != x; then
 	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
+	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
 	ssh ${fileserver} "mkdir -p ${binaries}/"
 	scp ${sums} ${fileserver}:${binaries}/
     else
@@ -131,7 +131,7 @@ if test x"${tarbin}" = xyes; then
     fi
     # Diff the two directories
     scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}`"
+    out="`ssh ${fileserver} if test -f ${bases}; then /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
     if test "`echo ${out} | grep -c REGRESSIONS`"; then
 	exit 1
     else
