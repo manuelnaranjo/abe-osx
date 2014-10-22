@@ -61,6 +61,8 @@ if test x"${nocheck}" = xno; then
     check="--check"
 fi
 
+gcc_source="gcc-linaro-4.9-${release}.tar.xz"
+
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
     $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} \
