@@ -758,11 +758,13 @@ create_release_tag()
 }
 
 # Get the SHA-1 for the latest commit to the git repository
-get_git_revision()
-{
-    local srcdir=$1
-    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
-    
-    echo ${revision}
-    return 0
-}
+#get_git_revision()
+#{
+#    trace "$*"
+#    
+#    local srcdir=$1
+#    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
+#    
+#    echo ${revision}
+#    return 0
+#}
