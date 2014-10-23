@@ -72,7 +72,9 @@ fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
+    # Canadian cross builds require a Linux hosted crfoss compiler first
     if test x"${canadian}" = x"true"; then
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} --build all
 	host="--host i686-w64-mingw32"
     else
 	host=""
