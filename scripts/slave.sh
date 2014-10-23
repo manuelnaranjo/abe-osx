@@ -6,7 +6,7 @@ apt-get update
 # Optionally use a package list from another machine of the same distribution and type
 # apt-get install `cat /tmp/packages.lst`
 apt-get build-dep gcc gdb
-apt-get install texinfo git-core build-essential openssh-server openjdk-6-jre-headless iptables flex bison autogen autoconf automake libtool dejagnu lsyncd gawk gcc-multilib g++-multilib libncurses5-dev lsb ccrypt nagios-nrpe-server qemu sendmail
+apt-get install texinfo git-core build-essential openssh-server openjdk-6-jre-headless iptables flex bison autogen autoconf automake libtool dejagnu lsyncd gawk gcc-multilib g++-multilib libncurses5-dev lsb ccrypt nagios-nrpe-server qemu sendmail mingw-w64
 
 # Move git-new-workdir to someplace so we can use it.
 cp /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin/
