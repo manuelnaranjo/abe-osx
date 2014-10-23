@@ -154,7 +154,7 @@ build_all()
 	if test x"${hits}" = xyes; then
 	    gerrit_build_status ${gcc_version} 3 ${sumsfile}
 	else
-	    gerrit_build_status ${gcc_version} 2 ${sumsfile}
+	    gerrit_build_status ${gcc_version} 2
 	fi
     fi
     rm -f ${sumsfile}
@@ -569,7 +569,7 @@ make_install()
     # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
     # up, and then tries to redefine caddr_t yet again. We modify the installed
     # types.h instead of the one in the source tree to be a tiny bit less ugly.
-    if test x"${tool}" = x"eglibc" -a `echo ${host} | grep -c mingw` -eq 1; then
+    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${host} | grep -c mingw` -eq 1; then
         sed -i -e '/typedef __caddr_t caddr_t/d' ${sysroots}/usr/include/sys/types.h
     fi
 
