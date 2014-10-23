@@ -92,16 +92,18 @@ snaps="/home/cbuild/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
-    sums="`find ${user_workspace} -name \*.sum`"
-    logs="`find ${user_workspace} -name \*.log`"
-    if test x"${sums}" != x; then
-	ssh ${fileserver} "mkdir -p ${bases}"
-	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
-	scp ${sums} ${logs} ${fileserver}:${bases}/
-    else
-	echo "ERROR: No test results were found!"
+    if test x"${check}" != x; then
+	sums="`find ${user_workspace} -name \*.sum`"
+	logs="`find ${user_workspace} -name \*.log`"
+	if test x"${sums}" != x; then
+	    ssh ${fileserver} "mkdir -p ${bases}"
+	    xz ${sums} ${logs}
+	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
+	    scp ${sums} ${logs} ${fileserver}:${bases}/
+	else
+	    echo "ERROR: No test results were found!"
+	fi
     fi
     tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
     if test x"${tarballs}" != x; then
@@ -119,24 +121,27 @@ if test x"${tarbin}" = xyes; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     scp ${manifest} ${fileserver}:${binaries}/
     scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
-    sums="`find ${user_workspace} -name \*.sum`"
-    logs="`find ${user_workspace} -name \*.log`"
-    if test x"${sums}" != x; then
-	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
-	ssh ${fileserver} "mkdir -p ${binaries}/"
-	scp ${sums} ${fileserver}:${binaries}/
-    else
-	echo "ERROR: No test results were found!"
-    fi
-    # Diff the two directories
-    scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-    out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
-    if test x"${out}" = x"YES"; then 
-	out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
-	if test "`echo ${out} | grep -c REGRESSIONS`"; then
-	    exit 1
+    if test x"${check}" != x; then
+	sums="`find ${user_workspace} -name \*.sum`"
+	logs="`find ${user_workspace} -name \*.log`"
+	if test x"${sums}" != x; then
+	    xz ${sums} ${logs}
+	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
+	    ssh ${fileserver} "mkdir -p ${binaries}/"
+	    scp ${sums} ${fileserver}:${binaries}/
+	else
+	    echo "ERROR: No test results were found!"
+	fi
+	
+	# Diff the two directories
+	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
+	if test x"${out}" = x"YES"; then 
+	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
+	    if test "`echo ${out} | grep -c REGRESSIONS`"; then
+		exit 1
+	    fi
 	fi
     fi
 fi
