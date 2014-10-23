@@ -72,8 +72,12 @@ fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
-    tars="--tarbin"
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} -build all
+    if test x"${canadian}" = x"true"; then
+	host="--host i686-w64-mingw32"
+    else
+	host=""
+    fi
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all
 fi
 
 # force a failure if cbuild2 has build problems.
