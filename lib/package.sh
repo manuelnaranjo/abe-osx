@@ -187,10 +187,18 @@ binary_toolchain()
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
-	local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	if test x"${host}" != x; then
+	    local tag="`echo gcc-linaro-${version}~${revision}-i686-mingw32_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	else
+	    local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	fi
     else
 	# use an explicit tag for the release name
-	local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	if test x"${host}" != x; then
+	    local tag="`echo gcc-linaro-${version}-${release}-i686-mingw32_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	else
+	    local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	fi
 
     fi
 
@@ -294,7 +302,7 @@ manifest()
     trace "$*"
 
     if test x"$1" = x; then
-	local outfile=/tmp/linaro.$$/manifest.txt
+	local outfile=${local_builds}/${host}/${target}/manifest.txt
     else
 	local outfile=$1
     fi
@@ -371,6 +379,16 @@ linux_version=${linux_version}
 cbuild_revision=${cbuild_revision}
 
 EOF
+
+    # Gerrit info, if triggered
+    if test x"${gerrit}" = xyes; then
+	cat >> ${outfile} <<EOF 
+gerrit_branch=${gerrit_branch}
+gerrit_revision=${gerrit_revision}
+
+EOF
+    fi
+
     case ${clibrary} in
 	glibc)
 	    local srcdir="`get_srcdir ${glibc_version}`"
