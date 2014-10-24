@@ -57,7 +57,12 @@ if ! test -e host.conf; then
       --with-git-reference-dir=${shared}/snapshots
 fi
 
-gcc_source="gcc-linaro-${version}-${release}.tar.xz"
+if test "${spin}" -gt 0; then
+    gcc_source="gcc-linaro-${version}-${release}-${spin}.tar.xz"
+else
+    gcc_source="gcc-linaro-${version}-${release}.tar.xz"
+fi
+
 if test x"${runtests}" = xtrue; then
     check=--check
 else
