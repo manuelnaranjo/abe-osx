@@ -1,0 +1,5 @@
+load_generic_config tcwgcommon
+
+set_board_info hostname 65.15.127.225
+set_board_info name chrome1-01
+set_board_info port 8024
