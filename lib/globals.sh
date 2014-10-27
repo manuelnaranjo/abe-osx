@@ -99,6 +99,11 @@ if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
 fi
 
+export CBUILD2_SHA="`cd ${topdir} && git rev-parse HEAD`"
+if test $? -ne 0; then
+    CBUILD2_SHA=0
+fi
+
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
 if test -e ~/.cbuildrc; then
