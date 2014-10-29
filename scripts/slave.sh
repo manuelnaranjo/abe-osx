@@ -38,3 +38,18 @@ cp ssh-config.txt /home/buildslave/.ssh/
 # lives in /linaro/foundation-model on all existing machines, so can just be
 # copied to the same location.
 
+# Qualcom Snapdragon
+
+login as linaro linaro
+
+# Remove the desktop packahes, we don't need them and that leaves 728M 
+# of free disk space
+# Remove gnome
+dpkg -l | grep "^ii.*gnome" | cut -d ' ' -f 3 > xx
+apt-get remove `cat xx`
+rm xx
+# Remove Unity
+dpkg -l | grep "^ii.*unity" | cut -d ' ' -f 3 > xx
+apt-get remove `cat xx`
+apt-get clean all
+apt-get update
