@@ -34,7 +34,7 @@ cleanup()
   local tmp
 
   if test x"${rva_setting}" != x; then
-    echo "${rva_setting}" > /proc/sys/kernel/randomize_va_space
+    echo "${rva_setting}" | ${sudo} tee /proc/sys/kernel/randomize_va_space > /dev/null
     if test $? -ne 0; then
       echo "Failed to restore ASLR setting" | tee -a /dev/stderr "${log}"
       ret=1
@@ -525,7 +525,7 @@ echo | tee -a "${log}"
 #but doesn't work on our machines (setarch rejects the value of uname -m, and some
 #obvious alternatives, as invalid).
 rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
-echo 0 > /proc/sys/kernel/randomize_va_space
+echo 0 | ${sudo} tee /proc/sys/kernel/randomize_va_space > /dev/null
 if test $? -ne 0; then
   echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
   if test "${cautiousness}" -eq 1; then
