@@ -1,0 +1,4 @@
+load_generic_config tcwgcommon
+
+set_board_info hostname 10.0.1.129
+set_board_info name chrome1-01
