@@ -284,9 +284,9 @@ fi
 if test x"${runtests}" = xtrue; then
     basedir="/work/logs"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh toolchain64 mkdir -p ${basedir}/${dir}
+    ssh ${fileserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
-	scp ${manifest} toolchain64:${basedir}/${dir}/
+	scp ${manifest} ${fileserver}:${basedir}/${dir}/
     fi
 
 # If 'make check' works, we get .sum files with the results. These we
