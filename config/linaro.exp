@@ -44,8 +44,8 @@ case "$target_triplet" in {
 	case "$native$myname" in {
 	    { tcwgrob* ripple* darkstar* } {
 #		set target_list { tcwgchromebook }
-#		set target_list { arm-chromebook }
 #		set target_list { tcwgd01 }
+#		set target_list { chrome1-01 }
 		set target_list { dragon-01 }
 	    }
 	    { tcwgbuild* toolchain64 tcwg-ex40-* tcwg-d01-* tcwg-chrome2-* } {
