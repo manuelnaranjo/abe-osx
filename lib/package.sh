@@ -194,7 +194,7 @@ binary_toolchain()
 	fi
     else
 	# use an explicit tag for the release name
-	if test x"${host}" != x; then
+	if test x"${host}" != x"${build}"; then
 	    local tag="`echo gcc-linaro-${version}-${release}-i686-mingw32_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
 	else
 	    local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
