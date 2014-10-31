@@ -26,7 +26,7 @@ build_all()
     
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-        local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
+        local builds="infrastructure binutils stage1 libc stage2 gdb gdbserver"
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
         local builds="infrastructure binutils stage2 gdb" # native build
@@ -338,11 +338,13 @@ build()
 
     if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc" -a x"${tarbin}" != xyes; then
         if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
-            notice "Starting test run for ${tag}${2:+ $2}"
-            make_check ${gitinfo}${2:+ $2}
-            if test $? -gt 0; then
-                return 1
-            fi
+	    if test x"${buildingall}" = xno; then
+		notice "Starting test run for ${tag}${2:+ $2}"
+		make_check ${gitinfo}${2:+ $2}
+		if test $? -gt 0; then
+                    return 1
+		fi
+	    fi
 	fi
     fi
 
@@ -391,6 +393,11 @@ make_all()
 
     # Some components require extra flags to make: we put them at the end so that config files can override
     local default_makeflags="`read_config $1 default_makeflags`"
+
+    if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
+       default_makeflags="gdbserver"
+    fi
+
     if test x"${default_makeflags}" !=  x; then
         local make_flags="${make_flags} ${default_makeflags}"
     fi
@@ -531,8 +538,12 @@ make_install()
     fi
 
     local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
-    if test x"${tool}" = x"gdb"; then
-	dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    if test x"${tool}" = x"gdb" ; then
+	if test x"$2" != x"gdbserver" ; then
+            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+        else
+            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+        fi
     else
 	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
