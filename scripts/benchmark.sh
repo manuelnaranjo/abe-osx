@@ -266,11 +266,13 @@ if ! test -e "${topdir}/host.conf"; then
   exit 1
 fi
 
+skip_build=
 toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
-while getopts i:t:b:kch flag; do
+while getopts i:t:b:kchs flag; do
   case "${flag}" in
+    s) skip_build=1;;
     i) toolchain_path="${OPTARG}";;
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
     b) benchmark="${OPTARG}";;
@@ -337,11 +339,13 @@ else #cross-build, implies we need remote devices
   target="--target ${target}"
 fi
 
-#cbuild2 can build the benchmarks just fine
-(cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target})
-if test $? -ne 0; then
-  echo "Error while building benchmark ${benchmark}" 1>&2
-  exit 1
+if test x"$skip_build" = x; then
+  #cbuild2 can build the benchmarks just fine
+  (cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target})
+  if test $? -ne 0; then
+    echo "Error while building benchmark ${benchmark}" 1>&2
+    exit 1
+  fi
 fi
 #devices not doing service ctrl need to have a ${device}.services file anyway, just so remote.sh doesn't complain it isn't there to copy.
 #It'll be ignored unless we give the -s flag.
