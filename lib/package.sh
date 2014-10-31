@@ -187,7 +187,7 @@ binary_toolchain()
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
-	if test x"${host}" != x; then
+	if test x"${host}" != x"${build}"; then
 	    local tag="`echo gcc-linaro-${version}~${revision}-i686-mingw32_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 	else
 	    local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
