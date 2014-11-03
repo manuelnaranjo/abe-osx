@@ -49,7 +49,7 @@ case "$target_triplet" in {
 		set target_list { dragon-01 }
 	    }
 	    { tcwgbuild* toolchain64 tcwg-ex40-* tcwg-d01-* tcwg-chrome2-* } {
-		set target_list { tcwgd01 }
+		set target_list { dragon-d01 }
 	    }
 	    { nativetcwg-d01-* nativetcwg-chrome2-* } {
 		set target_list { unix }
@@ -75,7 +75,7 @@ case "$target_triplet" in {
     { "aarch64-*linux*" } {
 	case "$myname" in {
 	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
-		set target_list { tcwgapm }
+		set target_list { aus-colo-01 }
 	    }
 	    { nativetcwg-apm-* } {
 		set target_list { unix }
