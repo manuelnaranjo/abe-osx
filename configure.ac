@@ -236,6 +236,14 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
+# The various Jenkins jbs copy log files and rest results to a remote file
+# server for storage and comparison. For the TCWG, this has been 'toolchain64'.
+AC_ARG_WITH(fileserver,
+  AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
+  FILESERVER=${withval},
+  FILESERVER='toolchain64')
+AC_SUBST(FILESERVER)
+
 AC_ARG_WITH(sources-conf,
   AC_HELP_STRING([--with-sources-conf], []),
   SOURCES_CONF=${withval},
