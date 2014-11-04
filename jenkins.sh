@@ -46,12 +46,6 @@ user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
-# This is the top level directory for the cbuild2 sources.
-cbuild_dir="${user_workspace}/cbuildv2"
-
-# Test results and logs get copied to here
-fileserver="toolchain64"
-
 # Languages to build
 languages="default"
 
@@ -61,17 +55,19 @@ releasestr=
 # This is a string of optional extra arguments to pass to cbuild at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:l:h -l snapshots:repo:cbuild:workspace:options:fileserver:languages:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:t:h -l snapshots:gitrepo:cbuild:workspace:options:fileserver:languages:target:help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
-        -g|--repo) user_git_repo=$2 ;;
+        -g|--gitrepo) user_git_repo=$2 ;;
         -c|--cbuild) cbuild_dir=$2 ;;
+	-t|--target) target=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
         -l|--languages) languages=$2 ;;
+        -r|--runtests) runtest="true" ;;
 	-h|--help) usage ;;
     esac
     shift
@@ -172,13 +168,19 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-languages=${languages} --enable-schroot-test
+if test x"${cbuild_dir}" = x; then
+    cbuild_dir=${topdir}
+fi
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
 case "$(hostname)" in
     "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
 esac
+
+# This is the top level directory for the cbuild2 sources.
+#cbuild_dir="${cbuild_path}"
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
