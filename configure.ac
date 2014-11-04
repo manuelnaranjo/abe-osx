@@ -236,12 +236,12 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
-# The various Jenkins jbs copy log files and rest results to a remote file
+# The various Jenkins jobs copy log files and rest results to a remote file
 # server for storage and comparison. For the TCWG, this has been 'toolchain64'.
 AC_ARG_WITH(fileserver,
   AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
   FILESERVER=${withval},
-  FILESERVER='toolchain64')
+  FILESERVER='cbuild.validation.linaro.org')
 AC_SUBST(FILESERVER)
 
 AC_ARG_WITH(sources-conf,
@@ -302,7 +302,7 @@ dnl A URL to the remote directory where snapshots are stored
 AC_ARG_WITH(remote-snapshots,
   AC_HELP_STRING([--with-remote-snapshots], []),
   REMOTE_SNAPSHOTS=${withval},
-  REMOTE_SNAPSHOTS='http://cbuild.validation.linaro.org/snapshots')
+  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots")
 AC_SUBST(REMOTE_SNAPSHOTS)
 
 dnl Display the default paths so the user does not need to look in the host.conf file.
