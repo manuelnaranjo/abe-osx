@@ -606,6 +606,7 @@ LOCAL_SNAPSHOTS
 SYSROOTS
 CBUILD_PATH
 SOURCES_CONF
+FILESERVER
 CBUILD_TOP
 BUILDDATE
 MAKEVERSION
@@ -687,6 +688,7 @@ with_dbuser
 with_dbpasswd
 with_dbhost
 with_toplevel
+with_fileserver
 with_sources_conf
 with_sysroot
 with_local_snapshots
@@ -1340,6 +1342,7 @@ Optional Packages:
   --with-dbpasswd         set the user password for the database
   --with-dbhost           set the database hostname
   --with-toplevel
+  --with-fileserver       the remote file server hostname
   --with-sources-conf
   --with-sysroot
   --with-local-snapshots  Where downloaded tarballs are stored
@@ -3705,6 +3708,18 @@ if test ! -d ${CBUILD_TOP}; then
 $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" >&2;}
    mkdir -p ${CBUILD_TOP}
 fi
+
+# The various Jenkins jbs copy log files and rest results to a remote file
+# server for storage and comparison. For the TCWG, this has been 'toolchain64'.
+
+# Check whether --with-fileserver was given.
+if test "${with_fileserver+set}" = set; then :
+  withval=$with_fileserver; FILESERVER=${withval}
+else
+  FILESERVER='toolchain64'
+fi
+
+
 
 
 # Check whether --with-sources-conf was given.
