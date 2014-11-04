@@ -3707,14 +3707,14 @@ $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" 
    mkdir -p ${CBUILD_TOP}
 fi
 
-# The various Jenkins jbs copy log files and rest results to a remote file
+# The various Jenkins jobs copy log files and rest results to a remote file
 # server for storage and comparison. For the TCWG, this has been 'toolchain64'.
 
 # Check whether --with-fileserver was given.
 if test "${with_fileserver+set}" = set; then :
   withval=$with_fileserver; FILESERVER=${withval}
 else
-  FILESERVER='toolchain64'
+  FILESERVER='cbuild.validation.linaro.org'
 fi
 
 
@@ -3797,7 +3797,7 @@ fi
 if test "${with_remote_snapshots+set}" = set; then :
   withval=$with_remote_snapshots; REMOTE_SNAPSHOTS=${withval}
 else
-  REMOTE_SNAPSHOTS='http://cbuild.validation.linaro.org/snapshots'
+  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots"
 fi
 
 
