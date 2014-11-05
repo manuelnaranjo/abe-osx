@@ -541,7 +541,8 @@ fi
 
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
-echo "Running taskset -c ${bench_cpu} ${cmd}" | tee -a "${log}"
+#TODO We expect to be running with stdout & stderr redirected, insert a test for this
+echo "Running taskset -c ${bench_cpu} ${cmd}"
 taskset -c ${bench_cpu} ${cmd}
 if test $? -eq 0; then
   echo "Run of  taskset -c ${bench_cpu} ${cmd} complete" | tee -a "${log}"
