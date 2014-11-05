@@ -170,7 +170,17 @@ run_benchmark()
     #      perhaps there is some delay after the interface comes up
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
-                       "cd ${target_dir}/`basename ${builddir}` && ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh; ret=\\\$?; for i in {1..10}; do echo \"\\\${USER}@\\\`hostname -I\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; done; if test \\\${ret} -eq 0; then true; else false; fi" \
+                       "cd ${target_dir}/`basename ${builddir}` && \
+                        ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh; \
+                        ret=\\\$?; \
+                        for i in {1..10}; do \
+                          echo \"\\\${USER}@\\\`hostname -I\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
+                       done; \
+                       if test \\\${ret} -eq 0; then \
+                         true; \
+                       else \
+                         false; \
+                       fi" \
                        "${target_dir}/stdout" "${target_dir}/stderr")
     if test $? -ne 0; then
       echo "Something went wrong when we tried to dispatch job" 1>&2
