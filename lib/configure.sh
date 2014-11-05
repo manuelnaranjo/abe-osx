@@ -278,7 +278,7 @@ configure_build()
         else
             dryrun "rsync -a --delete --exclude=.git/ ${srcdir}/ ${builddir}"
 	    if test $? -gt 0; then
-	        error "Copy of $1 failed (rsync -a ${srcdir} ${builddir})"
+	        error "Copy of $1 failed (rsync -a --delete ${srcdir}/ ${builddir})"
 	        return $?
 	    fi
         fi
