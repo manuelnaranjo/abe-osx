@@ -65,7 +65,7 @@ binary_runtime()
     trace "$*"
 
 #    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -166,7 +166,7 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -207,7 +207,7 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest ${destdir}/manifest.txt
+    manifest ${local_builds}/${host}/${target}/manifest.txt
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -227,7 +227,7 @@ binary_sysroot()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -267,7 +267,7 @@ binary_sysroot()
         # else
         # 	local commit=""
         # fi
-	local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+	local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 	date="`date +%Y%m%d`"
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
@@ -325,7 +325,7 @@ manifest()
     local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
 
     local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' '`"
+    local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
     local gcc_revision="`get_git_revision ${srcdir}`"
 
     local srcdir="`get_srcdir ${gdb_version}`"
