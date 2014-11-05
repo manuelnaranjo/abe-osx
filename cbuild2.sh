@@ -447,7 +447,7 @@ set_package()
 
 build_failure()
 {
-    time="`expr ${SECONDS} / 60`"
+    local time="`expr ${SECONDS} / 60`"
     error "Build process failed after ${time} minutes"
     
     if test x"${gerrit}" = xyes; then
@@ -458,11 +458,23 @@ build_failure()
 
 build_success()
 {
-    time="`expr ${SECONDS} / 60`"
+    local time="`expr ${SECONDS} / 60`"
     notice "Build process succeeded after ${time} minutes"
     
     if test x"${gerrit}" = xyes; then
 	gerrit_build_status ${gcc_version} 0
+    fi
+
+    return 0
+}
+
+test_success()
+{
+    local time="`expr ${SECONDS} / 60`"
+    notice "Test run completed after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 6
     fi
 
     return 0
@@ -981,6 +993,7 @@ if test ! -z ${do_build}; then
 	    fi
 	fi
     else
+	buildingall=yes
 	build_all
 	if test $? -gt 0; then
 	    error "Build all failed."

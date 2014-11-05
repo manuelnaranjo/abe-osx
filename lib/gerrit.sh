@@ -207,12 +207,12 @@ gerrit_build_status()
 	gerrit_info ${rcdir}
     fi
 
-    declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions")
+    declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions" "Test run completed")
 
     rm -f  ${msgfile}
     cat<<EOF > ${msgfile}
-Your patch is being reviewed. The build step has completed with a status of: ${statusmsg[${status}]}
- 
+Your patch is being reviewed. The build step has completed with a status of: ${statusmsg[${status}]} Build at: ${jenkins_job_url}"
+
 EOF
 
 #http://cbuild.validation.linaro.org/logs/gcc-linaro-5.0.0/
