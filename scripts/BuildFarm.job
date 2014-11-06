@@ -14,6 +14,7 @@ shared="/home/buildslave/workspace/shared"
 cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
+fileserver="cbuild.validation.linaro.org"
 
 # Disable until the lab is moved.
 #rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
@@ -29,7 +30,7 @@ if test x"${revisions}" != x; then
     mkdir -p ${WORKSPACE}/_build
   fi
   cd ${WORKSPACE}/_build
-  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-languages=${languages} --enable-schroot-test
+  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
   $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
 else
   $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release} -l ${languages}
