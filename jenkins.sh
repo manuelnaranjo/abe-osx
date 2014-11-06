@@ -46,6 +46,9 @@ user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
+# This is the top level directory for the cbuild2 sources.
+cbuild_dir="${user_workspace}/cbuildv2"
+
 # Languages to build
 languages="default"
 
