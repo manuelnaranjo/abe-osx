@@ -14,7 +14,7 @@ shared="/home/buildslave/workspace/shared"
 cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
-fileserver="cbuild.validation.linaro.org"
+fileserver="148.251.136.42"
 
 # Disable until the lab is moved.
 #rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
