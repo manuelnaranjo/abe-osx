@@ -15,8 +15,9 @@ cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 
-rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
-rm -rf ${snapshots_ref}/*~*
+# Disable until the lab is moved.
+#rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
+#rm -rf ${snapshots_ref}/*~*
 
 rm -rf ${WORKSPACE}/_build ${user_snapshots}
 
