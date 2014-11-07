@@ -217,8 +217,9 @@ run_benchmark()
       ret=1
     fi 
     local log
-    for log in stdout stderr "${benchmark}.git/linarobenchlog"; do
-      (. "${topdir}"/lib/common.sh; remote_download "${ip}" "${target_dir}/${log}" "${logdir}/${log}")
+    for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
+      mkdir -p "${logdir}/${benchmark}.git/`dirname ${log}`"
+      (. "${topdir}"/lib/common.sh; remote_download "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}")
       if test $? -ne 0; then
         echo "Error while getting log ${log}: will try to get others" 1>&2
 	ret=1
