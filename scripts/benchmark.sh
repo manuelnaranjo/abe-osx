@@ -200,6 +200,16 @@ run_benchmark()
       echo "Unable to determine IP, giving up." 1>&2
       exit 1
     fi
+    #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
+    #having an ssh config equivalent to TODO wikiref
+    #TODO Functionize (have now got the same code at 2 locations)
+    if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+      ip+='.lava'
+      if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+	echo "Unable to connect to target ${ip%.lava} (tried ${ip} first)" 1>&2
+	exit 1
+      fi
+    fi
 
     if test ${ret} -ne 0; then
       echo "Command failed: will try to get logs" 1>&2
