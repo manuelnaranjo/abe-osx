@@ -84,7 +84,7 @@ run_benchmark()
       while read line <&3; do
         echo "${lava_target}: $line"
         if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
-          ip="`echo ${line} | cut -d ' ' -f 5`"
+          ip="`echo ${line} | cut -d ' ' -f 5 | sed 's/\s*$//'`"
           break
         fi
       done
@@ -195,7 +195,7 @@ run_benchmark()
       echo "Unable to determine exit code, assuming the worst." 1>&2
       ret=1
     fi
-    ip="`echo ${ip} | sed 's/:.*//'`"
+    ip="`echo ${ip} | sed 's/:.*//' | sed 's/\s*$//'`"
     if test $? -ne 0; then
       echo "Unable to determine IP, giving up." 1>&2
       exit 1
