@@ -162,6 +162,17 @@ build_all()
     fi
     rm -f ${sumsfile}
     
+    if test x"${runtests}" = xyes; then
+	notice "Testing components"
+	buildingall=no
+	make_check ${binutils_version}
+	make_check ${gcc_version} stage2
+	make_check ${gdb_version}
+    fi
+
+    # Notify that the test run completed successfully
+    test_success
+
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
             release_binutils_src
@@ -398,7 +409,7 @@ make_all()
     local default_makeflags="`read_config $1 default_makeflags`"
 
     if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
-       default_makeflags="gdbserver"
+       default_makeflags="gdbserver CFLAGS=--sysroot=${local_builds}/sysroot-${target}"
     fi
 
     if test x"${default_makeflags}" !=  x; then
@@ -655,7 +666,7 @@ make_check()
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
-    local ignore="dejagnu gmp mpc mpfr gdb make eglibc linux"
+    local ignore="dejagnu gmp mpc mpfr make eglibc linux"
     for i in ${ignore}; do
         if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
             return 0
