@@ -77,20 +77,35 @@ if ! triplet_to_deb_arch "$arch" >/dev/null 2>&1; then
     arch="native"
 fi
 
-if [ "x$arch" = "xnative" ]; then
-    cpu="$(ssh $target uname -m)"
-    case "$cpu" in
-	aarch64) arch=aarch64-linux-gnu ;;
-	armv7l) arch=arm-linux-gnueabihf ;;
-	armv7*) arch=arm-linux-gnueabi ;;
-	i686) arch=i686-linux-gnu ;;
-	x86_64) arch=x86_64-linux-gnu ;;
-	*)
-	    echo "ERROR: unrecognized native target $cpu"
-	    exit 1
-	    ;;
-    esac
+cpu="$(ssh $target uname -m)"
+case "$cpu" in
+    aarch64) native_arch=aarch64-linux-gnu ;;
+    armv7l) native_arch=arm-linux-gnueabihf ;;
+    armv7*) native_arch=arm-linux-gnueabi ;;
+    i686) native_arch=i686-linux-gnu ;;
+    x86_64) native_arch=x86_64-linux-gnu ;;
+    *)
+	echo "ERROR: unrecognized native target $cpu"
+	exit 1
+	;;
+esac
+
+if [ x"$arch" = x"native" ]; then
+    arch="$native_arch"
 fi
+
+deb_arch="$(triplet_to_deb_arch $arch)"
+
+case "$cpu:$deb_arch" in
+    "x86_64:amd64"|"x86_64:i386") ;;
+    "x86_64:"*)
+	use_qemu=true
+	arch=$native_arch
+	;;
+esac
+
+deb_arch="$(triplet_to_deb_arch $arch)"
+deb_dist="$(triplet_to_deb_dist $arch)"
 
 if [ "x$board_exp" != "x" ] ; then
     lava_json="$(grep "^set_board_info lava_json " $board_exp | sed -e "s/^set_board_info lava_json //")"
@@ -114,9 +129,6 @@ fi
 
 orig_target_ssh_opts="$target_ssh_opts"
 target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-tcwg-test-$port-%u-%r@%h:%p"
-
-deb_arch="$(triplet_to_deb_arch $arch)"
-deb_dist="$(triplet_to_deb_dist $arch)"
 
 schroot_id=tcwg-test-$deb_arch-$deb_dist
 
@@ -278,9 +290,10 @@ if ! [ -z "$shared_dir" ]; then
     test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
-    # Recent versions of sshfs fail if ssh_command has white spaces at the end;
-    # make sure we end ssh_command with a non-space.
-    $rsh $target sshfs -C -o ssh_command="ssh -o StrictHostKeyChecking=no $host_ssh_opts -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
+    # Recent versions of sshfs fail if ssh_command has more than a single
+    # white spaces between options or ends with a space; filter ssh_command.
+    ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
+    $rsh $target sshfs -C -o ssh_command="$ssh_command" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
     res="${PIPESTATUS[0]}"
 
     # Remove temporary key and delete extra empty lines at the end of file.
