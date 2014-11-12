@@ -157,7 +157,7 @@ if $gen_schroot; then
 
     # Configure APT sources.
     case "$deb_arch" in
-	amd64) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
+	amd64|i386) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
 	*) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
     esac
     ssh $target_ssh_opts $target \
