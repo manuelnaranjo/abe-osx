@@ -1,7 +1,0 @@
-load_generic_config tcwgcommon
-
-set_board_info hostname r1-a10.aus-colo.linaro.org
-set_board_info name r1-a10
-set_board_info username buildslave
-#set_board_info rsh_opts "-o ProxyCommand="ssh aus-colo.linaro.org nc -q0 r1-a10 %p"
-

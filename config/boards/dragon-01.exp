@@ -1,5 +1,3 @@
-load_generic_config tcwgcommon
+load_generic_config tcwg-common
 
-set_board_info hostname 69.15.127.226
-set_board_info name dragon-01
-set_board_info port 8128
+set_board_info hostname dragon-01

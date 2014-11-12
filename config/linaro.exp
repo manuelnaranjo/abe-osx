@@ -51,7 +51,7 @@ case "$target_triplet" in {
 	    { tcwgbuild* toolchain64 tcwg-ex40-* tcwg-d01-* tcwg-chrome2-* } {
 		set target_list { dragon-d01 }
 	    }
-	    { nativetcwg-d01-* nativetcwg-chrome2-* } {
+	    { nativetcwg-d01-* nativetcwg-chrome2-* nativedragon-* } {
 		set target_list { unix }
 	    }
 	}
@@ -75,9 +75,9 @@ case "$target_triplet" in {
     { "aarch64-*linux*" } {
 	case "$myname" in {
 	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
-		set target_list { aus-colo-01 }
+		set target_list { aus-apm }
 	    }
-	    { nativetcwg-apm-* } {
+	    { nativetcwg-apm-* nativer1-a1* } {
 		set target_list { unix }
 	    }
 	}
@@ -85,7 +85,7 @@ case "$target_triplet" in {
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$native$myname" in {
 	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgbuild }
+		set target_list { tcwgex40 }
 	    }
 	    { nativetcwgbuild* nativetoolchain64 nativetcwg-ex40-* } {
 		set target_list { unix }
