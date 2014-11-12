@@ -171,7 +171,7 @@ run_benchmark()
     (. "${topdir}"/lib/common.sh
      remote_exec_async "${ip}" \
                        "cd ${target_dir}/`basename ${builddir}` && \
-                        ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${benchargs}; \
+                        ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs} -- ${run_benchargs}; \
                         ret=\\\$?; \
                         for i in {1..10}; do \
                           echo \"\\\${USER}@\\\`hostname -I\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
@@ -287,14 +287,14 @@ if ! test -e "${topdir}/host.conf"; then
   exit 1
 fi
 
-benchargs=""
+run_benchargs=""
 skip_build=
 toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 while getopts a:i:t:b:kchs flag; do
   case "${flag}" in
-    a) benchargs="${OPTARG}";;
+    a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
     i) toolchain_path="${OPTARG}";;
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
