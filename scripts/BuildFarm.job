@@ -16,9 +16,8 @@ user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 fileserver="148.251.136.42"
 
-# Disable until the lab is moved.
-#rsync -az --update toolchain64:snapshots/ ${snapshots_ref}/
-#rm -rf ${snapshots_ref}/*~*
+rsync -az --update ${fileserver}:snapshots/ ${snapshots_ref}/
+rm -rf ${snapshots_ref}/*~*
 
 rm -rf ${WORKSPACE}/_build ${user_snapshots}
 
