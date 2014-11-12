@@ -201,7 +201,6 @@ bind_processes()
       ppcmd="`ps -p ${ppid} -o cmd=`" 
       if test $? -ne 0; then
         echo "Failed to get cmd for pid $ppid (parent of $pid)" 1>&2
-        ret=1
       fi
       if [[ "${ppcmd}" = *kthreadd* ]]; then
         continue #don't try to change the affinity of kernel procs
