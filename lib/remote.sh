@@ -92,8 +92,12 @@ remote_exec()
 {
   local target="${1//\"/\\\"}"
   local cmd="${2//\"/\\\"}"
-  if test ${#@} -lt 2; then
+  if test $# -lt 2; then
     error "Target and/or command not specified"
+    return 1
+  fi
+  if test $# -gt 2; then
+    error "Too many args: $@"
     return 1
   fi
   dryrun "ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \"${target}\" \"${cmd}\""
@@ -106,8 +110,12 @@ remote_exec_async()
   local cmd="${2//\"/\\\"}"
   local stdoutfile="${3:-stdout}"
   local stderrfile="${4:-stderr}"
-  if test ${#@} -lt 2; then
+  if test $# -lt 2; then
     error "Target and/or command not specified"
+    return 1
+  fi
+  if test $# -gt 4; then
+    error "Too many args: $@"
     return 1
   fi
 
