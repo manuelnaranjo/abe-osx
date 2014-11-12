@@ -17,11 +17,14 @@ pids=""
 set -e
 for a in "${tcwgbuild_archs[@]}"; do
     true &
-    #eval $test_schroot -g -c $master -a $a linaro@tcwgbuild01 &
+    #eval ssh $ssh_opts linaro@tcwg-ex40-01 sudo apt-get install -y debootstrap qemu-static binfmt-misc
+    eval $test_schroot -g -c $master -a $a linaro@tcwg-ex40-01 &
     pids="$pids $!"
 done
 set +e
 wait $pids
+
+#exit 0
 
 ssh_opts="-o ConnectTimeout=5"
 
