@@ -16,6 +16,7 @@ user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 fileserver="148.251.136.42"
 
+mkdir -p ${snapshots_ref}/
 rsync -az --update ${fileserver}:snapshots/ ${snapshots_ref}/
 rm -rf ${snapshots_ref}/*~*
 
