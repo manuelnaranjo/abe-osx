@@ -278,7 +278,9 @@ if ! [ -z "$shared_dir" ]; then
     test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
-    $rsh $target sshfs -C -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
+    # Recent versions of sshfs fail if ssh_command has white spaces at the end;
+    # make sure we end ssh_command with a non-space.
+    $rsh $target sshfs -C -o ssh_command="ssh -o StrictHostKeyChecking=no $host_ssh_opts -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
     res="${PIPESTATUS[0]}"
 
     # Remove temporary key and delete extra empty lines at the end of file.
