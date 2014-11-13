@@ -137,7 +137,7 @@ difftwodirs ()
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
            sort ${next}/$i.sum -o ${next}/$i-sort.sum
-           diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
+           diff -U 0 ${prev}/$i-sort.sum ${next}/$i-sort.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL' 2>&1 | sort -k 2 2>&1 > ${diffdir}/diff-$i.txt
             rm ${prev}/$i-sort.sum ${next}/$i-sort.sum
 	    if test -s ${diffdir}/diff-$i.txt; then
 		if test `grep -c ^\+PASS ${diffdir}/diff-$i.txt` -gt 0; then
