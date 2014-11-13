@@ -91,11 +91,19 @@ difftwodirs ()
     fi
 
     # Don't diff it's already been done
-    if test -e $next/testsuite-diff.txt; then
+    if test -e $next/testsuite-diff-$(basename ${prev}).txt; then
 	return 0
     fi
+
+    local prev0=${prev}
+    local next0=${next}
+    tmpdir=$(mktemp -d)
+    prev=${tmpdir}/prev
+    next=${tmpdir}/next
+    rsync -a ${prev0}/ ${prev}/
+    rsync -a ${next0}/ ${next}/
     
-    echo "Diffing: ${prev} against ${next}..."
+    echo "Diffing: ${prev0} against ${next0}..."
     local gcc_version="`grep 'gcc_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local binutils_version="`grep 'binutils_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local binutils_revision="`grep 'binutils_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
@@ -108,10 +116,8 @@ difftwodirs ()
     else
 	local pversion=${cversion}
     fi
-    local toplevel="`dirname ${prev}`"
 
-#    diffdir="/tmp/diffof-${gcc_version}"
-    diffdir="/tmp/diffof-${pversion}-${cversion}"
+    diffdir="${tmpdir}/diffof-${pversion}-${cversion}"
     mkdir -p ${diffdir}
     local files="`ls ${prev}/*.sum.xz | wc -l`"
     if test ${files} -gt 0; then
@@ -125,8 +131,8 @@ difftwodirs ()
     local regressions=0
     touch ${resultsfile}
     echo "Comparison of ${gcc_version} between:" >> ${resultsfile}
-    echo "	${prev} and" >> ${resultsfile}
-    echo "	${next}" >> ${resultsfile}
+    echo "	${prev0} and" >> ${resultsfile}
+    echo "	${next0}" >> ${resultsfile}
     for i in gcc g\+\+ libstdc++ ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
 	if test -e ${prev}/$i.sum -a -e ${next}/$i.sum; then
            sort ${prev}/$i.sum -o ${prev}/$i-sort.sum
@@ -187,15 +193,7 @@ difftwodirs ()
     mailto "Test results for ${gcc_version}" ${resultsfile} ${userid}
     rm -f ${resultsfile}
 
-    rm -fr ${diffdir}
-    local incr=`expr ${incr} + 1`
-
-    # Not all subdirectories have uncompressed sum files
-    local files="`ls ${prev}/*.sum | wc -l`"
-    if test ${files} -gt 0; then
-	xz ${prev}/*.sum
-    fi
-    xz ${next}/*.sum ${next}/*.log
+    rm -fr ${tmpdir}
 
     echo ${returnstr}
     exit ${returncode}
@@ -239,7 +237,7 @@ testfile()
     origdir="`basename $1`"
     nextdir="`basename $2`"
  
-    cat <<EOF > ${diffdir}/testsuite-diff.txt
+    cat <<EOF > ${diffdir}/testsuite-diff-${origdir}.txt
 Difference in testsuite results between:
  ${orig} build ${origdir}
 and the one before it:
@@ -248,8 +246,7 @@ and the one before it:
 ------
 EOF
     
-    cat ${diffdir}/diff.txt  >> ${diffdir}/testsuite-diff.txt
-    cp  ${diffdir}/testsuite-diff.txt  $1
+    cat ${diffdir}/diff.txt  >> ${diffdir}/testsuite-diff-${origdir}.txt
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
