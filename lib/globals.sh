@@ -96,6 +96,8 @@ override_cflags=
 override_ldflags=
 override_runtestflags=
 
+aarch64_abilist=lp64
+
 if test x"${BUILD_NUMBER}" = x; then
     export BUILD_NUMBER=${RANDOM}
 fi

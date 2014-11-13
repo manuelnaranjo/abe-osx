@@ -50,7 +50,7 @@ get_stamp_name()
     fi
 
     #local stamp_name="stamp-${stamptype}-${name_fragment}${suffix:+-${suffix}}"
-    local stamp_name="${name_fragment}${suffix:+-${suffix}}-${stamptype}.stamp"
+    local stamp_name="${name_fragment}${suffix:+-${suffix}}${ABI:+-${ABI}}-${stamptype}.stamp"
     echo "${stamp_name}"
     return 0
 }

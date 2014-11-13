@@ -170,6 +170,9 @@ configure_build()
 	    ;;
 	*libc)
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    if test x"${ABI}" != x; then
+		local opts="${opts} CC=\"${target}-gcc -mabi=${ABI}\""
+	    fi
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)

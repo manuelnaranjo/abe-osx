@@ -31,6 +31,7 @@ usage()
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
+             [--set {abi}={lp64|ilp32}]
              [--snapshots <url>] [--target <target_triple>] [--usage]
              [--interactive]
              [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
@@ -213,6 +214,9 @@ OPTIONS
                 This changes the default set of GCC front ends that get built.
                 The default set for most platforms is c, c++, go, fortran,
                 and lto.
+
+  --set		{abi}={lp64|ilp32}
+                This sets the ABI or ABIs used for AArch64 builds.
 
   --snapshots	/path/to/alternative/local_snapshots/directory
   		Use an alternative path to a local snapshots directory. 
@@ -414,6 +418,11 @@ set_package()
 	cflags|cf*)
 	    override_cflags="${setting}"
 	    notice "Overriding ${setting} to CFLAGS"
+	    return 0
+	    ;;
+	abi)
+	    aarch64_abilist="${setting}"
+	    notice "Setting AArch64 ABI list to ${setting}"
 	    return 0
 	    ;;
 	libc)

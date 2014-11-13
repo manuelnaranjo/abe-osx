@@ -276,7 +276,7 @@ get_builddir()
     if test x"$2" = x"libgloss"; then
      	echo "${local_builds}/${host}/${target}/${dir}/${target}/libgloss"
     else
-	echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
+	echo "${local_builds}/${host}/${target}/${dir}${ABI:+-$ABI}${2:+-$2}"
     fi
 
     return 0
