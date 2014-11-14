@@ -432,6 +432,17 @@ else
     fixme "${in} returned ${out} but expected ${match}"
 fi
 
+testing="get_toolname: linaro linux repository"
+in="http://git.linaro.org/kernel/linux-linaro-tracking.git~linux-linaro"
+out="`get_toolname ${in}`"
+match="linux"
+if test x"${out}" = x"${match}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "${in} returned ${out} but expected ${match}"
+fi
+
 # ----------------------------------------------------------------------------------
 echo "============= fetch() tests ================"
 out="`fetch md5sums 2>/dev/null`"

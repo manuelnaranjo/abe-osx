@@ -176,7 +176,7 @@ git_parser()
 		# Strip service information and any trailing branch information.
 		local tool="`echo ${in} | sed -e 's/lp://' -e 's:/.*::'`"
 		# Strip superflous -linaro tags
-		local tool="`echo ${tool} | sed -e 's:-linaro::'`"
+		local tool="`echo ${tool} | sed -e 's:-linaro.*::'`"
 		echo ${tool}
 		;;
 	    *)
@@ -220,7 +220,7 @@ git_parser()
 		# Strip any trailing branch information.
 		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
 		# Strip off any -linaro tags.
-		tool="`echo ${tool} | sed -e 's:-linaro::'`"
+		tool="`echo ${tool} | sed -e 's:-linaro.*::'`"
 		# Strip service information.
 		tool="`basename ${tool}`"
 		echo ${tool}
@@ -368,6 +368,8 @@ git_parser()
 	    echo "${user}"
 	    ;;
 	tool)
+	    # Strip off any -linaro tags.
+	    tool="`echo ${tool} | sed -e 's:-linaro.*::'`"
 	    echo "${tool}"
 	    ;;
 	url)
