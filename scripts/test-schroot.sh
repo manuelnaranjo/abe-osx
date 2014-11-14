@@ -293,14 +293,21 @@ if ! [ -z "$shared_dir" ]; then
     # Recent versions of sshfs fail if ssh_command has more than a single
     # white spaces between options or ends with a space; filter ssh_command.
     ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
-    $rsh $target sshfs -C -o ssh_command="$ssh_command" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
-    res="${PIPESTATUS[0]}"
+    try="0"
+    while [ x"$try" -lt "3" ]; do
+	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
+	if [ x"${PIPESTATUS[0]}" != x"0" ]; then
+	    try=$(($try + 1))
+	    continue
+	fi
+	break
+    done
 
     # Remove temporary key and delete extra empty lines at the end of file.
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
     rm ~/.ssh/id_rsa-test-schroot.$$*
 
-    if [ x"$res" = x"0" ]; then
+    if [ x"$try" != x"3" ]; then
 	echo "$target:$port shared directory $shared_dir: SUCCESS"
     else
 	echo "$target:$port shared directory $shared_dir: FAIL"
