@@ -92,7 +92,7 @@ checkout_infrastructure()
 checkout_all()
 {
     local packages=
-    packages="binutils libc gcc gdb"
+    packages="linux binutils libc gcc gdb"
 
     # See if specific component versions were specified at runtime
     if test x"${gcc_version}" = x; then
@@ -113,6 +113,9 @@ checkout_all()
     if test x"${gdb_version}" = x; then
 	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
     fi
+    if test x"${linux_version}" = x; then
+	linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
+    fi
 
     checkout_infrastructure
     if test $? -gt 0; then
@@ -130,6 +133,9 @@ checkout_all()
 		;;
 	    gcc)
 		package=${gcc_version}
+		;;
+	    linux)
+		package=${linux_version}
 		;;
 	    libc)
 		if test x"${clibrary}" = x"eglibc"; then

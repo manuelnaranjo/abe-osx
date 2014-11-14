@@ -26,13 +26,13 @@ build_all()
     
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-        local builds="infrastructure binutils stage1 libc stage2 gdb"
+        local builds="infrastructure linux binutils stage1 libc stage2 gdb"
 	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 libc gdb" # native build
+        local builds="infrastructure linux binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
@@ -56,6 +56,10 @@ build_all()
 
     if test x"${gdb_version}" = x; then
         gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+    fi
+
+    if test x"${linux_version}" = x; then
+        linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
     fi
     
     # cross builds need to build a minimal C compiler, which after compiling
@@ -122,6 +126,10 @@ build_all()
                 ;;
             gdbserver)
                 build ${gdb_version} gdbserver
+                build_all_ret=$?
+                ;;
+            linux)
+                build ${linux_version}
                 build_all_ret=$?
                 ;;
             # Build anything not GCC or infrastructure
@@ -374,6 +382,23 @@ make_all()
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to compile.
     if test x"${tool}" = x"linux"; then
+        local srcdir="`get_srcdir $1 ${2:+$2}`"
+        if test `echo ${target} | grep -c aarch64` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | grep -c i.86` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=i386 INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | grep -c x86_64` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | grep -c arm` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+        else
+            warning "Unknown arch for make headers_install!"
+            return 1
+        fi
+        if test $? != "0"; then
+            warning "Make headers_install failed!"
+            return 1
+        fi
         return 0
     fi
 
@@ -485,23 +510,6 @@ make_install()
 
     local tool="`get_toolname $1`"
     if test x"${tool}" = x"linux"; then
-        local srcdir="`get_srcdir $1 ${2:+$2}`"
-        if test `echo ${target} | grep -c aarch64` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
-        elif test `echo ${target} | grep -c i.86` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=i386 INSTALL_HDR_PATH=${sysroots}/usr"
-        elif test `echo ${target} | grep -c x86_64` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
-        elif test `echo ${target} | grep -c arm` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
-        else
-            warning "Unknown arch for make headers_install!"
-            return 1
-        fi
-        if test $? != "0"; then
-            warning "Make headers_install failed!"
-            return 1
-        fi
         return 0
     fi
 
