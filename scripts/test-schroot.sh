@@ -294,7 +294,7 @@ if ! [ -z "$shared_dir" ]; then
     # white spaces between options or ends with a space; filter ssh_command.
     ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
     try="0"
-    while [ x"$try" -lt "3" ]; do
+    while [ "$try" -lt "3" ]; do
 	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
 	if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	    try=$(($try + 1))
@@ -308,7 +308,7 @@ if ! [ -z "$shared_dir" ]; then
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
     rm ~/.ssh/id_rsa-test-schroot.$$*
 
-    if [ x"$try" != x"3" ]; then
+    if [ "$try" != "3" ]; then
 	echo "$target:$port shared directory $shared_dir: SUCCESS"
     else
 	echo "$target:$port shared directory $shared_dir: FAIL"
