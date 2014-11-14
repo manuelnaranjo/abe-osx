@@ -298,6 +298,7 @@ if ! [ -z "$shared_dir" ]; then
 	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
 	if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	    try=$(($try + 1))
+	    sleep 1
 	    continue
 	fi
 	break
