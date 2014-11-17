@@ -1,6 +1,6 @@
                         README
 
-Abe is a bourne shell rewrite of the existing abe system as
+Abe is a bourne shell rewrite of the existing Cbuildv1 system as
 used by Linaro. While being oriented to the Linaro way of doing
 things, Abe should be usable by others by just reconfiguring.
 
