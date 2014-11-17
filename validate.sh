@@ -20,7 +20,7 @@
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
+    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
 fi
 
 if test $# -lt 4; then

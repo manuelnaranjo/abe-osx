@@ -161,7 +161,7 @@ fi
 # Use the newly created build directory
 pushd ${user_workspace}/_build
 
-# Configure Cbuildv2 itself. Force the use of bash instead of the Ubuntu
+# Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
 export CONFIG_SHELL="/bin/bash"

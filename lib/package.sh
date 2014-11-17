@@ -375,7 +375,7 @@ gdb_version=${gdb_version}
 gdb_revsion=${gdb_revision}
 linux_version=${linux_version}
 
-# Cbuild revision used
+# Abe revision used
 abe_revision=${abe_revision}
 
 EOF

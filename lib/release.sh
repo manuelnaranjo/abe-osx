@@ -116,7 +116,7 @@ release_binutils_src()
 
 # From: https://wiki.linaro.org/WorkingGroups/ToolChain/GCC/ReleaseProcess
 # The output file name looks like this: gcc-linaro-4.8-2013.11.tar.xz.
-# The date is set by the --release option to Cbuildv2. This function is
+# The date is set by the --release option to Abe. This function is
 # only called with --tarsrc or --tarball.
 release_gcc_src()
 {

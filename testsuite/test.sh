@@ -1249,8 +1249,8 @@ if test x"${out}" = x"gcc-linaro-4.8-${date}"; then
     xpass "${testing}"
 else
     # This fails because the tarball name fails to extract the version. This
-    # behavious isn't used by Cbuildv, it was an early feature to have some
-    # compatability with abev1, which used tarballs. Cbuildv2 produces the
+    # behavious isn't used by Abe, it was an early feature to have some
+    # compatability with abev1, which used tarballs. Abe produces the
     # tarballs, it doesn't need to import them anymore.
     xfail "${testing}"
     fixme "create_release_tag returned ${out}"
