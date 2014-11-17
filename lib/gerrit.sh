@@ -25,7 +25,7 @@
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit version
     # this uses the git commit SHA-1
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --code-review 0 -m "foo" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
-    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/abe --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set gcc status:open limit:1 --format JSON
 
 # The number used for code reviews looks like this, it's passed as a string to
@@ -37,7 +37,7 @@
 #   +2 Looks good to me, approved
 
 
-# ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
+# ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/abe --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
 
     # local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 
@@ -215,7 +215,7 @@ Your patch is being reviewed. The build step has completed with a status of: ${s
 
 EOF
 
-#http://cbuild.validation.linaro.org/logs/gcc-linaro-5.0.0/
+#http://abe.validation.linaro.org/logs/gcc-linaro-5.0.0/
 
     add_gerrit_comment ${revision} ${msgfile} ${code}
     if test $? -gt 0; then

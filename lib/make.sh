@@ -107,7 +107,7 @@ build_all()
                     local sysroot="`${target}-gcc -print-sysroot`"
                     if test ! -d ${sysroot}; then
                         dryrun "mkdir -p /opt/linaro"
-                        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+                        dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
                     fi
                 fi
                 ;; 

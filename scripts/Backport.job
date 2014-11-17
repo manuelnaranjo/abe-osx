@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cbuild_dir="${WORKSPACE}/cbuildv2"
+abe_dir="${WORKSPACE}/abe"
 user_snapshots="${WORKSPACE}/snapshots"
 shared="/home/buildslave/workspace/shared/"
 snapshots_ref="${shared}/snapshots"
@@ -17,11 +17,11 @@ rm -fr ${WORKSPACE}
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=148.251.136.42
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=148.251.136.42
 
-$CONFIG_SHELL -x ${cbuild_dir}/test-backport.sh --fileserver=148.251.136.42 --target ${target} ${gcc_branch}
+$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --fileserver=148.251.136.42 --target ${target} ${gcc_branch}
 
-# force a failure of cbuild2 has build problems.
+# force a failure of abe has build problems.
 if test $? -gt 0; then
   exit 1
 fi

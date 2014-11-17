@@ -225,13 +225,13 @@ fi
 
 $extract || $clean || $build || $run || { extract=true;clean=true;build=true;run=true; }
 
-#Cribbed from cbuild2.sh
+#Cribbed from abe.sh
 #TODO: Push this change back to last merge? Not really needed if I submit generated patches.
 #      But may still be worth it for my sanity.
 make_docs=no
 install=no
 
-#TODO How does primary cbuild2 do this?
+#TODO How does primary abe do this?
 dump_host_info  > host.txt
 #fetch md5sums
 

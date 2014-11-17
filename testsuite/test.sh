@@ -2,7 +2,7 @@
 
 # common.sh loads all the files of library functions.
 if test x"`echo \`dirname "$0"\` | sed 's:^\./::'`" != x"testsuite"; then
-    echo "WARNING: Should be run from top cbuild2 dir" > /dev/stderr
+    echo "WARNING: Should be run from top abe dir" > /dev/stderr
     topdir="`readlink -e \`dirname $0\`/..`"
 else
     topdir=$PWD
@@ -17,7 +17,7 @@ else
     . "${topdir}/lib/common.sh" || exit 1
     warning "no host.conf file!  Synthesizing a framework for testing."
 
-    remote_snapshots=http://cbuild.validation.linaro.org/snapshots
+    remote_snapshots=http://abe.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
     sources_conf=${topdir}/testsuite/test_sources.conf
 fi
@@ -28,13 +28,13 @@ wget_quiet=yes
 
 # We always override $local_snapshots so that we don't damage or move the
 # local_snapshots directory of an existing build.
-local_cbuild_tmp="`mktemp -d /tmp/cbuild2.$$.XXX`"
-local_snapshots="${local_cbuild_tmp}/snapshots"
+local_abe_tmp="`mktemp -d /tmp/abe.$$.XXX`"
+local_snapshots="${local_abe_tmp}/snapshots"
 
 # If this isn't being run in an existing build dir, create one in our
 # temp directory.
 if test ! -d "${local_builds}"; then
-    local_builds="${local_cbuild_tmp}/builds"
+    local_builds="${local_abe_tmp}/builds"
     out="`mkdir -p ${local_builds}`"
     if test "$?" -gt 1; then
 	error "Couldn't create local_builds dir ${local_builds}"
@@ -57,7 +57,7 @@ out="`mkdir -p ${local_snapshots}`"
 
 # Since we're testing, we don't load the host.conf file, instead
 # we create false values that stay consistent.
-cbuild_top=/build/cbuild2/test
+abe_top=/build/abe/test
 hostname=test.foobar.org
 target=x86_64-linux-gnu
 
@@ -135,7 +135,7 @@ totals()
 echo "============= get_toolname() tests ================"
 
 testing="get_toolname: uncompressed tarball"
-in="http://cbuild.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
+in="http://abe.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
 out="`get_toolname ${in}`"
 if test ${out} = "gdb"; then
     pass "${testing}"
@@ -146,7 +146,7 @@ fi
 
 # ----------------------------------------------------------------------------------
 testing="get_toolname: compressed tarball"
-in="http://cbuild.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
+in="http://abe.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
 out="`get_toolname ${in}`"
 if test ${out} = "gcc"; then
     pass "${testing}"
@@ -1250,7 +1250,7 @@ if test x"${out}" = x"gcc-linaro-4.8-${date}"; then
 else
     # This fails because the tarball name fails to extract the version. This
     # behavious isn't used by Cbuildv, it was an early feature to have some
-    # compatability with cbuildv1, which used tarballs. Cbuildv2 produces the
+    # compatability with abev1, which used tarballs. Cbuildv2 produces the
     # tarballs, it doesn't need to import them anymore.
     xfail "${testing}"
     fixme "create_release_tag returned ${out}"
@@ -1320,7 +1320,7 @@ test_checkout ()
 
 testing="checkout: http://git@<url>/<repo>.git"
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch=''
    revision=''
    should="pass"
@@ -1331,7 +1331,7 @@ fi
 
 testing="checkout: http://git@<url>/<repo>.git/<branch>"
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch="gerrit"
    revision=''
    should="pass"
@@ -1342,7 +1342,7 @@ fi
 
 testing="checkout: http://git@<url>/<repo>.git@<revision>"
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch=''
    revision="9bcced554dfc"
    should="pass"
@@ -1353,7 +1353,7 @@ fi
 
 testing="checkout: http://git@<url>/<repo>.git/unusedbranchnanme@<revision>"
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch="unusedbranchname"
    revision="9bcced554dfc"
    should="pass"
@@ -1364,7 +1364,7 @@ fi
 
 testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail."
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch="nonexistentbranch"
    revision=''
    should="fail"
@@ -1375,7 +1375,7 @@ fi
 
 testing="checkout: http://git@<url>/<repo>.git@<nonexistentrevision> should fail."
 if test ! -e "${PWD}/host.conf"; then
-   package="cbuild2.git"
+   package="abe.git"
    branch=''
    revision="123456bogusbranch"
    should="fail"

@@ -6,7 +6,7 @@ set_board_info hostname arm-odroidU2
 
 set_board_info protocol fastssh
 # Enable ControlMaster and ControlPath
-set_board_info rsh_opts "-o ControlMaster=auto -o ControlPath=\"/tmp/cbuild-%u@%h:[pid]\" -o ControlPersist=6h"
+set_board_info rsh_opts "-o ControlMaster=auto -o ControlPath=\"/tmp/abe-%u@%h:[pid]\" -o ControlPersist=6h"
 
 #set_board_info username buildslave
 set_board_info gcc,timeout 100000

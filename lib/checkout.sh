@@ -24,7 +24,7 @@
 # but we also want to work with the native source code control system.
 usegit=no
 
-# This is used by cbuild2.sh --checkout all but not by --build
+# This is used by abe.sh --checkout all but not by --build
 checkout_infrastructure()
 {
     trace "$*"
@@ -298,7 +298,7 @@ checkout()
 		# dryrun "(cd ${srcdir} && git checkout ${branch})"
 	    elif test x"${supdate}" = xyes; then
 		# Some packages allow the build to modify the source directory and
-		# that might screw up cbuild2's state so we restore a pristine branch.
+		# that might screw up abe's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git reset --hard)"

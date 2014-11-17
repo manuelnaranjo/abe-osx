@@ -40,9 +40,9 @@ target=$1
 shift
 
 # load commonly used functions
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
+abe="`which $0`"
+topdir="${abe_path}"
+abe="`basename $0`"
 
 . "${topdir}/lib/diff.sh" || exit 1
 
@@ -51,7 +51,7 @@ declare -a revisions=($*)
 
 # Get the path for the other scripts.
 fullpath="`which $0`"
-cbuild2="`dirname ${fullpath}`/cbuild2.sh"
+abe="`dirname ${fullpath}`/abe.sh"
 tcwgweb="`dirname ${fullpath}`/tcwgweb.sh"
 
 # We'll move all the results to subdirectories under here
@@ -63,16 +63,16 @@ i=0
 while test $i -lt ${#revisions[@]}; do
     stamps="`ls -C1 ${local_builds}/${build}/${target}/*-stage2-build.stamp`"
     if test "`echo ${stamps} | grep -c ${revisions[$i]}`" -eq 0; then
-     	${cbuild2} --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
+     	${abe} --target ${target} --check gcc=gcc.git@${revisions[$i]} --build all
     fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
     if test x"${sums}" != x; then
-	mkdir -p ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
-	cp ${sums} ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}
+	mkdir -p ${resultsdir}/abe${revisions[$i]}/${build}-${target}
+	cp ${sums} ${resultsdir}/abe${revisions[$i]}/${build}-${target}
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
-	xz -f ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/*.sum
-	rm ${resultsdir}/cbuild${revisions[$i]}/${build}-${target}/{x,xXx,testrun}.sum
+	xz -f ${resultsdir}/abe${revisions[$i]}/${build}-${target}/*.sum
+	rm ${resultsdir}/abe${revisions[$i]}/${build}-${target}/{x,xXx,testrun}.sum
     fi
     i=`expr $i + 1`
 done
@@ -81,13 +81,13 @@ done
 # is a series, do them all in the order they were specified on the
 # command line.
 if test ${#revisions[@]} -eq 2; then
-    difftwodirs ${resultsdir}/cbuild${revisions[0]} ${resultsdir}/cbuild${revisions[1]}
+    difftwodirs ${resultsdir}/abe${revisions[0]} ${resultsdir}/abe${revisions[1]}
 else
     j=0
     while test $j -lt ${#revisions[@]}; do
-	first=cbuild${revisions[$j]}/${build}-${target}
+	first=abe${revisions[$j]}/${build}-${target}
 	j=`expr $j + 1`
-	second=cbuild${revisions[$j]}/${build}-${target}
+	second=abe${revisions[$j]}/${build}-${target}
 	if test x"${second}" = x; then
 	    break
 	else

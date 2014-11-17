@@ -32,8 +32,8 @@ difftwodirs ()
     echo "Diffing: ${prev} against ${next}..."
     local resultsdir="${local_builds}/test-results"
 
-    local pversion="`echo ${prev} | grep -o "test-results/cbuild[0-9a-z]*" | grep -o "cbuild[0-9a-z]*"`"
-    local nversion="`echo ${next} | grep -o "test-results/cbuild[0-9a-z]*" | grep -o "cbuild[0-9a-z]*"`"
+    local pversion="`echo ${prev} | grep -o "test-results/abe[0-9a-z]*" | grep -o "abe[0-9a-z]*"`"
+    local nversion="`echo ${next} | grep -o "test-results/abe[0-9a-z]*" | grep -o "abe[0-9a-z]*"`"
 
     diffdir="${resultsdir}/diffof-${pversion}-${nversion}"
     mkdir -p ${diffdir}
@@ -111,9 +111,9 @@ diffall ()
 # This produces the test file, who's header needs to look like this:
 #
 # Difference in testsuite results between:
-#  gcc-linaro-4.8-2014.01 build i686-precise-cbuild461-oort8-i686r1
+#  gcc-linaro-4.8-2014.01 build i686-precise-abe461-oort8-i686r1
 # and the one before it:
-#  gcc-linaro-4.8-2013.12 build i686-precise-cbuild461-oort2-i686r1
+#  gcc-linaro-4.8-2013.12 build i686-precise-abe461-oort2-i686r1
 
 # ------
 testfile()

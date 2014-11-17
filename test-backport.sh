@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# To run, this script takes arguments in the same format as cbuild2.sh. The two
+# To run, this script takes arguments in the same format as abe.sh. The two
 # arguments it needs is the target archicture to build, and the gcc backport
 # branch name. Example:
 # $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
@@ -41,9 +41,9 @@ if test -e "${PWD}/host.conf"; then
 else
     echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
 fi
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
+abe="`which $0`"
+topdir="${abe_path}"
+abe="`basename $0`"
 
 repo="gcc.git"
 fileserver=""
@@ -86,10 +86,10 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
-resultsdir="/tmp/cbuild-${target}@"
+resultsdir="/tmp/abe-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    bash -x ${topdir}/abe.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Cbuild2 failed!"
 	exit 1

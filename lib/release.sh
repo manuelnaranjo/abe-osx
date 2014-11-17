@@ -58,7 +58,7 @@ sign_tarball()
 {
     trace "$*"
 
-#    ssh -t cbuild@toolchain64 gpg --no-use-agent -q --yes --passphrase-file /home/cbuild/.config/cbuild/password --armor --sign --detach-sig --default-key cbuild "/home/cbuild/var/snapshots/gcc-linaro-${release}.tar.xz" scp cbuild@toolchain64:/home/cbuild/var/snapshots/gcc-linaro-${release}.tar.xz.asc $REL_DIR
+#    ssh -t abe@toolchain64 gpg --no-use-agent -q --yes --passphrase-file /home/abe/.config/abe/password --armor --sign --detach-sig --default-key abe "/home/abe/var/snapshots/gcc-linaro-${release}.tar.xz" scp abe@toolchain64:/home/abe/var/snapshots/gcc-linaro-${release}.tar.xz.asc $REL_DIR
 
     return 0
 }

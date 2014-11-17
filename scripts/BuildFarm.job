@@ -11,7 +11,7 @@ export runtests=true
 
 export CONFIG_SHELL="/bin/bash"
 shared="/home/buildslave/workspace/shared/"
-cbuild_dir="${WORKSPACE}/cbuildv2"
+abe_dir="${WORKSPACE}/abe"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
 
@@ -19,10 +19,10 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL ${cbuild_dir}/configure --disable update --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
-$CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release}
+$CONFIG_SHELL ${abe_dir}/configure --disable update --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+$CONFIG_SHELL -x ${abe_dir}/jenkins.sh ${release}
 
-# force a failure of cbuild2 has build problems.
+# force a failure of abe has build problems.
 if test $? -gt 0; then
   exit 1
 fi
