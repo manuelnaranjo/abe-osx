@@ -604,10 +604,10 @@ LOCAL_BUILDS
 GIT_REFERENCE_DIR
 LOCAL_SNAPSHOTS
 SYSROOTS
-CBUILD_PATH
+ABE_PATH
 SOURCES_CONF
 FILESERVER
-CBUILD_TOP
+ABE_TOP
 BUILDDATE
 CCRYPT
 AUTOGEN
@@ -3694,17 +3694,17 @@ fi
 
 # Check whether --with-toplevel was given.
 if test "${with_toplevel+set}" = set; then :
-  withval=$with_toplevel; CBUILD_TOP=${withval}
+  withval=$with_toplevel; ABE_TOP=${withval}
 else
-  CBUILD_TOP="${PWD}"
+  ABE_TOP="${PWD}"
 fi
 
 
 
-if test ! -d ${CBUILD_TOP}; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${CBUILD_TOP} does not exist so creating directory!" >&5
-$as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" >&2;}
-   mkdir -p ${CBUILD_TOP}
+if test ! -d ${ABE_TOP}; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ${ABE_TOP} does not exist so creating directory!" >&5
+$as_echo "$as_me: WARNING: ${ABE_TOP} does not exist so creating directory!" >&2;}
+   mkdir -p ${ABE_TOP}
 fi
 
 # The various Jenkins jobs copy log files and rest results to a remote file
@@ -3729,7 +3729,7 @@ fi
 
 
 
-CBUILD_PATH=$(readlink -f ${srcdir})
+ABE_PATH=$(readlink -f ${srcdir})
 
 
 
@@ -3737,7 +3737,7 @@ CBUILD_PATH=$(readlink -f ${srcdir})
 if test "${with_sysroot+set}" = set; then :
   withval=$with_sysroot; SYSROOTS=${withval}
 else
-  SYSROOTS="${CBUILD_TOP}"/sysroots
+  SYSROOTS="${ABE_TOP}"/sysroots
 fi
 
 
@@ -3755,7 +3755,7 @@ fi
 if test "${with_local_snapshots+set}" = set; then :
   withval=$with_local_snapshots; LOCAL_SNAPSHOTS=${withval}
 else
-  LOCAL_SNAPSHOTS="${CBUILD_TOP}/snapshots"
+  LOCAL_SNAPSHOTS="${ABE_TOP}/snapshots"
 fi
 
 
@@ -3781,7 +3781,7 @@ fi
 if test "${with_local_builds+set}" = set; then :
   withval=$with_local_builds; LOCAL_BUILDS=${withval}
 else
-  LOCAL_BUILDS="${CBUILD_TOP}/builds"
+  LOCAL_BUILDS="${ABE_TOP}/builds"
 fi
 
 
