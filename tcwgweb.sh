@@ -65,7 +65,7 @@ scancheck ()
     rm -f /tmp/mail$$.txt
     echo "Testsuite build failures found in ${build}" > /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
-    echo "Check build log: http://cbuild.validation.linaro.org/$1.xz" >> /tmp/mail$$.txt
+    echo "Check build log: http://abe.tcwglab.linaro.org/$1.xz" >> /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
     local i=0
     while test $i -lt ${#errors[@]}; do
@@ -208,7 +208,7 @@ difftwodirs ()
     done
 
     local wwwpath="/logs/gcc-linaro-${gcc_version}/`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
-    echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
+    echo "Build logs: http://abe.tcwglab.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
     local lineno="`grep -n -- "----" ${prev}/manifest.txt | grep -o "[0-9]*"`"
     if test x"${lineno}" != x; then
