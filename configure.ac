@@ -227,13 +227,13 @@ AC_ARG_WITH(dbhost,
 dnl The top of the cbuild tree
 AC_ARG_WITH(toplevel,
   AC_HELP_STRING([--with-toplevel], []),
-  CBUILD_TOP=${withval},
-  CBUILD_TOP="${PWD}")
-AC_SUBST(CBUILD_TOP)
+  ABE_TOP=${withval},
+  ABE_TOP="${PWD}")
+AC_SUBST(ABE_TOP)
 
-if test ! -d ${CBUILD_TOP}; then
-   AC_MSG_WARN([${CBUILD_TOP} does not exist so creating directory!])
-   mkdir -p ${CBUILD_TOP}
+if test ! -d ${ABE_TOP}; then
+   AC_MSG_WARN([${ABE_TOP} does not exist so creating directory!])
+   mkdir -p ${ABE_TOP}
 fi
 
 # The various Jenkins jobs copy log files and rest results to a remote file
@@ -250,14 +250,14 @@ AC_ARG_WITH(sources-conf,
   SOURCES_CONF="${srcdir}/config/sources.conf")
 AC_SUBST(SOURCES_CONF)
 
-CBUILD_PATH=$(readlink -f ${srcdir})
-AC_SUBST(CBUILD_PATH)
+ABE_PATH=$(readlink -f ${srcdir})
+AC_SUBST(ABE_PATH)
 
 dnl The top of the cbuild tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),
   SYSROOTS=${withval},
-  SYSROOTS="${CBUILD_TOP}"/sysroots)
+  SYSROOTS="${ABE_TOP}"/sysroots)
 AC_SUBST(SYSROOTS)
 
 if test x"${target}" != x"${build}"; then
@@ -271,7 +271,7 @@ dnl The local directory where snapshots are stored
 AC_ARG_WITH(local-snapshots,
   AC_HELP_STRING([--with-local-snapshots], [Where downloaded tarballs are stored]),
   LOCAL_SNAPSHOTS=${withval},
-  LOCAL_SNAPSHOTS="${CBUILD_TOP}/snapshots")
+  LOCAL_SNAPSHOTS="${ABE_TOP}/snapshots")
 AC_SUBST(LOCAL_SNAPSHOTS)
 
 if test ! -d ${LOCAL_SNAPSHOTS}; then
@@ -290,7 +290,7 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
-  LOCAL_BUILDS="${CBUILD_TOP}/builds")
+  LOCAL_BUILDS="${ABE_TOP}/builds")
 AC_SUBST(LOCAL_BUILDS)
 
 if test ! -d ${LOCAL_BUILDS}; then
