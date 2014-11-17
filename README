@@ -1,19 +1,19 @@
                         README
 
-Cbuildv2 is a bourne shell rewrite of the existing abe system as
+Abe is a bourne shell rewrite of the existing abe system as
 used by Linaro. While being oriented to the Linaro way of doing
-things, Cbuildv2 should be usable by others by just reconfiguring.
+things, Abe should be usable by others by just reconfiguring.
 
-Configuring Cbuildv2:
+Configuring Abe:
 ---------------------
-  While it is possible to run Cbuildv2 from it's source tree, this
+  While it is possible to run Abe from it's source tree, this
 isn't recommended. The best practice is to create a new build
-directory, and configure Cbuildv2 in that directory. That makes it
+directory, and configure Abe in that directory. That makes it
 easy to change branches, or even delete subdirectories. There
 are defaults for all paths, which is to create them under the same
 directory configure is run in.
 
-  There are several directories that Cbuildv2 needs. These are the
+  There are several directories that Abe needs. These are the
 following:
 
   * local snapshots - This is where all the downloaded sources get
