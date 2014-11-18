@@ -172,7 +172,7 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
 
 # load commonly used varibles set by configure
 if test -e "${PWD}/host.conf"; then
