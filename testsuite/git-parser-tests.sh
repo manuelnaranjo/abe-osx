@@ -1000,7 +1000,7 @@ match='linux'
 test_parser tool "${in}" "${match}" "${errmatch}"
 
 errmatch=0
-in="http://cbuild.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
+in="http://abe.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
 match='gdb'
 test_parser repo "${in}" "${match}" "${errmatch}"
 

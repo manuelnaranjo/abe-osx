@@ -21,8 +21,8 @@ dnl build and test a GNU toolchain.
 dnl 
 
 AC_PREREQ(2.59c)
-AC_INIT(cbuild, 2.0dev)
-AC_CONFIG_SRCDIR([cbuild2.sh])
+AC_INIT(abe, 2.0dev)
+AC_CONFIG_SRCDIR([abe.sh])
 dnl AC_CONFIG_HEADERS([config.h])
 dnl AC_CONFIG_MACRO_DIR([macros])
 
@@ -33,7 +33,7 @@ missing=
 AC_PROG_CC
 AC_PROG_CXX
 if test x"${CC}" = x -a x"${CXX}" = x; then
-   AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run cbuild!])
+   AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run abe!])
    missing="${missing} gcc"
 fi
 AC_PROG_INSTALL
@@ -68,7 +68,7 @@ AC_SUBST(DISTRIBUTION)
 AC_PATH_PROG(WGET, wget)
 AC_SUBST(WGET)
 if test x"${WGET}" = x; then
-   AC_MSG_WARN([You need 'wget' to fully run cbuild!])
+   AC_MSG_WARN([You need 'wget' to fully run abe!])
    missing="${missing} wget"
 fi
 
@@ -205,7 +205,7 @@ BUILDDATE="`date +%Y%m%d`"
 AC_SUBST(BUILDDATE)
 
 dnl While it's a bad idea to store the database access information in an unencrypted
-dnl text file, this is useful for cbuild2 development itself. This option should never
+dnl text file, this is useful for abe development itself. This option should never
 dnl be used in a production environment. The default is read-only access. You can also
 dnl set DBUSER and DBPASSWD in your environment, but that's also a possible security
 dnl risk.
@@ -224,7 +224,7 @@ AC_ARG_WITH(dbhost,
   dbhost=${withval} ; AC_MSG_WARN([The database hostname is stored in an unencrypted text file which could be considered a security risk!]),
   dbhost='localhost')
 
-dnl The top of the cbuild tree
+dnl The top of the abe tree
 AC_ARG_WITH(toplevel,
   AC_HELP_STRING([--with-toplevel], []),
   ABE_TOP=${withval},
@@ -253,7 +253,7 @@ AC_SUBST(SOURCES_CONF)
 ABE_PATH=$(readlink -f ${srcdir})
 AC_SUBST(ABE_PATH)
 
-dnl The top of the cbuild tree
+dnl The top of the abe tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),
   SYSROOTS=${withval},
@@ -394,7 +394,7 @@ AC_SUBST(ENABLE_PARALLEL)
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
 dnl   snapshots=${withval},
-dnl   snapshots='cbuild')
+dnl   snapshots='abe')
 
 dnl Since the configure script is actually checked in, a developer
 dnl does not need to have the GNU Autotools installed. However,

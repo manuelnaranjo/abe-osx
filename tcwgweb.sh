@@ -22,9 +22,9 @@ if test -e "${PWD}/host.conf"; then
 fi
 
 # load commonly used functions
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
+abe="`which $0`"
+topdir="${abe_path}"
+abe="`basename $0`"
 
 . "${topdir}/lib/common.sh" || exit 1
 
@@ -86,7 +86,7 @@ diffbaseline ()
 {
     source $1/manifest.txt
 
-    local baselines="/work/cbuildv2/baselines"
+    local baselines="/work/abe/baselines"
     local tool="`echo $2 | cut -d '-' -f 1`"
     local tool="`basename ${tool}`"
     local version="`echo $2 | grep -o "[0-9]\.[0-9]*" | head -1`"
@@ -258,9 +258,9 @@ diffall ()
 # This produces the test file, who's header needs to look like this:
 #
 # Difference in testsuite results between:
-#  gcc-linaro-4.8-2014.01 build i686-precise-cbuild461-oort8-i686r1
+#  gcc-linaro-4.8-2014.01 build i686-precise-abe461-oort8-i686r1
 # and the one before it:
-#  gcc-linaro-4.8-2013.12 build i686-precise-cbuild461-oort2-i686r1
+#  gcc-linaro-4.8-2013.12 build i686-precise-abe461-oort2-i686r1
 
 # ------
 testfile()

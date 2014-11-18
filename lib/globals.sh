@@ -115,7 +115,7 @@ jenkins_job_url=""
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
-if test -e ~/.cbuildrc; then
-    . ~/.cbuildrc
+if test -e ~/.aberc; then
+    . ~/.aberc
 fi
 

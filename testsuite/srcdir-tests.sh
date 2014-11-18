@@ -100,11 +100,11 @@ fi
 
 echo "============= additional get_srcdir () tests ================"
 # Some of these are redundant with those in srcdir_tests but since
-# already have cbuild2.git checked out we might as well test them here.
+# already have abe.git checked out we might as well test them here.
 testing="get_srcdir: <repo>.git"
-in="cbuild2.git"
+in="abe.git"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git"; then
+if test x"${out}" = x"${local_snapshots}/abe.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -112,9 +112,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git@<revision>"
-in="cbuild2.git@12345"
+in="abe.git@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -122,9 +122,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git/<branch>"
-in="cbuild2.git/branch"
+in="abe.git/branch"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~branch"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -132,9 +132,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git/<branch>@<revision>"
-in="cbuild2.git/branch@12345"
+in="abe.git/branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -142,9 +142,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git~<branch>@<revision>"
-in="cbuild2.git~branch@12345"
+in="abe.git~branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -152,9 +152,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git/<multi/part/branch>@<revision>"
-in="cbuild2.git/multi/part/branch@12345"
+in="abe.git/multi/part/branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~multi-part-branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -162,9 +162,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git~<multi/part/branch>@<revision>"
-in="cbuild2.git~multi/part/branch@12345"
+in="abe.git~multi/part/branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~multi-part-branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -174,7 +174,7 @@ fi
 
 # 
 testing="get_srcdir: invalid identifier shouldn't return anything."
-in="cbuild2~multi/part/branch@12345"
+in="abe~multi/part/branch@12345"
 out="`get_srcdir $in 2>/dev/null`"
 if test x"${out}" = x""; then
     pass "${testing}"
@@ -184,9 +184,9 @@ else
 fi
 
 testing="get_srcdir: <repo>~<multi/part/branch>@<revision>"
-in="git://git.linaro.org/people/rsavoye/cbuild2~multi/part/branch@12345"
+in="git://git.linaro.org/people/rsavoye/abe~multi/part/branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2~multi-part-branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe~multi-part-branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -194,9 +194,9 @@ else
 fi
 
 testing="get_srcdir: <repo>.git~<multi/part/branch>@<revision>"
-in="cbuild2.git~multi/part/branch@12345"
+in="abe.git~multi/part/branch@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git~multi-part-branch@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git~multi-part-branch@12345"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -204,9 +204,9 @@ else
 fi
 
 testing="get_srcdir: http://<user>@<url>/<repo>.git"
-in="http://git@staging.git.linaro.org/git/toolchain/cbuild2.git"
+in="http://git@staging.git.linaro.org/git/toolchain/abe.git"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git"; then
+if test x"${out}" = x"${local_snapshots}/abe.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -214,9 +214,9 @@ else
 fi
 
 testing="get_srcdir: http://<user>@<url>/<repo>.git@<revision>"
-in="http://git@staging.git.linaro.org/git/toolchain/cbuild2.git@12345"
+in="http://git@staging.git.linaro.org/git/toolchain/abe.git@12345"
 out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cbuild2.git@12345"; then
+if test x"${out}" = x"${local_snapshots}/abe.git@12345"; then
     pass "${testing}"
 else
     fail "${testing}"

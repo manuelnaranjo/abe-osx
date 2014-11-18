@@ -7,7 +7,7 @@ cat <<EOF > ${review}
 [gerrit]
 	host=review.linaro.org
 	port=29418
-	project=toolchain/cbuild2
+	project=toolchain/abe
 
 [gitreview]
 	username=buildslave
@@ -32,7 +32,7 @@ else
 fi
 
 out="`extract_gerrit_project ${srcdir}`"
-if test x"${out}" = x"toolchain/cbuild2"; then
+if test x"${out}" = x"toolchain/abe"; then
     pass extract_gerrit_project""
 else
     ${fail_state} "extract_gerrit_project"

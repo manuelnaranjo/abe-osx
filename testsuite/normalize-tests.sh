@@ -81,7 +81,7 @@ else
     fixme "${in} returned ${out}"
 fi
 
-in="http://cbuild.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
+in="http://abe.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
 out="`normalize_path ${in}`"
 if test x"${out}" = x"gcc-linaro-4.8-2013.06-1"; then
     pass "normalize_path: tarball compressed"
