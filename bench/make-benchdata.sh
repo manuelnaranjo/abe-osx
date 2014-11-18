@@ -11,11 +11,11 @@ passwd="PASSWD"
 tmpdir="/tmp"
 
 # Check the environment for the database access information
-if test x"${CBUILD_DBUSER}" != x; then
-    user="${CBUILD_DBUSER}"
+if test x"${ABE_DBUSER}" != x; then
+    user="${ABE_DBUSER}"
 fi
-if test x"${CBUILD_DBPASSWD}" != x; then
-    passwd="${CBUILD_DBPASSWD}"
+if test x"${ABE_DBPASSWD}" != x; then
+    passwd="${ABE_DBPASSWD}"
 fi
 
 # Create the output file

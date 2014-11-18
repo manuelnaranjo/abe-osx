@@ -30,9 +30,9 @@ following:
 used. It is also possible to change those values at configure
 time. For example:
 
-$CBUILD-PATH/configure
---with-local-snapshots=$CBUILD_PATH/snapshots 
---with-local-builds=$CBUILD-PATH/destdir
+$ABE-PATH/configure
+--with-local-snapshots=$ABE_PATH/snapshots 
+--with-local-builds=$ABE-PATH/destdir
 --with-remote-snapshots=abe@toolchain64.lab:/home/abe/var/snapshots/
 
   This changes the 3 primary paths, including changing the remote host
