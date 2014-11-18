@@ -1,8 +1,0 @@
-load_generic_config unix
-load_lib "dmucs.exp"
-
-set  slave [gethost "toolchain64" "0xc08"]
-verbose "Slave is: $slave"
-set_board_info hostname $slave
-
-
