@@ -97,6 +97,9 @@ run_benchmark()
 
     #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
     #having an ssh config equivalent to TODO wikiref
+    #TODO Remember, this whole thing falls down if the target is not able to run netcat sessions
+    #     to the host. For example, if the host is inside a network that is outside Linaro network.
+    #     So maybe the whole 'append .lava' thing is pointless.
     if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
       ip+='.lava'
       if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
@@ -203,6 +206,9 @@ run_benchmark()
     #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
     #having an ssh config equivalent to TODO wikiref
     #TODO Functionize (have now got the same code at 2 locations)
+    #TODO Remember, this whole thing falls down if the target is not able to run netcat sessions
+    #     to the host. For example, if the host is inside a network that is outside Linaro network.
+    #     So maybe the whole 'append .lava' thing is pointless.
     if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
       ip+='.lava'
       if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
