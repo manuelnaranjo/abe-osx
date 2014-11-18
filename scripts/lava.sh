@@ -87,7 +87,7 @@ if test x"$key" = x; then
       exit 1
     fi
   else
-    echo "Could not find a key to authenticate with target (tried ssh-agent, ~/.ssd/id_rsa)" 1>&2
+    echo "Could not find a key to authenticate with target (tried ssh-agent, ~/.ssh/id_rsa)" 1>&2
     exit 1
   fi
 else
@@ -101,7 +101,7 @@ else
         exit 1
       fi
     elif head -n 1 "${key}" | grep -v ^ssh-; then
-      echo "Given key file does not look like an ssh public key"
+      echo "Given key file does not look like an ssh public key" 1>&2
       exit 1
     else
       key="`cat ${key}`"
