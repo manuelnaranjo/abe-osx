@@ -1,3 +1,0 @@
-load_generic_config tcwgfoundation-common
-
-set_board_info hostname tcwgfoundation03
