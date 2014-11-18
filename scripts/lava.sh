@@ -38,7 +38,7 @@ lava_server="${LAVA_SERVER}"
 lava_json=
 boot_timeout="$((120*60))" #2 hours
 keep=0
-key=
+key=${LAVA_SSH_KEYFILE}
 while getopts s:j:b:kp: flag; do
   case "${flag}" in
     s) lava_server="${OPTARG}";;
