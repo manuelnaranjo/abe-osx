@@ -1,3 +1,3 @@
 load_generic_config tcwgcommon
 
-set_board_info hostname tcwgblack05
+set_board_info hostname black05
