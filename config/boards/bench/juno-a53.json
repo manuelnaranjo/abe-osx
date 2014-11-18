@@ -1,0 +1,40 @@
+{
+    "job_name": "bench-juno-a53",
+    "device_type": "juno",
+    "timeout": 1800,
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "hwpack": "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20140823-686_arm64_supported.tar.gz",
+                "rootfs": "http://people.linaro.org/~bernie.ogden/linaro-image-toolchain-benchmark-genericarmv8-20141023155732.rootfs.tar.gz"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/toolchain/lavabench.git",
+                        "testdef": "bench-session-oe.yaml",
+                        "parameters": {
+                           "GATEWAY": "10.0.0.1",
+                           "PUB_KEY": "",
+                           "LISTENER_ADDR": "",
+                           "LISTENER_PORT": ""
+                        }
+                    }
+                ],
+                "timeout": 691200
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "",
+                "stream": ""
+            }
+        }
+    ]
+}
+
