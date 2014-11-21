@@ -43,7 +43,7 @@ case "$target_triplet" in {
 		set target_list { dragon-01 }
 	    }
 	    { build* *ex40-* } {
-		set target_list { dragon-d01 }
+		set target_list { d01-d01 }
 	    }
 	    { chromebook* d01-* chrome2-* } {
 		set target_list { unix }
