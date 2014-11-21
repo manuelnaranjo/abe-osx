@@ -42,10 +42,10 @@ case "$target_triplet" in {
 #		set target_list { chrome1-01 }
 		set target_list { dragon-01 }
 	    }
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
+	    { build* *ex40-* } {
 		set target_list { dragon-d01 }
 	    }
-	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
+	    { chromebook* d01-* chrome2-* } {
 		set target_list { unix }
 	    }
 	}
@@ -68,26 +68,26 @@ case "$target_triplet" in {
     }
     { "aarch64-*linux-gnu" } {
 	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
+	    { tcwgrob build* *ex40* } {
 		set target_list { aus-colo-01 }
 	    }
-	    { tcwg-apm-* } {
+	    { apm-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
+	    { tcwgrob build* *ex40-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "*linux-gnu*" } {
 	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgbuild  tcwg-ex40 }
-		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
+	    { tcwgrob build* *ex40-* } {
+		set target_list { build  *ex40 }
+		set board_info(build,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
 	    }
 	}
     }
