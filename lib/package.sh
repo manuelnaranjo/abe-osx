@@ -213,6 +213,9 @@ binary_toolchain()
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
+    # FIXME: link the sysroot into the toolchain tarball
+    ln -sfnT ${sysroots} ${destdir}/libc
+
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
