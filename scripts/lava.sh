@@ -143,6 +143,8 @@ if test $? -ne 0; then
   echo "Unable to establish listener" 1>&2
   exit 1
 fi
+listener_addr=${listener_port/%:*}
+listener_port=${listener_port/#*:}
 #Pretty much use this as a pipe - using an actual fifo seems to give nc fits
 exec 4< <(tail -f "${listener_file}")
 echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"

@@ -49,6 +49,7 @@ clean_benchmark()
     echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
     exit 1
   fi
+
 }
 
 #Called from a subshell. One consequence is that the 'global' variables are
@@ -64,6 +65,25 @@ run_benchmark()
       exit 1
     fi
     local tee_output=/dev/null
+
+    #Set up our listener
+    #Has to happen before we deal with LAVA, so that we can port forward if we need to
+    listener_file="`mktemp -t XXXXXXXXX`" || exit 1
+    listener_addr="`get_addr`"
+    if test $? -ne 0; then
+      echo "Unable to get IP for listener" 1>&2
+      exit 1
+    fi
+    listener_port="`establish_listener ${listener_addr} ${listener_file} 4200 5200`"
+    if test $? -ne 0; then
+      echo "Unable to establish listener" 1>&2
+      exit 1
+    fi
+    listener_addr=${listener_port/%:*}
+    listener_port=${listener_port/#*:}
+    echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"
+    #Pretty much use this as a pipe - using an actual fifo seems to give nc fits
+    exec 5< <(tail -f "${listener_file}")
 
     #Handle LAVA case
     echo "${ip}" | grep '\.json$' > /dev/null
@@ -92,39 +112,21 @@ run_benchmark()
         echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
       fi
+
+      lava_network
+      if test $? -eq 1; then
+        ip+='.lava'
+      fi
     fi
     #LAVA-agnostic from here
 
-    #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
-    #having an ssh config equivalent to TODO wikiref
-    #TODO Remember, this whole thing falls down if the target is not able to run netcat sessions
-    #     to the host. For example, if the host is inside a network that is outside Linaro network.
-    #     So maybe the whole 'append .lava' thing is pointless.
     if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
-      ip+='.lava'
-      if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
-	echo "Unable to connect to target ${ip%.lava} (tried ${ip} first)" 1>&2
-	exit 1
-      fi
+      echo "Unable to connect to target ${ip}" 1>&2
+      exit 1
     fi
 
     #Make sure we delete the remote dir when we're done
     trap clean_benchmark EXIT
-
-    listener_file="`mktemp -t XXXXXXXXX`" || exit 1
-    listener_addr="`get_addr`"
-    if test $? -ne 0; then
-      echo "Unable to get IP for listener" 1>&2
-      exit 1
-    fi
-    listener_port="`establish_listener ${listener_addr} ${listener_file} 4200 5200`"
-    if test $? -ne 0; then
-      echo "Unable to establish listener" 1>&2
-      exit 1
-    fi
-    echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"
-    #Pretty much use this as a pipe - using an actual fifo seems to give nc fits
-    exec 5< <(tail -f "${listener_file}")
 
     #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
     local logdir="${topdir}/${benchmark}-log/${ip}_`date +%s`"
@@ -203,18 +205,15 @@ run_benchmark()
       echo "Unable to determine IP, giving up." 1>&2
       exit 1
     fi
-    #Fiddle IP if we are outside the network. Rather linaro-specific, and depends upon
-    #having an ssh config equivalent to TODO wikiref
-    #TODO Functionize (have now got the same code at 2 locations)
-    #TODO Remember, this whole thing falls down if the target is not able to run netcat sessions
-    #     to the host. For example, if the host is inside a network that is outside Linaro network.
-    #     So maybe the whole 'append .lava' thing is pointless.
-    if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+
+    #Rather Linaro-specific
+    lava_network
+    if test $? -eq 1; then
       ip+='.lava'
-      if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
-	echo "Unable to connect to target ${ip%.lava} (tried ${ip} first)" 1>&2
-	exit 1
-      fi
+    fi
+    if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+      echo "Unable to connect to target ${ip}" 1>&2
+      exit 1
     fi
 
     if test ${ret} -ne 0; then
