@@ -72,11 +72,11 @@ run_benchmark()
       ip=''
       tee_output=/dev/console
       echo "Acquiring LAVA target ${lava_target}"
-      echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout} ${keep}" 1>&2
+      echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30} ${keep}" 1>&2
 
       #Downside of this approach is that bash syntax errors from lava.sh get reported as occurring at non-existent lines - but it is
       #otherwise quite neat. And you can always run lava.sh separately to get the correct error.
-      exec 3< <(${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout}" ${keep}) #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
+      exec 3< <(${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep}) #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
       if test $? -ne 0; then
         echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
         exit 1
