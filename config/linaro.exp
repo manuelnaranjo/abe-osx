@@ -75,7 +75,7 @@ case "$target_triplet" in {
     { "aarch64-*linux*" } {
 	case "$myname" in {
 	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
-		set target_list { aus-apm }
+		set target_list { tcwgqemu }
 	    }
 	    { nativetcwg-apm-* nativer1-a1* } {
 		set target_list { unix }

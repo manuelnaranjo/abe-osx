@@ -330,12 +330,18 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
+	if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
+	    # Our aarch64 sysroot has everything in /lib64, but executables
+	    # still expect to find dynamic linker under
+	    # /lib/ld-linux-aarch64.so.1
+	    $rsh root@$target "ln -s /sysroot/lib64 /sysroot/lib"
+	fi
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
 	# Note the "-S none" option -- ssh does not always detach from process
 	# when multiplexing is used.  I think this is a bug in ssh.
 	# We calculate delay in this fashion to avoid multi-thread tests
 	# getting through a minute of usertime in 60/#_of_cpus seconds.
-	delay=$((60 / $(getconf _NPROCESSORS_ONLN)))
+	delay=$((60 / $($rsh $target getconf _NPROCESSORS_ONLN)))
 	$rsh -f -S none $target bash -c "\"while sleep $delay; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
