@@ -18,6 +18,9 @@ clean_benchmark()
 {
   local error=$?
 
+  #Ensure that we perform the original exit trap when we're done in here
+  trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
+
   if test -f "${listener_file}"; then
     rm -f "${listener_file}"
     if test $? -ne 0; then
