@@ -56,7 +56,7 @@ remote_download()
   if test x"${destfile}" = x; then
     destfile="${sourcefile}"
   fi
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
   if test $? -ne 0; then
     error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
     return 1
@@ -80,7 +80,7 @@ remote_upload()
   if test x"${destfile}" = x; then
     destfile="${sourcefile}"
   fi
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq '${sourcefile}' '${target}:${destfile}' > /dev/null"
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq '${sourcefile}' '${target}:${destfile}' > /dev/null"
   if test $? -ne 0; then
     error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
     return 1
