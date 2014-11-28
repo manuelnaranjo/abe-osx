@@ -43,7 +43,7 @@ case "$target_triplet" in {
 		set target_list { dragon-01 }
 	    }
 	    { build* *ex40-* } {
-		set target_list { d01-d01 }
+		set target_list { d01-02 }
 	    }
 	    { chromebook* d01-* chrome2-* } {
 		set target_list { unix }
@@ -69,7 +69,7 @@ case "$target_triplet" in {
     { "aarch64-*linux-gnu" } {
 	case "$myname" in {
 	    { tcwgrob build* *ex40* } {
-		set target_list { aus-colo-01 }
+		set target_list { apm-02 }
 	    }
 	    { apm-* } {
 		set target_list { unix }
