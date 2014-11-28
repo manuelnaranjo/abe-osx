@@ -245,6 +245,7 @@ fi
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
     $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
+    $schroot sh -c "\"echo $user - nproc 1000 >> /etc/security/limits.conf\""
     # Set ssh port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
