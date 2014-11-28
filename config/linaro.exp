@@ -48,10 +48,13 @@ case "$target_triplet" in {
 #		set target_list { chrome1-01 }
 		set target_list { dragon-01 }
 	    }
-	    { tcwgbuild* toolchain64 tcwg-ex40-* tcwg-d01-* tcwg-chrome2-* } {
-		set target_list { tcwgqemu }
+	    { build-* d01-* juno-* amd-* } {
+		set target_list { tcwgbuildqemu }
 	    }
-	    { nativetcwg-d01-* nativetcwg-chrome2-* nativedragon-* } {
+	    { tcwg-ex40-* } {
+		set target_list { tcwgex40qemu }
+	    }
+	    { natived01-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
 	}
@@ -73,29 +76,35 @@ case "$target_triplet" in {
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
     { "aarch64-*linux*" } {
-	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
+	case "$native$myname" in {
+	    { tcwgrob build-* tcwg-ex40-* apm-* juno-* amd-* } {
 		set target_list { tcwgapm }
 	    }
-	    { nativetcwg-apm-* nativer1-a1* } {
+	    { nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$native$myname" in {
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
+	    { build-* } {
+		set target_list { tcwgbuild }
+	    }
+	    { tcwg-ex40-* } {
 		set target_list { tcwgex40 }
 	    }
-	    { nativetcwgbuild* nativetoolchain64 nativetcwg-ex40-* } {
+	    { nativebuild-* nativetcwg-ex40-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "*linux-gnu*" } {
 	case "$myname" in {
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgqemu }
+	    { build-* } {
+		set target_list { tcwgbuildqemu }
+	    }
+	    { tcwg-ex40-* } {
+		set target_list { tcwgex40qemu }
 	    }
 	}
     }
