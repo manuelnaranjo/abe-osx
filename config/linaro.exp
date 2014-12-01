@@ -48,11 +48,8 @@ case "$target_triplet" in {
 #		set target_list { chrome1-01 }
 		set target_list { dragon-01 }
 	    }
-	    { build-* d01-* juno-* amd-* } {
-		set target_list { tcwgbuildqemu }
-	    }
-	    { tcwg-ex40-* } {
-		set target_list { tcwgex40qemu }
+	    { build-* tcwg-ex40-* d01-* juno-* amd-* } {
+		set target_list { tcwgd01 }
 	    }
 	    { natived01-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
