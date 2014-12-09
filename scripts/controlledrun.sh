@@ -350,6 +350,7 @@ start_network()
   done
   if test $? -ne 0; then
     echo "Restored interface ${downed_interfaces[0]} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
+    echo "Ping rune: ping -c 1 \"`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`\" > /dev/null" | tee -a /dev/stderr "${log}" > /dev/null
   fi
   downed_interfaces=("${downed_interfaces[@]:1}")
 
@@ -371,6 +372,7 @@ start_network()
     done
     if test $? -ne 0; then
       echo "Restored interface ${interface} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
+      echo "Ping rune: ping -c 1 \"`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`\" > /dev/null" | tee -a /dev/stderr "${log}" > /dev/null
     fi
   done
   return ${ret}
