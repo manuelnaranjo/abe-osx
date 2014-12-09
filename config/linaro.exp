@@ -80,6 +80,10 @@ case "$target_triplet" in {
 	    { apm-* } {
 		set target_list { unix }
 	    }
+	    default {
+		set SIM "qemu-aarch64"
+                set target_list { aarch64-qemu }
+            }
 	}
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
