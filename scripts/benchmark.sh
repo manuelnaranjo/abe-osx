@@ -384,10 +384,14 @@ done
   
 ret=0
 for runpid in "${runpids[@]}"; do
-  wait "${runpid}"
+  kill -0 "${runpid}"
   if test $? -ne 0; then
-    ret=1
+    wait "${runpid}"
+    if test $? -ne 0; then
+      ret=1
+    fi
   fi
+  sleep 60
 done
 
 echo
