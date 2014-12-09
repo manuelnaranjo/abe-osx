@@ -189,11 +189,17 @@ sleep 15 #A short delay here is handy when debugging (if the LAVA queues are emp
 #Monitor job status until it starts running or fails
 #TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
 #TODO: In principle we want a timeout here, but we could be queued for a very long time, and that could be fine
+c=0
 while true; do
   jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
-    echo "Job ${id} disappeared!" 1>&2
-    exit 1
+    c=$((c + 1))
+    if test c -gt 5; then
+      echo "Job ${id} disappeared!" 1>&2
+      exit 1
+    else
+      continue
+    fi
   fi
   echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
   if test $? -eq 0; then
