@@ -10,10 +10,23 @@ set -o pipefail
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
-trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
+trap clean_top EXIT >/dev/null 2>&1
 trap 'exit ${error}' TERM INT HUP QUIT
 
 error=1
+
+clean_top()
+{
+  for runpid in "${runpids[@]}"; do
+    kill "${runpid}"
+    if test $? -ne 0; then
+      wait "${runpid}"
+      if test $? -ne 0; then
+        error=1
+      fi
+    fi
+  done
+}
 
 #To be called from exit trap in run_benchmark
 clean_benchmark()
