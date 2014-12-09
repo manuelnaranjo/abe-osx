@@ -16,19 +16,21 @@ release()
       echo "Failed to delete temporary file store ${temps}" 1>&2
     fi
   fi
-  if test ${keep} -eq 0; then
-    lava-tool cancel-job https://"${lava_server}" "${id}"
-    if test $? -eq 0; then
-      echo "Cancelled job ${id}" 1>&2
-      ret=0
+  if test x"${id}" != x; then
+    if test ${keep} -eq 0; then
+      lava-tool cancel-job https://"${lava_server}" "${id}"
+      if test $? -eq 0; then
+        echo "Cancelled job ${id}" 1>&2
+        ret=0
+      else
+        echo "Failed to cancel job ${id}" 1>&2
+        ret=1
+      fi
     else
-      echo "Failed to cancel job ${id}" 1>&2
-      ret=1
+      echo "Did not cancel job ${id} - keep requested" 1>&2
+      echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
+      ret=0
     fi
-  else
-    echo "Did not cancel job ${id} - keep requested" 1>&2
-    echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
-    ret=0
   fi
   kill -- -$BASHPID >/dev/null 2>&1 #This only makes sense when we were invoked directly, but should be harmless otherwise
   exit ${ret}
@@ -160,6 +162,7 @@ if test $? -ne 0; then
   exit 1
 fi
 
+trap release EXIT
 id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
@@ -168,7 +171,6 @@ if test $? -ne 0; then
   cat "${json_copy}" 1>&2
   exit 1
 fi
-trap release EXIT
 
 #TODO: Should be able to use cut at the end of this pipe, but when lava-tool
 #      is invoked through expect wrapper this line ends up with a carriage return 
