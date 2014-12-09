@@ -1,7 +1,7 @@
 {
     "job_name": "bench-juno-a53",
     "device_type": "juno",
-    "timeout": 1800,
+    "timeout": 36000,
     "actions": [
         {
             "command": "deploy_linaro_image",
