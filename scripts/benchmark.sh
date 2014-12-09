@@ -168,7 +168,7 @@ run_benchmark()
       flags+=" -n"
     fi
     if test x"${servicectl}" = xyes; then
-      flags+=" -s ${device}.services"
+      flags+=" -s ${target_dir}/${device}.services"
     fi
     if test x"${freqctl}" = xyes; then
       flags+=" -f"
