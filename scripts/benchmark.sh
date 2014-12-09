@@ -182,7 +182,7 @@ run_benchmark()
                         ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs} -- ${run_benchargs}; \
                         ret=\\\$?; \
                         for i in {1..10}; do \
-                          echo \"\\\${USER}@\\\`hostname -I\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
+                          echo \"\\\${USER}@\\\`ifconfig eth0 | grep 'inet addr' | sed 's/[^:]*://' | cut -d ' ' -f 1\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
                        done; \
                        if test \\\${ret} -eq 0; then \
                          true; \
