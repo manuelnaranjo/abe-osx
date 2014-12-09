@@ -48,6 +48,12 @@ case "$target_triplet" in {
 	    { chromebook* d01-* chrome2-* } {
 		set target_list { unix }
 	    }
+	    default{
+		global SIM
+		# CPU and sysroot are set through the environment
+		set SIM "qemu-arm"
+		set target_list { "arm-qemu" } 
+            }
 	}
     }
     { "arm-*eabi" } {
