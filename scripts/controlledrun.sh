@@ -267,7 +267,7 @@ stop_network()
   #Get interfaces
   local -a interfaces
   #TODO: Remote corner case - this'll break on interface names with a space in
-  interfaces=(`ifconfig -s | sed 1d | cut -d " " -f 1 | grep -v '^lo$'`) 
+  interfaces=(`ifconfig | cut -f 1 -d ' ' | sed '/^$/d' | grep -v '^lo$'`)
   if test $? -ne 0; then
     echo "Failed to read network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
@@ -302,11 +302,11 @@ stop_network()
   #Ensure that interfaces are have finished going down
   #TODO: A little manpage scanning suggests that this isn't needed at least the upstart case
   for i in {0..4}; do
-    if test x"`ifconfig -s | sed 1d | grep -v '^lo\b'`" = x; then
+    if test x"`ifconfig | cut -f 1 -d ' ' | sed '/^$/d' | grep -v '^lo$'`" = x; then
       break
     fi
     sleep 2
-    echo "Brought-down network interface(s) "`ifconfig -s | sed 1d | cut -d ' ' -f 1`" still up after >10s" | tee -a /dev/stderr "${log}" > /dev/null
+    echo "Brought-down network interface(s) "`ifconfig | cut -f 1 -d ' ' | sed '/^$/d' | grep -v '^lo$'`" still up after >10s" | tee -a /dev/stderr "${log}" > /dev/null
     echo "Will continue and hope for the best unless we're being cautious (-c)" | tee -a /dev/stderr "${log}" > /dev/null
     ret=1
   done
@@ -513,7 +513,7 @@ else
 fi
 echo | tee -a "${log}"
 echo "** Live Network Interfaces:" | tee -a "${log}"
-${sudo} ifconfig -s | sed 1d | cut -d ' ' -f 1 | tee -a "${log}"
+${sudo} ifconfig | tee -a "${log}"
 if test $? -ne 0; then
   echo "*** Unable to get network info" | tee -a "${log}"
 fi
