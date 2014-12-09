@@ -6,7 +6,8 @@ set -o pipefail
 if test $? -ne 0; then
   echo "Unable to source `dirname $0`/listener.sh"
 fi
-trap 'exit 1' TERM INT HUP QUIT
+error=1
+trap 'exit ${error}' TERM INT HUP QUIT
 
 release()
 {
@@ -21,19 +22,19 @@ release()
       lava-tool cancel-job https://"${lava_server}" "${id}"
       if test $? -eq 0; then
         echo "Cancelled job ${id}" 1>&2
-        ret=0
+        error=0
       else
         echo "Failed to cancel job ${id}" 1>&2
-        ret=1
+        error=1
       fi
     else
       echo "Did not cancel job ${id} - keep requested" 1>&2
       echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
-      ret=0
+      error=0
     fi
   fi
   kill -- -$BASHPID >/dev/null 2>&1 #This only makes sense when we were invoked directly, but should be harmless otherwise
-  exit ${ret}
+  #An effect of the kill is to kill _this process_. Exit code is preserved via the term trap.
 }
 
 lava_server="${LAVA_SERVER}"

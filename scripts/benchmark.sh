@@ -11,15 +11,14 @@ set -o pipefail
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
 trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
-trap 'exit 1' TERM INT HUP QUIT
+trap 'exit ${error}' TERM INT HUP QUIT
+
+error=1
 
 #To be called from exit trap in run_benchmark
 clean_benchmark()
 {
-  local error=$?
-
-  #Ensure that we perform the original exit trap when we're done in here
-  trap "kill -- -$BASHPID" EXIT >/dev/null 2>&1
+  error=$?
 
   if test -f "${listener_file}"; then
     rm -f "${listener_file}"
@@ -30,36 +29,31 @@ clean_benchmark()
 
   if test x"${target_dir}" = x; then
     echo "No directory to remove from ${ip}" 1>&2
-    exit "${error}"
-  fi
-  if test x"${keep}" = 'x-k'; then
+  elif test x"${keep}" = 'x-k'; then
     echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up." 1>&2
-    exit "${error}"
-  fi
-
-  #TODO: This is getting false negatives
-  expr "${target_dir}" : '\(/tmp\)' > /dev/null
-  if test $? -ne 0; then
+  elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
     echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
-    exit 1
-  fi
-
-  (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
-  if test $? -eq 0; then
-    echo "Removed ${target_dir} from ${ip}" 1>&2
-    exit "${error}"
   else
-    echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
-    exit 1
+    (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
+    if test $? -eq 0; then
+      echo "Removed ${target_dir} from ${ip}" 1>&2
+    else
+      echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
+      error=1
+    fi
   fi
 
+  #By now we've done our cleanup - it doesn't really matter what order the lava handler (if any) and listeners die in
+  kill -- -$BASHPID >/dev/null 2>&1
+  #Killing the group will kill this process too - but the TERM handler will exit with the correct exit code
 }
 
 #Called from a subshell. One consequence is that the 'global' variables are
 #only global within the subshell - which some of them need to be for the exit trap.
 run_benchmark()
 {
-    trap 'exit 1' TERM INT HUP QUIT
+    error=1
+    trap 'exit ${error}' TERM INT HUP QUIT
     . "${topdir}"/scripts/listener.sh
 
     . "${confdir}/${device}.conf" #We can't use cbuild2's source_config here as it requires us to have something get_toolname can parse
