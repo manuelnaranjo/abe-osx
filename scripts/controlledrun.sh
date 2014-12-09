@@ -339,7 +339,7 @@ start_network()
     echo "Cannot bring up network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
-  for i in {1..10}; do
+  for i in {1..60}; do
     echo "Ping ${downed_interfaces[0]}: $i" | tee -a /dev/stderr "${log}" > /dev/null
     ping -c 1 "`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
     if test $? -eq 0; then
@@ -361,7 +361,7 @@ start_network()
       echo "Failed to bring up network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
       ret=1
     fi
-    for i in {1..10}; do
+    for i in {1..60}; do
       ping -c 1 "`ip -f inet -o addr show ${interface} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
       if test $? -eq 0; then
 	break
