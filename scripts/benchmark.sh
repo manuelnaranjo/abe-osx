@@ -396,7 +396,7 @@ for device in "${devices[@]}"; do
   (run_benchmark)&
   runpids[$!]=''
 done
-  
+
 running_pids=("${!runpids[@]}")
 while true; do
   for running_pid in "${running_pids[@]}"; do
