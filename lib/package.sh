@@ -214,7 +214,8 @@ binary_toolchain()
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
     # FIXME: link the sysroot into the toolchain tarball
-    ln -sfnT ${sysroots} ${destdir}/libc
+    dryrun "mkdir -p ${destdir}/${host}/"
+    ln -sfnT ${sysroots} ${destdir}/${target}/libc
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
