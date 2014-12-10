@@ -25,10 +25,13 @@ rm -rf ${WORKSPACE}/_build ${user_snapshots}
 mkdir -p ${user_snapshots}/
 rsync -a ${snapshots_ref}/infrastructure/ ${user_snapshots}/infrastructure/
 
-if test x"${target}" = x"native-armhf"; then
-    CONFIG_SHELL="schroot -c tcwg-build-armhf-trusty -- ${CONFIG_SHELL}"
-    target="native"
-fi
+case ${target} in
+    schroot-*)
+	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\(.*\)--\(.*\)/\1/")
+	target=$(echo ${target} | sed -e "s/^schroot-\(.*\)--\(.*\)/\2/")
+	CONFIG_SHELL="schroot -c tcwg-build-${schroot_arch}-trusty -- ${CONFIG_SHELL}"
+	;;
+esac
 
 if test x"${revisions}" != x; then
   if test ! -d ${WORKSPACE}/_build; then
