@@ -197,7 +197,7 @@ while true; do
   jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
     c=$((c + 1))
-    if test c -gt 5; then
+    if test $c -gt 5; then
       echo "Job ${id} disappeared!" 1>&2
       exit 1
     else
