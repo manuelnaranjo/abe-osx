@@ -70,7 +70,7 @@ while test $# -gt 0; do
         -o|--options) user_options=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
         -l|--languages) languages=$2 ;;
-        -r|--runtests) runtest="true" ;;
+        -r|--runtests) runtests="true" ;;
 	-h|--help) usage ;;
     esac
     shift
