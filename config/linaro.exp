@@ -46,7 +46,7 @@ case "$target_triplet" in {
 	    { build* *ex40-* } {
 		set target_list { d01 }
 	    }
-	    { chromebook* d01* dragon* chrome2-* } {
+	    { localhost chromebook* d01* dragon* chrome2-* } {
 		set target_list { unix }
 	    }
 	    default{
@@ -78,7 +78,7 @@ case "$target_triplet" in {
 	    { tcwgrob build* *ex40* } {
 		set target_list { apm }
 	    }
-	    { juno* amd* apm-* } {
+	    { localhost juno* amd* apm-* } {
 		set target_list { unix }
 	    }
 	    default {
