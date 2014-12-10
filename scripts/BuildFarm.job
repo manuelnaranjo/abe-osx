@@ -25,6 +25,11 @@ rm -rf ${WORKSPACE}/_build ${user_snapshots}
 mkdir -p ${user_snapshots}/
 rsync -a ${snapshots_ref}/infrastructure/ ${user_snapshots}/infrastructure/
 
+if test x"${target}" = x"native-armhf"; then
+    CONFIG_SHELL="schroot -c tcwg-build-armhf-trusty -- ${CONFIG_SHELL}"
+    target="native"
+fi
+
 if test x"${revisions}" != x; then
   if test ! -d ${WORKSPACE}/_build; then
     mkdir -p ${WORKSPACE}/_build
