@@ -27,12 +27,6 @@ if {[info exists env(PREFIX_UNDER_TEST)]} {
 
 set myname [get_local_hostname]
 
-case "$myname" in {
-    { localhost } {
-	set target_list { unix }
-    }
-}
-
 case "$target_triplet" in { 
     { "arm-*linux-gnueabi*"} {
 	case "$myname" in {
