@@ -27,8 +27,8 @@ rsync -a ${snapshots_ref}/infrastructure/ ${user_snapshots}/infrastructure/
 
 case ${target} in
     schroot-*)
-	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\(.*\)--\(.*\)/\1/")
-	target=$(echo ${target} | sed -e "s/^schroot-\(.*\)--\(.*\)/\2/")
+	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\1/")
+	target=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\2/")
 	CONFIG_SHELL="schroot -c tcwg-build-${schroot_arch}-trusty -- ${CONFIG_SHELL}"
 	;;
 esac
