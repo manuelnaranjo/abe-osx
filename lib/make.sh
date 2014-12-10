@@ -198,7 +198,7 @@ build_all()
             fi
             binary_toolchain
         fi
-        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0 -a x"${build}" != x"${target}"; then
             binary_sysroot
         fi
 #        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
@@ -568,10 +568,15 @@ make_install()
 
     if test x"${tool}" = x"gcc"; then
         local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
-        if test ! -e ${sysroots}/usr/lib; then
-            dryrun "mkdir -p ${sysroots}/usr/lib/"
+        if test "`echo ${target} | grep -c aarch64`" -gt 0 ; then
+            gcc_libpath=${sysroots}/usr/lib64/
+        else
+            gcc_libpath=${sysroots}/usr/lib/
         fi
-        dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
+        if test ! -e ${gcc_libpath}; then
+            dryrun "mkdir -p ${gcc_libpath}"
+	fi
+        dryrun "rsync -av ${libs} ${gcc_libpath}"
     fi
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
