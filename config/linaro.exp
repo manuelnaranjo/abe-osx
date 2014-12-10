@@ -40,12 +40,13 @@ case "$target_triplet" in {
 #		set target_list { tcwgchromebook }
 #		set target_list { tcwgd01 }
 #		set target_list { chrome1-01 }
+#		set target_list { "arm-qemu" } 
 		set target_list { dragon-01 }
 	    }
 	    { build* *ex40-* } {
 		set target_list { d01 }
 	    }
-	    { chromebook* d01-* chrome2-* } {
+	    { chromebook* d01* dragon* chrome2-* } {
 		set target_list { unix }
 	    }
 	    default{
@@ -77,7 +78,7 @@ case "$target_triplet" in {
 	    { tcwgrob build* *ex40* } {
 		set target_list { apm }
 	    }
-	    { apm-* } {
+	    { juno* amd* apm-* } {
 		set target_list { unix }
 	    }
 	    default {
