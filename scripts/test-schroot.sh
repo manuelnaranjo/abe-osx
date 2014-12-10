@@ -13,9 +13,10 @@ sysroot=""
 ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
+profile="tcwg-test"
 multilib_path="lib"
 
-while getopts "a:bc:d:e:fgh:l:mo:p:qv" OPTION; do
+while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
@@ -29,6 +30,7 @@ while getopts "a:bc:d:e:fgh:l:mo:p:qv" OPTION; do
 	m) ssh_master=true ;;
 	o) target_ssh_opts="$OPTARG" ;;
 	p) host_ssh_opts="$OPTARG" ;;
+	P) profile="$OPTARG" ;;
 	q) exec > /dev/null ;;
 	v) set -x ;;
     esac
@@ -128,11 +130,11 @@ if [ "x$board_exp" != "x" ] ; then
 fi
 
 orig_target_ssh_opts="$target_ssh_opts"
-target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-tcwg-test-$port-%u-%r@%h:%p"
+target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-$profile-$port-%u-%r@%h:%p"
 
-schroot_id=tcwg-test-$deb_arch-$deb_dist
+schroot_id=$profile-$deb_arch-$deb_dist
 
-schroot="ssh $target_ssh_opts $target schroot -r -c session:tcwg-test-$port -d / -u root --"
+schroot="ssh $target_ssh_opts $target schroot -r -c session:$profile-$port -d / -u root --"
 rsh_opts="$target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no"
 rsh="ssh $rsh_opts"
 user="$(ssh $target_ssh_opts $target echo \$USER)"
@@ -180,6 +182,10 @@ if $gen_schroot; then
 	*) extra_packages="gdb gdbserver" ;;
     esac
 
+    case "$profile" in
+	"tcwg-build") extra_packages="autoconf automake bash bison build-essential dejagnu flex gawk git g++ gcc libtool make texinfo wget" ;;
+    esac
+
     if ! [ -z "$extra_packages" ]; then
 	ssh $target_ssh_opts $target \
 	    sudo chroot $chroot apt-get update
@@ -200,6 +206,13 @@ if $gen_schroot; then
 	    sudo rsync -a /linaro/foundation-model/Foundation_v8pkg/ $chroot/linaro/foundation-model/Foundation_v8pkg/
     fi
 
+    if echo "$extra_packages" | grep -q "git"; then
+	ssh $target_ssh_opts $target \
+	    sudo ln -s /usr/share/doc/git/contrib/workdir/git-new-workdir $chroot/usr/local/bin/
+	ssh $target_ssh_opts $target \
+	    sudo chmod a+x $chroot/usr/local/bin/git-new-workdir
+    fi
+
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
     ssh $target_ssh_opts $target \
@@ -215,7 +228,7 @@ type=file
 file=/var/chroots/$schroot_id.tgz
 groups=buildslave,tcwg,users
 root-groups=buildslave,tcwg,users
-profile=tcwg-test
+profile=$profile
 EOF
 
     if ! [ -z "$schroot_master" ]; then
@@ -238,12 +251,12 @@ if ! [ -z "$schroot_master" ]; then
     cat $schroot_master/chroot.d/$schroot_id | ssh $target_ssh_opts $target \
 	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\""
 
-    (cd $schroot_master && tar -c tcwg-test/ | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd /etc/schroot && rm -rf tcwg-test && tar -x && chown -R root:root tcwg-test/\"")
+    (cd $schroot_master && tar -c $profile/ | ssh $target_ssh_opts $target \
+	sudo bash -c "\"cd /etc/schroot && rm -rf $profile && tar -x && chown -R root:root $profile/\"")
 fi
 
 if $begin_session; then
-    ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
+    ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n $profile-$port -d /
     $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
     $schroot sh -c "\"echo $user - nproc 1000 >> /etc/security/limits.conf\""
     # Set ssh port
@@ -355,13 +368,13 @@ fi
 # Keep the session alive when file /dont_kill_me is present
 if $finish_session && [ x`$schroot cat /dont_keep_session` = x"1" ]; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
-    ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port | true
+    ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be
 	# forever busy if it had an sshfs under it.  Seems like fuse is not
 	# cleaning up somethings.  The workaround is to lazy unmount the bind.
 	$schroot umount -l /
-	ssh $target_ssh_opts $target schroot -f -e -c session:tcwg-test-$port
+	ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port
     fi
     echo $target:$port finished session
 fi
