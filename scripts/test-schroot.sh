@@ -183,7 +183,7 @@ if $gen_schroot; then
     esac
 
     case "$profile" in
-	"tcwg-build") extra_packages="autoconf automake bash bison build-essential dejagnu flex gawk git g++ gcc libtool make texinfo wget" ;;
+	"tcwg-build") extra_packages="autoconf autogen automake bash bison build-essential ccrypt dejagnu flex gawk git g++ gcc libncurses5-dev libtool make texinfo wget xz-utils" ;;
     esac
 
     if ! [ -z "$extra_packages" ]; then
@@ -210,7 +210,7 @@ if $gen_schroot; then
 	ssh $target_ssh_opts $target \
 	    sudo ln -s /usr/share/doc/git/contrib/workdir/git-new-workdir $chroot/usr/local/bin/
 	ssh $target_ssh_opts $target \
-	    sudo chmod a+x $chroot/usr/local/bin/git-new-workdir
+	    sudo chmod a+x $chroot/usr/share/doc/git/contrib/workdir/git-new-workdir
     fi
 
     ssh $target_ssh_opts $target \
@@ -221,6 +221,11 @@ if $gen_schroot; then
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
 
+    case "$deb_arch" in
+	armhf|i386) personality="personality=linux32" ;;
+	*) personality="" ;;
+    esac
+
     ssh $target_ssh_opts $target \
 	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\"" <<EOF
 [$schroot_id]
@@ -229,6 +234,7 @@ file=/var/chroots/$schroot_id.tgz
 groups=buildslave,tcwg,users
 root-groups=buildslave,tcwg,users
 profile=$profile
+$personality
 EOF
 
     if ! [ -z "$schroot_master" ]; then
