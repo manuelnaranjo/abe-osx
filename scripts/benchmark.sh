@@ -14,18 +14,20 @@ trap clean_top EXIT >/dev/null 2>&1
 trap 'exit ${error}' TERM INT HUP QUIT
 
 error=1
+declare -A runpids
 
 clean_top()
 {
-  for runpid in "${runpids[@]}"; do
-    kill "${runpid}"
-    if test $? -ne 0; then
+  for runpid in "${!runpids[@]}"; do
+    if kill -0 "${runpid}" 2>/dev/null; then
+      kill "${runpid}"
       wait "${runpid}"
       if test $? -ne 0; then
         error=1
       fi
     fi
   done
+  exit ${error}
 }
 
 #To be called from exit trap in run_benchmark
@@ -392,19 +394,28 @@ fi
 #And remote.sh can work with controlledrun.sh to run them for us
 for device in "${devices[@]}"; do
   (run_benchmark)&
-  runpids+=("$!")
+  runpids[$!]=''
 done
   
 ret=0
-for runpid in "${runpids[@]}"; do
-  kill -0 "${runpid}"
-  if test $? -ne 0; then
-    wait "${runpid}"
-    if test $? -ne 0; then
-      ret=1
+running_pids=("${!runpids[@]}")
+while true; do
+  for running_pid in "${running_pids[@]}"; do
+    kill -0 "${running_pid}" 2>/dev/null
+    if test $? -ne 0; then #Process cannot be signalled, reap it
+      wait "${running_pid}"
+      if test $? -ne 0; then
+        ret=1
+      fi
+      unset runpids["${running_pid}"]
     fi
+  done
+  running_pids=("${!runpids[@]}")
+  if test ${#running_pids[@]} -eq 0; then
+    break
+  else
+    sleep 60
   fi
-  sleep 60
 done
 
 echo
