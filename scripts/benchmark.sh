@@ -397,7 +397,6 @@ for device in "${devices[@]}"; do
   runpids[$!]=''
 done
   
-ret=0
 running_pids=("${!runpids[@]}")
 while true; do
   for running_pid in "${running_pids[@]}"; do
@@ -405,7 +404,7 @@ while true; do
     if test $? -ne 0; then #Process cannot be signalled, reap it
       wait "${running_pid}"
       if test $? -ne 0; then
-        ret=1
+        error=1
       fi
       unset runpids["${running_pid}"]
     fi
@@ -420,7 +419,7 @@ done
 
 echo
 echo "All runs completed"
-exit ${ret}
+exit ${error}
 
 #TODO: I suppose I might want a 'delete local copies of source/built benchmark'
 
