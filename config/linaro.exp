@@ -48,10 +48,10 @@ case "$target_triplet" in {
 #		set target_list { chrome1-01 }
 		set target_list { dragon-01 }
 	    }
-	    { build-* tcwg-ex40-* d01-* juno-* amd-* } {
-		set target_list { tcwgd01 }
+	    { build-* tcwg-ex40-* d01-* apm-* juno-* amd-* } {
+		set target_list { juno }
 	    }
-	    { natived01-* nativejuno-* nativeamd-* } {
+	    { natived01-* nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
 	}
@@ -75,7 +75,7 @@ case "$target_triplet" in {
     { "aarch64-*linux*" } {
 	case "$native$myname" in {
 	    { tcwgrob build-* tcwg-ex40-* apm-* juno-* amd-* } {
-		set target_list { tcwgapm }
+		set target_list { juno }
 	    }
 	    { nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
