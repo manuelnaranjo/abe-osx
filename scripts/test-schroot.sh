@@ -231,8 +231,8 @@ if $gen_schroot; then
 [$schroot_id]
 type=file
 file=/var/chroots/$schroot_id.tgz
-groups=buildslave,tcwg,users
-root-groups=buildslave,tcwg,users
+groups=users
+root-groups=users
 profile=$profile
 $personality
 EOF
