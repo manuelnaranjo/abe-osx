@@ -68,7 +68,7 @@ while test $# -gt 0; do
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
-        -r|--runtests) runtest="true" ;;
+        -r|--runtests) runtests="true" ;;
 	-h|--help) usage ;;
     esac
     shift
