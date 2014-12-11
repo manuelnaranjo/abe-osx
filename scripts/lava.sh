@@ -43,11 +43,12 @@ release()
         error=0
       else
         echo "Failed to cancel job ${id}" 1>&2
+        echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
         error=1
       fi
     else
-      echo "Did not cancel job ${id} - keep requested" 1>&2
-      echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
+      echo "Did not cancel job ${id} - keep requested"
+      echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel"
       error=0
     fi
   fi
