@@ -17,8 +17,18 @@ trap 'exit ${error}' TERM INT HUP QUIT
 error=1
 listener_pid=
 forward_pid=
+pseudofifo_pid=
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
+
+#A fifo would make much more sense, but nc doesn't like it
+exec 3< <(tail -f "${listener_file}"& echo $! >> "${listener_file}" 2>/dev/null; wait)
+read pseudofifo_pid <&3
+if test $? -ne 0; then
+  echo "Failed to read pseudofifo pid" 1>&2
+  exit 1
+fi
+
 forward_fifo="${temps}/forward_fifo"
 mkfifo "${forward_fifo}" || exit 1
 
@@ -29,18 +39,23 @@ function cleanup
     kill "${listener_pid}"
     wait "${listener_pid}"
   fi
+  if test x"${pseudofifo_pid}" != x; then
+    kill "${pseudofifo_pid}"
+    #Substituted process is not our child and cannot be waited on. Fortunately,
+    #it doesn't matter too much when it dies.
+  fi
   if test x"${forward_pid}" != x; then
     kill "${forward_pid}"
     wait "${forward_pid}"
   fi
   if test -d "${temps}"; then
+    exec 3>&-
     rm -rf ${temps}
     if test $? -ne 0; then
       echo "Failed to delete temporary file store ${temps}" 1>&2
     fi
     error=1
   fi
-  kill -- -$$
 }
 
 if test $# -ne 3; then
@@ -61,7 +76,7 @@ end_port="$3"
 for ((listener_port=${start_port}; listener_port < ${end_port}; listener_port++)); do
   #Try to listen on the port. nc will fail if something has snatched it.
   echo "Attempting to establish listener on ${listener_addr}:${listener_port}" 1>&2
-  nc -kl "${listener_addr}" "${listener_port}" > "${listener_file}"&
+  nc -kl "${listener_addr}" "${listener_port}" >> "${listener_file}"&
   listener_pid=$!
 
   #nc doesn't confirm that it's got the port, so we spin until either:
@@ -115,8 +130,6 @@ fi
 echo "${listener_addr}"
 echo "${listener_port}"
 
-#A fifo would make much more sense, but nc doesn't like it
-exec 3< <(tail -f "${listener_file}")
 while read line <&3; do
   echo $line
 done
