@@ -4,7 +4,7 @@ set -o pipefail
 trap 'error=$?; kill -- -$BASHPID' EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
-lavapid=
+lava_pid=
 benchmark=
 device=
 keep=
@@ -94,13 +94,13 @@ clean_benchmark()
     fi
   fi
 
-  if test x"${lavapid}" != x; then
+  if test x"${lava_pid}" != x; then
     if test ${clean} -ne 0; then
       echo "Not killing lava.sh, to ensure session remains open for cleanup."
-      echo "You can kill it with 'kill ${lavapid}'."
+      echo "You can kill it with 'kill ${lava_pid}'."
     else
-      kill "${lavapid}"
-      wait "${lavapid}"
+      kill "${lava_pid}"
+      wait "${lava_pid}"
     fi
   fi
   kill -- -$BASHPID
@@ -138,7 +138,7 @@ if test $? -eq 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
-  lavapid=$!
+  lava_pid=$!
   while read line < "${lava_fifo}"; do
     echo "${lava_target}: $line"
     if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
