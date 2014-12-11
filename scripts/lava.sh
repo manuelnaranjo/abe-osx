@@ -2,9 +2,15 @@
 
 #Deps: lava-tool, auth token for lava-tool
 set -o pipefail
-. "`dirname $0`"/listener.sh
+topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
+if ! test -e "${topdir}/host.conf"; then
+  echo "No host.conf, did you run ./configure?" 1>&2
+  exit 1
+fi
+. "${topdir}"/scripts/listener.sh
 if test $? -ne 0; then
-  echo "Unable to source `dirname $0`/listener.sh"
+  echo "Unable to source `dirname $0`/listener.sh" 1>&2
+  exit 1
 fi
 waiter=
 error=1
