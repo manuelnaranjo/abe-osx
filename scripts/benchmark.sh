@@ -10,7 +10,7 @@ set -o pipefail
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
-trap clean_top EXIT >/dev/null 2>&1
+trap clean_top EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
 error=1
