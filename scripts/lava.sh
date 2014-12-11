@@ -221,7 +221,7 @@ done
 read -t "${boot_timeout}" user_ip <&4
 
 if test $? -ne 0; then
-  echo "read -t ${boot_timeout} user_ip < ${listener_file}"
+  echo "read -t ${boot_timeout} user_ip <&4 failed" 1>&2
   exit 1
 fi
 if test x"${user_ip}" = x; then
@@ -232,6 +232,6 @@ fi
 echo "LAVA target ready at ${user_ip}"
 #Continue to report whatever comes across the listener
 while true; do
-  read line < "${listener_file}"
+  read line <&4
   echo "${line}"
 done
