@@ -4,6 +4,7 @@ set -o pipefail
 trap 'error=$?; kill -- -$BASHPID' EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
+lavapid=
 benchmark=
 device=
 keep=
@@ -56,19 +57,17 @@ if test $? -ne 0; then
   exit 1
 fi
 
+temps="`mktemp -dt XXXXXXXXX`" || exit 1
+listener_file="${temps}/listener_file"
+lava_fifo="${temps}/lava_fifo"
+mkfifo "${lava_fifo}" || exit 1
+
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
 clean_benchmark()
 {
   error=$?
   local clean=0
-
-  if test -f "${listener_file}"; then
-    rm -f "${listener_file}"
-    if test $? -ne 0; then
-      echo "Failed to delete ${listener_file}" 1>&2
-    fi
-  fi
 
   if test x"${target_dir}" = x; then
     echo "No directory to remove from ${ip}" 1>&2
@@ -87,19 +86,28 @@ clean_benchmark()
     fi
   fi
 
-  #By now we've done our cleanup - it doesn't really matter what order the lava handler (if any) and listeners die in
-  if test ${clean} -eq 0; then
-    echo "Not killing children, to ensure session remains open for cleanup."
-    echo "You can kill them with 'kill -- -$BASHPID'."
-  else
-    #Killing the group will kill this process too - but the TERM handler will exit with the correct exit code
-    kill -- -$BASHPID >/dev/null 2>&1
+  if test -d "${temps}"; then
+    rm -rf "${temps}"
+    if test $? -ne 0; then
+      echo "Failed to delete ${temps}" 1>&2
+      error=1
+    fi
   fi
+
+  if test x"${lavapid}" != x; then
+    if test ${clean} -ne 0; then
+      echo "Not killing lava.sh, to ensure session remains open for cleanup."
+      echo "You can kill it with 'kill ${lavapid}'."
+    else
+      kill "${lavapid}"
+      wait "${lavapid}"
+    fi
+  fi
+  kill -- -$BASHPID
 }
 
 #Set up our listener
 #Has to happen before we deal with LAVA, so that we can port forward if we need to
-listener_file="`mktemp -t XXXXXXXXX`" || exit 1
 listener_addr="`get_addr`"
 if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
@@ -125,14 +133,13 @@ if test $? -eq 0; then
   echo "Acquiring LAVA target ${lava_target}"
   echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30} ${keep}" 1>&2
 
-  #Downside of this approach is that bash syntax errors from lava.sh get reported as occurring at non-existent lines - but it is
-  #otherwise quite neat. And you can always run lava.sh separately to get the correct error.
-  exec 3< <(${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep}) #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
+  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep} > "${lava_fifo}" & #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
-  while read line <&3; do
+  lavapid=$!
+  while read line < "${lava_fifo}"; do
     echo "${lava_target}: $line"
     if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
       ip="`echo ${line} | cut -d ' ' -f 5 | sed 's/\s*$//'`"
