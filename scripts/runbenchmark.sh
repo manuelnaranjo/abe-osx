@@ -73,16 +73,19 @@ clean_benchmark()
     echo "No directory to remove from ${ip}" 1>&2
   elif test x"${keep}" = '-k'; then
     echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
+    clean=1
   elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
     echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
+    error=1
+    clean=1
   else
     (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
     if test $? -eq 0; then
       echo "Removed ${target_dir} from ${ip}"
-      clean=1
     else
       echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
       error=1
+      clean=1
     fi
   fi
 
