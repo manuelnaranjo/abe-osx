@@ -154,7 +154,7 @@ if test x"$skip_build" = x; then
 fi
 
 for device in "${devices[@]}"; do
-  setsid "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" ${keep} ${cautious} &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" ${keep} ${cautious} &
   runpids[$!]=''
 done
 

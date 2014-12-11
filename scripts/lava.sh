@@ -155,7 +155,7 @@ if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-setsid "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
+"${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
 listener_pid=$!
 read listener_addr <&3
 if test $? -ne 0; then
