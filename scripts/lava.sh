@@ -12,6 +12,7 @@ if test $? -ne 0; then
   echo "Unable to source `dirname $0`/listener.sh" 1>&2
   exit 1
 fi
+listener_pid=
 waiter=
 error=1
 trap 'exit ${error}' TERM INT HUP QUIT
@@ -22,7 +23,12 @@ release()
     kill "${waiter}"
     wait "${waiter}"
   fi
+  if test x"${listener_pid}" != x; then
+    kill "${listener_pid}"
+    wait "${listener_pid}"
+  fi
   if test -d "${temps}"; then
+    exec 3>&-
     rm -rf "${temps}"
     if test $? -ne 0; then
       echo "Failed to delete temporary file store ${temps}" 1>&2
@@ -44,8 +50,7 @@ release()
       error=0
     fi
   fi
-  kill -- -$BASHPID >/dev/null 2>&1 #This only makes sense when we were invoked directly, but should be harmless otherwise
-  #An effect of the kill is to kill _this process_. Exit code is preserved via the term trap.
+  exit "${error}"
 }
 
 lava_server="${LAVA_SERVER}"
@@ -132,12 +137,10 @@ key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 trap "if test -d ${temps}; then rm -rf ${temps}; fi" EXIT
+listener_fifo="${temps}/listener_fifo"
+mkfifo "${listener_fifo}" || exit 1
+exec 3<> "${listener_fifo}"
 json_copy="${temps}/job.json"
-listener_file="${temps}/listener_file"
-if test $? -ne 0; then
-  echo "Failed to create ${listener_file}" 1>&2
-  exit
-fi
 cp "${lava_json}" "${json_copy}"
 sed -i "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" "${json_copy}"
 if test $? -ne 0; then
@@ -152,16 +155,19 @@ if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-listener_port="`establish_listener ${listener_addr} ${listener_file} 4200 5200`"
+setsid "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
+listener_pid=$!
+read listener_addr <&3
 if test $? -ne 0; then
-  echo "Unable to establish listener" 1>&2
+  echo "Failed to read listener address" 1>&2
   exit 1
 fi
-listener_addr=${listener_port/%:*}
-listener_port=${listener_port/#*:}
-#Pretty much use this as a pipe - using an actual fifo seems to give nc fits
-exec 4< <(tail -f "${listener_file}")
-echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"
+read listener_port <&3
+if test $? -ne 0; then
+  echo "Failed to read listener port" 1>&2
+  exit 1
+fi
+echo "Listener ${listener_addr}:${listener_port}"
 
 sed -i "s/^\(.*\"LISTENER_ADDR\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${listener_addr}\"\2/" "${json_copy}"
 if test $? -ne 0; then
@@ -229,10 +235,10 @@ while true; do
   sleep 60
 done
 
-read -t "${boot_timeout}" user_ip <&4
+read -t "${boot_timeout}" user_ip <&3
 
 if test $? -ne 0; then
-  echo "read -t ${boot_timeout} user_ip <&4 failed" 1>&2
+  echo "read -t ${boot_timeout} user_ip <&3 failed" 1>&2
   exit 1
 fi
 if test x"${user_ip}" = x; then

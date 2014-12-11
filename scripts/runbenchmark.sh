@@ -5,6 +5,7 @@ trap 'error=$?; kill -- -$BASHPID' EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
 lava_pid=
+listener_pid=
 benchmark=
 device=
 keep=
@@ -63,8 +64,12 @@ fi
 
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
+listener_fifo="${temps}/listener_fifo"
 lava_fifo="${temps}/lava_fifo"
+mkfifo "${listener_fifo}" || exit 1
+exec 3<> "${listener_fifo}"
 mkfifo "${lava_fifo}" || exit 1
+exec 4<> "${lava_fifo}"
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
@@ -93,7 +98,13 @@ clean_benchmark()
     fi
   fi
 
+  if test x"${listener_pid}" != x; then
+    kill "${listener_pid}"
+    wait "${listener_pid}"
+  fi
   if test -d "${temps}"; then
+    exec 3>&-
+    exec 4>&-
     rm -rf "${temps}"
     if test $? -ne 0; then
       echo "Failed to delete ${temps}" 1>&2
@@ -110,7 +121,7 @@ clean_benchmark()
       wait "${lava_pid}"
     fi
   fi
-  kill -- -$BASHPID
+  exit "${error}"
 }
 
 #Set up our listener
@@ -120,16 +131,19 @@ if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-listener_port="`establish_listener ${listener_addr} ${listener_file} 4200 5200`"
+setsid "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
+listener_pid=$!
+read listener_addr <&3
 if test $? -ne 0; then
-  echo "Unable to establish listener" 1>&2
+  echo "Failed to read listener address" 1>&2
   exit 1
 fi
-listener_addr=${listener_port/%:*}
-listener_port=${listener_port/#*:}
-echo "Listener ${listener_addr}:${listener_port}, writing to file ${listener_file}"
-#Pretty much use this as a pipe - using an actual fifo seems to give nc fits
-exec 5< <(tail -f "${listener_file}")
+read listener_port <&3
+if test $? -ne 0; then
+  echo "Failed to read listener port" 1>&2
+  exit 1
+fi
+echo "Listener ${listener_addr}:${listener_port}"
 
 #Handle LAVA case
 echo "${ip}" | grep '\.json$' > /dev/null
@@ -140,13 +154,13 @@ if test $? -eq 0; then
   echo "Acquiring LAVA target ${lava_target}"
   echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30} ${keep}" 1>&2
 
-  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep} > "${lava_fifo}" & #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
+  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep} >&4 & #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
   lava_pid=$!
-  while read line < "${lava_fifo}"; do
+  while read line <&4; do
     echo "${lava_target}: $line"
     if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
       ip="`echo ${line} | cut -d ' ' -f 5 | sed 's/\s*$//'`"
@@ -237,7 +251,7 @@ if test $? -ne 0; then
 fi
 
 #TODO: Do we want a timeout around this? Timeout target and workload dependent.
-read ip <&5
+read ip <&3
 
 error="`echo ${ip} | sed 's/.*://'`"
 if test $? -ne 0; then
