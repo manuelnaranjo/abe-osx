@@ -6,11 +6,16 @@ set -o pipefail
 if test $? -ne 0; then
   echo "Unable to source `dirname $0`/listener.sh"
 fi
+waiter=
 error=1
 trap 'exit ${error}' TERM INT HUP QUIT
 
 release()
 {
+  if test x"${waiter}" != x; then
+    kill "${waiter}"
+    wait "${waiter}"
+  fi
   if test -d "${temps}"; then
     rm -rf "${temps}"
     if test $? -ne 0; then
@@ -230,8 +235,8 @@ if test x"${user_ip}" = x; then
 fi
 
 echo "LAVA target ready at ${user_ip}"
-#Continue to report whatever comes across the listener
-while true; do
-  read line <&4
-  echo "${line}"
-done
+
+#Wait to be killed, at which point we cancel the job
+sleep infinity &
+waiter=$!
+wait ${waiter}
