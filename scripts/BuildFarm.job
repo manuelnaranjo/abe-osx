@@ -39,7 +39,7 @@ if test x"${revisions}" != x; then
   $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
   $CONFIG_SHELL -x ${cbuild_dir}/validate.sh --target ${target} ${revisions}
 else
-  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release} -f ${fileserver} -l ${languages}
+  $CONFIG_SHELL -x ${cbuild_dir}/jenkins.sh ${release} --runtests -f ${fileserver} -l ${languages}
 fi
 
 # force a failure of cbuild2 has build problems.
