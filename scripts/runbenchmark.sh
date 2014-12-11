@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o pipefail
 
-trap 'error=$?; kill -- -$BASHPID' EXIT
+trap clean_benchmark EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
 lava_pid=
@@ -183,9 +183,6 @@ if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; t
   echo "Unable to connect to target ${ip}" 1>&2
   exit 1
 fi
-
-#Make sure we delete the remote dir when we're done
-trap clean_benchmark EXIT
 
 #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
 logdir="${topdir}/${benchmark}-log/${ip}_`date +%s`"

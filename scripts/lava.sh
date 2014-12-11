@@ -15,6 +15,7 @@ fi
 listener_pid=
 waiter=
 error=1
+trap release EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
 release()
@@ -136,7 +137,6 @@ fi
 key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
-trap "if test -d ${temps}; then rm -rf ${temps}; fi" EXIT
 listener_fifo="${temps}/listener_fifo"
 mkfifo "${listener_fifo}" || exit 1
 exec 3<> "${listener_fifo}"
@@ -180,7 +180,6 @@ if test $? -ne 0; then
   exit 1
 fi
 
-trap release EXIT
 id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
