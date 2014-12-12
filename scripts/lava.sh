@@ -39,7 +39,7 @@ release()
     if test ${keep} -eq 0; then
       lava-tool cancel-job https://"${lava_server}" "${id}"
       if test $? -eq 0; then
-        echo "Cancelled job ${id}" 1>&2
+        echo "Cancelled job ${id}"
         error=0
       else
         echo "Failed to cancel job ${id}" 1>&2

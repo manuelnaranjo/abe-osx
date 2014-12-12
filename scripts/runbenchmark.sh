@@ -81,7 +81,7 @@ clean_benchmark()
 
   if test x"${ip}" != x; then
     if test x"${target_dir}" = x; then
-      echo "No directory to remove from ${ip}" 1>&2
+      echo "No directory to remove from ${ip}"
       lava_release=0
     elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
@@ -163,7 +163,7 @@ if test $? -eq 0; then
   ip=''
   tee_output=/dev/console
   echo "Acquiring LAVA target ${lava_target}"
-  echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30} ${keep}" 1>&2
+  echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
   ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep} >&4 & #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
   if test $? -ne 0; then
