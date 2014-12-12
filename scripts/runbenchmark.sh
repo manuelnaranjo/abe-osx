@@ -1,4 +1,8 @@
 #!/bin/bash
+#This script takes a build of a benchmark and transfers it to, and runs it on
+#a single target. The target may be LAVA or non-LAVA. The script is mostly
+#LAVA-agnostic - apart from the section that initiates the LAVA session, there
+#is some awareness of it in the exit handler, and that's all.
 set -o pipefail
 
 trap clean_benchmark EXIT
@@ -89,7 +93,7 @@ clean_benchmark()
       echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
       error=1
     else
-      (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}")
+      (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}" ${ssh_opts})
       if test $? -eq 0; then
         echo "Removed ${target_dir} from ${ip}"
         lava_release=0
@@ -136,30 +140,17 @@ clean_benchmark()
   exit "${error}"
 }
 
-#Set up our listener
-#Has to happen before we deal with LAVA, so that we can port forward if we need to
-listener_addr="`get_addr`"
-if test $? -ne 0; then
-  echo "Unable to get IP for listener" 1>&2
-  exit 1
-fi
-"${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
-listener_pid=$!
-read listener_addr <&3
-if test $? -ne 0; then
-  echo "Failed to read listener address" 1>&2
-  exit 1
-fi
-read listener_port <&3
-if test $? -ne 0; then
-  echo "Failed to read listener port" 1>&2
-  exit 1
-fi
-echo "Listener ${listener_addr}:${listener_port}"
-
 #Handle LAVA case
 echo "${ip}" | grep '\.json$' > /dev/null
 if test $? -eq 0; then
+  lava_network
+  case $? in
+    2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
+    1)
+      ssh_opts="${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh lab.validation.linaro.org nc -q0 %h %p'"
+      establish_listener_opts="-f 10.0.0.10:lab.validation.linaro.org"
+  esac
+
   lava_target="${ip}"
   ip=''
   tee_output=/dev/console
@@ -186,15 +177,30 @@ if test $? -eq 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
-
-  lava_network
-  if test $? -eq 1; then
-    ip+='.lava'
-  fi
 fi
-#LAVA-agnostic from here
+#LAVA-agnostic from here, apart from a section in the exit handler
 
-if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+#Set up our listener
+listener_addr="`get_addr`"
+if test $? -ne 0; then
+  echo "Unable to get IP for listener" 1>&2
+  exit 1
+fi
+"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} `get_addr` 4200 5200 >&3 &
+listener_pid=$!
+read listener_addr <&3
+if test $? -ne 0; then
+  echo "Failed to read listener address" 1>&2
+  exit 1
+fi
+read listener_port <&3
+if test $? -ne 0; then
+  echo "Failed to read listener port" 1>&2
+  exit 1
+fi
+echo "Listener ${listener_addr}:${listener_port}"
+
+if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip}" 1>&2
   exit 1
 fi
@@ -211,13 +217,13 @@ if test $? -ne 0; then
 fi
 
 #Create and populate working dir on target
-target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX'`"
+target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
 if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
   exit 1
 fi
 for thing in "${builddir}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
-  (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}/`basename ${thing}`")
+  (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
     exit 1
@@ -256,7 +262,8 @@ fi
      else \
        false; \
      fi" \
-     "${target_dir}/stdout" "${target_dir}/stderr")
+     "${target_dir}/stdout" "${target_dir}/stderr" \
+     ${ssh_opts})
 if test $? -ne 0; then
   echo "Something went wrong when we tried to dispatch job" 1>&2
   exit 1
@@ -276,12 +283,7 @@ if test $? -ne 0; then
   exit 1
 fi
 
-#Rather Linaro-specific
-lava_network
-if test $? -eq 1; then
-  ip+='.lava'
-fi
-if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true) > /dev/null 2>&1; then
+if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip}" 1>&2
   exit 1
 fi
@@ -293,7 +295,7 @@ if test ${error} -ne 0; then
 fi
 for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
   mkdir -p "${logdir}/${benchmark}.git/`dirname ${log}`"
-  (. "${topdir}"/lib/common.sh; remote_download "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}")
+  (. "${topdir}"/lib/common.sh; remote_download "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
   if test $? -ne 0; then
     echo "Error while getting log ${log}: will try to get others" 1>&2
     error=1

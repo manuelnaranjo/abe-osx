@@ -20,6 +20,7 @@ forward_pid=
 pseudofifo_pid=
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
+gateway=
 
 #A fifo would make much more sense, but nc doesn't like it
 #The trap is just to suppress the 'Terminated' message
@@ -59,10 +60,27 @@ function cleanup
   fi
 }
 
+while getopts f: flag; do
+  case "${flag}" in
+    f) gateway="${OPTARG}" ;;
+    *)
+       echo "Bad arg" 1>&2
+       exit 1
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
 if test $# -ne 3; then
   echo "establish_listener needs 3 args, got $#" 1>&2
   for arg in "$@"; do echo "${arg}" 1>&2; done
   exit 1
+fi
+if test x"${gateway}" != x; then
+  if ! echo "${gateway}" | grep -q '.\+:.\+'; then
+    echo "If specifying a gateway to forward through, must be in format 'internal_interface:external_interface'" 1>&2
+    echo "Got: ${gateway}" 1>&2
+    exit 1
+  fi
 fi
 
 listener_addr="$1"
@@ -109,9 +127,10 @@ if test x"${listener_pid}" = x; then
   exit 1
 fi
 
-lava_network
-if test $? -eq 1; then
-  ssh -NR 10.0.0.10:0:${listener_addr}:${listener_port} hackbox.lavalab >"${forward_fifo}" 2>&1 &
+if test x"${gateway}" != x; then
+  internal_interface="${gateway/%:*}"
+  external_interface="${gateway/#*:}"
+  ssh -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface} >"${forward_fifo}" 2>&1 &
   forward_pid=$!
   read -t 30 line < "${forward_fifo}"
   if test $? -ne 0; then
@@ -125,7 +144,7 @@ if test $? -eq 1; then
     echo "Got: $line" 1>&2
     exit 1
   fi
-  listener_addr="`get_addr hackbox.lavalab`" || exit 1
+  listener_addr="`get_addr ${external_interface}`" || exit 1
 fi
 
 echo "${listener_addr}"

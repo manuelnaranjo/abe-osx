@@ -153,12 +153,22 @@ fi
 sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${USER}@validation.linaro.org/RPC2/\"\2+" "${json_copy}"
 sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${USER}/\"\2+" "${json_copy}"
 
+lava_network
+in_lab=$?
+if $ret -eq 2; then
+  echo "Unable to determine whether I am inside the LAVA lab, assuming that I am not" 1>&2
+fi
+
 listener_addr="`get_addr`"
 if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-"${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
+if test ${in_lab} -eq 0; then
+  "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
+else
+  "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:lab.validation.linaro.org ${listener_addr} 4200 5200 >&3 &
+fi
 listener_pid=$!
 read listener_addr <&3
 if test $? -ne 0; then
