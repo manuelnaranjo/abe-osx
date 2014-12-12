@@ -54,9 +54,11 @@ remote_download()
     return 1
   fi
   if test x"${destfile}" = x; then
-    destfile="${sourcefile}"
+    error "file/dir to copy to not specified"
+    return 1
   fi
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq '${target}:${sourcefile}' '${destfile}' > /dev/null"
+  shift 3
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq $* '${target}:${sourcefile}' '${destfile}' > /dev/null"
   if test $? -ne 0; then
     error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
     return 1
@@ -74,13 +76,15 @@ remote_upload()
     return 1
   fi
   if test x"${sourcefile}" = x; then
-    error "file/dir to copy not specified"
+    error "file/dir to copy from not specified"
     return 1
   fi
   if test x"${destfile}" = x; then
-    destfile="${sourcefile}"
+    error "file/dir to copy to not specified"
+    return 1
   fi
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq '${sourcefile}' '${target}:${destfile}' > /dev/null"
+  shift 3
+  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -l 200 -rq $* '${sourcefile}' '${target}:${destfile}' > /dev/null"
   if test $? -ne 0; then
     error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
     return 1
@@ -96,11 +100,8 @@ remote_exec()
     error "Target and/or command not specified"
     return 1
   fi
-  if test $# -gt 2; then
-    error "Too many args: $@"
-    return 1
-  fi
-  dryrun "ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \"${target}\" \"${cmd}\""
+  shift 2
+  dryrun "ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $* \"${target}\" \"${cmd}\""
   return $?
 }
 
@@ -108,16 +109,13 @@ remote_exec_async()
 {
   local target="${1//\"/\\\"}"
   local cmd="${2//\"/\\\"}"
-  local stdoutfile="${3:-stdout}"
-  local stderrfile="${4:-stderr}"
-  if test $# -lt 2; then
+  local stdoutfile="${3}"
+  local stderrfile="${4}"
+  if test $# -lt 4; then
     error "Target and/or command not specified"
     return 1
   fi
-  if test $# -gt 4; then
-    error "Too many args: $@"
-    return 1
-  fi
+  shift 4
 
   #The combination of backgrounding the command that we run, the -n option to 
   #ssh (don't read stdin) and the redirection of stdout appears to be enough
@@ -128,6 +126,6 @@ remote_exec_async()
   #dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$?' &\""
 
   #Using command that experiments show is sufficient
-  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
+  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $* ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
   return $?
 }
