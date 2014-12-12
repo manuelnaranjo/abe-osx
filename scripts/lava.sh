@@ -155,7 +155,7 @@ sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private
 
 lava_network
 in_lab=$?
-if $ret -eq 2; then
+if test ${in_lab} -eq 2; then
   echo "Unable to determine whether I am inside the LAVA lab, assuming that I am not" 1>&2
 fi
 
