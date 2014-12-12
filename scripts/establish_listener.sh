@@ -26,7 +26,7 @@ gateway=
 #A fifo would make much more sense, but nc doesn't like it
 #The trap is just to suppress the 'Terminated' message
 exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
-read pseudofifo_pid <&3
+read -t 60 pseudofifo_pid <&3
 if test $? -ne 0; then
   echo "Failed to read pseudofifo pid" 1>&2
   exit 1
@@ -152,6 +152,11 @@ fi
 echo "${listener_addr}"
 echo "${listener_port}"
 
-while read line <&3; do
+while true; do
+  line="`bgread ${pseudofifo_pid} 60 <&3`"
+  if test $? -ne 0; then
+    echo "Failed to read pseudofifo pid" 1>&2
+    exit 1
+  fi
   echo $line
 done

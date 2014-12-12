@@ -170,12 +170,12 @@ else
   "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:lab.validation.linaro.org ${listener_addr} 4200 5200 >&3 &
 fi
 listener_pid=$!
-read listener_addr <&3
+listener_addr="`bgread ${listener_pid} 60 <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener address" 1>&2
   exit 1
 fi
-read listener_port <&3
+listener_port="`bgread ${listener_pid} 60 <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener port" 1>&2
   exit 1

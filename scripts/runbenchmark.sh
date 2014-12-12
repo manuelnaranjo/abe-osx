@@ -163,7 +163,12 @@ if test $? -eq 0; then
     exit 1
   fi
   lava_pid=$!
-  while read line <&4; do
+  while true; do
+    line="`bgread ${lava_pid} 60 <&4`"
+    if test $? -ne 0; then
+      echo "Failed to read lava output" 1>&2
+      exit 1
+    fi
     echo "${lava_target}: $line"
     if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
       ip="`echo ${line} | cut -d ' ' -f 5 | sed 's/\s*$//'`"
@@ -188,12 +193,12 @@ if test $? -ne 0; then
 fi
 "${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} `get_addr` 4200 5200 >&3 &
 listener_pid=$!
-read listener_addr <&3
+listener_addr="`bgread ${listener_pid} 60 <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener address" 1>&2
   exit 1
 fi
-read listener_port <&3
+listener_port="`bgread ${listener_pid} 60 <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener port" 1>&2
   exit 1
@@ -269,8 +274,11 @@ if test $? -ne 0; then
   exit 1
 fi
 
-#TODO: Do we want a timeout around this? Timeout target and workload dependent.
-read ip <&3
+ip="`bgread ${listener_pid} 60 <&3`"
+if test $? -ne 0; then
+  echo "Failed to read IP following benchmark run" 1>&2
+  exit 1
+fi
 
 error="`echo ${ip} | sed 's/.*://'`"
 if test $? -ne 0; then
