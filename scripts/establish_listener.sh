@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o pipefail
 
 topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
 if ! test -e "${topdir}/host.conf"; then
@@ -58,6 +59,7 @@ function cleanup
     fi
     error=1
   fi
+  exit "${error}"
 }
 
 while getopts f: flag; do
