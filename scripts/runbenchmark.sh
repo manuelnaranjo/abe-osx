@@ -147,7 +147,7 @@ if test $? -eq 0; then
   case $? in
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)
-      ssh_opts="${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh lab.validation.linaro.org nc -q0 %h %p'"
+      ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh lab.validation.linaro.org nc -q0 %h %p'"
       establish_listener_opts="-f 10.0.0.10:lab.validation.linaro.org"
   esac
 
