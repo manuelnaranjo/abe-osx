@@ -10,6 +10,7 @@ benchmark=
 device=
 keep=
 cautious=''
+lava_target=
 while getopts b:d:kc flag; do
   case "${flag}" in
     k) keep='-k';;
@@ -102,6 +103,21 @@ clean_benchmark()
     kill "${listener_pid}"
     wait "${listener_pid}"
   fi
+
+  if test x"${lava_pid}" != x; then
+    if test ${clean} -ne 0; then
+      echo "Not killing lava.sh, to ensure session remains open for cleanup."
+      echo "You can kill it with 'kill ${lava_pid}'."
+    else
+      kill "${lava_pid}"
+      wait "${lava_pid}"
+    fi
+
+    #Make sure we see any messages from the lava.sh handlers
+    dd iflag=nonblock <&4 2>/dev/null | awk "{print \"${lava_target}: \" \$0}"
+  fi
+
+  #Delete these last so that we can still get messages through the lava fifo
   if test -d "${temps}"; then
     exec 3>&-
     exec 4>&-
@@ -112,15 +128,6 @@ clean_benchmark()
     fi
   fi
 
-  if test x"${lava_pid}" != x; then
-    if test ${clean} -ne 0; then
-      echo "Not killing lava.sh, to ensure session remains open for cleanup."
-      echo "You can kill it with 'kill ${lava_pid}'."
-    else
-      kill "${lava_pid}"
-      wait "${lava_pid}"
-    fi
-  fi
   exit "${error}"
 }
 
@@ -167,6 +174,9 @@ if test $? -eq 0; then
       break
     fi
   done
+  #After this point, lava.sh should produce no output until we reach the exit handlers.
+  #Our exit handler checks the pipe from lava.sh before closing down.
+
   if test x"${ip}" = x; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
