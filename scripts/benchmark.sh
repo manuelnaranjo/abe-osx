@@ -20,7 +20,7 @@ clean_top()
 {
   for runpid in "${!runpids[@]}"; do
     if kill -0 "${runpid}" 2>/dev/null; then
-      kill "${runpid}"
+      kill "${runpid}" 2>/dev/null
       wait "${runpid}"
       if test $? -ne 0; then
         error=1

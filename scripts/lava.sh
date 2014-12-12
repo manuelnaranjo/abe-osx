@@ -23,11 +23,11 @@ trap 'exit ${error}' TERM INT HUP QUIT
 release()
 {
   if test x"${waiter}" != x; then
-    kill "${waiter}"
+    kill "${waiter}" 2>/dev/null
     wait "${waiter}"
   fi
   if test x"${listener_pid}" != x; then
-    kill "${listener_pid}"
+    kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
   if test -d "${temps}"; then

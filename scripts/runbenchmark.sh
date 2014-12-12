@@ -108,17 +108,17 @@ clean_benchmark()
   fi
 
   if test x"${listener_pid}" != x; then
-    kill "${listener_pid}"
+    kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
 
   if test x"${lava_pid}" != x; then
     if test ${lava_release} -ne 0; then
       echo "Not killing lava session, to ensure session remains open for cleanup."
-      kill "${lava_pid}"
+      kill "${lava_pid}" 2>/dev/null
       wait "${lava_pid}"
     else
-      kill -USR1 "${lava_pid}"
+      kill -USR1 "${lava_pid}" 2>/dev/null
       wait "${lava_pid}"
     fi
 

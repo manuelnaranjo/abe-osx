@@ -39,16 +39,16 @@ function cleanup
 {
   error=$?
   if test x"${listener_pid}" != x; then
-    kill "${listener_pid}"
+    kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
   if test x"${pseudofifo_pid}" != x; then
-    kill "${pseudofifo_pid}"
+    kill "${pseudofifo_pid}" 2>/dev/null
     #Substituted process is not our child and cannot be waited on. Fortunately,
     #it doesn't matter too much when it dies.
   fi
   if test x"${forward_pid}" != x; then
-    kill "${forward_pid}"
+    kill "${forward_pid}" 2>/dev/null
     wait "${forward_pid}"
   fi
   if test -d "${temps}"; then
