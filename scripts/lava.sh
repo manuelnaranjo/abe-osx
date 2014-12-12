@@ -14,7 +14,9 @@ if test $? -ne 0; then
 fi
 listener_pid=
 waiter=
+keep=1
 error=1
+trap 'keep=0; exit ${error}' USR1
 trap release EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
@@ -47,8 +49,10 @@ release()
         error=1
       fi
     else
-      echo "Did not cancel job ${id} - keep requested"
-      echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel"
+      echo "Did not cancel job ${id} - superior did not request cancellation."
+      echo "You probably have some cleanup to do."
+      echo "When you've finished, cancel by running:"
+      echo "lava-tool cancel-job https://${lava_server} ${id}"
       error=0
     fi
   fi
@@ -58,14 +62,12 @@ release()
 lava_server="${LAVA_SERVER}"
 lava_json=
 boot_timeout="$((120*60))" #2 hours
-keep=0
 key=${LAVA_SSH_KEYFILE}
-while getopts s:j:b:kp: flag; do
+while getopts s:j:b:p: flag; do
   case "${flag}" in
     s) lava_server="${OPTARG}";;
     j) lava_json="${OPTARG}";;
     b) boot_timeout="$((OPTARG*60))";;
-    k) keep=1;;
     p) key="${OPTARG}";;
     *)
        echo 'Unknown option' 1>&2

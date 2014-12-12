@@ -110,10 +110,11 @@ clean_benchmark()
 
   if test x"${lava_pid}" != x; then
     if test ${lava_release} -ne 0; then
-      echo "Not killing lava.sh, to ensure session remains open for cleanup."
-      echo "You can kill it with 'kill ${lava_pid}'."
-    else
+      echo "Not killing lava session, to ensure session remains open for cleanup."
       kill "${lava_pid}"
+      wait "${lava_pid}"
+    else
+      kill -USR1 "${lava_pid}"
       wait "${lava_pid}"
     fi
 
@@ -165,7 +166,7 @@ if test $? -eq 0; then
   echo "Acquiring LAVA target ${lava_target}"
   echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
-  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" ${keep} >&4 & #Don't enquote keep - if it is empty we want to pass nothing, not the empty string
+  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 &
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
