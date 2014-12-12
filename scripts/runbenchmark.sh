@@ -201,7 +201,7 @@ fi
 echo "Listener ${listener_addr}:${listener_port}"
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-  echo "Unable to connect to target ${ip}" 1>&2
+  echo "Unable to connect to target ${ip:+(unknown)} after boot" 1>&2
   exit 1
 fi
 
@@ -284,7 +284,7 @@ if test $? -ne 0; then
 fi
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-  echo "Unable to connect to target ${ip}" 1>&2
+  echo "Unable to connect to target after ${ip:+(unknown)} benchmark run" 1>&2
   exit 1
 fi
 
