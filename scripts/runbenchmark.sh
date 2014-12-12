@@ -82,7 +82,7 @@ clean_benchmark()
   if test x"${ip}" != x; then
     if test x"${target_dir}" = x; then
       echo "No directory to remove from ${ip}" 1>&2
-    elif test x"${keep}" = '-k'; then
+    elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
       clean=1
     elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
