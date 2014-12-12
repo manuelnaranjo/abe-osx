@@ -22,20 +22,18 @@ function get_addr
 #Return 0 if we're inside the lava network
 #Return 1 if we're outside the lava network
 #Return 2 if we don't know where we are
+#Typically, 2 will be returned if we can't ssh into the hackbox. This tends
+#to mean we're not configured to do so and could happen both inside and outside
+#the LAVA network.
 function lava_network
 {
-  local hackbox_ip
   local hackbox_mac
 
-  hackbox_ip="`get_addr hackbox.lavalab`"
-  if test $? -ne 0; then
-    return 2
-  fi
-  hackbox_mac="`ssh hackbox.lavalab 'cat /sys/class/net/eth0/address'`"
+  hackbox_mac="`ssh lab.validation.linaro.org 'cat /sys/class/net/eth0/address'`"
   if test $? -ne 0; then
     return 2 #We couldn't get the mac, stop trying to figure out where we are
   fi
-  arp "${hackbox_ip}" | grep -q "${hackbox_mac}";
+  arp 10.0.0.10 | grep -q "${hackbox_mac}";
   if test $? -eq 0; then
     return 0
   else
