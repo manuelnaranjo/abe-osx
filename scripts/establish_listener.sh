@@ -22,7 +22,8 @@ temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
 
 #A fifo would make much more sense, but nc doesn't like it
-exec 3< <(tail -f "${listener_file}"& echo $! >> "${listener_file}" 2>/dev/null; wait)
+#The trap is just to suppress the 'Terminated' message
+exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
 read pseudofifo_pid <&3
 if test $? -ne 0; then
   echo "Failed to read pseudofifo pid" 1>&2
