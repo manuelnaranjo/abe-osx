@@ -77,12 +77,10 @@ exec 4<> "${lava_fifo}"
 clean_benchmark()
 {
   error=$?
-  local lava_release=1 #Default to not releasing the target
 
   if test x"${ip}" != x; then
     if test x"${target_dir}" = x; then
       echo "No directory to remove from ${ip}"
-      lava_release=0
     elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
     elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
@@ -92,7 +90,6 @@ clean_benchmark()
       (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}" ${ssh_opts})
       if test $? -eq 0; then
         echo "Removed ${target_dir} from ${ip}"
-        lava_release=0
       else
         echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
         error=1
@@ -100,7 +97,6 @@ clean_benchmark()
     fi
   else
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
-    lava_release=0
   fi
 
   if test x"${listener_pid}" != x; then
@@ -109,8 +105,8 @@ clean_benchmark()
   fi
 
   if test x"${lava_pid}" != x; then
-    if test ${lava_release} -ne 0; then
-      echo "Not killing lava session, to ensure session remains open for cleanup."
+    if test ${error} -ne 0 || test x"${keep}" = 'x-k'; then
+      echo "Not killing lava session, to ensure session remains open for investigation/cleanup."
       kill "${lava_pid}" 2>/dev/null
       wait "${lava_pid}"
     else
