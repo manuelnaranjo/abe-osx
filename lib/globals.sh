@@ -86,6 +86,7 @@ verbose=1
 network=""
 runtests=no
 ccache=no
+gerrit=no
 
 release=""
 with_packages="toolchain,sysroot,gdb"
@@ -104,8 +105,22 @@ if test $? -ne 0; then
     CBUILD2_SHA=0
 fi
 
+gerrit_host="review.linaro.org"
+gerrit_port="29418"
+gerrit_username=""
+gerrit_project=""
+gerrit_branch=""
+gerrit_revision=""
+gerrit_change_subject=""
+gerrit_change_id=""
+gerrit_change_number=""
+gerrit_event_type=""
+jenkins_job_name=""
+jenkins_job_url=""
+
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
 if test -e ~/.cbuildrc; then
     . ~/.cbuildrc
 fi
+

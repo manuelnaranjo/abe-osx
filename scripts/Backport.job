@@ -13,12 +13,13 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-rm -fr ${WORKSPACE}/_build
+rm -fr ${WORKSPACE}
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
-$CONFIG_SHELL -x ${cbuild_dir}/test-backport.sh --target ${target} ${gcc_branch}
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=148.251.136.42
+
+$CONFIG_SHELL -x ${cbuild_dir}/test-backport.sh --fileserver=148.251.136.42 --target ${target} ${gcc_branch}
 
 # force a failure of cbuild2 has build problems.
 if test $? -gt 0; then

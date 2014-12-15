@@ -36,12 +36,14 @@ case "$myname" in {
 case "$target_triplet" in { 
     { "arm-*linux-gnueabi*"} {
 	case "$myname" in {
-	    { tcwgrob* } {
-		set target_list { tcwgchromebook }
-#		set target_list { arm-chromebook }
+	    { tcwgrob* ripple* darkstar* } {
+#		set target_list { tcwgchromebook }
+#		set target_list { tcwgd01 }
+#		set target_list { chrome1-01 }
+		set target_list { dragon-01 }
 	    }
 	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgchrome2 }
+		set target_list { dragon-d01 }
 	    }
 	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
 		set target_list { unix }
@@ -57,17 +59,17 @@ case "$target_triplet" in {
     { "armeb-*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
-	set SIM "qemu-armeb-static"
+	set SIM "qemu-armeb"
 	set target_list { "arm-qemu" } 
     }
     { "aarch64*-none-elf*" } {
 	set target_list { "v8model" } 
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
-    { "aarch64-*linux*" } {
+    { "aarch64-*linux-gnu" } {
 	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-*} {
-		set target_list { tcwgapm }
+	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
+		set target_list { aus-colo-01 }
 	    }
 	    { tcwg-apm-* } {
 		set target_list { unix }

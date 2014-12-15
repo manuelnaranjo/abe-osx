@@ -606,9 +606,9 @@ LOCAL_SNAPSHOTS
 SYSROOTS
 CBUILD_PATH
 SOURCES_CONF
+FILESERVER
 CBUILD_TOP
 BUILDDATE
-MAKEVERSION
 CCRYPT
 AUTOGEN
 BISON
@@ -687,6 +687,7 @@ with_dbuser
 with_dbpasswd
 with_dbhost
 with_toplevel
+with_fileserver
 with_sources_conf
 with_sysroot
 with_local_snapshots
@@ -1340,6 +1341,7 @@ Optional Packages:
   --with-dbpasswd         set the user password for the database
   --with-dbhost           set the database hostname
   --with-toplevel
+  --with-fileserver       the remote file server hostname
   --with-sources-conf
   --with-sysroot
   --with-local-snapshots  Where downloaded tarballs are stored
@@ -3575,13 +3577,12 @@ fi
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
-MAKEVERSION="${makeversion}"
-
-if test ${makeversion} -lt 400; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Make 4.0 is missing, which is required" >&5
-$as_echo "$as_me: WARNING: Make 4.0 is missing, which is required" >&2;}
-fi
+#makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+#MAKEVERSION="${makeversion}"
+#AC_SUBST(MAKEVERSION)
+#if test ${makeversion} -lt 400; then
+#   AC_MSG_WARN([Make 4.0 is missing, which is required])
+#fi
 
 #packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="texinfo gawk"
@@ -3706,6 +3707,18 @@ $as_echo "$as_me: WARNING: ${CBUILD_TOP} does not exist so creating directory!" 
    mkdir -p ${CBUILD_TOP}
 fi
 
+# The various Jenkins jobs copy log files and rest results to a remote file
+# server for storage and comparison. For the TCWG, this has been 'toolchain64'.
+
+# Check whether --with-fileserver was given.
+if test "${with_fileserver+set}" = set; then :
+  withval=$with_fileserver; FILESERVER=${withval}
+else
+  FILESERVER='abe.tcwglab.linaro.org'
+fi
+
+
+
 
 # Check whether --with-sources-conf was given.
 if test "${with_sources_conf+set}" = set; then :
@@ -3784,7 +3797,7 @@ fi
 if test "${with_remote_snapshots+set}" = set; then :
   withval=$with_remote_snapshots; REMOTE_SNAPSHOTS=${withval}
 else
-  REMOTE_SNAPSHOTS='http://cbuild.validation.linaro.org/snapshots'
+  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots"
 fi
 
 
@@ -4198,6 +4211,7 @@ $as_echo "$as_me: WARNING: You need to install git-new-workdir to use GIT!" >&2;
 $as_echo "$as_me: copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable" >&6;}
       missing="${missing} git-new-workdir"
 fi
+
 
 # A symbolic link needs to be made in this directory
 #if test -w /opt/linaro -eq 0; then

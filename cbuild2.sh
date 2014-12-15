@@ -23,7 +23,7 @@ usage()
   ${cbuild2} [''| [--timeout <value>]
              [[--build [<package> --stage {1|2}]|all]
               |[--checkout <package>|all]]
-             [--ccache] [--check] [--enable {bootstrap}]
+             [--ccache] [--check] [--enable {bootstrap|gerrit}]
              [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
@@ -143,6 +143,10 @@ OPTIONS
                 bootstrap
                         Enable gcc bootstrapping, which is disabled by
                         default.
+
+                gerrit
+                        Enable posting comments to Gerrit on the build
+                        progress.
 
   --fetch <url>
 
@@ -443,9 +447,37 @@ set_package()
 
 build_failure()
 {
-    time="`expr ${SECONDS} / 60`"
+    local time="`expr ${SECONDS} / 60`"
     error "Build process failed after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 1
+    fi
     exit 1
+}
+
+build_success()
+{
+    local time="`expr ${SECONDS} / 60`"
+    notice "Build process succeeded after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 0
+    fi
+
+    return 0
+}
+
+test_success()
+{
+    local time="`expr ${SECONDS} / 60`"
+    notice "Test run completed after ${time} minutes"
+    
+    if test x"${gerrit}" = xyes; then
+	gerrit_build_status ${gcc_version} 6
+    fi
+
+    return 0
 }
 
 # Switches that require a following directive need to make sure they don't
@@ -545,6 +577,7 @@ dump()
     echo "Distribution:      ${distribution}"
 
     echo "Bootstrap          ${bootstrap}"
+    echo "Gerrit             ${gerrit}"
     echo "Install            ${install}"
     echo "Source Update      ${supdate}"
     echo "Make Documentation ${make_docs}"
@@ -770,6 +803,14 @@ while test $# -gt 0; do
 		bootstrap)
 		    bootstrap="${value}"
 		    ;;
+		gerrit)
+		    gerrit="${value}"
+		    # Initialize settings for gerrit
+		    gerrit_info $HOME
+		    if test x"${gerrit_branch}" != x; then
+			gcc_version="gcc.git~${gerrit_branch}@${gerrit_revision}"
+		    fi
+		    ;;
 		alltests)
 		    alltests="${value}"
 		    ;;
@@ -952,6 +993,7 @@ if test ! -z ${do_build}; then
 	    fi
 	fi
     else
+	buildingall=yes
 	build_all
 	if test $? -gt 0; then
 	    error "Build all failed."

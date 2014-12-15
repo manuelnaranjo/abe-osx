@@ -32,6 +32,9 @@ if { [board_info $board obj_format] == "pe" } {
 # basic-sim.exp is a basic description for the standard Cygnus simulator.
 load_base_board_description "basic-sim"
 
+# set library path environment variable for qemu
+set env(QEMU_LD_PREFIX) $sysroot
+
 # The name of the directory in the build tree where the simulator lives.
 setup_sim arm
 
@@ -49,8 +52,14 @@ set specdir "$sysroot/usr/lib"
 
 # The basic set of flags needed to build "hello world" for this
 # board. This board uses libgloss and newlib.
-set_board_info cflags  "-specs=$specdir/rdimon.specs"
-set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags] $additional_options"
+
+# For bare metal we use libgloss, but for linux hosts this is wrong.
+if { [ istarget "arm*-none-*"] } {
+    set_board_info cflags  "-specs=$specdir/rdimon.specs"
+    set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags] $additional_options"
+} else {
+    set_board_info ldflags "-static"
+}
 
 # This board doesn't use a linker script.
 set_board_info ldscript ""

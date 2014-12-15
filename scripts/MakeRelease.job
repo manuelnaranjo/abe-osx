@@ -7,12 +7,14 @@ tarsrc=""
 tarbin=""
 check=""
 nocheck="no"
-fileserver="toolchain64"
+fileserver="abe.tcwglab.linaro.org"
+user_workspace="${WORKSPACE:-/home/buildslave/workspace}"
 
-OPTS="`getopt -o t:f:bs:nh -l target::fileserver:tarbin:tarsrc:help`"
+OPTS="`getopt -o t:f:bs:w:nh -l target::fileserver:tarbin:tarsrc:workspace:help`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
+	-w|--workspace) user_workspace=$2 ;;
 	-s|--tarsrc) tarsrc=yes ;;
 	-b|--tarbin) tarbin=yes ;;
 	-t|--target) target=$2 ;;
@@ -28,7 +30,6 @@ if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
 fi
 
-user_workspace="${WORKSPACE:-/home/buildslave/workspace}"
 shared="/home/buildslave/workspace/shared/"
 cbuild_dir="${user_workspace}/cbuildv2"
 user_snapshots="${user_workspace}/snapshots"
@@ -54,11 +55,15 @@ cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
   $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} \
-      --with-git-reference-dir=${shared}/snapshots
+      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 fi
 
-if test x"${nocheck}" = xno; then
-    check="--check"
+gcc_source="gcc-linaro-${version}-${release}.tar.xz"
+
+if test x"${runtests}" = xtrue; then
+    check=--check
+else
+    check=""
 fi
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
@@ -67,10 +72,16 @@ if test x"${tarsrc}" = x"yes"; then
 	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
-# Build a biary release tarball, then run the tests on the installed binaries
+# Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
-    tars="--tarbin --check"
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} -build all
+    # Canadian cross builds require a Linux hosted crfoss compiler first
+    if test x"${canadian}" = x"true"; then
+	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
+	host="--host i686-w64-mingw32"
+    else
+	host=""
+    fi
+    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all
 fi
 
 # force a failure if cbuild2 has build problems.
@@ -89,16 +100,18 @@ snaps="/home/cbuild/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
-    sums="`find ${user_workspace} -name \*.sum`"
-    logs="`find ${user_workspace} -name \*.log`"
-    if test x"${sums}" != x; then
-	ssh ${fileserver} "mkdir -p ${bases}"
-	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
-	scp ${sums} ${logs} ${fileserver}:${bases}/
-    else
-	echo "ERROR: No test results were found!"
+    if test x"${check}" != x; then
+	sums="`find ${user_workspace} -name \*.sum`"
+	logs="`find ${user_workspace} -name \*.log`"
+	if test x"${sums}" != x; then
+	    ssh ${fileserver} "mkdir -p ${bases}"
+	    xz ${sums} ${logs}
+	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
+	    scp ${sums} ${logs} ${fileserver}:${bases}/
+	else
+	    echo "ERROR: No test results were found!"
+	fi
     fi
     tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
     if test x"${tarballs}" != x; then
@@ -114,25 +127,32 @@ fi
 binaries="/work/space/binaries/${release}/${target}"
 if test x"${tarbin}" = xyes; then
     manifest="`find ${user_workspace} -name manifest.txt`"
+    ssh ${fileserver} "if test ! -d ${binaries}; then mkdir -p ${binaries}; fi"
     scp ${manifest} ${fileserver}:${binaries}/
     scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
-    sums="`find ${user_workspace} -name \*.sum`"
-    logs="`find ${user_workspace} -name \*.log`"
-    if test x"${sums}" != x; then
-	xz ${sums} ${logs}
-	sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/'`"
-	logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/'`"
-	ssh ${fileserver} "mkdir -p ${binaries}/"
-	scp ${sums} ${fileserver}:${binaries}/
-    else
-	echo "ERROR: No test results were found!"
-    fi
-    # Diff the two directories
-    scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}`"
-    if test "`echo ${out} | grep -c REGRESSIONS`"; then
-	exit 1
-    else
-	exit 0
+    if test x"${check}" != x; then
+	sums="`find ${user_workspace} -name \*.sum`"
+	logs="`find ${user_workspace} -name \*.log`"
+	if test x"${sums}" != x; then
+	    xz ${sums} ${logs}
+	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
+	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
+	    ssh ${fileserver} "mkdir -p ${binaries}/"
+	    scp ${sums} ${fileserver}:${binaries}/
+	else
+	    echo "ERROR: No test results were found!"
+	fi
+	
+	# Diff the two directories
+	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
+	if test x"${out}" = x"YES"; then 
+	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
+	    if test "`echo ${out} | grep -c REGRESSIONS`"; then
+		exit 1
+	    fi
+	fi
     fi
 fi
+
+exit 0

@@ -125,12 +125,12 @@ AC_CHECK_LIB(z, gzread)
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
-MAKEVERSION="${makeversion}"
-AC_SUBST(MAKEVERSION)
-if test ${makeversion} -lt 400; then
-   AC_MSG_WARN([Make 4.0 is missing, which is required])
-fi
+#makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+#MAKEVERSION="${makeversion}"
+#AC_SUBST(MAKEVERSION)
+#if test ${makeversion} -lt 400; then
+#   AC_MSG_WARN([Make 4.0 is missing, which is required])
+#fi
 
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
@@ -236,6 +236,14 @@ if test ! -d ${CBUILD_TOP}; then
    mkdir -p ${CBUILD_TOP}
 fi
 
+# The various Jenkins jobs copy log files and rest results to a remote file
+# server for storage and comparison. For the TCWG, this has been 'toolchain64'.
+AC_ARG_WITH(fileserver,
+  AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
+  FILESERVER=${withval},
+  FILESERVER='abe.tcwglab.linaro.org')
+AC_SUBST(FILESERVER)
+
 AC_ARG_WITH(sources-conf,
   AC_HELP_STRING([--with-sources-conf], []),
   SOURCES_CONF=${withval},
@@ -294,7 +302,7 @@ dnl A URL to the remote directory where snapshots are stored
 AC_ARG_WITH(remote-snapshots,
   AC_HELP_STRING([--with-remote-snapshots], []),
   REMOTE_SNAPSHOTS=${withval},
-  REMOTE_SNAPSHOTS='http://cbuild.validation.linaro.org/snapshots')
+  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots")
 AC_SUBST(REMOTE_SNAPSHOTS)
 
 dnl Display the default paths so the user does not need to look in the host.conf file.
@@ -424,6 +432,7 @@ AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
       AC_MSG_NOTICE([copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable])
       missing="${missing} git-new-workdir"
 fi
+AC_SUBST(NEWWORKDIR)
 
 # A symbolic link needs to be made in this directory
 #if test -w /opt/linaro -eq 0; then

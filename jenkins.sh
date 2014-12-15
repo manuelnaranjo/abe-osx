@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+
 usage()
 {
     # Format this section with 75 columns.
@@ -30,6 +31,10 @@ if test $# -lt 1; then
     usage
 #    exit
 fi
+
+# load commonly used functions
+which_dir="`which $0`"
+topdir="`dirname ${which_dir}`"
 
 # This is where all the builds go
 if test x"${WORKSPACE}" = x; then
@@ -46,28 +51,24 @@ user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
-# This is the top level directory for the cbuild2 sources.
-cbuild_dir="${user_workspace}/cbuildv2"
-
-# Test results and logs get copied to here
-fileserver="toolchain64"
-
 # The release version string, usually a date
 releasestr=
 
 # This is a string of optional extra arguments to pass to cbuild at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:h -l snapshots:repo:cbuild:workspace:options:fileserver:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:t:h -l snapshots:gitrepo:cbuild:workspace:options:fileserver:target:help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
-        -g|--repo) user_git_repo=$2 ;;
+        -g|--gitrepo) user_git_repo=$2 ;;
         -c|--cbuild) cbuild_dir=$2 ;;
+	-t|--target) target=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
+        -r|--runtests) runtest="true" ;;
 	-h|--help) usage ;;
     esac
     shift
@@ -168,8 +169,18 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+if test x"${cbuild_dir}" = x; then
+    cbuild_dir=${topdir}
+fi
+$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 
+# load commonly used varibles set by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+fi
+
+# This is the top level directory for the cbuild2 sources.
+#cbuild_dir="${cbuild_path}"
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
@@ -258,6 +269,7 @@ if test x"${manifest}" != x; then
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
+    echo "build_url=${BUILD_URL}" >> ${manifest}
 else
     echo "ERROR: No manifest file, build probably failed!"
 fi
@@ -266,9 +278,9 @@ fi
 if test x"${runtests}" = xtrue; then
     basedir="/work/logs"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh toolchain64 mkdir -p ${basedir}/${dir}
+    ssh ${fileserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
-	scp ${manifest} toolchain64:${basedir}/${dir}/
+	scp ${manifest} ${fileserver}:${basedir}/${dir}/
     fi
 
 # If 'make check' works, we get .sum files with the results. These we

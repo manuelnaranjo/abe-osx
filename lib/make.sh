@@ -26,7 +26,10 @@ build_all()
     
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-        local builds="infrastructure binutils stage1 libc stage2 gdb" #  gdbserver
+        local builds="infrastructure binutils stage1 libc stage2 gdb"
+	if test "`echo ${target} | grep -c -- -none-`" -eq 0; then
+	    local builds="${builds} gdbserver"
+	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
         local builds="infrastructure binutils stage2 gdb" # native build
@@ -58,103 +61,118 @@ build_all()
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
-    if test x"${building}" != xno; then
-        local build_all_ret=
-        # build each component
-        for i in ${builds}; do
-            notice "Building all, current component $i"
-            # If an interactive build, stop betweeen each step so we can
-            # check the build and config options.
-            if test x"${interactive}" = x"yes"; then
-                echo "Hit any key to continue..."
-                read answer             
-            fi
-            case $i in
-                infrastructure)
-                    infrastructure
-                    build_all_ret=$?
-                    ;;
-                # Build stage 1 of GCC, which is a limited C compiler used to compile
-                # the C library.
-                libc)
-                    if test x"${clibrary}" = x"eglibc"; then
-                        build ${eglibc_version}
-                    elif  test x"${clibrary}" = x"glibc"; then
-                        build ${glibc_version}
-                    elif test x"${clibrary}" = x"newlib"; then
-                        build ${newlib_version}
-                        build ${newlib_version} libgloss
-                    else
-                        error "\${clibrary}=${clibrary} not supported."
-                        return 1
+    local build_all_ret=
+
+    # Checkout all the sources
+    checkout_all
+
+    # build each component
+    for i in ${builds}; do
+        notice "Building all, current component $i"
+        # If an interactive build, stop betweeen each step so we can
+        # check the build and config options.
+        if test x"${interactive}" = x"yes"; then
+            echo "Hit any key to continue..."
+            read answer
+        fi
+        case $i in
+            infrastructure)
+                infrastructure
+                build_all_ret=$?
+                ;;
+            # Build stage 1 of GCC, which is a limited C compiler used to compile
+            # the C library.
+            libc)
+                if test x"${clibrary}" = x"eglibc"; then
+                    build ${eglibc_version}
+                elif  test x"${clibrary}" = x"glibc"; then
+                    build ${glibc_version}
+                elif test x"${clibrary}" = x"newlib"; then
+                    build ${newlib_version}
+                    build ${newlib_version} libgloss
+                else
+                    error "\${clibrary}=${clibrary} not supported."
+                    return 1
+                fi
+                build_all_ret=$?
+                ;;
+            stage1)
+                build ${gcc_version} stage1
+                build_all_ret=$?
+                # Don't create the sysroot if the clibrary build didn't succeed.
+                if test ${build_all_ret} -lt 1; then
+                    # If we don't install the sysroot, link to the one we built so
+                    # we can use the GCC we just built.
+                    # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
+                    local sysroot="`${target}-gcc -print-sysroot`"
+                    if test ! -d ${sysroot}; then
+                        dryrun "mkdir -p /opt/linaro"
+                        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
                     fi
-                    build_all_ret=$?
-                    ;;
-                stage1)
-                    build ${gcc_version} stage1
-                    build_all_ret=$?
-                    # Don't create the sysroot if the clibrary build didn't succeed.
-                    if test ${build_all_ret} -lt 1; then
-                        # If we don't install the sysroot, link to the one we built so
-                        # we can use the GCC we just built.
-                        # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
-                        local sysroot="`${target}-gcc -print-sysroot`"
-                        if test ! -d ${sysroot}; then
-                            dryrun "mkdir -p /opt/linaro"
-                            dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
-                        fi
-                    fi
-                    ;; 
-                # Build stage 2 of GCC, which is the actual and fully functional compiler
-                stage2)
-                    build ${gcc_version} stage2
-                    build_all_ret=$?
-                    ;;
-                gdb)
-                    build ${gdb_version}
-                    build_all_ret=$?
-                    ;;
-                gdbserver)
-                    build ${gdb_version} gdbserver
-                    build_all_ret=$?
-                    ;;
-                # Build anything not GCC or infrastructure
-                *)
-                    build ${binutils_version}
-                    build_all_ret=$?
-                    ;;
-            esac
-            #if test $? -gt 0; then
-            if test ${build_all_ret} -gt 0; then
-                error "Failed building $i."
-                return 1
-            fi
-        done
-        
-        manifest ${local_builds}/${host}/${target}/manifest.txt
-        
-        notice "Build took ${SECONDS} seconds"
+                fi
+                ;; 
+            # Build stage 2 of GCC, which is the actual and fully functional compiler
+            stage2)
+                build ${gcc_version} stage2
+                build_all_ret=$?
+                ;;
+            gdb)
+                build ${gdb_version}
+                build_all_ret=$?
+                ;;
+            gdbserver)
+                build ${gdb_version} gdbserver
+                build_all_ret=$?
+                ;;
+            # Build anything not GCC or infrastructure
+            *)
+                build ${binutils_version}
+                build_all_ret=$?
+                ;;
+        esac
+        #if test $? -gt 0; then
+        if test ${build_all_ret} -gt 0; then
+            error "Failed building $i."
+            return 1
+        fi
+    done
+
+    manifest ${local_builds}/${host}/${target}/manifest.txt
+
+    # Notify that the build completed successfully
+    build_success
+
+    if test x"${gerrit}" = xyes -a x"${runtests}" = xyes; then
+	local sumsfile="/tmp/sums$$.txt"
+	local sums="`find ${local_builds}/${host}/${target} -name \*.sum`"
+	for i in ${sums}; do
+	    local lineno="`grep -n -- "Summary" $i | grep -o "[0-9]*"`"
+	    local lineno="`expr ${lineno} - 2`"
+	    sed -e "1,${lineno}d" $i >> ${sumsfile}
+	    local status="`grep -c unexpected $i`"
+	    if test ${status} -gt 0; then
+		local hits="yes"
+	    fi
+	done
+	if test x"${hits}" = xyes; then
+	    gerrit_build_status ${gcc_version} 3 ${sumsfile}
+	else
+	    gerrit_build_status ${gcc_version} 2
+	fi
+    fi
+    rm -f ${sumsfile}
+    
+    if test x"${runtests}" = xyes; then
+	notice "Testing components"
+	buildingall=no
+	make_check ${binutils_version}
+	make_check ${gcc_version} stage2
+	make_check ${gdb_version}
     fi
 
-    # # now run the tests if specified. We do this after a full toolchain
-    # # build because *glibc requires a full stage2 build to compile the
-    # # test cases.
-    # if test x"${runtests}" = x"yes"; then
-    # 	for i in ${builds}; do
-    # 	    local gitinfo="`get_source $i`"
-    #         case $i in
-    # 		binutils|libc|stage2|gdb) 
-    # 		    make_check ${gitinfo}${2:+ $2}
-    # 		    ;;
-    # 		*) /* do nothing */ ;;
-    # 	    esac
-    # 	    if test $? -gt 0; then
-    # 		error "Failed building $i."
-    # 		return 1
-    # 	    fi
-    # 	done
-    # fi
-    
+    # Notify that the test run completed successfully
+    test_success
+
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
             release_binutils_src
@@ -163,10 +181,6 @@ build_all()
         if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
             release_gdb_src
         fi
-# FIXME: release_sysroot isn't implemented yet, this is a reminder
-#       if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
-#            release_sysroot
-#       fi
     fi
 
     if test x"${tarbin}" = x"yes"; then
@@ -275,72 +289,77 @@ build()
         warning "no source dir for the stamp!"
    fi
 
-    notice "Configuring ${tag}${2:+ $2}"
-    configure_build ${gitinfo} $2
-    if test $? -gt 0; then
-        error "Configure of $1 failed!"
-        return $?
-    fi
-    
-    # Clean the build directories when forced
-    if test x"${force}" = xyes; then
-        make_clean ${gitinfo} $2
-        if test $? -gt 0; then
+    if test x"${building}" != xno; then
+	notice "Configuring ${tag}${2:+ $2}"
+	configure_build ${gitinfo} $2
+	if test $? -gt 0; then
+            error "Configure of $1 failed!"
+            return $?
+	fi
+	
+	# Clean the build directories when forced
+	if test x"${force}" = xyes; then
+            make_clean ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	fi
+	
+	# Finally compile and install the libaries
+	make_all ${gitinfo} $2
+	if test $? -gt 0; then
             return 1
-        fi
+	fi
+	
+	# Build the documentation, unless it has been disabled at the command line.
+	if test x"${make_docs}" = xyes; then
+            make_docs ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	else
+            notice "Skipping make docs as requested (check host.conf)."
+	fi
+	
+	# Install, unless it has been disabled at the command line.
+	if test x"${install}" = xyes; then
+            make_install ${gitinfo} $2
+            if test $? -gt 0; then
+		return 1
+            fi
+	else
+            notice "Skipping make install as requested (check host.conf)."
+	fi
+	
+	# See if we can compile and link a simple test case.
+	if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
+            dryrun "(hello_world)"
+            if test $? -gt 0; then
+		error "Hello World test failed for ${gitinfo}..."
+		return 1
+            else
+		notice "Hello World test succeeded for ${gitinfo}..."
+            fi
+	fi
+	
+	create_stamp "${stampdir}" "${stamp}"
+	
+	notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
+	
+	# For cross testing, we need to build a C library with our freshly built
+	# compiler, so any tests that get executed on the target can be fully linked.
     fi
-    
-    # Finally compile and install the libaries
-    make_all ${gitinfo} $2
-    if test $? -gt 0; then
-        return 1
-    fi
 
-    # Build the documentation, unless it has been disabled at the command line.
-    if test x"${make_docs}" = xyes; then
-        make_docs ${gitinfo} $2
-        if test $? -gt 0; then
-            return 1
-        fi
-    else
-        notice "Skipping make docs as requested (check host.conf)."
-    fi
-
-    # Install, unless it has been disabled at the command line.
-    if test x"${install}" = xyes; then
-        make_install ${gitinfo} $2
-        if test $? -gt 0; then
-            return 1
-        fi
-    else
-        notice "Skipping make install as requested (check host.conf)."
-    fi
-
-    # See if we can compile and link a simple test case.
-    if test x"$2" = x"stage2" -a x"${clibrary}" != x"newlib"; then
-        dryrun "(hello_world)"
-        if test $? -gt 0; then
-            error "Hello World test failed for ${gitinfo}..."
-            return 1
-        else
-            notice "Hello World test succeeded for ${gitinfo}..."
-        fi
-    fi
-
-    create_stamp "${stampdir}" "${stamp}"
-
-    notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
-
-    # For cross testing, we need to build a C library with our freshly built
-    # compiler, so any tests that get executed on the target can be fully linked.
     if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc" -a x"${tarbin}" != xyes; then
         if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
-            notice "Starting test run for ${tag}${2:+ $2}"
-            make_check ${gitinfo}${2:+ $2}
-            if test $? -gt 0; then
-                return 1
-            fi
-        fi
+	    if test x"${buildingall}" = xno; then
+		notice "Starting test run for ${tag}${2:+ $2}"
+		make_check ${gitinfo}${2:+ $2}
+		if test $? -gt 0; then
+                    return 1
+		fi
+	    fi
+	fi
     fi
 
     return 0
@@ -388,6 +407,11 @@ make_all()
 
     # Some components require extra flags to make: we put them at the end so that config files can override
     local default_makeflags="`read_config $1 default_makeflags`"
+
+    if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
+       default_makeflags="gdbserver CFLAGS=--sysroot=${local_builds}/sysroot-${target}"
+    fi
+
     if test x"${default_makeflags}" !=  x; then
         local make_flags="${make_flags} ${default_makeflags}"
     fi
@@ -451,7 +475,7 @@ make_install()
 {
     trace "$*"
 
-    if test x"${parallel}" = x"yes"; then
+    if test x"${parallel}" = x"yes" -a "`echo ${tool} | grep -c glibc`" -eq 0; then
         local make_flags="${make_flags} -j $((2*${cpus}))"
     fi
 
@@ -528,8 +552,12 @@ make_install()
     fi
 
     local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
-    if test x"${tool}" = x"gdb"; then
-	dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+    if test x"${tool}" = x"gdb" ; then
+	if test x"$2" != x"gdbserver" ; then
+            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+        else
+            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+        fi
     else
 	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
@@ -539,7 +567,7 @@ make_install()
     fi
 
     if test x"${tool}" = x"gcc"; then
-        local libs="`find ${builddir} -name \*.so\* -o -name \*.a`"
+        local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
         if test ! -e ${sysroots}/usr/lib; then
             dryrun "mkdir -p ${sysroots}/usr/lib/"
         fi
@@ -566,7 +594,7 @@ make_install()
     # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
     # up, and then tries to redefine caddr_t yet again. We modify the installed
     # types.h instead of the one in the source tree to be a tiny bit less ugly.
-    if test x"${tool}" = x"eglibc" -a `echo ${host} | grep -c mingw` -eq 1; then
+    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${host} | grep -c mingw` -eq 1; then
         sed -i -e '/typedef __caddr_t caddr_t/d' ${sysroots}/usr/include/sys/types.h
     fi
 
@@ -638,7 +666,7 @@ make_check()
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
-    local ignore="dejagnu gmp mpc mpfr gdb make eglibc"
+    local ignore="dejagnu gmp mpc mpfr make eglibc linux"
     for i in ${ignore}; do
         if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
             return 0
@@ -671,9 +699,7 @@ make_check()
     fi
 
     # load the config file for Linaro build farms
-    if test x"${DEJAGNU}" = x; then
-        export DEJAGNU=${topdir}/config/linaro.exp
-    fi
+    export DEJAGNU=${topdir}/config/linaro.exp
 
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then

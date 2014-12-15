@@ -65,7 +65,7 @@ binary_runtime()
     trace "$*"
 
 #    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -166,7 +166,7 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -187,10 +187,18 @@ binary_toolchain()
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
-	local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	if test x"${host}" != x"${build}"; then
+	    local tag="`echo gcc-linaro-${version}~${revision}-i686-mingw32_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	else
+	    local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
+	fi
     else
 	# use an explicit tag for the release name
-	local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	if test x"${host}" != x"${build}"; then
+	    local tag="`echo gcc-linaro-${version}-${release}-i686-mingw32_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	else
+	    local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
+	fi
 
     fi
 
@@ -199,7 +207,7 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest ${destdir}/manifest.txt
+    manifest ${local_builds}/${host}/${target}/manifest.txt
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -219,7 +227,7 @@ binary_sysroot()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
+    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
@@ -259,7 +267,7 @@ binary_sysroot()
         # else
         # 	local commit=""
         # fi
-	local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
+	local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 	date="`date +%Y%m%d`"
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
@@ -291,37 +299,55 @@ binary_sysroot()
 # used for this build.
 manifest()
 {
+    trace "$*"
+
     if test x"$1" = x; then
-	local outfile=/tmp/linaro.$$/manifest.txt
+	local outfile=${local_builds}/${host}/${target}/manifest.txt
     else
 	local outfile=$1
     fi
 
-    if test x"${gcc_version}" = x; then
-	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
     if test x"${gmp_version}" = x; then
-	gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
+	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${mpc_version}" = x; then
-	mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
+	local mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${mpfr_version}" = x; then
-	mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
+	local mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
+    fi
+    
+    if test x"${gdb_version}" = x; then
+	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
+    fi
+    local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
+
+    local srcdir="`get_srcdir ${gcc_version}`"
+    local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
+    local gcc_revision="`get_git_revision ${srcdir}`"
+
+    local srcdir="`get_srcdir ${gdb_version}`"
+    local gdb_revision="`get_git_revision ${srcdir}`"
+    
+    if test x"${dejagnu_version}" = x; then
+	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+    fi
+    local srcdir="`get_srcdir ${dejagnu_version}`"
+    local dejagnu_revision="`get_git_revision ${srcdir}`"
+    
+    if test x"${linux_version}" = x; then
+	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
     fi
     
     if test x"${binutils_version}" = x; then
-	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
+	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    local binutils_revision=="`get_git_revision ${srcdir}`"
 
-    local cbuild_revision="`cd ${cbuild_path} && git log -n 1 | grep ^commit | cut -d ' ' -f 2`"
+    local cbuild_revision="`get_git_revision ${cbuild_path}`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -338,15 +364,31 @@ host_gcc="${host_gcc_version}"
 gmp_version=${gmp_version}
 mpc_version=${mpc_version}
 mpfr_version=${mpfr_version}
-gcc_version=${gcc_version}
+gcc_branch=${gcc_branch}
+gcc_version=${gcc_versionnum}
 gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
+dejagnu_version=${dejagnu_version}
+dejagnu_revsion=${dejagnu_revision}
+gdb_version=${gdb_version}
+gdb_revsion=${gdb_revision}
+linux_version=${linux_version}
 
 # Cbuild revision used
 cbuild_revision=${cbuild_revision}
 
 EOF
+
+    # Gerrit info, if triggered
+    if test x"${gerrit}" = xyes; then
+	cat >> ${outfile} <<EOF 
+gerrit_branch=${gerrit_branch}
+gerrit_revision=${gerrit_revision}
+
+EOF
+    fi
+
     case ${clibrary} in
 	glibc)
 	    local srcdir="`get_srcdir ${glibc_version}`"
@@ -381,9 +423,8 @@ EOF
     esac
 
     local srcdir="`get_srcdir ${gcc_version}`"
-    local entry="`cd ${srcdir} && git log -n 1`"
     echo "---------------------------------------------" >> ${outfile}
-    echo ${entry} >> ${outfile}
+    cd ${srcdir} && git log -n 1 >> ${outfile}
 }
 
 # Build a source tarball
