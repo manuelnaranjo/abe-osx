@@ -141,20 +141,24 @@ else #cross-build, implies we need remote devices
     echo "--target implies cross-compilation, but no devices given for run" 1>&2
     exit 1
   fi
-  target="--target ${target}"
 fi
 
 if test x"$skip_build" = x; then
   #cbuild2 can build the benchmarks just fine
-  (cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target})
+  (cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
   fi
 fi
 
+builddir="`target2="${target}"; . ${topdir}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+if test $? -ne 0; then
+  echo "Unable to get builddir" 1>&2
+  exit 1
+fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" ${keep} ${cautious} &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${builddir}" ${keep} ${cautious} &
   runpids[$!]=''
 done
 

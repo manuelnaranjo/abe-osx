@@ -14,13 +14,15 @@ benchmark=
 device=
 keep=
 cautious=''
+build_dir=
 lava_target=
-while getopts b:d:kc flag; do
+while getopts b:d:t:kc flag; do
   case "${flag}" in
     k) keep='-k';;
     c) cautious='-c';;
     b) benchmark="${OPTARG}";;
     d) device="${OPTARG}";;
+    t) builddir="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1
@@ -43,12 +45,6 @@ if ! test -e "${topdir}/host.conf"; then
 fi
 confdir="${topdir}/config/boards/bench"
 lavaserver="${USER}@validation.linaro.org/RPC2/"
-builddir="`target2="${target}"; . ${topdir}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
-if test $? -ne 0; then
-  echo "Unable to get builddir" 1>&2
-  exit 1
-fi
-
 
 benchlog="`. ${topdir}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
