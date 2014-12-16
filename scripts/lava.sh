@@ -71,7 +71,14 @@ release()
       echo "lava-tool cancel-job https://${lava_server} ${id}"
       error=0
     fi
+    echo "Getting present job status:"
+    retrying_lava_tool job-status "https://${lava_server}" "${id}"
+    if test $? -ne 0; then
+      echo "Was unable to get job status"
+    fi
   fi
+  lava_server=${lava_server%/RPC2/}
+  echo "Log should be at: https://${lava_server#*@}/scheduler/job/${id}/log_file#bottom"
   exit "${error}"
 }
 
