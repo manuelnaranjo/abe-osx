@@ -149,7 +149,7 @@ if test $? -eq 0; then
   echo "Acquiring LAVA target ${lava_target}"
   echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
-  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 &
+  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 2>&1 &
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
@@ -158,7 +158,7 @@ if test $? -eq 0; then
   while true; do
     line="`bgread ${lava_pid} 60 <&4`"
     if test $? -ne 0; then
-      echo "Failed to read lava output" 1>&2
+      echo "${lava_target}: Failed to read lava output" 1>&2
       exit 1
     fi
     echo "${lava_target}: $line"
