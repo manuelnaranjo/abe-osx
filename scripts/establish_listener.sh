@@ -23,18 +23,6 @@ temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
 gateway=
 
-#A fifo would make much more sense, but nc doesn't like it
-#The trap is just to suppress the 'Terminated' message
-exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
-read -t 60 pseudofifo_pid <&3
-if test $? -ne 0; then
-  echo "Failed to read pseudofifo pid" 1>&2
-  exit 1
-fi
-
-forward_fifo="${temps}/forward_fifo"
-mkfifo "${forward_fifo}" || exit 1
-
 function cleanup
 {
   error=$?
@@ -61,6 +49,18 @@ function cleanup
   fi
   exit "${error}"
 }
+
+#A fifo would make much more sense, but nc doesn't like it
+#The trap is just to suppress the 'Terminated' message
+exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
+read -t 60 pseudofifo_pid <&3
+if test $? -ne 0; then
+  echo "Failed to read pseudofifo pid" 1>&2
+  exit 1
+fi
+
+forward_fifo="${temps}/forward_fifo"
+mkfifo "${forward_fifo}" || exit 1
 
 while getopts f: flag; do
   case "${flag}" in
