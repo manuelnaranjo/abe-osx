@@ -257,14 +257,32 @@ while true; do
 done
 
 echo "Job ${id} is running, waiting for boot"
-read -t "${boot_timeout}" user_ip <&3
 
-if test $? -ne 0; then
-  echo "read -t ${boot_timeout} user_ip <&3 failed" 1>&2
-  exit 1
-fi
+deadline=$((`date +%s` + boot_timeout))
+while test `date +%s` -lt ${deadline}; do
+  read -t 60 user_ip <&3
+  err=$?
+  if test ${err} -eq 0; then
+    break
+  elif test ${err} -le 128; then
+    echo "Non-timeout error code ${err} while trying to read user_ip" 1>&2
+    exit 1
+  fi
+  jobstatus="`retrying_lava_tool job-status https://${lava_server} ${id}`"
+  if test $? -ne 0; then
+    echo "Job ${id} disappeared!" 1>&2
+    exit 1
+  fi
+  echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
+  if test $? -ne 0; then
+    echo "Job ${id} has surprising status, giving up" 1>&2
+    echo -e "${jobstatus}" 1>&2
+    exit 1
+  fi
+done
+
 if test x"${user_ip}" = x; then
-  echo "LAVA boot failed, or abandoned after $((boot_timeout/60)) minutes" 1>&2
+  echo "LAVA boot abandoned after $((boot_timeout/60)) minutes" 1>&2
   exit 1
 fi
 
