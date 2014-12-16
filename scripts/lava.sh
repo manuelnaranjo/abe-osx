@@ -20,6 +20,22 @@ trap 'keep=0; exit ${error}' USR1
 trap release EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
+function retrying_lava_tool
+{
+  local c
+  for c in {4..0}; do
+    lava-tool $@ && return 0
+    if test $c -eq 0; then
+      return 1
+    else
+      echo "lava-tool $@ failed" 1>&2
+      echo "May be spurious: ${c} retries remaining" 1>&2
+      sleep 5
+    fi
+  done
+  return 1
+}
+
 release()
 {
   if test x"${waiter}" != x; then
@@ -39,7 +55,7 @@ release()
   fi
   if test x"${id}" != x; then
     if test ${keep} -eq 0; then
-      lava-tool cancel-job https://"${lava_server}" "${id}"
+      retrying_lava_tool cancel-job https://"${lava_server}" "${id}"
       if test $? -eq 0; then
         echo "Cancelled job ${id}"
         error=0
@@ -193,7 +209,7 @@ if test $? -ne 0; then
   exit 1
 fi
 
-id="`lava-tool submit-job https://${lava_server} ${json_copy}`"
+id="`retrying_lava_tool submit-job https://${lava_server} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
   echo "SERVER: https://${lava_server}" 1>&2
@@ -221,21 +237,14 @@ sleep 15 #A short delay here is handy when debugging (if the LAVA queues are emp
 #Monitor job status until it starts running or fails
 #TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
 #TODO: In principle we want a timeout here, but we could be queued for a very long time, and that could be fine
-c=0
 while true; do
-  jobstatus="`lava-tool job-status https://${lava_server} ${id}`"
+  jobstatus="`retrying_lava_tool job-status https://${lava_server} ${id}`"
   if test $? -ne 0; then
-    c=$((c + 1))
-    if test $c -gt 5; then
-      echo "Job ${id} disappeared!" 1>&2
-      exit 1
-    else
-      continue
-    fi
+    echo "Job ${id} disappeared!" 1>&2
+    exit 1
   fi
   echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
   if test $? -eq 0; then
-    echo "Job ${id} is running, waiting for boot"
     break
   fi
   echo "${jobstatus}" | grep 'Job Status: Submitted' > /dev/null
@@ -247,6 +256,7 @@ while true; do
   sleep 60
 done
 
+echo "Job ${id} is running, waiting for boot"
 read -t "${boot_timeout}" user_ip <&3
 
 if test $? -ne 0; then
