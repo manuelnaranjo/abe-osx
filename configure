@@ -609,7 +609,6 @@ SOURCES_CONF
 FILESERVER
 ABE_TOP
 BUILDDATE
-CCRYPT
 AUTOGEN
 BISON
 FLEX
@@ -3475,52 +3474,6 @@ if test x"${AUTOGEN}" = x; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'autogen' to run configure for GCC properly!" >&5
 $as_echo "$as_me: WARNING: You need 'autogen' to run configure for GCC properly!" >&2;}
    missing="${missing} autogen"
-fi
-
-# Extract the first word of "ccrypt", so it can be a program name with args.
-set dummy ccrypt; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_CCRYPT+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $CCRYPT in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_CCRYPT="$CCRYPT" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_CCRYPT="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-CCRYPT=$ac_cv_path_CCRYPT
-if test -n "$CCRYPT"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CCRYPT" >&5
-$as_echo "$CCRYPT" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-if test x"${CCRYPT}" = x; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'ccrypt' to run benchmarks, this can be ignored for builds" >&5
-$as_echo "$as_me: WARNING: You need 'ccrypt' to run benchmarks, this can be ignored for builds" >&2;}
-   missing="${missing} ccrypt"
 fi
 
 #AC_CHECK_LIB(ncurses, doupdate)
