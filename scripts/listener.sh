@@ -1,3 +1,5 @@
+set -o pipefail
+
 function get_addr
 {
   local hostname="${1:-localhost}"
