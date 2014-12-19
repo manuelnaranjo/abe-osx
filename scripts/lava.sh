@@ -24,7 +24,7 @@ function retrying_lava_tool
 {
   local c
   for c in {4..0}; do
-    lava-tool $@ && return 0
+    lava-tool "$@" && return 0
     if test $c -eq 0; then
       return 1
     else
