@@ -55,7 +55,7 @@ case "$target_triplet" in {
 		set target_list { dragon-01 }
 	    }
 	    { build-* tcwg-ex40-* d01-* apm-* juno-* amd-* } {
-		set target_list { $machine_prefix-armv8 }
+		set target_list [list $machine_prefix-armv8]
 	    }
 	    { natived01-* nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
@@ -81,7 +81,7 @@ case "$target_triplet" in {
     { "aarch64-*linux*" } {
 	case "$native$myname" in {
 	    { tcwgrob build-* tcwg-ex40-* apm-* juno-* amd-* } {
-		set target_list { $machine_prefix-armv8 }
+		set target_list [list $machine_prefix-armv8]
 	    }
 	    { nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
@@ -91,10 +91,10 @@ case "$target_triplet" in {
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$native$myname" in {
 	    { build-* } {
-		set target_list { $machine_prefix-build }
+		set target_list [list $machine_prefix-build]
 	    }
 	    { tcwg-ex40-* } {
-		set target_list { $machine_prefix-tcwgex40 }
+		set target_list [list $machine_prefix-tcwgex40]
 	    }
 	    { nativebuild-* nativetcwg-ex40-* } {
 		set target_list { unix }
@@ -104,10 +104,10 @@ case "$target_triplet" in {
     { "*linux-gnu*" } {
 	case "$myname" in {
 	    { build-* } {
-		set target_list { $machine_prefix-buildqemu }
+		set target_list [list $machine_prefix-buildqemu]
 	    }
 	    { tcwg-ex40-* } {
-		set target_list { $machine_prefix-tcwgex40qemu }
+		set target_list [list $machine_prefix-tcwgex40qemu]
 	    }
 	}
     }
