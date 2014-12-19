@@ -554,7 +554,12 @@ fi
 
 #By setting our own niceness, we don't force the benchmark to run as root
 if test ${do_renice} -eq 1; then
-  sudo renice -19 $$ #Don't use $sudo, we don't want to break out of chroot here
+  #Don't use $sudo, we don't want to break out of chroot here
+  if test "${USER}" = root; then
+         renice -19 $$
+  else
+    sudo renice -19 $$
+  fi
   if test $? -ne 0; then
     echo "Failed to set niceness to -19" 1>&2
   fi
