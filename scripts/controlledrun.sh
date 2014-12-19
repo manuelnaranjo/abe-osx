@@ -385,6 +385,7 @@ bench_cpu=0
 non_bench_cpu=''
 cautiousness=0
 do_network=0
+do_aslr=1 #Enabled by default
 do_renice=1 #Enabled by default
 while getopts s:f:b:p:cnul: flag; do
   case $flag in
@@ -402,6 +403,7 @@ while getopts s:f:b:p:cnul: flag; do
         bench_cpu=''
         non_bench_cpu=''
         do_network=0
+        do_aslr=0
         do_renice=0
         echo "Uncontrolled (-u) set, no controls enabled" 1>&2
         echo "Individual control flags set after -u will still be respected" 1>&2
@@ -539,12 +541,14 @@ echo | tee -a "${log}"
 #"setarch `uname -m` -R" would be a tidier way to run our benchmark without ASLR,
 #but doesn't work on our machines (setarch rejects the value of uname -m, and some
 #obvious alternatives, as invalid).
-rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
-sudo bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
-if test $? -ne 0; then
-  echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
-  if test "${cautiousness}" -eq 1; then
-    exit 1
+if test ${do_aslr} -eq 1; then
+  rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
+  sudo bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+  if test $? -ne 0; then
+    echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
+    if test "${cautiousness}" -eq 1; then
+      exit 1
+    fi
   fi
 fi
 
