@@ -242,6 +242,13 @@ fi
 if test x"${freqctl}" = xyes; then
   flags+=" -f"
 fi
+
+#But, if uncontrolled is set, override all other flags
+if test x"${uncontrolled}" = xyes; then
+  echo "Running without any target controls or special (sudo) privileges, due to 'uncontrolled=yes' in target config file"
+  flags="-u"
+fi
+
 #TODO: Strictly, hostname -I might return multiple IP addresses
 #TODO: Repetition of hostname echoing is ugly, but seems to be needed -
 #      perhaps there is some delay after the interface comes up

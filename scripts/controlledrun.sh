@@ -385,7 +385,7 @@ bench_cpu=0
 non_bench_cpu=''
 cautiousness=0
 do_network=0
-while getopts s:f:b:p:cnl: flag; do
+while getopts s:f:b:p:cnul: flag; do
   case $flag in
     s)  services_file="${OPTARG}";;
     f)  freq="${OPTARG}";;
@@ -394,6 +394,16 @@ while getopts s:f:b:p:cnl: flag; do
     c)  cautiousness=1;;
     n)  do_network=1;;
     l)  log="${OPTARG}";;
+    u)  #Set everything to 'uncontrolled', even the controls that default on
+        sudo=''
+        services_file=''
+        freq=''
+        bench_cpu=0
+        non_bench_cpu=''
+        do_network=0
+        echo "Uncontrolled (-u) set, no controls enabled" 1>&2
+        echo "Individual control flags set after -u will still be respected" 1>&2
+    ;;
     *)
         echo 'Unknown option' | tee -a /dev/stderr "${log}" > /dev/null
         exit 1
