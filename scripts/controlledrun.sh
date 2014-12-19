@@ -385,6 +385,7 @@ bench_cpu=0
 non_bench_cpu=''
 cautiousness=0
 do_network=0
+do_renice=1 #Enabled by default
 while getopts s:f:b:p:cnul: flag; do
   case $flag in
     s)  services_file="${OPTARG}";;
@@ -401,6 +402,7 @@ while getopts s:f:b:p:cnul: flag; do
         bench_cpu=''
         non_bench_cpu=''
         do_network=0
+        do_renice=0
         echo "Uncontrolled (-u) set, no controls enabled" 1>&2
         echo "Individual control flags set after -u will still be respected" 1>&2
     ;;
@@ -547,9 +549,11 @@ if test $? -ne 0; then
 fi
 
 #By setting our own niceness, we don't force the benchmark to run as root
-sudo renice -19 $$ #Don't use $sudo, we don't want to break out of chroot here
-if test $? -ne 0; then
-  echo "Failed to set niceness to -19" 1>&2
+if test ${do_renice} -eq 1; then
+  sudo renice -19 $$ #Don't use $sudo, we don't want to break out of chroot here
+  if test $? -ne 0; then
+    echo "Failed to set niceness to -19" 1>&2
+  fi
 fi
 
 #Finally, run the command!
