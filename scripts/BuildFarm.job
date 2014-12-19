@@ -12,7 +12,7 @@ shared="/home/buildslave/workspace/shared"
 cbuild_dir="${WORKSPACE}/cbuildv2"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
-fileserver="148.251.136.42"
+fileserver="abe.tcwglab.linaro.org"
 
 mkdir -p ${snapshots_ref}/
 rsync -az --update ${fileserver}:snapshots/ ${snapshots_ref}/
