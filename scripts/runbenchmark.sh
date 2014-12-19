@@ -232,7 +232,7 @@ done
 #death sooner or later - we can stop ssh client and ssh server from killing the connection, but the TCP layer will get it eventually.
 
 #These parameters sourced from the conf file at beginning of this function
-flags="-b ${benchcore} ${othercore:+-p ${othercore}}"
+flags="${benchcore:+-b ${benchcore}} ${othercore:+-p ${othercore}}"
 if test x"${netctl}" = xyes; then
   flags+=" -n"
 fi

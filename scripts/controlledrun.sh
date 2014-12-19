@@ -398,7 +398,7 @@ while getopts s:f:b:p:cnul: flag; do
         sudo=''
         services_file=''
         freq=''
-        bench_cpu=0
+        bench_cpu=''
         non_bench_cpu=''
         do_network=0
         echo "Uncontrolled (-u) set, no controls enabled" 1>&2
@@ -428,9 +428,9 @@ if test x"${services_file}" != x; then
   fi
 fi
 
-echo "$bench_cpu" | grep '^[[:digit:]]\+$' > /dev/null
+echo "$bench_cpu" | grep '^[[:digit:]]*$' > /dev/null
 if test $? -ne 0; then
-  echo "Benchmark CPU (-b) must be a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
+  echo "Benchmark CPU (-b) must be null or a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 echo "$non_bench_cpu" | grep '^[[:digit:]]*$' > /dev/null
@@ -438,17 +438,19 @@ if test $? -ne 0; then
   echo "Non-benchmark CPU (-p) must be null or a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
-if test x"${bench_cpu}" = x"${non_bench_cpu}"; then
-  echo "Benchmark CPU (-b) and non-benchmark CPU (-p) must be different" | tee -a /dev/stderr "${log}" > /dev/null
+if test x"${bench_cpu}" != x && test x"${non_bench_cpu}" != x && test x"${bench_cpu}" = x"${non_bench_cpu}"; then
+  echo "If set, benchmark CPU (-b) and non-benchmark CPU (-p) must be different" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 
 cmd="$@"
 
-taskset -c ${bench_cpu} true
-if test $? -ne 0; then
-  echo "Could not bind benchmark to CPU ${bench_cpu}" | tee -a /dev/stderr "${log}" > /dev/null
-  exit 1
+if test x"${bench_cpu}" != x; then
+  taskset -c ${bench_cpu} true
+  if test $? -ne 0; then
+    echo "Could not bind benchmark to CPU ${bench_cpu}" | tee -a /dev/stderr "${log}" > /dev/null
+    exit 1
+  fi
 fi
 
 #Put the target back in order before we quit
@@ -553,12 +555,15 @@ fi
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
 #TODO We expect to be running with stdout & stderr redirected, insert a test for this
-echo "Running taskset -c ${bench_cpu} ${cmd}"
-taskset -c ${bench_cpu} ${cmd}
+if test x"${bench_cpu}" != x; then
+  cmd="taskset -c ${bench_cpu} ${cmd}"
+fi
+echo "Running ${cmd}"
+${cmd}
 if test $? -eq 0; then
-  echo "Run of  taskset -c ${bench_cpu} ${cmd} complete" | tee -a "${log}"
+  echo "Run of ${cmd} complete" | tee -a "${log}"
   exit 0
 else
-  echo "taskset -c ${bench_cpu} ${cmd} failed" | tee -a /dev/stderr "${log}" > /dev/null
+  echo "Run of ${cmd} failed" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
