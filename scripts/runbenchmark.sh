@@ -44,7 +44,12 @@ if ! test -e "${topdir}/host.conf"; then
   exit 1
 fi
 confdir="${topdir}/config/boards/bench"
-lavaserver="${USER}@validation.linaro.org/RPC2/"
+if test x"${LAVA_SERVER}" != x; then
+  lavaserver="${LAVA_SERVER}"
+else
+  lavaserver="${USER}@validation.linaro.org/RPC2/"
+  echo "Environment variable LAVA_SERVER not set, defaulted to ${lavaserver}" 1>&2
+fi
 
 benchlog="`. ${topdir}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
