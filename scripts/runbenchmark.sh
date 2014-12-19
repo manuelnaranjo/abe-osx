@@ -68,8 +68,10 @@ listener_file="${temps}/listener_file"
 listener_fifo="${temps}/listener_fifo"
 lava_fifo="${temps}/lava_fifo"
 mkfifo "${listener_fifo}" || exit 1
+exec 3>&-
 exec 3<> "${listener_fifo}"
 mkfifo "${lava_fifo}" || exit 1
+exec 4>&-
 exec 4<> "${lava_fifo}"
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,

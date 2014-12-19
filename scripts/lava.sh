@@ -165,6 +165,7 @@ key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_fifo="${temps}/listener_fifo"
 mkfifo "${listener_fifo}" || exit 1
+exec 3>&-
 exec 3<> "${listener_fifo}"
 json_copy="${temps}/job.json"
 cp "${lava_json}" "${json_copy}"

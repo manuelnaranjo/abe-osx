@@ -52,6 +52,7 @@ function cleanup
 
 #A fifo would make much more sense, but nc doesn't like it
 #The trap is just to suppress the 'Terminated' message
+exec 3>&-
 exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
 read -t 60 pseudofifo_pid <&3
 if test $? -ne 0; then
