@@ -34,7 +34,7 @@ cleanup()
   local tmp
 
   if test x"${rva_setting}" != x; then
-    sudo bash -c "echo ${rva_setting} > /proc/sys/kernel/randomize_va_space"
+    ${sudo} bash -c "echo ${rva_setting} > /proc/sys/kernel/randomize_va_space"
     if test $? -ne 0; then
       echo "Failed to restore ASLR setting" | tee -a /dev/stderr "${log}"
       ret=1
@@ -543,7 +543,7 @@ echo | tee -a "${log}"
 #obvious alternatives, as invalid).
 if test ${do_aslr} -eq 1; then
   rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
-  sudo bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+  ${sudo} bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
   if test $? -ne 0; then
     echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
     if test "${cautiousness}" -eq 1; then
