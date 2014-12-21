@@ -157,6 +157,9 @@ checkout_all()
 	    return 1
 	fi
     done
+    
+    # Since we just checked out all the sources, disable updating them again.
+    supdate=no
 
     notice "Checkout all took ${SECONDS} seconds"
 
@@ -258,7 +261,7 @@ checkout()
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
-		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${revision}"
+		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
 		    if test $? -gt 0; then
 			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
 		    	return 1
@@ -269,7 +272,7 @@ checkout()
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
 		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
-		    dryrun "git-new-workdir ${local_snapshots}/${repo} ${srcdir} ${branch}"
+		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		    if test $? -gt 0; then
 			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		   	return 1
@@ -509,7 +512,7 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "git-new-workdir ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	dryrun "${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then

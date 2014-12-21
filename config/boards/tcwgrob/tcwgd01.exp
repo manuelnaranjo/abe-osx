@@ -1,0 +1,11 @@
+load_generic_config arm-linux
+
+set_board_info protocol ssh
+set_board_info hostname lab.validation.linaro.org
+set_board_info name tcwg-d01-03
+set_board_info port 41044
+set_board_info gcc,timeout 1000
+
+set_board_info ldflags "-static"
+
+set timeout 1000

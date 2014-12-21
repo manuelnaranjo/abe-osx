@@ -609,7 +609,6 @@ SOURCES_CONF
 FILESERVER
 CBUILD_TOP
 BUILDDATE
-MAKEVERSION
 CCRYPT
 AUTOGEN
 BISON
@@ -3578,13 +3577,12 @@ fi
 
 # Versions of Make before 4.0 have a bug which breaks eglibc builds when
 # using parallel jobs.
-makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
-MAKEVERSION="${makeversion}"
-
-if test ${makeversion} -lt 400; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Make 4.0 is missing, which is required" >&5
-$as_echo "$as_me: WARNING: Make 4.0 is missing, which is required" >&2;}
-fi
+#makeversion="`make --version | head -1 | tr -d '.' | cut -d ' ' -f 3`"
+#MAKEVERSION="${makeversion}"
+#AC_SUBST(MAKEVERSION)
+#if test ${makeversion} -lt 400; then
+#   AC_MSG_WARN([Make 4.0 is missing, which is required])
+#fi
 
 #packages="git-svn bzr-fastimport svn-all-fast-exp libncurses5-dev texinfo"
 packages="texinfo gawk"
@@ -3716,7 +3714,7 @@ fi
 if test "${with_fileserver+set}" = set; then :
   withval=$with_fileserver; FILESERVER=${withval}
 else
-  FILESERVER='cbuild.validation.linaro.org'
+  FILESERVER='abe.tcwglab.linaro.org'
 fi
 
 
@@ -4213,6 +4211,7 @@ $as_echo "$as_me: WARNING: You need to install git-new-workdir to use GIT!" >&2;
 $as_echo "$as_me: copy /usr/share/doc/git/contrib/workdir/git-new-workdir to /usr/local/bin and then make it executable" >&6;}
       missing="${missing} git-new-workdir"
 fi
+
 
 # A symbolic link needs to be made in this directory
 #if test -w /opt/linaro -eq 0; then

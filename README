@@ -1,3 +1,4 @@
+                        README
 
 Cbuildv2 is a bourne shell rewrite of the existing cbuild system as
 used by Linaro. While being oriented to the Linaro way of doing
@@ -277,89 +278,4 @@ preserves the data, otherwise it'll get truncated.
   Another good habit is to always prepend a character when doing
 string comparisons. If one of the two strings is undefined, the script
 will abort. So always using "test x${foo} = xbar" prevents that.
-
-
-Build & test times, unoptimized
--------------------------------
-
-aarch64-linux-gnu
-	NOTE: Build took 8140 seconds
-	NOTE: Complete build process took 135 minutes
-	Backport 6hrs, 14m
-
-arm-linux-gnueabihf
-	NOTE: Build took 10766 seconds
-	NOTE: Complete build process took 179 minutes
-	Backport 5hrs, 33m
-
-aarch64-none-elf
-	Timed out
-
-arm-linux-gnueabi	
-	NOTE: Build took 1917 seconds
-	NOTE: Complete build process took 31 minutes
-        Backport 58m
-
-armeb-linux-gnueabihf	
-	NOTE: Build took 9390 seconds
-	NOTE: Complete build process took 156 minutes
-	Backport 5hrs, 28m
-	Found regressions!
-
-aarch64_be-none-elf
-	NOTE: Build took 1111 seconds
-	NOTE: Complete build process took 18 minutes
-        Backport 1hr 57m
-
-native
-    x86_64
-	NOTE: Build took 4684 seconds
-	NOTE: Complete build process took 78 minutes
-
-    aarch64
-	NOTE: Build took 8285 seconds
-	NOTE: Complete build process took 138 minutes
-
-    arm
-	NOTE: Build took 31991 seconds
-	NOTE: Complete build process took 533 minutes	
-
-Build & test times, optimized
--------------------------------
-aarch64-linux-gnu
-arm-linux-gnueabihf
-aarch64-none-elf
-arm-linux-gnueabi	
-armeb-linux-gnueabihf	
-aarch64_be-none-elf
-native
-    x86_64
-    aarch64
-    arm
-
-
-Parallel  Build Performance tests
-https://collaborate.linaro.org/display/TCWG/Toolchain+Build+Statistics
-
-Quad core Xeon @ 2.40GHZ (my old workstation)
----------------------------------------------
-cpus = 16, Build took 2379 seconds, 39 minutes (not over 16)
-cpus = 12, Build took 2454 seconds, 40 minutes
-cpus = 8,  Build took 2224 seconds, 37 minutes
-cpus = 4,  Build took 2343 seconds, 39 minutes (not over 11)
-
-- Make check no remote target
-cpus = 24,  Build took 9323 seconds, 155 minutes armv7
-
-Quad core i7-3740QM with hyperthreading @ 2.70GHz (my laptop)
--------------------------------------------------------------
-cpus = 16, Build took 1602 seconds, 27 minutes
-cpus = 12, Build took  seconds,  minutes
-cpus = 8,  Build took  seconds,  minutes
-
-- Make check 1 remote target
-cpus = 8,  Build took  seconds,  minutes armv7
-
-Quad core Xeon E3-1220 @ 3.10GHZ (tcwgbuild*)
----------------------------------------------
 

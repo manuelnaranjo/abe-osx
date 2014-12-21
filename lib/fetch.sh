@@ -28,6 +28,11 @@ fetch()
 	local file="`basename $1`"
     fi
 
+#    if test x"${supdate}" = xno; then
+#	warning "Updating files disabled by user, not downloading $1"
+#	return 0
+#    fi
+
     # The md5sums file is a special case as it's used to find all
     # the other names of the tarballs for remote downloading.
     if test x"$1" = x"md5sums"; then

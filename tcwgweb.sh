@@ -16,8 +16,31 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+fi
+
+# load commonly used functions
+cbuild="`which $0`"
+topdir="${cbuild_path}"
+cbuild2="`basename $0`"
+
+. "${topdir}/lib/common.sh" || exit 1
+
+# Globals shared between email and gerrit notifications
 returncode="0"
 returnstr="ALLGOOD"
+resultsfile="/tmp/test-results$$.txt"
+
+usage()
+{
+    cat << EOF
+--email          : Send email of the validation results
+--tdir dir1 dir2 : Compare the test results in 2 subdirectories
+EOF
+    return 0
+}
 
 # $1 - the check.log file to scan
 scancheck () 
@@ -42,7 +65,7 @@ scancheck ()
     rm -f /tmp/mail$$.txt
     echo "Testsuite build failures found in ${build}" > /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
-    echo "Check build log: http://cbuild.validation.linaro.org/$1.xz" >> /tmp/mail$$.txt
+    echo "Check build log: http://abe.tcwglab.linaro.org/$1.xz" >> /tmp/mail$$.txt
     echo "" >> /tmp/mail$$.txt
     local i=0
     while test $i -lt ${#errors[@]}; do
@@ -104,12 +127,15 @@ difftwodirs ()
     rsync -a ${next0}/ ${next}/
     
     echo "Diffing: ${prev0} against ${next0}..."
+
     local gcc_version="`grep 'gcc_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
+    if test x"${gcc_version}" = x"gcc.git"; then
+	local gcc_branch="gcc.git~master"
+    else
+	local gcc_branch="${gcc_version}"
+    fi
     local binutils_version="`grep 'binutils_version=' ${next}/manifest.txt | cut -d '=' -f 2`"
     local binutils_revision="`grep 'binutils_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
-    if test x"${gcc_version}" = x"gcc.git"; then
-	local gcc_version="gcc.git~master"
-    fi
     local cversion="`grep 'gcc_revision=' ${next}/manifest.txt | cut -d '=' -f 2`"
     if test -e ${prev}/manifest.txt; then
 	local pversion="`grep 'gcc_revision=' ${prev}/manifest.txt | cut -d '=' -f 2`"
@@ -125,12 +151,11 @@ difftwodirs ()
     fi
     unxz ${next}/*.sum.xz
     unxz ${next}/check*.log.xz
-    # FIXME: gfortran has problems in the testsuite, so it's temporarily not
+    # FIXME: LD and gfortran has problems in the testsuite, so it's temporarily not
     # analyzed for errors.
-    local resultsfile="/tmp/test-results$$.txt"
     local regressions=0
     touch ${resultsfile}
-    echo "Comparison of ${gcc_version} between:" >> ${resultsfile}
+    echo "Comparison of ${gcc_branch} between:" >> ${resultsfile}
     echo "	${prev0} and" >> ${resultsfile}
     echo "	${next0}" >> ${resultsfile}
     for i in gcc g\+\+ libstdc++ ld gas gdb glibc egibc newlib binutils libatomic libgomp libitm; do
@@ -171,7 +196,6 @@ difftwodirs ()
 		echo "" >> ${resultsfile}
 		grep "^# of " ${next}/$i.sum >> ${resultsfile}
 		echo "" >> ${resultsfile}
-		local wwwpath="`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
 		local userid="`grep 'email=' ${next}/manifest.txt | cut -d '=' -f 2`"
 		if test ${regressions} -gt 0; then
 		    echo "$i had regressions between ${pversion} and ${cversion}!" >> ${resultsfile}
@@ -188,15 +212,20 @@ difftwodirs ()
 	scancheck ${next}/check-$i.log.xz
     done
 
-    echo "Build logs: http://cbuild.validation.linaro.org${wwwpath}/" >> ${resultsfile}
+    local wwwpath="/logs/gcc-linaro-${gcc_version}/`echo ${next} | sed -e 's:/work::' -e 's:/space::'`"
+    echo "Build logs: http://abe.tcwglab.linaro.org${wwwpath}/" >> ${resultsfile}
     echo "" >> ${resultsfile}
-    mailto "Test results for ${gcc_version}" ${resultsfile} ${userid}
-    rm -f ${resultsfile}
+    local lineno="`grep -n -- "----" ${prev}/manifest.txt | grep -o "[0-9]*"`"
+    if test x"${lineno}" != x; then
+	sed -e "1,${lineno}d" ${prev}/manifest.txt >> ${resultsfile}
+	echo "" >> ${resultsfile}
+    fi
+
+    mailto "Test results for ${gcc_branch}" ${resultsfile} ${userid}
 
     rm -fr ${tmpdir}
 
     echo ${returnstr}
-    exit ${returncode}
 }
 
 #
@@ -250,79 +279,30 @@ EOF
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
-# $1 - the subject for the email
-# $2 - the body of the email
-# $3 - optional user to send email to
-mailto()
-{
-    if test x"${email}" = xyes; then
-	echo "Mailing test results!"
-	if test x"$3" != x; then
-	    mail -s "$1" $3 < $2	
-	else
-	    mail -s "$1" tcwg-test-results@gnashdev.org < $2
-	fi
-    fi
-    echo "$1"
-    echo "===================== $i ================"
-    cat $2
-}
-
-usage()
-{
-    echo "--email          : Send email of the validation results"
-    echo "--tdir dir1 dir2 : Compare the test results in 2 subdirectories"
-    echo "--base dir       : Compare the test results in dir to the baseline"
-    echo "These next two options are only used by --base"
-    echo "  --target triplet : Thr target triplet or 'native'"
-    echo "  --build cpu      : The cpu of the buuld machine"
-}
-
 # ----------------------------------------------------------------------
 # Start to actually do something
-
-# The top level is usually something like /space/build/gcc-linaro-4.8.3-2014.02
-
-if test "`echo $* | grep -c email`" -gt 0; then
-    email=yes    
-fi
 
 if test $# -eq 0; then
     usage
 fi
-args="$*"
+
+OPTS="`getopt -o etb:h -l email:tdir:help:branch -- "$@"`"
 while test $# -gt 0; do
-    case "$1" in
-	--email)
-	    ;;
-	--tdir*)
-	    difftwodirs "$2" "$3"
-	    shift
-	    ;;
-	--target*)
-	    # Set the target triplet
-	    target="$2"
-	    shift
-	    ;;
-	--build*)
-	    # Set the target triplet
-	    buildarch="`echo $2 | cut -d '-' -f 1`"
-	    shift
-	    ;;
-	--base*)
-	    # For each revision we build the toolchain for this config triplet
-	    if test x"${target}" = x; then
-		echo "ERROR: No target to compare!"
-		echo "tcwgweb.sh --target [triplet] ${args} --base [path]"
-		exit
-		
-	    fi
-	    shift
-	    diffbaseline "${buildarch}.${target}" "$1"
-	    ;;
+    echo 1 = "$1"
+    case $1 in
+	-e|--email) email=yes ;;
+	-b|--branch) branch=$2 ;;
+	-t|--tdir) difftwodirs "$2" "$3"
+	    shift ; shift ;;
+        -h|--help) usage ;;
+	--) break ;;
     esac
-    if test $# -gt 0; then
-	shift
-    fi
+    shift
 done
 
+srcdir="linaro/shared/snapshots/gcc.git"
+gerrit_info ${srcdir}
+gerrit_build_status ${srcdir} 0 ${resultsfile}
+
+rm -fr ${resultsfile}
+# cat ${resultsfile}

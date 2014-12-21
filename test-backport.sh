@@ -24,7 +24,7 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  test-backport.sh [--help] [f|--fileserver remote file server]
+  test-backport.sh [--help] [f|--fileserver remote file server] --target triplet branch
 EOF
     return 0
 }
@@ -66,6 +66,10 @@ while test $# -gt 0; do
     shift
 done
 
+if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
+    branch="`echo ${branch} | sed -e 's:gcc.git~::'`"
+fi
+
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/${branch}"
 else
@@ -73,12 +77,8 @@ else
     srcdir="${local_snapshots}/${branch}"
 fi
 
-if test ! -e ${srcdir}; then
-#    (cd ${local_snapshots}/${repo} && git pull)
-    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
-#else
-#    (cd ${srcdir} && git pull)
-fi
+rm -fr ${srcdir}
+git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
@@ -86,16 +86,16 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
-resultsdir="/tmp/cbuild@"
+resultsdir="/tmp/cbuild-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Cbuild2 failed!"
 	exit 1
     fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
-    logs="`find ${local_builds}/${build}/${target} -name \*.log`"
+    logs="`echo ${sums} | sed 's/\.sum/.log/g'`"
     manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
     if test x"${sums}" != x; then
 	mkdir -p ${resultsdir}${revisions[$i]}
@@ -103,8 +103,9 @@ while test $i -lt ${#revisions[@]}; do
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
 	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
-	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.sum
+	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.*
     fi
+    mv ${manifest} ${manifest}.${revisions[$i]}
     i="`expr $i + 1`"
 done
 
@@ -114,14 +115,14 @@ if test x"${fileserver}" != x; then
     basedir="/work/logs"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
     ssh ${fileserver} mkdir -p ${basedir}/${dir}
-    # Compress and copy ll files from the first build
+    # Compress and copy all files from the first build
     xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
     scp ${resultsdir}${revisions[0]}/* ${fileserver}:${basedir}/${dir}/
     
-# Compress and copy ll files from the first build
+# Compress and copy all files from the second build
     xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
     scp ${resultsdir}${revisions[1]}/* ${fileserver}:${basedir}/${dir}/
 fi
 
 # Diff the two directories
-${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
+/bin/bash -x ${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}

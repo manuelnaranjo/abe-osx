@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+
 usage()
 {
     # Format this section with 75 columns.
@@ -31,6 +32,10 @@ if test $# -lt 1; then
 #    exit
 fi
 
+# load commonly used functions
+which_dir="`which $0`"
+topdir="`dirname ${which_dir}`"
+
 # This is where all the builds go
 if test x"${WORKSPACE}" = x; then
     WORKSPACE="`pwd`"
@@ -45,12 +50,6 @@ user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
-
-# This is the top level directory for the cbuild2 sources.
-cbuild_dir="${user_workspace}/cbuildv2"
-
-# Languages to build
-languages="default"
 
 # The release version string, usually a date
 releasestr=
@@ -182,6 +181,11 @@ case "$(hostname)" in
     "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
 esac
 
+# load commonly used varibles set by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+fi
+
 # This is the top level directory for the cbuild2 sources.
 #cbuild_dir="${cbuild_path}"
 
@@ -281,6 +285,7 @@ if test x"${manifest}" != x; then
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
+    echo "build_url=${BUILD_URL}" >> ${manifest}
 else
     echo "ERROR: No manifest file, build probably failed!"
 fi
