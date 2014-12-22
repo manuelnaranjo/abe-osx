@@ -45,11 +45,17 @@ user_workspace="${WORKSPACE}"
 # The files in this directory are shared across all platforms 
 shared="${HOME}/workspace/shared"
 
-# This is where all the git repositories live
-user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+# This is an optional directory for the master copy of the git repositories.
+user_git_repo="${shared}/snapshots"
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
+
+# Server to store results on.
+fileserver="abe.tcwglab.linaro.org"
+
+# Compiler languages to build
+languages=default
 
 # The release version string, usually a date
 releasestr=
@@ -94,11 +100,6 @@ fi
 if test "`echo $user_options | grep -c -- --release`" -gt 0; then
     release="`echo  $user_options | grep -o -- "--release [a-zA-Z0-9]* " | cut -d ' ' -f 2`"
     releasestr="--release ${release}"
-fi
-
-# This is an optional directory for the master copy of the git repositories.
-if test x"${user_git_repo}" = x; then
-    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 fi
 
 # Get the versions of dependant components to use
@@ -173,7 +174,7 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.

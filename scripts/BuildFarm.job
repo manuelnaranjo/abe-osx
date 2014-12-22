@@ -35,8 +35,7 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-languages=${languages} --enable-schroot-test
-$CONFIG_SHELL -x ${abe_dir}/jenkins.sh ${release}
+$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
