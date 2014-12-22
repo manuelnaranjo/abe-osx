@@ -35,7 +35,7 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL ${abe_dir}/configure --disable-update --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-languages=${languages} --enable-schroot-test
 $CONFIG_SHELL -x ${abe_dir}/jenkins.sh ${release}
 
 # force a failure of abe has build problems.
@@ -43,6 +43,7 @@ if test $? -gt 0; then
   exit 1
 fi
 
+# Leave source and build trees for *Farm jobs; delete for all other jobs
 echo "JOB_NAME = ${JOB_NAME}"
 case "${JOB_NAME}" in
     *"Farm"*) ;;
