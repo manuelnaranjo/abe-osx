@@ -173,7 +173,7 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
