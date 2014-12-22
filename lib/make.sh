@@ -32,7 +32,7 @@ build_all()
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 gdb" # native build
+        local builds="infrastructure binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
@@ -198,7 +198,7 @@ build_all()
             fi
             binary_toolchain
         fi
-        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0 -a x"${build}" != x"${target}"; then
+        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
             binary_sysroot
         fi
 #        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
