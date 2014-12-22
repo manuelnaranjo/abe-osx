@@ -57,13 +57,16 @@ fileserver="abe.tcwglab.linaro.org"
 # Compiler languages to build
 languages=default
 
+# Whether attempt bootstrap
+bootstrap=false
+
 # The release version string, usually a date
 releasestr=
 
 # This is a string of optional extra arguments to pass to abe at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:l:r:t:h -l snapshots:gitrepo:abe:workspace:options:fileserver:languages:runtests:target:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -76,6 +79,7 @@ while test $# -gt 0; do
         -f|--fileserver) fileserver=$2 ;;
         -l|--languages) languages=$2 ;;
         -r|--runtests) runtests="true" ;;
+        -b|--bootstrap) bootstrap="true" ;;
 	-h|--help) usage ;;
     esac
     shift

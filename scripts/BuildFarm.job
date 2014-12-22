@@ -31,11 +31,17 @@ case ${target} in
 	;;
 esac
 
+if test x"${bootstrap}" = x"true"; then
+    bootstrap="--bootstrap"
+else
+    bootstrap=""
+fi
+
 rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release}
+$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release} ${bootstrap}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
