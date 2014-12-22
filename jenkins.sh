@@ -63,7 +63,7 @@ releasestr=
 # This is a string of optional extra arguments to pass to abe at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:l:t:h -l snapshots:gitrepo:abe:workspace:options:fileserver:languages:target:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:r:t:h -l snapshots:gitrepo:abe:workspace:options:fileserver:languages:runtests:target:help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
