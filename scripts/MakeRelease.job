@@ -31,7 +31,7 @@ if test x"${target}" != x"native" -a x"${target}" != x; then
 fi
 
 shared="/home/buildslave/workspace/shared/"
-cbuild_dir="${user_workspace}/cbuildv2"
+abe_dir="${user_workspace}/abe"
 user_snapshots="${user_workspace}/snapshots"
 
 if test -e ${user_workspace}; then
@@ -54,7 +54,7 @@ fi
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} \
+  $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} \
       --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 fi
 
@@ -68,7 +68,7 @@ fi
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} \
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} \
 	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
@@ -76,15 +76,15 @@ fi
 if test x"${tarbin}" = x"yes"; then
     # Canadian cross builds require a Linux hosted crfoss compiler first
     if test x"${canadian}" = x"true"; then
-	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
 	host="--host i686-w64-mingw32"
     else
 	host=""
     fi
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all
 fi
 
-# force a failure if cbuild2 has build problems.
+# force a failure if abe has build problems.
 if test $? -gt 0; then
   exit 1
 fi
@@ -95,8 +95,8 @@ if test x"${nocheck}" = xyes; then
 fi
 
 # Copy the source build test results and tarballs to the fileserver
-bases="/work/cbuildv2/baselines/${release}/${target}"
-snaps="/home/cbuild/var/snapshots/"
+bases="/work/abe/baselines/${release}/${target}"
+snaps="/home/abe/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
@@ -144,7 +144,7 @@ if test x"${tarbin}" = xyes; then
 	fi
 	
 	# Diff the two directories
-	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
 	if test x"${out}" = x"YES"; then 
 	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"

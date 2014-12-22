@@ -57,7 +57,7 @@ set_dbpasswd()
     dbpasswd="$1"
 }
 
-# if --dryrun is passed to cbuild2.sh, then commands are echoed instead of
+# if --dryrun is passed to abe.sh, then commands are echoed instead of
 # of executed.
 dryrun()
 {

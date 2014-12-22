@@ -213,6 +213,9 @@ binary_toolchain()
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
+    # FIXME: link the sysroot into the toolchain tarball
+    ln -sfnT ${sysroots} ${destdir}/libc
+
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
@@ -279,10 +282,10 @@ binary_sysroot()
 	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
     fi
 
-#    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
+#    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="/tmp/linaro.$$/${tag}"
     dryrun "mkdir -p /tmp/linaro.$$"
-    dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${destdir}"
+    dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
 
     # Generate the install script
     sysroot_install_script ${destdir}
@@ -347,7 +350,7 @@ manifest()
     local srcdir="`get_srcdir ${binutils_version}`"
     local binutils_revision=="`get_git_revision ${srcdir}`"
 
-    local cbuild_revision="`get_git_revision ${cbuild_path}`"
+    local abe_revision="`get_git_revision ${abe_path}`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -375,8 +378,8 @@ gdb_version=${gdb_version}
 gdb_revsion=${gdb_revision}
 linux_version=${linux_version}
 
-# Cbuild revision used
-cbuild_revision=${cbuild_revision}
+# Abe revision used
+abe_revision=${abe_revision}
 
 EOF
 
@@ -513,7 +516,7 @@ binutils_src_tarball()
     return 0
 }
 
-# This installs a binary tarball produced by cbuild2, and runs make check
+# This installs a binary tarball produced by abe, and runs make check
 test_binary_toolchain()
 {
     # Binaries get installed here if possible

@@ -1,6 +1,6 @@
 These are the config files DejaGnu uses to access the Linaro build
 farm. When the DEJAGNU environment variables is set to
-cbuild2/config/linaro.exp, then cbuild2/config/boards is prefixed to
+abe/config/linaro.exp, then abe/config/boards is prefixed to
 the directory lookup paths. The top level sub directory is the shorter
 nodename of the system's hostname, for example tcwgbuild01.
 

@@ -52,6 +52,7 @@ case "$target_triplet" in {
 #		set target_list { tcwgchromebook }
 #		set target_list { tcwgd01 }
 #		set target_list { chrome1-01 }
+#		set target_list { "arm-qemu" } 
 		set target_list { dragon-01 }
 	    }
 	    { build-* tcwg-ex40-* d01-* apm-* juno-* amd-* } {
@@ -60,6 +61,12 @@ case "$target_triplet" in {
 	    { natived01-* nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
+	    default{
+		global SIM
+		# CPU and sysroot are set through the environment
+		set SIM "qemu-arm"
+		set target_list { "arm-qemu" } 
+            }
 	}
     }
     { "arm-*-eabi*" } {
@@ -86,6 +93,10 @@ case "$target_triplet" in {
 	    { nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
+	    default {
+		set SIM "qemu-aarch64"
+                set target_list { aarch64-qemu }
+            }
 	}
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {

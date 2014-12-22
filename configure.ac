@@ -21,8 +21,8 @@ dnl build and test a GNU toolchain.
 dnl 
 
 AC_PREREQ(2.59c)
-AC_INIT(cbuild, 2.0dev)
-AC_CONFIG_SRCDIR([cbuild2.sh])
+AC_INIT(abe, 2.0dev)
+AC_CONFIG_SRCDIR([abe.sh])
 dnl AC_CONFIG_HEADERS([config.h])
 dnl AC_CONFIG_MACRO_DIR([macros])
 
@@ -33,7 +33,7 @@ missing=
 AC_PROG_CC
 AC_PROG_CXX
 if test x"${CC}" = x -a x"${CXX}" = x; then
-   AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run cbuild!])
+   AC_MSG_ERROR([You need 'gcc' and 'g++' to fully run abe!])
    missing="${missing} gcc"
 fi
 AC_PROG_INSTALL
@@ -68,7 +68,7 @@ AC_SUBST(DISTRIBUTION)
 AC_PATH_PROG(WGET, wget)
 AC_SUBST(WGET)
 if test x"${WGET}" = x; then
-   AC_MSG_WARN([You need 'wget' to fully run cbuild!])
+   AC_MSG_WARN([You need 'wget' to fully run abe!])
    missing="${missing} wget"
 fi
 
@@ -107,12 +107,6 @@ AC_PATH_PROG(AUTOGEN, autogen)
 if test x"${AUTOGEN}" = x; then
    AC_MSG_WARN([You need 'autogen' to run configure for GCC properly!])
    missing="${missing} autogen"
-fi
-
-AC_PATH_PROG(CCRYPT, ccrypt)
-if test x"${CCRYPT}" = x; then
-   AC_MSG_WARN([You need 'ccrypt' to run benchmarks, this can be ignored for builds])
-   missing="${missing} ccrypt"
 fi
 
 dnl Building GDB requires ncurses and termcap
@@ -205,7 +199,7 @@ BUILDDATE="`date +%Y%m%d`"
 AC_SUBST(BUILDDATE)
 
 dnl While it's a bad idea to store the database access information in an unencrypted
-dnl text file, this is useful for cbuild2 development itself. This option should never
+dnl text file, this is useful for abe development itself. This option should never
 dnl be used in a production environment. The default is read-only access. You can also
 dnl set DBUSER and DBPASSWD in your environment, but that's also a possible security
 dnl risk.
@@ -224,16 +218,16 @@ AC_ARG_WITH(dbhost,
   dbhost=${withval} ; AC_MSG_WARN([The database hostname is stored in an unencrypted text file which could be considered a security risk!]),
   dbhost='localhost')
 
-dnl The top of the cbuild tree
+dnl The top of the abe tree
 AC_ARG_WITH(toplevel,
   AC_HELP_STRING([--with-toplevel], []),
-  CBUILD_TOP=${withval},
-  CBUILD_TOP="${PWD}")
-AC_SUBST(CBUILD_TOP)
+  ABE_TOP=${withval},
+  ABE_TOP="${PWD}")
+AC_SUBST(ABE_TOP)
 
-if test ! -d ${CBUILD_TOP}; then
-   AC_MSG_WARN([${CBUILD_TOP} does not exist so creating directory!])
-   mkdir -p ${CBUILD_TOP}
+if test ! -d ${ABE_TOP}; then
+   AC_MSG_WARN([${ABE_TOP} does not exist so creating directory!])
+   mkdir -p ${ABE_TOP}
 fi
 
 # The various Jenkins jobs copy log files and rest results to a remote file
@@ -250,14 +244,14 @@ AC_ARG_WITH(sources-conf,
   SOURCES_CONF="${srcdir}/config/sources.conf")
 AC_SUBST(SOURCES_CONF)
 
-CBUILD_PATH=$(readlink -f ${srcdir})
-AC_SUBST(CBUILD_PATH)
+ABE_PATH=$(readlink -f ${srcdir})
+AC_SUBST(ABE_PATH)
 
-dnl The top of the cbuild tree
+dnl The top of the abe tree
 AC_ARG_WITH(sysroot,
   AC_HELP_STRING([--with-sysroot], []),
   SYSROOTS=${withval},
-  SYSROOTS="${CBUILD_TOP}"/sysroots)
+  SYSROOTS="${ABE_TOP}"/sysroots)
 AC_SUBST(SYSROOTS)
 
 if test x"${target}" != x"${build}"; then
@@ -271,7 +265,7 @@ dnl The local directory where snapshots are stored
 AC_ARG_WITH(local-snapshots,
   AC_HELP_STRING([--with-local-snapshots], [Where downloaded tarballs are stored]),
   LOCAL_SNAPSHOTS=${withval},
-  LOCAL_SNAPSHOTS="${CBUILD_TOP}/snapshots")
+  LOCAL_SNAPSHOTS="${ABE_TOP}/snapshots")
 AC_SUBST(LOCAL_SNAPSHOTS)
 
 if test ! -d ${LOCAL_SNAPSHOTS}; then
@@ -290,7 +284,7 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
-  LOCAL_BUILDS="${CBUILD_TOP}/builds")
+  LOCAL_BUILDS="${ABE_TOP}/builds")
 AC_SUBST(LOCAL_BUILDS)
 
 if test ! -d ${LOCAL_BUILDS}; then
@@ -394,7 +388,7 @@ AC_SUBST(ENABLE_PARALLEL)
 dnl AC_ARG_WITH(snapshots,
 dnl   AC_HELP_STRING([--with-snapshots], []),
 dnl   snapshots=${withval},
-dnl   snapshots='cbuild')
+dnl   snapshots='abe')
 
 dnl Since the configure script is actually checked in, a developer
 dnl does not need to have the GNU Autotools installed. However,

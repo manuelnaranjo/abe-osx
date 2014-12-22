@@ -21,7 +21,7 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  jenkins.sh [--help] [-s snapshot dir] [g git reference dir] [cbuildv2 path] [w workspace]
+  jenkins.sh [--help] [-s snapshot dir] [g git reference dir] [abe path] [w workspace]
 EOF
     return 0
 }
@@ -54,16 +54,16 @@ user_snapshots="${user_workspace}/snapshots"
 # The release version string, usually a date
 releasestr=
 
-# This is a string of optional extra arguments to pass to cbuild at runtime
+# This is a string of optional extra arguments to pass to abe at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:l:t:h -l snapshots:gitrepo:cbuild:workspace:options:fileserver:languages:target:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:t:h -l snapshots:gitrepo:abe:workspace:options:fileserver:languages:target:help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
         -g|--gitrepo) user_git_repo=$2 ;;
-        -c|--cbuild) cbuild_dir=$2 ;;
+        -c|--abe) abe_dir=$2 ;;
 	-t|--target) target=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
@@ -162,7 +162,7 @@ fi
 # Use the newly created build directory
 pushd ${user_workspace}/_build
 
-# Configure Cbuildv2 itself. Force the use of bash instead of the Ubuntu
+# Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
 export CONFIG_SHELL="/bin/bash"
@@ -170,10 +170,10 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-if test x"${cbuild_dir}" = x; then
-    cbuild_dir=${topdir}
+if test x"${abe_dir}" = x; then
+    abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${cbuild_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
@@ -186,8 +186,8 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 fi
 
-# This is the top level directory for the cbuild2 sources.
-#cbuild_dir="${cbuild_path}"
+# This is the top level directory for the abe sources.
+#abe_dir="${abe_path}"
 
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
@@ -207,9 +207,9 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
-# If cbuild2 returned an error, make jenkins see this as a build failure
+# If abe returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
     echo "================= TAIL OF LOG: BEGIN ================="
     tail -n 50 build.out
@@ -306,7 +306,7 @@ if test x"${runtests}" = xtrue; then
 #if test x"${sums}" != x; then
 #    for i in ${sums}; do
 #	name="`basename $i`"
-#	${cbuild_dir}/sum2junit.sh $i $user_workspace/${name}.junit
+#	${abe_dir}/sum2junit.sh $i $user_workspace/${name}.junit
 #	cp $i ${user_workspace}/results/${dir}
 #    done
 #    junits="`find ${user_workspace} -name *.junit`"
@@ -325,13 +325,13 @@ sums="`find ${user_workspace} -name *.sum`"
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
-    $CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${platform} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${platform} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${cbuild_dir}/cbuild2.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
@@ -354,13 +354,13 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	logs="`find ${user_workspace} -name make\*.log`"
 	cp ${logs} ${logs_dir}/
 
-	# Copy stdout and stderr output from cbuild2.
+	# Copy stdout and stderr output from abe.
 	cp build.out build.err ${logs_dir}/
 
 	xz ${logs_dir}/*
 	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
 	rm -rf ${logs_dir}
-	scp ${cbuild_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
 
@@ -369,7 +369,7 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} ${fileserver}:/home/cbuild/var/snapshots/
+	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/
 	rm -f ${srcfiles}
     fi
 

@@ -1,22 +1,22 @@
 #!/bin/bash
 
-testcbuild2="`basename $0`"
+testabe="`basename $0`"
 topdir=`dirname $0`
-cbuild_path=`readlink -f ${topdir}`
-export cbuild_path
+abe_path=`readlink -f ${topdir}`
+export abe_path
 
 # Source common.sh for some common utilities.
-. ${cbuild_path}/lib/common.sh || exit 1
+. ${abe_path}/lib/common.sh || exit 1
 
 # We use a tmp/ directory for the builddir in order that we don't pollute the
 # srcdir or an existing builddir.
-tmpdir=`mktemp -d /tmp/cbuild2.$$.XXX`
+tmpdir=`mktemp -d /tmp/abe.$$.XXX`
 if test "$?" -gt 0; then
     error "mktemp of ${tmpdir} failed."
     exit 1
 fi
 
-# Log files for cbuild test runs are dumped here.
+# Log files for abe test runs are dumped here.
 testlogs=${tmpdir}/testlogs
 mkdir -p ${testlogs}
 if test "$?" -gt 0; then
@@ -29,14 +29,14 @@ runintmpdir=
 # existing build dir, otherwise we're in the srcdir so we need to run
 # configure in the tmpdir and run the tests from there.
 if test ! -e "${PWD}/host.conf"; then
-    (cd ${tmpdir} && ${cbuild_path}/configure --with-sources-conf=${cbuild_path}/testsuite/test_sources.conf)
+    (cd ${tmpdir} && ${abe_path}/configure --with-sources-conf=${abe_path}/testsuite/test_sources.conf)
     runintmpdir=yes
 else
     # copy the md5sums file from the existing snapshots directory to the new local_snapshots directory.
 
     # Override $local_snapshots so that the local_snapshots directory of an
     # existing build is not moved or damaged.  This affects all called
-    # instances of cbuild2.sh below.
+    # instances of abe.sh below.
     export local_snapshots="${tmpdir}/snapshots"
     out="`mkdir -p ${local_snapshots}`"
     if test "$?" -gt 0; then
@@ -44,19 +44,19 @@ else
         exit 1
     fi
     # Override the existing sources_conf setting in host.conf.
-    export sources_conf=${cbuild_path}testsuite/test_sources.conf
+    export sources_conf=${abe_path}testsuite/test_sources.conf
 fi
 
 export wget_quiet=yes
 
 usage()
 {
-    echo "  ${testcbuild2} [--debug|-v]"
+    echo "  ${testabe} [--debug|-v]"
     echo "                 [--md5sums <path/to/alternative/snapshots/md5sums>]"
     echo ""
-    echo "  ${testcbuild2} is the cbuild2 frontend command conformance test."
+    echo "  ${testabe} is the abe frontend command conformance test."
     echo ""
-    echo " ${testcbuild2} should be run from the source directory."
+    echo " ${testabe} should be run from the source directory."
 }
 
 passes=0
@@ -157,7 +157,7 @@ test_failure()
     local match=$2
     local out=
 
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
 }
 
@@ -169,7 +169,7 @@ test_pass()
     local out=
 
     # Continue to search for error so we don't get false positives.
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
@@ -607,7 +607,7 @@ test_pass "${cb_commands}" "${match}"
 # be grepped in 'match'... yet.
 cb_commands="--dryrun --build gcc.git --stage 2"
 testlineno="`expr $LINENO + 1`"
-out="`(${runintmpdir:+cd ${tmpdir}} && ${cbuild_path}/cbuild2.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
+out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
 if test ${out} -gt 0; then
     pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 else
@@ -630,7 +630,7 @@ if test x"${tmpdir}" = x"/tmp"; then
     echo "\n${local_snapshots} doesn't conform to /tmp/<tmpdir>/snapshots. Not safe to remove."
 elif test -d "${tmpdir}/snapshots" -a ${failures} -lt 1; then
     echo ""
-    echo "${testcbuild2} finished with no unexpected failures. Removing ${tmpdir}"
+    echo "${testabe} finished with no unexpected failures. Removing ${tmpdir}"
     rm -rf ${tmpdir}
 fi
 

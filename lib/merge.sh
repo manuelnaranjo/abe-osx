@@ -85,7 +85,7 @@ merge_branch()
 	month="`date +%m`"
 	day="`date +%d`"
 	
-	# If no email address is in ~/.cbuildrc, create one
+	# If no email address is in ~/.aberc, create one
 	if test x"${email}" = x; then
 	    email="${LOGNAME}@`hostname`"
 	fi

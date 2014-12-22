@@ -27,7 +27,7 @@ build_all()
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
         local builds="infrastructure binutils stage1 libc stage2 gdb"
-	if test "`echo ${target} | grep -c -- -none-`" -eq 0; then
+	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
@@ -107,7 +107,7 @@ build_all()
                     local sysroot="`${target}-gcc -print-sysroot`"
                     if test ! -d ${sysroot}; then
                         dryrun "mkdir -p /opt/linaro"
-                        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+                        dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
                     fi
                 fi
                 ;; 
@@ -198,7 +198,7 @@ build_all()
             fi
             binary_toolchain
         fi
-        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
+        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0 -a x"${build}" != x"${target}"; then
             binary_sysroot
         fi
 #        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
@@ -409,7 +409,7 @@ make_all()
     local default_makeflags="`read_config $1 default_makeflags`"
 
     if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
-       default_makeflags="gdbserver CFLAGS=--sysroot=${local_builds}/sysroot-${target}"
+       default_makeflags="gdbserver CFLAGS=--sysroot=${sysroots}"
     fi
 
     if test x"${default_makeflags}" !=  x; then
@@ -710,7 +710,7 @@ make_check()
     # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
-        dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+        dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
 	local exec_tests
 	exec_tests=false
@@ -757,6 +757,10 @@ make_check()
 		local check_targets="check"
 		;;
 	esac
+	if test x"${tool}" = x"gcc"; then
+            touch ${sysroots}/etc/ld.so.cache
+            chmod 700 ${sysroots}/etc/ld.so.cache
+	fi
 
 	for i in ${dirs}; do
             dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
@@ -764,6 +768,10 @@ make_check()
 
 	# Stop schroot sessions
 	stop_schroot_sessions "$schroot_port" ${schroot_boards}
+       
+        if test x"${tool}" = x"gcc"; then
+            rm -rf ${sysroots}/etc/ld.so.cache
+	fi
     fi
 
     return 0
