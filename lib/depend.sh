@@ -132,7 +132,7 @@ installed()
 
 # These are the latest copies of the infrastructure files required to
 # fully build GCC in all it's glory. While it is possible to pass
-# --disable-* options at configure time to GCC, these are use for
+# --disable-* options at configure time to GCC, these are used for
 # good reason, so we download, build and install them.
 infrastructure()
 {
@@ -162,21 +162,18 @@ infrastructure()
      	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
     done
 
-    # Store the current value so we can reset it ater we're done.
+    # Store the current value so we can reset it after we're done.
     local nodep=${nodepends}
 
     # Turn off dependency checking, as everything is handled here.
     nodepends=yes
     local buildret=
     for i in ${files}; do
-	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-	if test "`echo $i | grep -c /linux`" -eq 1 -a x"${build}" = x"${target}"; then
-	    continue
-	fi
 	# if make 4.0 is already installed, we don't need to build it everytime.
 	if test $i = "make" -a "${makeversion}" = "4.0"; then
 	    continue
 	fi
+	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
 	build ${name}
 	buildret=$?
 	if test ${buildret} -gt 0; then
