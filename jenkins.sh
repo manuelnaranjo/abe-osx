@@ -155,8 +155,9 @@ fi
 
 # Create a build directory
 if test ! -d ${user_workspace}/_build; then
-    mkdir -p ${user_workspace}/_build
+    rm -fr ${user_workspace}/_build
 fi
+mkdir -p ${user_workspace}/_build
 
 # Use the newly created build directory
 pushd ${user_workspace}/_build
