@@ -32,7 +32,7 @@ build_all()
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 gdb" # native build
+        local builds="infrastructure binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
