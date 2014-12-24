@@ -154,7 +154,7 @@ if test x"${user_workspace}" = x; then
 fi
 
 # Create a build directory
-if test ! -d ${user_workspace}/_build; then
+if test -d ${user_workspace}/_build; then
     rm -fr ${user_workspace}/_build
 fi
 mkdir -p ${user_workspace}/_build
