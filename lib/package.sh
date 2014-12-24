@@ -285,7 +285,11 @@ binary_sysroot()
 #    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="/tmp/linaro.$$/${tag}"
     dryrun "mkdir -p /tmp/linaro.$$"
-    dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
+    if test x"${build}" != x"${target}"; then
+	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
+    else
+	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
+    fi
 
     # Generate the install script
     sysroot_install_script ${destdir}
