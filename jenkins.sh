@@ -218,11 +218,7 @@ else
 fi
 
 # Setup the remote directory for tcwgweb
-if test x"${target}" = x"${build}"; then
-    gcc="`find ${user_workspace} -name gcc`"
-else
-    gcc="`find ${user_workspace} -name ${target}-gcc`"
-fi
+gcc="`find ${user_workspace} -name ${target}\*gcc`"
 
 # If we can't find GCC, our build failed, so don't continue
 if test x"${gcc}" = x; then
