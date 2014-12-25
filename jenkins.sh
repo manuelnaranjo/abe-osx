@@ -218,7 +218,7 @@ else
 fi
 
 # Setup the remote directory for tcwgweb
-if test x"${target}" = x"native"; then
+if test x"${target}" = x"${build}"; then
     gcc="`find ${user_workspace} -name gcc`"
 else
     gcc="`find ${user_workspace} -name ${target}-gcc`"
