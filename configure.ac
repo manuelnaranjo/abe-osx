@@ -241,7 +241,11 @@ AC_SUBST(FILESERVER)
 AC_ARG_WITH(sources-conf,
   AC_HELP_STRING([--with-sources-conf], []),
   SOURCES_CONF=${withval},
-  SOURCES_CONF="${srcdir}/config/sources.conf")
+  SOURCES_CONF="${srcdir}/config/sources.conf"
+  dir="`dirname ${SOURCES_CONF}`"
+  base="`cd ${dir} && pwd`"
+  conf="`basename  ${SOURCES_CONF}`"
+  SOURCES_CONF="${base}/${conf}")
 AC_SUBST(SOURCES_CONF)
 
 ABE_PATH=$(readlink -f ${srcdir})
