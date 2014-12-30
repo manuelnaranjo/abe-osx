@@ -3678,6 +3678,10 @@ if test "${with_sources_conf+set}" = set; then :
   withval=$with_sources_conf; SOURCES_CONF=${withval}
 else
   SOURCES_CONF="${srcdir}/config/sources.conf"
+  dir="`dirname ${SOURCES_CONF}`"
+  base="`cd ${dir} && pwd`"
+  conf="`basename  ${SOURCES_CONF}`"
+  SOURCES_CONF="${base}/${conf}"
 fi
 
 
