@@ -296,7 +296,7 @@ binary_sysroot()
     fi
 
     # Generate the install script
-    sysroot_install_script ${destdir}
+#    sysroot_install_script ${destdir}
 
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
@@ -544,7 +544,7 @@ test_binary_toolchain()
 #    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
 #    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
 
-    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
+#    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
 
     # Put the installed toolchain first in the path so it gets picked up by make check.
     local compiler="`find /opt/linaro -name ${target}-gcc`"
