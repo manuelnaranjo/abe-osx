@@ -568,7 +568,8 @@ make_install()
 
     if test x"${tool}" = x"gcc"; then
         local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
-        if test "`echo ${target} | grep -c aarch64`" -gt 0 ; then
+#        if test "`echo ${target} | egrep -c 'aarch64|x86_64'`" -gt 0 ; then
+	if test x"${build_arch}" = x"aarch64" -o x"${build_arch}" = x"x86_64"; then
             gcc_libpath=${sysroots}/usr/lib64/
         else
             gcc_libpath=${sysroots}/usr/lib/
@@ -584,13 +585,13 @@ make_install()
         dynamic_linker="$(find_dynamic_linker "$sysroots")"
         local dynamic_linker_name="`basename ${dynamic_linker}`"
 
-        # aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
-        # things look for shared libraries in.
+        # 64 bit architectures don't populate sysroot/lib, which unfortunately other
+        # things look in for shared libraries.
         dryrun "rsync -a ${sysroots}/lib/ ${sysroots}/lib64/"
         dryrun "rm -rf ${sysroots}/lib"
-        dryrun "ln -sfnT ${sysroots}/lib64 ${sysroots}/lib"
+        dryrun "(cd ${sysroots} && ln -sfnT lib64 lib)"
 #        dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
-        dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
+        dryrun "rm -f ${sysroots}/lib/ld-linux-aarch64.so.1"
         dryrun "ln -sfnT ${dynamic_linker_name} ${sysroots}/lib64/ld-linux-aarch64.so.1"
     fi
 
