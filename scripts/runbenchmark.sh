@@ -260,7 +260,6 @@ if test x"${uncontrolled}" = xyes; then
   flags="-u"
 fi
 
-#TODO: Strictly, hostname -I might return multiple IP addresses
 #TODO: Repetition of hostname echoing is ugly, but seems to be needed -
 #      perhaps there is some delay after the interface comes up
 (. "${topdir}"/lib/common.sh
