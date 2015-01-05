@@ -68,13 +68,13 @@ fi
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} \
+    $CONFIG_SHELL ${abe_dir}/abe.sh --release ${release} \
 	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
 fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
-    # Canadian cross builds require a Linux hosted crfoss compiler first
+    # Canadian cross builds require a Linux hosted cross compiler first
     if test x"${canadian}" = x"true"; then
 	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
 	host="--host i686-w64-mingw32"
