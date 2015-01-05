@@ -86,3 +86,59 @@ function bgread
   echo "${buffer}${line}"
   return 0
 }
+
+#Use ping to perform a traceroute-like check of route to some target
+#It's probably not guaranteed that other protocols (or even future pings) will
+#take the same route, this is just a conservative sanity check.
+function check_private_route
+{
+  local myaddr
+  local pingout
+  local ttl
+
+  #Extended regexps (use grep -E)
+  local block24='10\.[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
+  local block20='172\.(1[6-9]|2[0-9]|3[0-1])\.[[:digit:]]+\.[[:digit:]]+'
+  local block16='192\.168\.[[:digit:]]+\.[[:digit:]]+'
+
+  myaddr="`hostname -I`"
+  if test $? -ne 0; then
+    echo "Unable to determine own IP address" 1>&2
+    return 1
+  fi
+
+  #We only try to support IPv4 for now
+  myaddr="`echo ${myaddr} | tr ' ' '\n' | grep '^\([[:digit:]]\{1,3\}\.\)\{3\}[[:digit:]]\{1,3\}$'`"
+  if test $? -ne 0; then
+    echo "No IPv4 address found, aborting" 1>&2
+    return 1
+  fi
+
+  #We don't try to figure out what'll happen if we've got multiple IPv4 interfaces
+  if test "`echo ${myaddr} | wc -w`" -ne 1; then
+    echo "Multiple IPv4 addresses found, aborting" 1>&2
+    return 1
+  fi
+
+  #Check we're on something in a private network to start with
+  if ! echo "${myaddr}" | grep -Eq "^(${block24}|${block20}|${block16})$"; then
+    echo "Own IP address ${myaddr} does not match any known private network range" 1>&2
+    return 1
+  fi
+
+  #Check every stop along the way to target. DO NOT check target itself - assume
+  #that we don't hop off our network even if its IP appears to be non-private.
+  #This is a crude, but generic and unprivileged, way of doing traceroute - what
+  #we really want is the routing tables, I think.
+  for ttl in {1..10}; do
+    pingout="`ping -t ${ttl} -c 1 $1`"
+    if test $? -eq 0; then
+      break #We've reached the target
+    fi
+    echo "${pingout}" | grep -Eq "^From (${block24}|${block20}|${block16}) icmp_seq=1 Time to live exceeded$"
+    if test $? -ne 0; then
+      echo "Surprising stop on route to benchmark target: ${pingout}" 1>&2
+      return 1
+    fi
+  done
+}
