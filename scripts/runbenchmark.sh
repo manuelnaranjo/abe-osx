@@ -151,14 +151,15 @@ if test $? -eq 0; then
   case $? in
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)
-      #We might as well fail quickly if we can't get to lab.validation.l.o via a private route
-      check_private_route lab.validation.linaro.org
-      if test $? -ne 0; then
+      gateway=lab.validation.linaro.org
+      ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
+      establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
+
+      #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast
+      if ! check_private_route "${gateway}"; then
         echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
         exit 1
       fi
-      ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@lab.validation.linaro.org nc -q0 %h %p'"
-      establish_listener_opts="-f 10.0.0.10:${lava_user}@lab.validation.linaro.org"
   esac
 
   lava_target="${ip}"
@@ -192,6 +193,8 @@ if test $? -eq 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
+else
+  gateway="${ip/*@}"
 fi
 #LAVA-agnostic from here, apart from a section in the exit handler
 
@@ -237,8 +240,7 @@ if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
   exit 1
 fi
-check_private_route "${ip/*@}"
-if test $? -ne 0; then
+if ! check_private_route "${gateway}"; then
   echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
@@ -324,8 +326,7 @@ if test ${error} -ne 0; then
 fi
 
 #Several days might have passed, re-check the route
-check_private_route "${ip/*@}"
-if test $? -ne 0; then
+if ! check_private_route "${gateway}"; then
   echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
