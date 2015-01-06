@@ -83,6 +83,8 @@ release()
 }
 
 lava_url="${LAVA_SERVER}"
+lava_server=
+lava_user=
 lava_json=
 boot_timeout="$((120*60))" #2 hours
 key=${LAVA_SSH_KEYFILE}
@@ -100,6 +102,16 @@ while getopts s:j:b:p: flag; do
 done
 
 expr ${lava_url:?'Must give a LAVA URL (-l) or set $LAVA_SERVER'} > /dev/null
+lava_user="`lava_user ${lava_url}`"
+if test $? -ne 0; then
+  echo "Unable to find username from ${lavaserver}" 1>&2
+  exit 1
+fi
+lava_server="`lava_server ${lava_url}`"
+if test $? -ne 0; then
+  echo "Unable to find username from ${lavaserver}" 1>&2
+  exit 1
+fi
 
 if ! test -f ${lava_json:?'Must give a json file (-j)'}; then
   echo "JSON file ${lava_json} not a file"
@@ -174,8 +186,8 @@ if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
 fi
-sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_url}\"\2+" "${json_copy}"
-sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${USER}/\"\2+" "${json_copy}"
+sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_user}@${lava_server}\"\2+" "${json_copy}"
+sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${lava_user}/\"\2+" "${json_copy}"
 
 lava_network
 in_lab=$?
@@ -191,7 +203,7 @@ fi
 if test ${in_lab} -eq 0; then
   "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
 else
-  "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:lab.validation.linaro.org ${listener_addr} 4200 5200 >&3 &
+  "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:${lava_user}@lab.validation.linaro.org ${listener_addr} 4200 5200 >&3 &
 fi
 listener_pid=$!
 listener_addr="`bgread ${listener_pid} 60 <&3`"

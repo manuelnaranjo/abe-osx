@@ -142,12 +142,17 @@ clean_benchmark()
 #Handle LAVA case
 echo "${ip}" | grep '\.json$' > /dev/null
 if test $? -eq 0; then
+  lava_user="`lava_user ${lavaserver}`"
+  if test $? -ne 0; then
+    echo "Unable to find username from ${lavaserver}" 1>&2
+    exit 1
+  fi
   lava_network
   case $? in
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)
-      ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh lab.validation.linaro.org nc -q0 %h %p'"
-      establish_listener_opts="-f 10.0.0.10:lab.validation.linaro.org"
+      ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@lab.validation.linaro.org nc -q0 %h %p'"
+      establish_listener_opts="-f 10.0.0.10:${lava_user}@lab.validation.linaro.org"
   esac
 
   lava_target="${ip}"

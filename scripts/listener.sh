@@ -48,6 +48,33 @@ function lava_network
   fi
 }
 
+function lava_user
+{
+  local usr="${USER}"
+  if echo "$1" | grep -q '^http'; then
+    echo "LAVA URL must exclude protocol (e.g. http://, https://)" 1>&2
+    return 1
+  fi
+  if echo "$1" | grep -Eq '^.+@'; then
+    usr="${1/@*}"
+    usr="${usr/:*}"
+  fi
+  echo "${usr}"
+}
+
+function lava_server
+{
+  if echo "$1" | grep -q '^http'; then
+    echo "LAVA URL must exclude protocol (e.g. http://, https://)" 1>&2
+    return 1
+  fi
+  if echo "$1" | grep -Eq '^.+@'; then
+    echo "$1" | sed 's/[^@]*@//'
+  else
+    echo "$1"
+  fi
+}
+
 #Attempt to use read to discover whether there is a record to read from the producer
 #If we time out, check to see whether the producer still seems to be alive.
 #If it seems dead, return 2, otherwise keep trying to read.
