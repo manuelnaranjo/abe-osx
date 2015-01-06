@@ -231,7 +231,7 @@ if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
   exit 1
 fi
-if ! check_private_route "${ip}"; then
+if ! check_private_route "${ip/*@}"; then
   echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
@@ -317,7 +317,7 @@ if test ${error} -ne 0; then
 fi
 
 #Several days might have passed, re-check the route
-if ! check_private_route "${ip}"; then
+if ! check_private_route "${ip/*@}"; then
   echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
