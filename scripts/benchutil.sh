@@ -159,7 +159,7 @@ function check_private_route
   for ttl in {1..10}; do
     pingout="`ping -t ${ttl} -c 1 $1`"
     if test $? -eq 0; then
-      break #We've reached the target
+      return 0 #We've reached the target
     fi
     echo "${pingout}" | grep -Eq "^From (${block24}|${block20}|${block16}) icmp_seq=1 Time to live exceeded$"
     if test $? -ne 0; then
@@ -167,4 +167,7 @@ function check_private_route
       return 1
     fi
   done
+
+  #We've run out of hops to try
+  return 1
 }
