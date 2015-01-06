@@ -147,7 +147,7 @@ if test $? -eq 0; then
     echo "Unable to find username from ${lavaserver}" 1>&2
     exit 1
   fi
-  lava_network
+  lava_network "${lava_user}"
   case $? in
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)

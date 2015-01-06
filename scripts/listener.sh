@@ -36,7 +36,7 @@ function lava_network
 {
   local hackbox_mac
 
-  hackbox_mac="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes lab.validation.linaro.org 'cat /sys/class/net/eth0/address'`"
+  hackbox_mac="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${1:+${1}@}lab.validation.linaro.org 'cat /sys/class/net/eth0/address'`"
   if test $? -ne 0; then
     return 2 #We couldn't get the mac, stop trying to figure out where we are
   fi
