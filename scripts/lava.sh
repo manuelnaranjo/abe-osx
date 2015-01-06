@@ -76,9 +76,9 @@ release()
     if test $? -ne 0; then
       echo "Was unable to get job status"
     fi
+    lava_url=${lava_url%/RPC2/}
+    echo "Log should be at: https://${lava_url#*@}/scheduler/job/${id}/log_file#bottom"
   fi
-  lava_url=${lava_url%/RPC2/}
-  echo "Log should be at: https://${lava_url#*@}/scheduler/job/${id}/log_file#bottom"
   exit "${error}"
 }
 
