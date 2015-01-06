@@ -144,6 +144,7 @@ if test x"${gateway}" != x; then
     listener_port="`echo ${line} | cut -d ' ' -f 3`"
   else
     echo "Unable to get port forwarded for listener" 1>&2
+    echo "Tried: ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface}" 1>&2
     echo "Got: $line" 1>&2
     exit 1
   fi
