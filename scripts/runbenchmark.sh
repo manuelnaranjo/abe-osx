@@ -151,6 +151,12 @@ if test $? -eq 0; then
   case $? in
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)
+      #We might as well fail quickly if we can't get to lab.validation.l.o via a private route
+      check_private_route lab.validation.linaro.org
+      if test $? -ne 0; then
+        echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
+        exit 1
+      fi
       ssh_opts="-l 200 ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@lab.validation.linaro.org nc -q0 %h %p'"
       establish_listener_opts="-f 10.0.0.10:${lava_user}@lab.validation.linaro.org"
   esac
