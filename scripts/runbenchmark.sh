@@ -201,7 +201,7 @@ if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} `get_addr` 4200 5200 >&3 &
+"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} "${listener_addr}" 4200 5200 >&3 &
 listener_pid=$!
 listener_addr="`bgread ${listener_pid} 60 <&3`"
 if test $? -ne 0; then
