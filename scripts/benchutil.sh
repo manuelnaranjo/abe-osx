@@ -1,4 +1,5 @@
 set -o pipefail
+set -o nounset
 
 function get_addr
 {
@@ -91,7 +92,7 @@ function lava_server
 function bgread
 {
   local pid=$1
-  if test x"${pid}" = x; then
+  if test x"${pid:-}" = x; then
     echo "No pid to poll!" 1>&2
     return 1
   fi
@@ -114,7 +115,7 @@ function bgread
   #If we get here, we managed to read 1 char. If we have a null string just
   #return it (the record was empty). Otherwise, assume the rest of the record is ready to be read,
   #especially within the generous timeout that we allow.
-  if test x"${buffer}" != x; then
+  if test x"${buffer:-}" != x; then
     read -t 60 line
     if test $? -ne 0; then
       echo "Record did not complete" 1>&2
@@ -134,7 +135,7 @@ function check_private_route
   local pingout
   local ttl
 
-  if test x"$1" = x; then
+  if test x"${1:-}" = x; then
     echo "check_private_route requires a parameter" 1>&2
     return 1
   fi

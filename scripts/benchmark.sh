@@ -7,6 +7,7 @@
 #     Better - confine cbuild2 to a subshell
 
 set -o pipefail
+set -o nounset
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
@@ -57,7 +58,7 @@ EOF
 set_toolchain()
 {
   local target_gcc="${target:+${target}-}gcc"
-  if test x"${toolchain_path}" = x; then
+  if test x"${toolchain_path:-}" = x; then
     which "${target_gcc}" > /dev/null 2>&1
     if test $? -ne 0; then
       echo "No toolchain specified and unable to find a suitable gcc on the path" 1>&2
@@ -97,6 +98,7 @@ skip_build=
 toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
+target=
 while getopts a:i:t:b:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
@@ -130,12 +132,12 @@ devices=("$@") #Duplicate targets are fine for lava, they will resolve to differ
                #TODO: Check for multiple instances of a given non-lava target
 set_toolchain
 
-if test x"${benchmark}" = x; then
+if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
   exit 1
 fi
-if test x"${target}" = x; then #native build
+if test x"${target:-}" = x; then #native build
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
                           #localhost. This could be fixed if anyone _really_
@@ -153,7 +155,7 @@ else #cross-build, implies we need remote devices
   fi
 fi
 
-if test x"$skip_build" = x; then
+if test x"${skip_build:-}" = x; then
   #cbuild2 can build the benchmarks just fine
   ("${topdir}"/cbuild2.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -o pipefail
+set -o nounset
 
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
@@ -29,16 +30,16 @@ gateway=
 function cleanup
 {
   error=$?
-  if test x"${listener_pid}" != x; then
+  if test x"${listener_pid:-}" != x; then
     kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
-  if test x"${pseudofifo_pid}" != x; then
+  if test x"${pseudofifo_pid:-}" != x; then
     kill "${pseudofifo_pid}" 2>/dev/null
     #Substituted process is not our child and cannot be waited on. Fortunately,
     #it doesn't matter too much when it dies.
   fi
-  if test x"${forward_pid}" != x; then
+  if test x"${forward_pid:-}" != x; then
     kill "${forward_pid}" 2>/dev/null
     wait "${forward_pid}"
   fi
@@ -81,7 +82,7 @@ if test $# -ne 3; then
   for arg in "$@"; do echo "${arg}" 1>&2; done
   exit 1
 fi
-if test x"${gateway}" != x; then
+if test x"${gateway:-}" != x; then
   if ! echo "${gateway}" | grep -q '.\+:.\+'; then
     echo "If specifying a gateway to forward through, must be in format 'internal_interface:external_interface'" 1>&2
     echo "Got: ${gateway}" 1>&2
@@ -128,12 +129,12 @@ for ((listener_port=${start_port}; listener_port < ${end_port}; listener_port++)
   listener_pid=
 done
 
-if test x"${listener_pid}" = x; then
+if test x"${listener_pid:-}" = x; then
   echo "Failed to find a free port in range ${start_port}-${end_port}" 1>&2
   exit 1
 fi
 
-if test x"${gateway}" != x; then
+if test x"${gateway:-}" != x; then
   internal_interface="${gateway/%:*}"
   external_interface="${gateway/#*:}"
   ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface} >"${forward_fifo}" 2>&1 &

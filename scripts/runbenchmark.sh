@@ -4,6 +4,7 @@
 #LAVA-agnostic - apart from the section that initiates the LAVA session, there
 #is some awareness of it in the exit handler, and that's all.
 set -o pipefail
+set -o nounset
 
 trap clean_benchmark EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
@@ -47,7 +48,7 @@ else
 fi
 topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 confdir="${topdir}/config/boards/bench"
-if test x"${LAVA_SERVER}" != x; then
+if test x"${LAVA_SERVER:-}" != x; then
   lava_url="${LAVA_SERVER}"
 else
   lava_url="${USER}@validation.linaro.org/RPC2/"
@@ -88,8 +89,8 @@ clean_benchmark()
 {
   error=$?
 
-  if test x"${ip}" != x; then
-    if test x"${target_dir}" = x; then
+  if test x"${ip:-}" != x; then
+    if test x"${target_dir:-}" = x; then
       echo "No directory to remove from ${ip}"
     elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
@@ -109,12 +110,12 @@ clean_benchmark()
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
   fi
 
-  if test x"${listener_pid}" != x; then
+  if test x"${listener_pid:-}" != x; then
     kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
 
-  if test x"${lava_pid}" != x; then
+  if test x"${lava_pid:-}" != x; then
     if test ${error} -ne 0 || test x"${keep}" = 'x-k'; then
       echo "Not killing lava session, to ensure session remains open for investigation/cleanup."
       kill "${lava_pid}" 2>/dev/null
@@ -192,12 +193,14 @@ if test $? -eq 0; then
   #After this point, lava.sh should produce no output until we reach the exit handlers.
   #Our exit handler checks the pipe from lava.sh before closing down.
 
-  if test x"${ip}" = x; then
+  if test x"${ip:-}" = x; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
 else
   gateway="${ip/*@}"
+  ssh_opts=
+  establish_listener_opts=
 fi
 #LAVA-agnostic from here, apart from a section in the exit handler
 
@@ -261,18 +264,18 @@ done
 
 #These parameters sourced from the conf file at beginning of this function
 flags="${benchcore:+-b ${benchcore}} ${othercore:+-p ${othercore}}"
-if test x"${netctl}" = xyes; then
+if test x"${netctl:-}" = xyes; then
   flags+=" -n"
 fi
-if test x"${servicectl}" = xyes; then
+if test x"${servicectl:-}" = xyes; then
   flags+=" -s ${target_dir}/${device}.services"
 fi
-if test x"${freqctl}" = xyes; then
+if test x"${freqctl:-}" = xyes; then
   flags+=" -f"
 fi
 
 #But, if uncontrolled is set, override all other flags
-if test x"${uncontrolled}" = xyes; then
+if test x"${uncontrolled:-}" = xyes; then
   echo "Running without any target controls or special (sudo) privileges, due to 'uncontrolled=yes' in target config file"
   flags="-u"
 fi
@@ -283,7 +286,7 @@ fi
    remote_exec_async \
      "${ip}" \
      "cd ${target_dir}/`basename ${builddir}` && \
-     ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs} -- ${run_benchargs}; \
+     ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      for i in {1..10}; do \
        echo \"\\\${USER}@\\\`ifconfig eth0 | grep 'inet addr' | sed 's/[^:]*://' | cut -d ' ' -f 1\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \

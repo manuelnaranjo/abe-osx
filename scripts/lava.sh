@@ -2,6 +2,7 @@
 
 #Deps: lava-tool, auth token for lava-tool
 set -o pipefail
+set -o nounset
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -41,22 +42,24 @@ function retrying_lava_tool
 
 release()
 {
-  if test x"${waiter}" != x; then
+  if test x"${waiter:-}" != x; then
     kill "${waiter}" 2>/dev/null
     wait "${waiter}"
   fi
-  if test x"${listener_pid}" != x; then
+  if test x"${listener_pid:-}" != x; then
     kill "${listener_pid}" 2>/dev/null
     wait "${listener_pid}"
   fi
-  if test -d "${temps}"; then
-    exec 3>&-
-    rm -rf "${temps}"
-    if test $? -ne 0; then
-      echo "Failed to delete temporary file store ${temps}" 1>&2
+  if test x"${temps:-}" != x; then
+    if test -d "${temps}"; then
+      exec 3>&-
+      rm -rf "${temps}"
+      if test $? -ne 0; then
+        echo "Failed to delete temporary file store ${temps}" 1>&2
+      fi
     fi
   fi
-  if test x"${id}" != x; then
+  if test x"${id:-}" != x; then
     if test ${keep} -eq 0; then
       retrying_lava_tool cancel-job https://"${lava_url}" "${id}"
       if test $? -eq 0; then
@@ -85,12 +88,12 @@ release()
   exit "${error}"
 }
 
-lava_url="${LAVA_SERVER}"
+lava_url="${LAVA_SERVER:-}"
 lava_server=
 lava_user=
 lava_json=
 boot_timeout="$((120*60))" #2 hours
-key=${LAVA_SSH_KEYFILE}
+key=${LAVA_SSH_KEYFILE:-}
 while getopts s:j:b:p: flag; do
   case "${flag}" in
     s) lava_url="${OPTARG}";;
@@ -134,7 +137,7 @@ fi
 #Store the public key in key - if no public key file given on CLI, try a few
 #sensible defaults. (We only ever end up sharing a public key, so there's no
 #security issue here.)
-if test x"$key" = x; then
+if test x"${key:-}" = x; then
   if ssh-add -l; then
     key="`ssh-add -L | head -n1 2>/dev/null`"
     if test $? -ne 0; then
@@ -304,7 +307,7 @@ while test `date +%s` -lt ${deadline}; do
   fi
 done
 
-if test x"${user_ip}" = x; then
+if test x"${user_ip:-}" = x; then
   echo "LAVA boot abandoned after $((boot_timeout/60)) minutes" 1>&2
   exit 1
 fi

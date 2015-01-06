@@ -16,6 +16,7 @@
 #Rebuild functions just return 0 if there is nothing to do
 
 set -o pipefail
+set -o nounset
 declare -a stopped_services
 declare -a bound_processes
 declare -a downed_interfaces
@@ -33,7 +34,7 @@ cleanup()
   local ret=$?
   local tmp
 
-  if test x"${rva_setting}" != x; then
+  if test x"${rva_setting:-}" != x; then
     ${sudo} bash -c "echo ${rva_setting} > /proc/sys/kernel/randomize_va_space"
     if test $? -ne 0; then
       echo "Failed to restore ASLR setting" | tee -a /dev/stderr "${log}"
@@ -143,9 +144,9 @@ set_policy()
 {
   old_policy=(`cpufreq-info -p`) #0 = min freq, 1 = max freq, 2 = governor
   if test $? -ne 0 || \
-     test x"${old_policy[0]}" = x || \
-     test x"${old_policy[1]}" = x || \
-     test x"${old_policy[2]}" = x; then
+     test x"${old_policy[0]:-}" = x || \
+     test x"${old_policy[1]:-}" = x || \
+     test x"${old_policy[2]:-}" = x; then
     echo "Frequency scaling not supported" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
@@ -160,7 +161,7 @@ set_policy()
 restore_policy()
 {
   #If freq scaling was unsupported then there is nothing to do
-  if test x"${old_policy}" = x; then
+  if test x"${old_policy:-}" = x; then
     return 0
   fi
   ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}"
@@ -421,12 +422,12 @@ echo | tee -a "${log}"
 shift $((OPTIND - 1))
 
 #Cheap sanity checks, before we start tearing the target down
-if test x"${services_file}" != x; then
+if test x"${services_file:-}" != x; then
   if test \! -f "${services_file}"; then
     echo "Services file '${services_file}' missing" | tee -a /dev/stderr "${log}" > /dev/null
     exit 1
   fi
-  if test x"`cat ${services_file}`" = x; then
+  if test x"`cat ${services_file:-}`" = x; then
     echo "Services file '${services_file}' is empty" | tee -a /dev/stderr "${log}" > /dev/null
     exit 1
   fi
@@ -442,14 +443,14 @@ if test $? -ne 0; then
   echo "Non-benchmark CPU (-p) must be null or a decimal number" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
-if test x"${bench_cpu}" != x && test x"${non_bench_cpu}" != x && test x"${bench_cpu}" = x"${non_bench_cpu}"; then
+if test x"${bench_cpu:-}" != x && test x"${non_bench_cpu:-}" != x && test x"${bench_cpu:-}" = x"${non_bench_cpu:-}"; then
   echo "If set, benchmark CPU (-b) and non-benchmark CPU (-p) must be different" | tee -a /dev/stderr "${log}" > /dev/null
   exit 1
 fi
 
 cmd="$@"
 
-if test x"${bench_cpu}" != x; then
+if test x"${bench_cpu:-}" != x; then
   taskset -c ${bench_cpu} true
   if test $? -ne 0; then
     echo "Could not bind benchmark to CPU ${bench_cpu}" | tee -a /dev/stderr "${log}" > /dev/null
@@ -461,19 +462,19 @@ fi
 trap cleanup EXIT
 trap 'exit 1' TERM INT HUP QUIT
 
-if test x"${services_file}" != x; then
+if test x"${services_file:-}" != x; then
   stop_services "${services_file}"
   if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
-if test x"${freq}" != x; then
+if test x"${freq:-}" != x; then
   set_policy "${freq}"
   if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
   fi
 fi
-if test x"${non_bench_cpu}" != x; then
+if test x"${non_bench_cpu:-}" != x; then
   bind_processes ${non_bench_cpu}
   if test $? -ne 0 -a ${cautiousness} -eq 1; then
     exit 1
@@ -568,7 +569,7 @@ fi
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
 #TODO We expect to be running with stdout & stderr redirected, insert a test for this
-if test x"${bench_cpu}" != x; then
+if test x"${bench_cpu:-}" != x; then
   cmd="taskset -c ${bench_cpu} ${cmd}"
 fi
 echo "Running ${cmd}"

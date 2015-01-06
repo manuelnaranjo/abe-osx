@@ -68,13 +68,13 @@ distribution=
 make_flags=
 
 # These can be changed by environment variables
-if test x"${SNAPSHOTS_URL}" != x -o x"${CBUILD_SNAPSHOTS}" != x; then
+if test x"${SNAPSHOTS_URL:-}" != x -o x"${CBUILD_SNAPSHOTS:-}" != x; then
     snapshots="${SNAPSHOTS_URL}"
 fi
-if test x"${CBUILD_DBUSER}" != x; then
+if test x"${CBUILD_DBUSER:-}" != x; then
     dbuser="${CBUILD_DBUSER}"
 fi
-if test x"${CBUILD_DBPASSWD}" != x; then
+if test x"${CBUILD_DBPASSWD:-}" != x; then
     dbpasswd="${CBUILD_DBPASSWD}"
 fi
 
@@ -96,7 +96,7 @@ override_cflags=
 override_ldflags=
 override_runtestflags=
 
-if test x"${BUILD_NUMBER}" = x; then
+if test x"${BUILD_NUMBER:-}" = x; then
     export BUILD_NUMBER=${RANDOM}
 fi
 

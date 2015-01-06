@@ -273,7 +273,7 @@ get_builddir()
     # as well because we might be passed a tar file.
     local dir="`normalize_path $1`"
 
-    if test x"$2" = x"libgloss"; then
+    if test x"${2:+$2}" = x"libgloss"; then
      	echo "${local_builds}/${host}/${target}/${dir}/${target}/libgloss"
     else
 	echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
