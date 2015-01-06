@@ -9,16 +9,21 @@ function get_addr
     echo "Failed to run 'hostname -I' on ${hostname}" 1>&2
     return 1
   fi
-  if test x"`echo ${listener_addr} | wc -l`" != x1; then
-   echo "Warning: Multiple IPs found for ${hostname}, will use first one" 1>&2
-  fi 
-  listener_addr="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${hostname} 'hostname -I' | head -n1 | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'`"
-  if ! echo "${listener_addr}" | grep '^\([[:digit:]]\+\.\)\{3\}[[:digit:]]\+$' > /dev/null; then
-    echo "${listener_addr} does not look like an IP address" 1>&2
+
+  #We only try to support IPv4 for now
+  listener_addr="`echo ${listener_addr} | tr ' ' '\n' | grep '^\([[:digit:]]\{1,3\}\.\)\{3\}[[:digit:]]\{1,3\}$'`"
+  if test $? -ne 0; then
+    echo "No IPv4 address found, aborting" 1>&2
     return 1
   fi
-  echo "${listener_addr}"
-  return 0
+
+  #We don't try to figure out what'll happen if we've got multiple IPv4 interfaces
+  if test "`echo ${listener_addr} | wc -w`" -ne 1; then
+    echo "Multiple IPv4 addresses found, aborting" 1>&2
+    return 1
+  fi
+
+  echo "${listener_addr}" | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
 }
 
 #Return 0 if we're inside the lava network
@@ -101,22 +106,9 @@ function check_private_route
   local block20='172\.(1[6-9]|2[0-9]|3[0-1])\.[[:digit:]]+\.[[:digit:]]+'
   local block16='192\.168\.[[:digit:]]+\.[[:digit:]]+'
 
-  myaddr="`hostname -I`"
+  myaddr="`get_addr`"
   if test $? -ne 0; then
-    echo "Unable to determine own IP address" 1>&2
-    return 1
-  fi
-
-  #We only try to support IPv4 for now
-  myaddr="`echo ${myaddr} | tr ' ' '\n' | grep '^\([[:digit:]]\{1,3\}\.\)\{3\}[[:digit:]]\{1,3\}$'`"
-  if test $? -ne 0; then
-    echo "No IPv4 address found, aborting" 1>&2
-    return 1
-  fi
-
-  #We don't try to figure out what'll happen if we've got multiple IPv4 interfaces
-  if test "`echo ${myaddr} | wc -w`" -ne 1; then
-    echo "Multiple IPv4 addresses found, aborting" 1>&2
+    echo "Cannot get a usable IP address to check route" 1>&2
     return 1
   fi
 
