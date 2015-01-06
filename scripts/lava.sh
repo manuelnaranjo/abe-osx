@@ -55,40 +55,40 @@ release()
   fi
   if test x"${id}" != x; then
     if test ${keep} -eq 0; then
-      retrying_lava_tool cancel-job https://"${lava_server}" "${id}"
+      retrying_lava_tool cancel-job https://"${lava_url}" "${id}"
       if test $? -eq 0; then
         echo "Cancelled job ${id}"
         error=0
       else
         echo "Failed to cancel job ${id}" 1>&2
-        echo "Run 'lava-tool cancel-job https://"${lava_server}" "${id}"' to cancel" 1>&2
+        echo "Run 'lava-tool cancel-job https://"${lava_url}" "${id}"' to cancel" 1>&2
         error=1
       fi
     else
       echo "Did not cancel job ${id} - superior did not request cancellation."
       echo "You probably have some cleanup to do."
       echo "When you've finished, cancel by running:"
-      echo "lava-tool cancel-job https://${lava_server} ${id}"
+      echo "lava-tool cancel-job https://${lava_url} ${id}"
       error=0
     fi
     echo "Getting present job status:"
-    retrying_lava_tool job-status "https://${lava_server}" "${id}"
+    retrying_lava_tool job-status "https://${lava_url}" "${id}"
     if test $? -ne 0; then
       echo "Was unable to get job status"
     fi
   fi
-  lava_server=${lava_server%/RPC2/}
-  echo "Log should be at: https://${lava_server#*@}/scheduler/job/${id}/log_file#bottom"
+  lava_url=${lava_url%/RPC2/}
+  echo "Log should be at: https://${lava_url#*@}/scheduler/job/${id}/log_file#bottom"
   exit "${error}"
 }
 
-lava_server="${LAVA_SERVER}"
+lava_url="${LAVA_SERVER}"
 lava_json=
 boot_timeout="$((120*60))" #2 hours
 key=${LAVA_SSH_KEYFILE}
 while getopts s:j:b:p: flag; do
   case "${flag}" in
-    s) lava_server="${OPTARG}";;
+    s) lava_url="${OPTARG}";;
     j) lava_json="${OPTARG}";;
     b) boot_timeout="$((OPTARG*60))";;
     p) key="${OPTARG}";;
@@ -99,7 +99,7 @@ while getopts s:j:b:p: flag; do
   esac
 done
 
-expr ${lava_server:?'Must give a lava server (-l) or set $LAVA_SERVER'} > /dev/null
+expr ${lava_url:?'Must give a LAVA URL (-l) or set $LAVA_SERVER'} > /dev/null
 
 if ! test -f ${lava_json:?'Must give a json file (-j)'}; then
   echo "JSON file ${lava_json} not a file"
@@ -174,7 +174,7 @@ if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
 fi
-sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_server}\"\2+" "${json_copy}"
+sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_url}\"\2+" "${json_copy}"
 sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${USER}/\"\2+" "${json_copy}"
 
 lava_network
@@ -217,10 +217,10 @@ if test $? -ne 0; then
   exit 1
 fi
 
-id="`retrying_lava_tool submit-job https://${lava_server} ${json_copy}`"
+id="`retrying_lava_tool submit-job https://${lava_url} ${json_copy}`"
 if test $? -ne 0; then
   echo "Failed to submit job" 1>&2
-  echo "SERVER: https://${lava_server}" 1>&2
+  echo "URL: https://${lava_url}" 1>&2
   echo "JSON: " 1>&2
   cat "${json_copy}" 1>&2
   exit 1
@@ -246,7 +246,7 @@ sleep 15 #A short delay here is handy when debugging (if the LAVA queues are emp
 #TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
 #TODO: In principle we want a timeout here, but we could be queued for a very long time, and that could be fine
 while true; do
-  jobstatus="`retrying_lava_tool job-status https://${lava_server} ${id}`"
+  jobstatus="`retrying_lava_tool job-status https://${lava_url} ${id}`"
   if test $? -ne 0; then
     echo "Job ${id} disappeared!" 1>&2
     exit 1
@@ -276,7 +276,7 @@ while test `date +%s` -lt ${deadline}; do
     echo "Non-timeout error code ${err} while trying to read user_ip" 1>&2
     exit 1
   fi
-  jobstatus="`retrying_lava_tool job-status https://${lava_server} ${id}`"
+  jobstatus="`retrying_lava_tool job-status https://${lava_url} ${id}`"
   if test $? -ne 0; then
     echo "Job ${id} disappeared!" 1>&2
     exit 1
