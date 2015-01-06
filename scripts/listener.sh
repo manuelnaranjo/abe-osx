@@ -38,6 +38,8 @@ function lava_network
 
   hackbox_mac="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${1:+${1}@}lab.validation.linaro.org 'cat /sys/class/net/eth0/address'`"
   if test $? -ne 0; then
+    echo "Failed to get hackbox mac" 1>&2
+    echo "Tried: ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${1:+${1}@}lab.validation.linaro.org 'cat /sys/class/net/eth0/address'" >&2
     return 2 #We couldn't get the mac, stop trying to figure out where we are
   fi
   arp 10.0.0.10 | grep -q "${hackbox_mac}";
