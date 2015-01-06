@@ -101,7 +101,7 @@ while getopts s:j:b:p: flag; do
   esac
 done
 
-expr ${lava_url:?'Must give a LAVA URL (-l) or set $LAVA_SERVER'} > /dev/null
+expr ${lava_url:?'Must give a LAVA URL (-s) or set $LAVA_SERVER'} > /dev/null
 lava_user="`lava_user ${lava_url}`"
 if test $? -ne 0; then
   echo "Unable to find username from ${lavaserver}" 1>&2
