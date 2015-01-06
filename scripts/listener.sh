@@ -130,6 +130,11 @@ function check_private_route
   local pingout
   local ttl
 
+  if test x"$1" = x; then
+    echo "check_private_route requires a parameter" 1>&2
+    return 1
+  fi
+
   #Extended regexps (use grep -E)
   local block24='10\.[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
   local block20='172\.(1[6-9]|2[0-9]|3[0-1])\.[[:digit:]]+\.[[:digit:]]+'
