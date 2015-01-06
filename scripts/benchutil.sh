@@ -4,7 +4,11 @@ function get_addr
 {
   local hostname="${1:-localhost}"
   local listener_addr
-  listener_addr="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${hostname} 'hostname -I'`"
+  if test x"${hostname}" = xlocalhost; then
+    listener_addr="`hostname -I`"
+  else
+    listener_addr="`ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${hostname} 'hostname -I'`"
+  fi
   if test $? -ne 0; then
     echo "Failed to run 'hostname -I' on ${hostname}" 1>&2
     return 1
