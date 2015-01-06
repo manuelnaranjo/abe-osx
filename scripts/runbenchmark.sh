@@ -45,10 +45,10 @@ if ! test -e "${topdir}/host.conf"; then
 fi
 confdir="${topdir}/config/boards/bench"
 if test x"${LAVA_SERVER}" != x; then
-  lavaserver="${LAVA_SERVER}"
+  lava_url="${LAVA_SERVER}"
 else
-  lavaserver="${USER}@validation.linaro.org/RPC2/"
-  echo "Environment variable LAVA_SERVER not set, defaulted to ${lavaserver}" 1>&2
+  lava_url="${USER}@validation.linaro.org/RPC2/"
+  echo "Environment variable LAVA_SERVER not set, defaulted to ${lava_url}" 1>&2
 fi
 
 benchlog="`. ${topdir}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
@@ -142,9 +142,9 @@ clean_benchmark()
 #Handle LAVA case
 echo "${ip}" | grep '\.json$' > /dev/null
 if test $? -eq 0; then
-  lava_user="`lava_user ${lavaserver}`"
+  lava_user="`lava_user ${lava_url}`"
   if test $? -ne 0; then
-    echo "Unable to find username from ${lavaserver}" 1>&2
+    echo "Unable to find username from ${lava_url}" 1>&2
     exit 1
   fi
   lava_network "${lava_user}"
@@ -165,9 +165,9 @@ if test $? -eq 0; then
   ip=''
   tee_output=/dev/console
   echo "Acquiring LAVA target ${lava_target}"
-  echo "${topdir}/scripts/lava.sh -s ${lavaserver} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
+  echo "${topdir}/scripts/lava.sh -s ${lava_url} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
-  ${topdir}/scripts/lava.sh -s "${lavaserver}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 2>&1 &
+  ${topdir}/scripts/lava.sh -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 2>&1 &
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
