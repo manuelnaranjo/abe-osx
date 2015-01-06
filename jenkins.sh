@@ -325,7 +325,7 @@ if test x"${runtests}" = xtrue; then
 fi
 
 # Find all the test result files.
-sums="`find ${user_workspace} -name *.sum`"
+sums="`cd ${user_workspace} ; find . -name *.sum`"
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
@@ -349,21 +349,21 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	done
 
 	logs_dir=$(mktemp -d)
-	cp ${sums} ${test_logs} ${logs_dir}/
+	(cd ${user_workspace} ; rsync -aR ${sums} ${test_logs} ${logs_dir}/)
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
-	checks="`find ${user_workspace} -name check\*.log`"
-	cp ${checks} ${logs_dir}/
+	checks="`cd ${user_workspace} ; find . -name check\*.log`"
+	(cd ${user_workspace} ; rsync -aR ${checks} ${logs_dir}/)
 	
 	# Copy over the build logs
-	logs="`find ${user_workspace} -name make\*.log`"
-	cp ${logs} ${logs_dir}/
+	logs="`cd ${user_workspace} ; find . -name make\*.log`"
+	(cd ${user_workspace} ; rsync -aR ${logs} ${logs_dir}/)
 
 	# Copy stdout and stderr output from abe.
 	cp build.out build.err ${logs_dir}/
 
-	xz ${logs_dir}/*
-	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
+	find ${logs_dir} -type f -exec xz {} \;
+	(cd ${logs_dir} ; rsync -aR * ${fileserver}:${basedir}/${dir}/)
 	rm -rf ${logs_dir}
 	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
