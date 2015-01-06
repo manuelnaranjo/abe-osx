@@ -83,7 +83,7 @@ if ! test -e "${topdir}/host.conf"; then
 fi
 
 #TODO: Really, this check should operate on the route from the git server to localhost
-. "${topdir}/scripts/listener.sh"
+. "${topdir}/scripts/benchutil.sh"
 if ! check_private_route localhost; then
   echo "Do not appear to be on private network, conservatively aborting" 1>&2
   exit 1

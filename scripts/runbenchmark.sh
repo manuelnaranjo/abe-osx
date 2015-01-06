@@ -57,9 +57,9 @@ if test $? -ne 0; then
   exit 1
 fi
 
-. "${topdir}"/scripts/listener.sh
+. "${topdir}"/scripts/benchutil.sh
 if test $? -ne 0; then
-  echo "+++ Unable to source `dirname $0`/listener.sh" 1>&2
+  echo "+++ Unable to source `dirname $0`/benchutil.sh" 1>&2
   exit 1
 fi
 . "${confdir}/${device}.conf" #We can't use cbuild2's source_config here as it requires us to have something get_toolname can parse
