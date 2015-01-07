@@ -11,7 +11,7 @@ fi
 topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 . "${topdir}"/scripts/benchutil.sh
 if test $? -ne 0; then
-  echo "Unable to source `dirname $0`/benchutil.sh" 1>&2
+  echo "Unable to source ${topdir}/benchutil.sh" 1>&2
   exit 1
 fi
 
