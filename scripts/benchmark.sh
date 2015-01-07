@@ -76,11 +76,14 @@ set_toolchain()
   fi
 }
 
-topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
-if ! test -e "${topdir}/host.conf"; then
-  echo "No host.conf, did you run ./configure?" 1>&2
-  exit 1
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
 fi
+topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 
 #TODO: Really, this check should operate on the route from the git server to localhost
 . "${topdir}/scripts/benchutil.sh"
@@ -152,14 +155,14 @@ fi
 
 if test x"$skip_build" = x; then
   #cbuild2 can build the benchmarks just fine
-  (cd "${topdir}" && ./cbuild2.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  ("${topdir}"/cbuild2.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
   fi
 fi
 
-builddir="`target2="${target}"; . ${topdir}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`target2="${target}"; . host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   exit 1

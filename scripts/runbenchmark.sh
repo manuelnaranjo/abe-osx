@@ -38,11 +38,14 @@ fi
 error=1
 tee_output=/dev/null
 
-topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
-if ! test -e "${topdir}/host.conf"; then
-  echo "No host.conf, did you run ./configure?" 1>&2
-  exit 1
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
 fi
+topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 confdir="${topdir}/config/boards/bench"
 if test x"${LAVA_SERVER}" != x; then
   lava_url="${LAVA_SERVER}"
@@ -51,7 +54,7 @@ else
   echo "Environment variable LAVA_SERVER not set, defaulted to ${lava_url}" 1>&2
 fi
 
-benchlog="`. ${topdir}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
+benchlog="`. host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   exit 1

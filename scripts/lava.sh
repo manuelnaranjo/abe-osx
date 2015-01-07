@@ -2,11 +2,14 @@
 
 #Deps: lava-tool, auth token for lava-tool
 set -o pipefail
-topdir="`dirname $0`/.." #cbuild2 global, but this should be the right value for cbuild2
-if ! test -e "${topdir}/host.conf"; then
-  echo "No host.conf, did you run ./configure?" 1>&2
-  exit 1
+# load the configure file produced by configure
+if test -e "${PWD}/host.conf"; then
+    . "${PWD}/host.conf"
+else
+    echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
+    exit 1
 fi
+topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 . "${topdir}"/scripts/benchutil.sh
 if test $? -ne 0; then
   echo "Unable to source `dirname $0`/benchutil.sh" 1>&2
