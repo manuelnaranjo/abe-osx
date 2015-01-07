@@ -86,12 +86,24 @@ else
 fi
 topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
 
+
+#Sanity Checks
+if test "$((`umask` & 077))" -ne 63; then
+  echo "umask grants permissions to group and world, will remove those permissions" 1>&2
+  if ! umask g-rwx,o-rwx; then
+    echo "umask failed, wibble, aborting" 1>&2
+    exit 1
+  fi
+fi
+
 #TODO: Really, this check should operate on the route from the git server to localhost
 . "${topdir}/scripts/benchutil.sh"
 if ! check_private_route localhost; then
   echo "Do not appear to be on private network, conservatively aborting" 1>&2
   exit 1
 fi
+#End sanity checks
+
 
 run_benchargs=""
 skip_build=
