@@ -249,7 +249,7 @@ build()
     # If this is a native build, we always checkout/fetch.  If it is a 
     # cross-build we only checkout/fetch if this is stage1
     if test x"${target}" = x"${build}" \
-        -o "${target}" != x"${build}" -a x"$2" != x"stage2"; then
+        -o x"${target}" != x"${build}" -a x"$2" != x"stage2"; then
         if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^ssh|^lp|^http|^git|\.git"` -gt 0; then     
             # Don't update the compiler sources between stage1 and stage2 builds if this
             # is a cross build.
