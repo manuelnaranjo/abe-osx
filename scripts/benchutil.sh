@@ -168,11 +168,11 @@ function check_private_route
     fi
     echo "${pingout}" | grep -Eq "From (${block24}|${block20}|${block16}) icmp_seq=1 Time to live exceeded"
     if test $? -ne 0; then
-      echo "Surprising stop on route to benchmark target: ${pingout}" 1>&2
+      echo "Surprising stop on hop ${ttl} on route to benchmark target: '${pingout}'" 1>&2
       return 1
     fi
   done
 
-  #We've run out of hops to try
+  echo "Failed to reach benchmark target within ${ttl} hops" 1>&2
   return 1
 }
