@@ -134,6 +134,7 @@ function check_private_route
   local myaddr
   local pingout
   local ttl
+  local retry
 
   if test x"${1:-}" = x; then
     echo "check_private_route requires a parameter" 1>&2
@@ -162,15 +163,20 @@ function check_private_route
   #This is a crude, but generic and unprivileged, way of doing traceroute - what
   #we really want is the routing tables, I think.
   for ttl in {1..10}; do
-    pingout="`ping -n -t ${ttl} -c 1 $1`"
-    if test $? -eq 0; then
-      return 0 #We've reached the target
-    fi
-    echo "${pingout}" | grep -Eq "^From (${block24}|${block20}|${block16}) icmp_seq=1 Time to live exceeded$"
-    if test $? -ne 0; then
-      echo "Surprising stop on hop ${ttl} on route to benchmark target: '${pingout}'" 1>&2
-      return 1
-    fi
+    #This thing sometimes fails spuriously - I can't fathom why, so we retry
+    #a few times. Sigh.
+    for retry in {1..5}; do
+      pingout="`ping -n -t ${ttl} -c 1 $1`"
+      if test $? -eq 0; then
+        return 0 #We've reached the target
+      fi
+      echo "${pingout}" | grep -Eq "^From (${block24}|${block20}|${block16}) icmp_seq=1 Time to live exceeded$"
+      if test $? -eq 0; then
+        continue 2
+      fi
+    done
+    echo "Surprising stop on hop ${ttl} on route to benchmark target: '${pingout}'" 1>&2
+    return 1
   done
 
   echo "Failed to reach benchmark target within ${ttl} hops" 1>&2
