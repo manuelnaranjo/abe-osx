@@ -162,7 +162,7 @@ function check_private_route
   #This is a crude, but generic and unprivileged, way of doing traceroute - what
   #we really want is the routing tables, I think.
   for ttl in {1..10}; do
-    pingout="`ping -t ${ttl} -c 1 $1`"
+    pingout="`ping -n -t ${ttl} -c 1 $1`"
     if test $? -eq 0; then
       return 0 #We've reached the target
     fi
