@@ -1,0 +1,4 @@
+load_generic_config tcwg-common
+
+set_board_info hostname tcwg-ex40-09
+set_board_info remote_sim "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"

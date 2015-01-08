@@ -7,22 +7,50 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-export runtests=true
-
 export CONFIG_SHELL="/bin/bash"
-shared="/home/buildslave/workspace/shared/"
+shared="/home/buildslave/workspace/shared"
 abe_dir="${WORKSPACE}/abe"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
+fileserver="abe.tcwglab.linaro.org"
+
+mkdir -p ${snapshots_ref}/
+rsync -az --update ${fileserver}:snapshots/ ${snapshots_ref}/
+rm -rf ${snapshots_ref}/*~*
+
+rm -rf ${WORKSPACE}/_build ${user_snapshots}
+
+mkdir -p ${user_snapshots}/
+rsync -a ${snapshots_ref}/infrastructure/ ${user_snapshots}/infrastructure/
+
+case ${target} in
+    schroot-*)
+	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\1/")
+	target=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\2/")
+	CONFIG_SHELL="schroot -c tcwg-build-${schroot_arch}-trusty --preserve-environment -- ${CONFIG_SHELL}"
+	;;
+esac
+
+if test x"${bootstrap}" = x"true"; then
+    bootstrap="--bootstrap"
+else
+    bootstrap=""
+fi
 
 rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
-$CONFIG_SHELL -x ${abe_dir}/jenkins.sh ${release}
+$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release} ${bootstrap}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
   exit 1
 fi
+
+# Leave source and build trees for *Farm jobs; delete for all other jobs
+echo "JOB_NAME = ${JOB_NAME}"
+case "${JOB_NAME}" in
+    *"Farm"*) ;;
+    *) rm -rf ${WORKSPACE}/_build ${user_snapshots} ;;
+esac

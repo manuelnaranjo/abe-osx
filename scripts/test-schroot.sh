@@ -13,9 +13,10 @@ sysroot=""
 ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
+profile="tcwg-test"
 multilib_path="lib"
 
-while getopts "a:bc:d:e:fgh:l:mo:p:qv" OPTION; do
+while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
@@ -29,6 +30,7 @@ while getopts "a:bc:d:e:fgh:l:mo:p:qv" OPTION; do
 	m) ssh_master=true ;;
 	o) target_ssh_opts="$OPTARG" ;;
 	p) host_ssh_opts="$OPTARG" ;;
+	P) profile="$OPTARG" ;;
 	q) exec > /dev/null ;;
 	v) set -x ;;
     esac
@@ -77,20 +79,35 @@ if ! triplet_to_deb_arch "$arch" >/dev/null 2>&1; then
     arch="native"
 fi
 
-if [ "x$arch" = "xnative" ]; then
-    cpu="$(ssh $target uname -m)"
-    case "$cpu" in
-	aarch64) arch=aarch64-linux-gnu ;;
-	armv7l) arch=arm-linux-gnueabihf ;;
-	armv7*) arch=arm-linux-gnueabi ;;
-	i686) arch=i686-linux-gnu ;;
-	x86_64) arch=x86_64-linux-gnu ;;
-	*)
-	    echo "ERROR: unrecognized native target $cpu"
-	    exit 1
-	    ;;
-    esac
+cpu="$(ssh $target uname -m)"
+case "$cpu" in
+    aarch64) native_arch=aarch64-linux-gnu ;;
+    armv7l) native_arch=arm-linux-gnueabihf ;;
+    armv7*) native_arch=arm-linux-gnueabi ;;
+    i686) native_arch=i686-linux-gnu ;;
+    x86_64) native_arch=x86_64-linux-gnu ;;
+    *)
+	echo "ERROR: unrecognized native target $cpu"
+	exit 1
+	;;
+esac
+
+if [ x"$arch" = x"native" ]; then
+    arch="$native_arch"
 fi
+
+deb_arch="$(triplet_to_deb_arch $arch)"
+
+case "$cpu:$deb_arch" in
+    "x86_64:amd64"|"x86_64:i386") ;;
+    "x86_64:"*)
+	use_qemu=true
+	arch=$native_arch
+	;;
+esac
+
+deb_arch="$(triplet_to_deb_arch $arch)"
+deb_dist="$(triplet_to_deb_dist $arch)"
 
 if [ "x$board_exp" != "x" ] ; then
     lava_json="$(grep "^set_board_info lava_json " $board_exp | sed -e "s/^set_board_info lava_json //")"
@@ -112,12 +129,12 @@ if [ "x$board_exp" != "x" ] ; then
     fi
 fi
 
-deb_arch="$(triplet_to_deb_arch $arch)"
-deb_dist="$(triplet_to_deb_dist $arch)"
+orig_target_ssh_opts="$target_ssh_opts"
+target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o ControlPath=/tmp/ssh-$profile-$port-%u-%r@%h:%p"
 
-schroot_id=tcwg-test-$deb_arch-$deb_dist
+schroot_id=$profile-$deb_arch-$deb_dist
 
-schroot="ssh $target_ssh_opts $target schroot -r -c session:tcwg-test-$port -d / -u root --"
+schroot="ssh $target_ssh_opts $target schroot -r -c session:$profile-$port -d / -u root --"
 rsh_opts="$target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no"
 rsh="ssh $rsh_opts"
 user="$(ssh $target_ssh_opts $target echo \$USER)"
@@ -152,18 +169,24 @@ if $gen_schroot; then
 	fi
     done
 
+    # Configure APT sources.
     case "$deb_arch" in
-	amd64) extra_packages="qemu-user-static" ;;
-	*) extra_packages="" ;;
+	amd64|i386) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
+	*) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
+    esac
+    ssh $target_ssh_opts $target \
+	sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
+
+    case "$deb_arch" in
+	amd64) extra_packages="qemu-user-static gdb gdbserver" ;;
+	*) extra_packages="gdb gdbserver" ;;
+    esac
+
+    case "$profile" in
+	"tcwg-build") extra_packages="autoconf autogen automake bash bison build-essential ccrypt dejagnu flex gawk git g++ gcc libncurses5-dev libtool make texinfo wget xz-utils" ;;
     esac
 
     if ! [ -z "$extra_packages" ]; then
-	case "$deb_arch" in
-	    amd64) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
-	    *) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
-	esac
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
 	ssh $target_ssh_opts $target \
 	    sudo chroot $chroot apt-get update
 	ssh $target_ssh_opts $target \
@@ -175,6 +198,21 @@ if $gen_schroot; then
 	    sudo rm -f $chroot/usr/bin/qemu-\*-static
     fi
 
+    # Install foundation model in x86_64 chroots for bare-metal testing
+    if [ x"$deb_arch" = x"amd64" ]; then
+	ssh $target_ssh_opts $target \
+	    sudo mkdir -p $chroot/linaro/foundation-model/Foundation_v8pkg
+	ssh $target_ssh_opts $target \
+	    sudo rsync -a /linaro/foundation-model/Foundation_v8pkg/ $chroot/linaro/foundation-model/Foundation_v8pkg/
+    fi
+
+    if echo "$extra_packages" | grep -q "git"; then
+	ssh $target_ssh_opts $target \
+	    sudo ln -s /usr/share/doc/git/contrib/workdir/git-new-workdir $chroot/usr/local/bin/
+	ssh $target_ssh_opts $target \
+	    sudo chmod a+x $chroot/usr/share/doc/git/contrib/workdir/git-new-workdir
+    fi
+
     ssh $target_ssh_opts $target \
 	sudo mkdir -p /var/chroots/
     ssh $target_ssh_opts $target \
@@ -183,14 +221,20 @@ if $gen_schroot; then
     ssh $target_ssh_opts $target \
 	sudo rm -rf $chroot
 
+    case "$deb_arch" in
+	armhf|i386) personality="personality=linux32" ;;
+	*) personality="" ;;
+    esac
+
     ssh $target_ssh_opts $target \
 	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\"" <<EOF
 [$schroot_id]
 type=file
 file=/var/chroots/$schroot_id.tgz
-groups=buildslave,users
-root-groups=buildslave,users
-profile=tcwg-test
+groups=users
+root-groups=users
+profile=$profile
+$personality
 EOF
 
     if ! [ -z "$schroot_master" ]; then
@@ -213,12 +257,14 @@ if ! [ -z "$schroot_master" ]; then
     cat $schroot_master/chroot.d/$schroot_id | ssh $target_ssh_opts $target \
 	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\""
 
-    (cd $schroot_master && tar -c tcwg-test/ | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd /etc/schroot && rm -rf tcwg-test && tar -x && chown -R root:root tcwg-test/\"")
+    (cd $schroot_master && tar -c $profile/ | ssh $target_ssh_opts $target \
+	sudo bash -c "\"cd /etc/schroot && rm -rf $profile && tar -x && chown -R root:root $profile/\"")
 fi
 
 if $begin_session; then
-    ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n tcwg-test-$port -d /
+    ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n $profile-$port -d /
+    $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
+    $schroot sh -c "\"echo $user - nproc 1000 >> /etc/security/limits.conf\""
     # Set ssh port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
@@ -241,6 +287,9 @@ if $begin_session; then
     $rsh root@$target rsync -a /root/ $home/
     $rsh root@$target chown -R $user $home/
 
+    $rsh root@$target "echo 1 > /dont_keep_session"
+    $rsh root@$target chmod 0666 /dont_keep_session
+
     echo $target:$port started schroot: $rsh $target
 fi
 
@@ -261,13 +310,29 @@ if ! [ -z "$shared_dir" ]; then
     test -z "$host_ssh_port" && host_ssh_port="22"
     # Establish port forwarding
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
-    $rsh $target sshfs -o ssh_command="ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" "$USER@127.0.0.1:$shared_dir" "$shared_dir"
+    # Recent versions of sshfs fail if ssh_command has more than a single
+    # white spaces between options or ends with a space; filter ssh_command.
+    ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
+    try="0"
+    while [ "$try" -lt "3" ]; do
+	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
+	if [ x"${PIPESTATUS[0]}" != x"0" ]; then
+	    try=$(($try + 1))
+	    sleep 1
+	    continue
+	fi
+	break
+    done
 
     # Remove temporary key and delete extra empty lines at the end of file.
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
     rm ~/.ssh/id_rsa-test-schroot.$$*
 
-    echo $target:$port shared directory $shared_dir
+    if [ "$try" != "3" ]; then
+	echo "$target:$port shared directory $shared_dir: SUCCESS"
+    else
+	echo "$target:$port shared directory $shared_dir: FAIL"
+    fi
 fi
 
 if ! [ -z "$sysroot" ]; then
@@ -285,20 +350,38 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
+	if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
+	    # Our aarch64 sysroot has everything in /lib64, but executables
+	    # still expect to find dynamic linker under
+	    # /lib/ld-linux-aarch64.so.1
+	    $rsh root@$target "ln -s /sysroot/lib64 /sysroot/lib"
+	fi
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
-	$rsh -f $target bash -c "\"while sleep 30; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
+	# Note the "-S none" option -- ssh does not always detach from process
+	# when multiplexing is used.  I think this is a bug in ssh.
+	# We calculate delay in this fashion to avoid multi-thread tests
+	# getting through a minute of usertime in 60/#_of_cpus seconds.
+	delay=$((60 / $($rsh $target getconf _NPROCESSORS_ONLN)))
+	$rsh -f -S none $target bash -c "\"while sleep $delay; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
 fi
 
 if $ssh_master; then
-    $rsh -fMN $target
+    ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -fMN $target
 fi
 
-if $finish_session; then
+# Keep the session alive when file /dont_kill_me is present
+if $finish_session && [ x`$schroot cat /dont_keep_session` = x"1" ]; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
-    $schroot /etc/init.d/ssh stop || true
-    ssh $target_ssh_opts $target schroot -e -c session:tcwg-test-$port
+    ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
+    if [ x"${PIPESTATUS[0]}" != x"0" ]; then
+	# tcwgbuildXX machines have a kernel problem that a bind mount will be
+	# forever busy if it had an sshfs under it.  Seems like fuse is not
+	# cleaning up somethings.  The workaround is to lazy unmount the bind.
+	$schroot umount -l /
+	ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port
+    fi
     echo $target:$port finished session
 fi
 

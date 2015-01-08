@@ -45,11 +45,20 @@ user_workspace="${WORKSPACE}"
 # The files in this directory are shared across all platforms 
 shared="${HOME}/workspace/shared"
 
-# This is where all the git repositories live
-user_git_repo="--with-git-reference-dir=${shared}/snapshots"
+# This is an optional directory for the master copy of the git repositories.
+user_git_repo="${shared}/snapshots"
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
+
+# Server to store results on.
+fileserver="abe.tcwglab.linaro.org"
+
+# Compiler languages to build
+languages=default
+
+# Whether attempt bootstrap
+try_bootstrap=false
 
 # The release version string, usually a date
 releasestr=
@@ -57,7 +66,7 @@ releasestr=
 # This is a string of optional extra arguments to pass to abe at runtime
 user_options=""
 
-OPTS="`getopt -o s:g:c:w:o:f:t:h -l snapshots:gitrepo:abe:workspace:options:fileserver:target:help -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -68,7 +77,9 @@ while test $# -gt 0; do
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
+        -l|--languages) languages=$2 ;;
         -r|--runtests) runtests="true" ;;
+        -b|--bootstrap) try_bootstrap="true" ;;
 	-h|--help) usage ;;
     esac
     shift
@@ -93,11 +104,6 @@ fi
 if test "`echo $user_options | grep -c -- --release`" -gt 0; then
     release="`echo  $user_options | grep -o -- "--release [a-zA-Z0-9]* " | cut -d ' ' -f 2`"
     releasestr="--release ${release}"
-fi
-
-# This is an optional directory for the master copy of the git repositories.
-if test x"${user_git_repo}" = x; then
-    user_git_repo="--with-git-reference-dir=${shared}/snapshots"
 fi
 
 # Get the versions of dependant components to use
@@ -173,7 +179,13 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${shared}/snapshots
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test
+
+# Double parallelism for tcwg-ex40-* machines to compensate for really-remote
+# target execution.  GCC testsuites will run with -j 32.
+case "$(hostname)" in
+    "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
+esac
 
 # load commonly used varibles set by configure
 if test -e "${PWD}/host.conf"; then
@@ -186,19 +198,28 @@ fi
 # Delete the previous test result files to avoid problems.
 find ${user_workspace} -name \*.sum -exec rm {} \;  2>&1 > /dev/null
 
-# For cross build. For cross builds we build a native GCC, and then use
-# that to compile the cross compiler to bootstrap. Since it's just
-# used to build the cross compiler, we don't bother to run 'make check'.
-if test x"${bootstrap}" = xtrue; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${change} --bootstrap --build all
+if test x"${try_bootstrap}" = xtrue; then
+    # Attempt to bootstrap GCC is build and target are compatible
+    build1="$(grep "^build=" host.conf | sed -e "s/build=\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
+    target1="$(echo ${target} | sed -e "s/\(.*\)-\(.*\)-\(.*\)-\(.*\)/\1-\3-\4/")"
+    if test x"${build1}" = x"${target1}" -o x"${platform}" = x""; then
+	try_bootstrap="--enable bootstrap"
+    else
+	try_bootstrap="--disable bootstrap"
+    fi
+else
+    try_bootstrap=""
 fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} --timeout 100 --build all
+$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If abe returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
+    echo "================= TAIL OF LOG: BEGIN ================="
+    tail -n 50 build.out
+    echo "================= TAIL OF LOG: FINISH ================="
     exit 1
 fi
 
@@ -323,16 +344,24 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	for s in ${sums}; do
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
-	scp ${sums} $test_logs ${fileserver}:${basedir}/${dir}/
+
+	logs_dir=$(mktemp -d)
+	cp ${sums} ${test_logs} ${logs_dir}/
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${user_workspace} -name check\*.log`"
-	scp ${checks} ${fileserver}:${basedir}/${dir}/
+	cp ${checks} ${logs_dir}/
 	
 	# Copy over the build logs
 	logs="`find ${user_workspace} -name make\*.log`"
-	scp ${logs} ${fileserver}:${basedir}/${dir}/
-	ssh ${fileserver} xz ${basedir}/${dir}/\*.sum ${basedir}/${dir}/\*.log
+	cp ${logs} ${logs_dir}/
+
+	# Copy stdout and stderr output from abe.
+	cp build.out build.err ${logs_dir}/
+
+	xz ${logs_dir}/*
+	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
+	rm -rf ${logs_dir}
 	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh

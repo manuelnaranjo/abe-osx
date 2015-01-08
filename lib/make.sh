@@ -455,16 +455,20 @@ make_all()
 
 # Print path to dynamic linker in sysroot
 # $1 -- sysroot path
+# $2 -- whether dynamic linker is expected to exist
 find_dynamic_linker()
 {
     local sysroots="$1"
+    local strict="$2"
     local dynamic_linker c_library_version
 
     # Programmatically determine the embedded glibc version number for
     # this version of the clibrary.
-    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
-    dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
-    if [ -z "$dynamic_linker" ]; then
+    if test -x "${sysroots}/usr/bin/ldd"; then
+	c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
+	dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
+    fi
+    if $strict && [ -z "$dynamic_linker" ]; then
         error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
         exit 1
     fi
@@ -567,22 +571,12 @@ make_install()
     fi
 
     if test x"${tool}" = x"gcc"; then
-        local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
-#        if test "`echo ${target} | egrep -c 'aarch64|x86_64'`" -gt 0 ; then
-	if test x"${build_arch}" = x"aarch64" -o x"${build_arch}" = x"x86_64"; then
-            gcc_libpath=${sysroots}/usr/lib64/
-        else
-            gcc_libpath=${sysroots}/usr/lib/
-        fi
-        if test ! -e ${gcc_libpath}; then
-            dryrun "mkdir -p ${gcc_libpath}"
-	fi
-        dryrun "rsync -av ${libs} ${gcc_libpath}"
+	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
     fi
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
         local dynamic_linker
-        dynamic_linker="$(find_dynamic_linker "$sysroots")"
+        dynamic_linker="$(find_dynamic_linker "$sysroots" true)"
         local dynamic_linker_name="`basename ${dynamic_linker}`"
 
         # 64 bit architectures don't populate sysroot/lib, which unfortunately other
@@ -701,16 +695,54 @@ make_check()
     fi
 
     if test x"${parallel}" = x"yes"; then
-        local make_flags="${make_flags} -j ${cpus}"
+	local make_flags
+	case "${target}" in
+	    "$build"|*"-elf"*) make_flags="${make_flags} -j ${cpus}" ;;
+	    # Double parallelization when running tests on remote boards
+	    # to avoid host idling when waiting for the board.
+	    *) make_flags="${make_flags} -j $((2*${cpus}))" ;;
+	esac
     fi
 
     # load the config file for Linaro build farms
     export DEJAGNU=${topdir}/config/linaro.exp
 
+    # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
         dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
+	local exec_tests
+	exec_tests=false
+	case "$tool" in
+	    gcc) exec_tests=true ;;
+	    binutils)
+		if [ x"$2" = x"gdb" ]; then
+		    exec_tests=true
+		fi
+		;;
+	esac
+
+	eval "schroot_make_opts="
+	eval "schroot_boards="
+
+	local schroot_port
+	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
+	    # Start schroot sessions on target boards that support it
+	    schroot_port="$(print_schroot_port)"
+	    local schroot_sysroot
+	    case "${target}" in
+		*"-elf"*) schroot_sysroot="" ;;
+		*) schroot_sysroot="$(make_target_sysroot)" ;;
+	    esac
+	    start_schroot_sessions "${target}" "${schroot_port}" "${schroot_sysroot}" "${builddir}"
+	    if test "$?" != "0"; then
+		stop_schroot_sessions "${schroot_port}" ${schroot_boards}
+		return 1
+	    fi
+	    rm -rf "$schroot_sysroot"
+	fi
+
 	case ${tool} in
 	    binutils)
 		local dirs="/binutils /ld /gas"
@@ -720,10 +752,6 @@ make_check()
 		local dirs="/gdb"
 		local check_targets="check-gdb"
 		;;
-#	    gcc)
-#		local dirs="/gcc"
-#		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
-#		;;
 	    *)
 		local dirs="/"
 		local check_targets="check"
@@ -735,14 +763,17 @@ make_check()
 	fi
 
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
 	done
+
+	# Stop schroot sessions
+	stop_schroot_sessions "$schroot_port" ${schroot_boards}
        
         if test x"${tool}" = x"gcc"; then
             rm -rf ${sysroots}/etc/ld.so.cache
 	fi
     fi
-    
+
     return 0
 }
 
@@ -843,3 +874,48 @@ EOF
     return 0
 }
 
+# Make a single-use target sysroot with all shared libraries for testing.
+# NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
+# $1 - compiler (and any compiler flags) to query multilib information
+make_target_sysroot()
+{
+    trace "$*"
+
+    local sysroot
+    sysroot=/tmp/sysroot.$$
+    rsync -a $sysroots/ $sysroot/
+
+    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
+	# Remove symlink lib64 -> lib to make sysroot debian-compatible.
+	rm $sysroot/lib
+    fi
+
+    echo $sysroot
+}
+
+# $1 - compiler (and any compiler flags) to query multilib information
+copy_gcc_libs_to_sysroot()
+{
+    local libgcc
+    local ldso
+    local gcc_lib_path
+    local sysroot_lib_dir
+
+    ldso="$(find_dynamic_linker "${sysroots}" false)"
+    if ! test -z "${ldso}"; then
+	libgcc="libgcc_s.so"
+    else
+	libgcc="libgcc.a"
+    fi
+
+    libgcc="$($@ -print-file-name=${libgcc})"
+    gcc_lib_path="$(dirname "${libgcc}")"
+
+    if ! test -z "${ldso}"; then
+	sysroot_lib_dir="$(dirname ${ldso})"
+    else
+	sysroot_lib_dir="${sysroots}/usr/lib"
+    fi
+
+    rsync -a ${gcc_lib_path}/ ${sysroot_lib_dir}/
+}
