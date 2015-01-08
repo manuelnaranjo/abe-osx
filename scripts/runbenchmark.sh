@@ -230,7 +230,7 @@ if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/
 fi
 
 #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
-logdir="${cbuild_top}/${benchmark}-log/${ip}_`date +%s`"
+logdir="${cbuild_top}/${benchmark}-log/${device}_${ip}_`date -u +%F_%T`"
 if test -e "${logdir}"; then
   echo "Log output directory ${logdir} already exists" 1>&2
 fi
