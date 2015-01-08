@@ -130,6 +130,9 @@ stop_services()
 start_services()
 {
   ret=0
+  if test x"${stopped_services-}" = x; then
+    return 0
+  fi
   for ((i=${#stopped_services[@]}-1; i>=0; i--)); do
     ${sudo} start "${stopped_services[$i]}" > /dev/null
     if test $? -ne 0; then
@@ -225,7 +228,7 @@ bind_processes()
 #      a bash 4 dependency here just yet
 unbind_processes()
 {
-  if test ${#bound_processes[@]} -eq 0; then
+  if test x"${bound_processes-}" = x; then
     #Either taskset isn't working, or we didn't change any affinities
     return 0
   fi
@@ -273,6 +276,10 @@ stop_network()
     echo "Failed to read network interfaces" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
+  if test x"${interfaces-}" = x; then
+    echo "No interfaces found. Wibble." | tee -a /dev/stderr "${log}" > /dev/null
+    return 1
+  fi
 
   #Work out how to stop interfaces by stopping one of them
   local netcmd
@@ -285,20 +292,23 @@ stop_network()
     return 1
   fi
   downed_interfaces+=("${interfaces[0]}")
-  interfaces=("${interfaces[@]:1}")
+
+  local ret=0
 
   #Stop any remaining interfaces
-  local ret=0
-  local interface
-  for interface in "${interfaces[@]}"; do
-    bash -c "${netcmd}${interface}"
-    if test $? -eq 0; then
-      downed_interfaces+=("${interface}")
-    else
-      echo "Failed to bring down network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
-      ret=1
-    fi
-  done
+  if test ${#interfaces[@]} -gt 1; then
+    local interface
+    interfaces=("${interfaces[@]:1}")
+    for interface in "${interfaces[@]}"; do
+      bash -c "${netcmd}${interface}"
+      if test $? -eq 0; then
+        downed_interfaces+=("${interface}")
+      else
+        echo "Failed to bring down network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
+        ret=1
+      fi
+    done
+  fi
 
   #Ensure that interfaces are have finished going down
   #TODO: A little manpage scanning suggests that this isn't needed at least the upstart case
@@ -317,7 +327,7 @@ stop_network()
 
 start_network()
 {
-  if test ${#downed_interfaces[@]} -eq 0; then
+  if test x"${downed_interfaces-}" = x; then
     return 0
   fi
 
@@ -356,26 +366,28 @@ start_network()
   downed_interfaces=("${downed_interfaces[@]:1}")
 
   local ret=0
-  local interface
-  for interface in "${downed_interfaces[@]}"; do
-    bash -c "${netcmd}${interface}"
-    if test $? -ne 0; then
-      echo "Failed to bring up network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
-      ret=1
-    fi
-    for i in {1..60}; do
-      ping -c 1 "`ip -f inet -o addr show ${interface} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
-      if test $? -eq 0; then
-	break
+  if test ${#downed_interfaces[@]} -gt 1; then
+    local interface
+    for interface in "${downed_interfaces[@]}"; do
+      bash -c "${netcmd}${interface}"
+      if test $? -ne 0; then
+        echo "Failed to bring up network interface '${interface}'" | tee -a /dev/stderr "${log}" > /dev/null
+        ret=1
       fi
-      sleep 1
-      false
+      for i in {1..60}; do
+        ping -c 1 "`ip -f inet -o addr show ${interface} | awk '{print $4}' | sed 's#/.*##'`" > /dev/null
+        if test $? -eq 0; then
+	  break
+        fi
+        sleep 1
+        false
+      done
+      if test $? -ne 0; then
+        echo "Restored interface ${interface} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
+        echo "Ping rune: ping -c 1 \"`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`\" > /dev/null" | tee -a /dev/stderr "${log}" > /dev/null
+      fi
     done
-    if test $? -ne 0; then
-      echo "Restored interface ${interface} not answering pings after ${i} seconds" | tee -a /dev/stderr "${log}" > /dev/null
-      echo "Ping rune: ping -c 1 \"`ip -f inet -o addr show ${downed_interfaces[0]} | awk '{print $4}' | sed 's#/.*##'`\" > /dev/null" | tee -a /dev/stderr "${log}" > /dev/null
-    fi
-  done
+  fi
   return ${ret}
 } 
 
