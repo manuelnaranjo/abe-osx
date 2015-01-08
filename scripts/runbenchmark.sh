@@ -23,7 +23,7 @@ while getopts b:d:t:kc flag; do
     c) cautious='-c';;
     b) benchmark="${OPTARG}";;
     d) device="${OPTARG}";;
-    t) builddir="${OPTARG}";;
+    t) buildtar="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1
@@ -250,7 +250,7 @@ if ! check_private_route "${gateway}"; then
   echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
-for thing in "${builddir}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
+for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
   (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
@@ -285,7 +285,9 @@ fi
 (. "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
-     "cd ${target_dir}/`basename ${builddir}` && \
+     "cd ${target_dir} && \
+      tar xjf `basename ${buildtar}` && \
+      cd `tar tjf ${buildtar} | head -n1` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      for i in {1..10}; do \

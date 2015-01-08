@@ -28,6 +28,13 @@ clean_top()
       fi
     fi
   done
+  if test x"${cmpbuild:-}" != x; then
+    rm -f "${cmpbuild}"
+    if test $? -ne 0; then
+      echo "Failed to delete compressed benchmark output ${cmpbuild}" 1>&2
+      error=1
+    fi
+  fi
   exit ${error}
 }
 
@@ -181,8 +188,21 @@ if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   exit 1
 fi
+
+#Compress build to a tmpfile in our top-level working directory
+#This should be good for bandwidth
+#By keeping file at top level, we make sure that everything sensitive is in one place
+cmpbuild="`mktemp -p ${cbuild_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
+if test $? -ne 0; then
+  echo "Unable to create temporary file for compressed build output" 1>&2
+  exit 1
+fi
+if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
+  echo "Unable to compress ${builddir} to ${cmpbuild}" 1>&2
+  exit 1
+fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${builddir}" ${keep} ${cautious} &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" ${keep} ${cautious} &
   runpids[$!]=''
 done
 
