@@ -55,7 +55,7 @@ else
   echo "Environment variable LAVA_SERVER not set, defaulted to ${lava_url}" 1>&2
 fi
 
-benchlog="`. host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
+benchlog="`. ${cbuild_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   exit 1

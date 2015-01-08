@@ -176,7 +176,7 @@ if test x"${skip_build:-}" = x; then
   fi
 fi
 
-builddir="`target2="${target}"; . host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`target2="${target}"; . ${cbuild_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   exit 1
