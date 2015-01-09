@@ -17,13 +17,15 @@ keep=
 cautious=''
 build_dir=
 lava_target=
-while getopts b:d:t:kc flag; do
+run_benchargs=
+while getopts b:d:t:a:kc flag; do
   case "${flag}" in
     k) keep='-k';;
     c) cautious='-c';;
     b) benchmark="${OPTARG}";;
     d) device="${OPTARG}";;
     t) buildtar="${OPTARG}";;
+    a) run_benchargs="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1

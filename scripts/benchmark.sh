@@ -202,7 +202,7 @@ if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   exit 1
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" ${keep} ${cautious} &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} &
   runpids[$!]=''
 done
 
