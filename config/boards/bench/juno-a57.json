@@ -6,8 +6,8 @@
         {
             "command": "deploy_linaro_image",
             "parameters": {
-                "hwpack": "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20140823-686_arm64_supported.tar.gz",
-                "rootfs": "http://people.linaro.org/~bernie.ogden/linaro-image-toolchain-benchmark-genericarmv8-20141023155732.rootfs.tar.gz"
+                "hwpack": "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz",
+                "rootfs": "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz"
             }
         },
         {
@@ -16,7 +16,7 @@
                 "testdef_repos": [
                     {
                         "git-repo": "git://git.linaro.org/toolchain/lavabench.git",
-                        "testdef": "bench-session-oe.yaml",
+                        "testdef": "bench-session-debian.yaml",
                         "parameters": {
                            "GATEWAY": "10.0.0.1",
                            "PUB_KEY": "",
