@@ -86,7 +86,7 @@ verbose=1
 network=""
 runtests=no
 ccache=no
-gerrit=no
+#gerrit=no
 
 release=""
 with_packages="toolchain,sysroot,gdb"
