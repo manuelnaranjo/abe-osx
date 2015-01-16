@@ -145,17 +145,22 @@ extract_gerrit_port()
 extract_gerrit_username()
 {
     local srcdir=$1
-    if test -e ${srcdir}/.gitreview; then
-	local review=${srcdir}/.gitreview
-	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
-    fi
-    if test x"${gerrit_username}" = x; then
-	if test -e ${HOME}/.gitreview; then
-	    local review=${HOME}/.gitreview
+    
+    if test x"${BUILD_USER_ID}" = x; then
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
 	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
-	else
-	    error "No ${srcdir}/.gitreview file!"
 	fi
+	if test x"${gerrit_username}" = x; then
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+		gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	    else
+		error "No ${srcdir}/.gitreview file!"
+	    fi
+	fi
+    else
+	gerrit_username="${BUILD_USER_ID}"
     fi
     if test x"${gerrit_username}" != x; then
 	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
@@ -272,7 +277,7 @@ gerrit_query()
     local status=${2:-status:open}
 
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
-    gerrit_username=robert.savoye
+    gerrit_username="${BUILD_USER_FIRST_NAME}.${BUILD_USER_LAST_NAME}"
     ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a records
