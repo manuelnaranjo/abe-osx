@@ -207,7 +207,7 @@ gerrit_build_status()
     local status="$2"
     local resultsfile="${3:-}"
     local revision="`get_git_revision ${srcdir}`"
-    local msgfile="${local_builds}/${host}/${target}/test-results.txt"
+    local msgfile="test-results-$$.txt"
     local code="0"
 
     # Initialize setting for gerrit if not done so already
