@@ -19,7 +19,7 @@ cd ${WORKSPACE}/_build
 
 $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
-$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
+$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --enable gerrit --target ${target} ${gcc_branch}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
