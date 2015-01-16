@@ -366,9 +366,9 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	xz ${logs_dir}/*
 	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
 	rm -rf ${logs_dir}
-	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
+#	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+#	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
+#	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
