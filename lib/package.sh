@@ -217,8 +217,10 @@ binary_toolchain()
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
-    # FIXME: link the sysroot into the toolchain tarball
-    ln -sfnT ${sysroots} ${destdir}/libc
+    if test x"${build}" != x"${target}"; then
+	# FIXME: link the sysroot into the toolchain tarball
+	ln -sfnT ${sysroots} ${destdir}/libc
+    fi
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
@@ -528,18 +530,23 @@ binutils_src_tarball()
 test_binary_toolchain()
 {
     # Binaries get installed here if possible
-    if test ! -w /opt/linaro; then
-	error "/opt/linaro is not writable!"
-	return 1
+#    if test ! -w /opt/linaro; then
+#	error "/opt/linaro is not writable!"
+#	return 1
+#    fi
+    local install="/tmp/install.$$"
+
+    if test ! -d ${install}; then
+	dryrun "mkdir -p ${install}"
     fi
-    
+
     # Untar everything in the install directory
     for i in ${local_snapshots}/*-x86_64*.xz; do
-	tar Jxvf $i --directory=/opt/linaro
+	tar Jxvf $i --directory="${install}"
     done
 
-    local sysroot="`find /opt/linaro -name INSTALL-SYSROOT.sh`"
-    local sysroot="`dirname ${sysroot}`"
+#    local sysroot="`find ${install} -name INSTALL-SYSROOT.sh`"
+#    local sysroot="`dirname ${sysroot}`"
 
 #    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
 #    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
@@ -547,7 +554,7 @@ test_binary_toolchain()
 #    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
 
     # Put the installed toolchain first in the path so it gets picked up by make check.
-    local compiler="`find /opt/linaro -name ${target}-gcc`"
+    local compiler="`find ${install} -name ${target}-gcc`"
     local compiler="`dirname ${compiler}`"
     export PATH="${compiler}:$PATH"
 
