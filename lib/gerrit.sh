@@ -156,11 +156,11 @@ extract_gerrit_username()
 		local review=${HOME}/.gitreview
 		gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		warning "No ${srcdir}/.gitreview file!"
 	    fi
 	fi
-    else
-	gerrit_username="${BUILD_USER_ID}"
+#    else
+#	gerrit_username="${BUILD_USER_ID}"
     fi
     if test x"${gerrit_username}" != x; then
 	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
