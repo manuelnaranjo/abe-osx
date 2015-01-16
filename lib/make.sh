@@ -162,7 +162,7 @@ build_all()
     fi
     rm -f ${sumsfile}
     
-    if test x"${runtests}" = xyes; then
+    if test x"${runtests}" = xyes -a x"${tarbin}" != x"yes"; then
 	notice "Testing components"
 	buildingall=no
 	make_check ${binutils_version}
