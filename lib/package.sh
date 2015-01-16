@@ -529,11 +529,6 @@ binutils_src_tarball()
 # This installs a binary tarball produced by abe, and runs make check
 test_binary_toolchain()
 {
-    # Binaries get installed here if possible
-#    if test ! -w /opt/linaro; then
-#	error "/opt/linaro is not writable!"
-#	return 1
-#    fi
     local install="/tmp/install.$$"
 
     if test ! -d ${install}; then
@@ -544,14 +539,6 @@ test_binary_toolchain()
     for i in ${local_snapshots}/*-x86_64*.xz; do
 	tar Jxvf $i --directory="${install}"
     done
-
-#    local sysroot="`find ${install} -name INSTALL-SYSROOT.sh`"
-#    local sysroot="`dirname ${sysroot}`"
-
-#    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
-#    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
-
-#    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
 
     # Put the installed toolchain first in the path so it gets picked up by make check.
     local compiler="`find ${install} -name ${target}-gcc`"
@@ -564,4 +551,6 @@ test_binary_toolchain()
 
     make_clean ${gcc_version} stage2
     make_check ${gcc_version} stage2
+
+    rm -fr ${install}
 }
