@@ -163,7 +163,7 @@ extract_gerrit_username()
 #	gerrit_username="${BUILD_USER_ID}"
     fi
     if test x"${gerrit_username}" != x; then
-	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+	gerrit_username="${GERRIT_CHANGE_OWNER_EMAIL}"
     fi
 
     gerrit_branch="${GERRIT_TOPIC}"
@@ -274,7 +274,7 @@ gerrit_query()
     local status=${2:-status:open}
 
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
-    gerrit_username="${BUILD_USER_FIRST_NAME}.${BUILD_USER_LAST_NAME}"
+    gerrit_username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
     ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a records
