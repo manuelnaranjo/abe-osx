@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-#   Copyright (C) 2014 Linaro, Inc
+#   Copyright (C) 2014,2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,6 +48,8 @@
 # the requireed information.
 gerrit_info()
 {
+    trace "$*"
+
     local srcdir=$1
     extract_gerrit_host ${srcdir}
     extract_gerrit_port ${srcdir}
@@ -81,7 +83,7 @@ extract_gerrit_host()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		Error "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
@@ -179,6 +181,8 @@ add_gerrit_comment ()
 
 submit_gerrit()
 {
+    trace "$*"
+    
     local message="`cat $1`"
     local code="${2:-0}"
     local revision="${3:-}"
@@ -192,6 +196,8 @@ submit_gerrit()
 # $3 - the file of test results, if any
 gerrit_build_status()
 {
+    trace "$*"
+    
     if test x"${gerrit}" != xyes; then
 	return 0
     fi
