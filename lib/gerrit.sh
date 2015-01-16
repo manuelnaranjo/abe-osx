@@ -217,7 +217,6 @@ gerrit_build_status()
 
     declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions" "Test run completed")
 
-    rm -f  ${msgfile}
     cat<<EOF > ${msgfile}
 Your patch is being reviewed. The build step has completed with a status of: ${statusmsg[${status}]} Build at: ${jenkins_job_url}"
 
@@ -236,6 +235,7 @@ EOF
 	cat ${resultsfile} >> ${msgfile}
     fi
 
+    rm -f  ${msgfile}
     return 0
 }
 
