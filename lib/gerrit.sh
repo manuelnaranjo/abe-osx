@@ -203,9 +203,6 @@ gerrit_build_status()
 {
     trace "$*"
     
-    if test x"${gerrit}" != xyes; then
-	return 0
-    fi
     local srcdir="`get_srcdir $1`"
     local status="$2"
     local resultsfile="${3:-}"
