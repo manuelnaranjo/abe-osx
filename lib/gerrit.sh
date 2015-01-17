@@ -175,11 +175,14 @@ add_gerrit_comment ()
 {
     trace "$*"
 
-    local revision="$1"
-    local message="`cat $2`"
+    local message="`cat $1`"
+    local revision="$2"
     local code="${3:-0}"
 
     ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    if test $? -gt 0; then
+	return 1
+    fi
 
     return 0
 }
@@ -224,7 +227,7 @@ EOF
 
 #http://abe.validation.linaro.org/logs/gcc-linaro-5.0.0/
 
-    add_gerrit_comment ${revision} ${msgfile} ${code}
+    add_gerrit_comment ${msgfile} ${revision} ${code}
     if test $? -gt 0; then
 	error "Couldn't add Gerrit comment!"
 	rm -f  ${msgfile}
