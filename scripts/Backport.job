@@ -19,6 +19,10 @@ cd ${WORKSPACE}/_build
 
 $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
+# If started by a Gerrit Trigger, use that for the branch.
+if text x"${GERRIT_BRANCH}" != x; then
+    gcc_branch="~${GERRIT_BRANCH}"
+fi
 $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
 # force a failure of abe has build problems.
