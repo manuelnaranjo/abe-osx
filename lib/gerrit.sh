@@ -212,7 +212,7 @@ gerrit_build_status()
 
     # Initialize setting for gerrit if not done so already
     if test x"${gerrit_username}" = x; then
-	gerrit_info ${rcdir}
+	gerrit_info ${srcdir}
     fi
 
     declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions" "Test run completed")
