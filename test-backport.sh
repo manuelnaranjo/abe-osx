@@ -86,6 +86,9 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
+# Checkout all the sources
+bash -x ${topdir}/abe.sh --checkout all
+
 resultsdir="/tmp/abe-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
