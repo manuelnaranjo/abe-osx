@@ -55,6 +55,12 @@ function cleanup
 }
 
 #A fifo would make much more sense, but nc doesn't like it
+touch "${listener_file}"
+if test $? -ne 0; then
+  echo "Failed to create listener file '${listener_file}'" 1>&2
+  exit 1
+fi
+
 #The trap is just to suppress the 'Terminated' message
 exec 3>&-
 exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
