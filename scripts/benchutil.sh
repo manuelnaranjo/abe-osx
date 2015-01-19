@@ -84,19 +84,25 @@ function lava_server
 
 #Attempt to use read to discover whether there is a record to read from the producer
 #If we time out, check to see whether the producer still seems to be alive.
-#If it seems dead, return 2, otherwise keep trying to read.
+#We can check more than one pid, if we have visibility of some other process(s) that we
+#would also like to monitor while we wait to read something. If any of these
+#processes seem dead then return 2, otherwise keep trying to read.
 #Once we've established that there seems to be a record, try to read it with a
 #fixed timeout. If we fail to read within the timeout, return 1 to indicate
 #read failure - but the producer may still be alive in this case.
-#Typical invocation: foo="`bgread ${child_pid} 5 <&3`"
+#Typical invocation: foo="`bgread 60 ${child_pid} <&3`"
 function bgread
 {
-  local pid=$1
-  if test x"${pid:-}" = x; then
-    echo "No pid to poll!" 1>&2
+  if test $# -eq 0; then
+    echo "bgread requires a timeout" 1>&2
     return 1
   fi
-  local timeout=${2:+60}
+  local timeout=$1
+  shift
+  if test $# -eq 0; then
+    echo "No pid(s) to poll!" 1>&2
+    return 1
+  fi
   local buffer=''
   local line=''
 
@@ -109,7 +115,9 @@ function bgread
   #Read the delimiter, don't timeout: buffer is empty, exit code 0 OR
   #Fail to read any chars coz there aren't any, then timeout: buffer is empty, exit code 1
   while ! read -N 1 -t "${timeout}" buffer; do
-    kill -0 "${pid}" > /dev/null 2>&1 || return 1
+    for pid in "$@"; do
+      kill -0 "${pid}" > /dev/null 2>&1 || return 2
+    done
   done
 
   #If we get here, we managed to read 1 char. If we have a null string just
