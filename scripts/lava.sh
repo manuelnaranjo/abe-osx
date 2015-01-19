@@ -40,6 +40,29 @@ function retrying_lava_tool
   return 1
 }
 
+function job_status
+{
+  if test x"${id:-}" = x -o x"${lava_url:-}" = x; then
+    echo "Job ID or LAVA URL not defined" 1>&2
+    return 1
+  fi
+
+  local jobstatus
+  jobstatus="`retrying_lava_tool job-status https://${lava_url} ${id}`"
+  if test $? -ne 0; then
+    echo "Job ${id} disappeared!" 1>&2
+    return 1
+  fi
+  echo "${jobstatus}" | grep "Job Status: $1" > /dev/null
+  if test $? -ne 0; then
+    echo "Job ${id} has surprising status" 1>&2
+    echo -e "${jobstatus}" 1>&2
+    return 1
+  fi
+
+  return 0
+}
+
 release()
 {
   if test x"${waiter:-}" != x; then
@@ -294,15 +317,8 @@ while test `date +%s` -lt ${deadline}; do
     echo "Non-timeout error code ${err} while trying to read user_ip" 1>&2
     exit 1
   fi
-  jobstatus="`retrying_lava_tool job-status https://${lava_url} ${id}`"
-  if test $? -ne 0; then
-    echo "Job ${id} disappeared!" 1>&2
-    exit 1
-  fi
-  echo "${jobstatus}" | grep 'Job Status: Running' > /dev/null
-  if test $? -ne 0; then
-    echo "Job ${id} has surprising status, giving up" 1>&2
-    echo -e "${jobstatus}" 1>&2
+  if ! job_status 'Running'; then
+    echo "Bad status, giving up" 1>&2
     exit 1
   fi
 done
@@ -315,6 +331,12 @@ fi
 echo "LAVA target ready at ${user_ip}"
 
 #Wait to be killed, at which point we cancel the job
-sleep infinity &
-waiter=$!
-wait ${waiter}
+while true; do
+  sleep 600 &
+  waiter=$!
+  wait ${waiter}
+  if ! job_status Running; then
+    echo "Job ${id} has bad status, giving up" 1>&2
+    exit 1
+  fi
+done
