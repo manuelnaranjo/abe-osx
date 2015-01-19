@@ -204,7 +204,8 @@ else
   ssh_opts=
   establish_listener_opts=
 fi
-#LAVA-agnostic from here, apart from a section in the exit handler
+#LAVA-agnostic from here, apart from a section in the exit handler, and bgread
+#monitoring of the LAVA process while we're waiting for the benchmark to end
 
 #Set up our listener
 listener_addr="`get_addr`"
@@ -307,9 +308,14 @@ if test $? -ne 0; then
   exit 1
 fi
 
-ip="`bgread 60 ${listener_pid} <&3`"
+#lava_pid will expand to empty if we're not using lava
+ip="`bgread 60 ${listener_pid} ${lava_pid} <&3`"
 if test $? -ne 0; then
-  echo "Failed to read IP following benchmark run" 1>&2
+  if test x"${lava_pid:-}" = x; then
+    echo "LAVA process died, or otherwise failed while waiting to read post-benchmark-run IP" 1>&2
+  else
+    echo "Failed to read post-benchmark-run IP" 1>&2
+  fi
   exit 1
 fi
 
