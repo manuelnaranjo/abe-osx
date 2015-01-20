@@ -179,7 +179,8 @@ add_gerrit_comment ()
     local revision="$2"
     local code="${3:-0}"
 
-    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+#    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    ssh -p 29418 lava-bot@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
     if test $? -gt 0; then
 	return 1
     fi
