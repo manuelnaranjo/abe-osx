@@ -55,9 +55,9 @@ remote_download()
   done
   shift $((OPTIND - 1))
 
-  local target="$1"
-  local sourcefile="$2"
-  local destfile="$3"
+  local target="${1:-}"
+  local sourcefile="${2:-}"
+  local destfile="${3:-}"
   local retries=0
   if test x"${target}" = x; then
     error "target not specified"
@@ -101,9 +101,9 @@ remote_upload()
   done
   shift $((OPTIND - 1))
 
-  local target="$1"
-  local sourcefile="$2"
-  local destfile="$3"
+  local target="${1:-}"
+  local sourcefile="${2:-}"
+  local destfile="${3:-}"
   if test x"${target}" = x; then
     error "target not specified"
     return 1
