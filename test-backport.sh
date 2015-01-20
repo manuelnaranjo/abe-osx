@@ -118,14 +118,14 @@ if test x"${fileserver}" != x; then
     basedir="/work/logs"
     job="Backport.job"
     dir1="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[0]}"
-    ssh ${fileserver} mkdir -p ${basedir}/${dir1}
+    ssh ${fileserver} mkdir -p ${dir1}
     # Compress and copy all files from the first build
     xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
     scp ${resultsdir}${revisions[0]}/* ${fileserver}:${dir}/
     
 # Compress and copy all files from the second build
     dir2="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[1]}"
-    ssh ${fileserver} mkdir -p ${basedir}/${dir1}
+    ssh ${fileserver} mkdir -p ${dir2}
     xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
     scp ${resultsdir}${revisions[1]}/* ${fileserver}:${dir2}/
 
