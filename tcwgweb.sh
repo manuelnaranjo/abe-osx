@@ -300,9 +300,9 @@ while test $# -gt 0; do
     shift
 done
 
-srcdir="linaro/shared/snapshots/gcc.git"
+srcdir="/linaro/shared/snapshots/gcc.git"
 gerrit_info ${srcdir}
 gerrit_build_status ${srcdir} 0 ${resultsfile}
 
+cat ${resultsfile}
 rm -fr ${resultsfile}
-# cat ${resultsfile}
