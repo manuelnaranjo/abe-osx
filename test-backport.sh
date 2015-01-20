@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# To run, this script takes arguments in the same format as cbuild2.sh. The two
+# To run, this script takes arguments in the same format as abe.sh. The two
 # arguments it needs is the target archicture to build, and the gcc backport
 # branch name. Example:
 # $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
@@ -39,11 +39,11 @@ fi
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
-    echo "Error: this script needs to be run from a configured Cbuild2 tree!" 1>&2
+    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
 fi
-cbuild="`which $0`"
-topdir="${cbuild_path}"
-cbuild2="`basename $0`"
+abe="`which $0`"
+topdir="${abe_path}"
+abe="`basename $0`"
 
 repo="gcc.git"
 fileserver=""
@@ -70,12 +70,12 @@ if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
     branch="`echo ${branch} | sed -e 's:gcc.git~::'`"
 fi
 
-if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/${branch}"
-else
+#if test x"${git_reference_dir}" != x; then
+#    srcdir="${git_reference_dir}/${branch}"
+#else
     git_reference_dir="${local_snapshots}"
     srcdir="${local_snapshots}/${branch}"
-fi
+#fi
 
 rm -fr ${srcdir}
 git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
@@ -86,12 +86,15 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
-resultsdir="/tmp/cbuild-${target}@"
+# Checkout all the sources
+bash -x ${topdir}/abe.sh --checkout all
+
+resultsdir="/tmp/abe-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/cbuild2.sh --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    bash -x ${topdir}/abe.sh --enable gerrit --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
-	echo "ERROR: Cbuild2 failed!"
+	echo "ERROR: Abe failed!"
 	exit 1
     fi
     sums="`find ${local_builds}/${build}/${target} -name \*.sum`"

@@ -103,9 +103,13 @@ binary_runtime()
 
     # Get the binary libraries. aarch64 uses /lib64, arm uses /lib, s we use a wildcard
     # to get either.
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc* ${destdir}/lib/${target}/"
-    
-    dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
+    if test x"${build}" != x"${target}"; then
+	dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libgcc* ${destdir}/lib/${target}/"	
+	dryrun "rsync -av ${local_builds}/destdir/${host}/${target}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
+    else
+	dryrun "rsync -av ${local_builds}/destdir/${host}/lib*/libgcc* ${destdir}/lib/${target}/"
+	dryrun "rsync -av ${local_builds}/destdir/${host}/lib*/libstdc++* ${destdir}/usr/lib/${target}/"
+    fi
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for runtime libraries, please wait..."
@@ -213,6 +217,11 @@ binary_toolchain()
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
+    if test x"${build}" != x"${target}"; then
+	# FIXME: link the sysroot into the toolchain tarball
+	ln -sfnT ${sysroots} ${destdir}/libc
+    fi
+
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
@@ -279,13 +288,17 @@ binary_sysroot()
 	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
     fi
 
-#    dryrun "cp -fr ${cbuild_top}/sysroots/${target} ${destdir}"
+#    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="/tmp/linaro.$$/${tag}"
     dryrun "mkdir -p /tmp/linaro.$$"
-    dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${destdir}"
+    if test x"${build}" != x"${target}"; then
+	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
+    else
+	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
+    fi
 
     # Generate the install script
-    sysroot_install_script ${destdir}
+#    sysroot_install_script ${destdir}
 
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
@@ -347,7 +360,7 @@ manifest()
     local srcdir="`get_srcdir ${binutils_version}`"
     local binutils_revision=="`get_git_revision ${srcdir}`"
 
-    local cbuild_revision="`get_git_revision ${cbuild_path}`"
+    local abe_revision="`get_git_revision ${abe_path}`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -375,8 +388,8 @@ gdb_version=${gdb_version}
 gdb_revsion=${gdb_revision}
 linux_version=${linux_version}
 
-# Cbuild revision used
-cbuild_revision=${cbuild_revision}
+# Abe revision used
+abe_revision=${abe_revision}
 
 EOF
 
@@ -513,30 +526,22 @@ binutils_src_tarball()
     return 0
 }
 
-# This installs a binary tarball produced by cbuild2, and runs make check
+# This installs a binary tarball produced by abe, and runs make check
 test_binary_toolchain()
 {
-    # Binaries get installed here if possible
-    if test ! -w /opt/linaro; then
-	error "/opt/linaro is not writable!"
-	return 1
+    local install="/tmp/install.$$"
+
+    if test ! -d ${install}; then
+	dryrun "mkdir -p ${install}"
     fi
-    
+
     # Untar everything in the install directory
     for i in ${local_snapshots}/*-x86_64*.xz; do
-	tar Jxvf $i --directory=/opt/linaro
+	tar Jxvf $i --directory="${install}"
     done
 
-    local sysroot="`find /opt/linaro -name INSTALL-SYSROOT.sh`"
-    local sysroot="`dirname ${sysroot}`"
-
-#    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' '`"
-#    local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
-
-    pushd ${sysroot} && sh ./INSTALL-SYSROOT.sh && popd
-
     # Put the installed toolchain first in the path so it gets picked up by make check.
-    local compiler="`find /opt/linaro -name ${target}-gcc`"
+    local compiler="`find ${install} -name ${target}-gcc`"
     local compiler="`dirname ${compiler}`"
     export PATH="${compiler}:$PATH"
 
@@ -546,4 +551,6 @@ test_binary_toolchain()
 
     make_clean ${gcc_version} stage2
     make_check ${gcc_version} stage2
+
+    rm -fr ${install}
 }

@@ -64,7 +64,7 @@
 #       The revision designation that follows the repository, e.g.,
 #       binutils.git@12345
 #
-#         Note: cbuild allows <repo>.git/branch@revision even though
+#         Note: abe allows <repo>.git/branch@revision even though
 #               when a revision is present, the 'branch' is only used
 #               in path names, since a revision implies a branch already.
 #

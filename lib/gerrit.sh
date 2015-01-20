@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-#   Copyright (C) 2014 Linaro, Inc
+#   Copyright (C) 2014,2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit version
     # this uses the git commit SHA-1
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --code-review 0 -m "foo" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
-    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
+    # ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/abe --code-review 0 -m "foobar" a87c53e83236364fe9bc7d5ffdbf3c307c64707d
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set gcc status:open limit:1 --format JSON
 
 # The number used for code reviews looks like this, it's passed as a string to
@@ -37,7 +37,7 @@
 #   +2 Looks good to me, approved
 
 
-# ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/cbuild2 --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
+# ssh -p 29418 robert.savoye@git.linaro.org gerrit review --project toolchain/abe --code-review "+2" -m "foobar" 55957eaff3d80d854062544dea6fc0eedcbf9247 --submit
 
     # local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 
@@ -48,6 +48,8 @@
 # the requireed information.
 gerrit_info()
 {
+    trace "$*"
+
     local srcdir=$1
     extract_gerrit_host ${srcdir}
     extract_gerrit_port ${srcdir}
@@ -81,7 +83,7 @@ extract_gerrit_host()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		Error "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
@@ -143,20 +145,25 @@ extract_gerrit_port()
 extract_gerrit_username()
 {
     local srcdir=$1
-    if test -e ${srcdir}/.gitreview; then
-	local review=${srcdir}/.gitreview
-	gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
-    fi
-    if test x"${gerrit_username}" = x; then
-	if test -e ${HOME}/.gitreview; then
-	    local review=${HOME}/.gitreview
+    
+    if test x"${BUILD_USER_ID}" = x; then
+	if test -e ${srcdir}/.gitreview; then
+	    local review=${srcdir}/.gitreview
 	    gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
-	else
-	    error "No ${srcdir}/.gitreview file!"
 	fi
+	if test x"${gerrit_username}" = x; then
+	    if test -e ${HOME}/.gitreview; then
+		local review=${HOME}/.gitreview
+		gerrit_username="`grep "username=" ${review} | cut -d '=' -f 2`"
+	    else
+		warning "No ${srcdir}/.gitreview file!"
+	    fi
+	fi
+#    else
+#	gerrit_username="${BUILD_USER_ID}"
     fi
     if test x"${gerrit_username}" != x; then
-	gerrit_username="${GERRIT_PATCHSET_UPLOADER_EMAIL}"
+	gerrit_username="${GERRIT_CHANGE_OWNER_EMAIL}"
     fi
 
     gerrit_branch="${GERRIT_TOPIC}"
@@ -168,17 +175,22 @@ add_gerrit_comment ()
 {
     trace "$*"
 
-    local revision="$1"
-    local message="`cat $2`"
+    local message="`cat $1`"
+    local revision="$2"
     local code="${3:-0}"
 
     ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    if test $? -gt 0; then
+	return 1
+    fi
 
     return 0
 }
 
 submit_gerrit()
 {
+    trace "$*"
+    
     local message="`cat $1`"
     local code="${2:-0}"
     local revision="${3:-}"
@@ -192,32 +204,30 @@ submit_gerrit()
 # $3 - the file of test results, if any
 gerrit_build_status()
 {
-    if test x"${gerrit}" != xyes; then
-	return 0
-    fi
+    trace "$*"
+    
     local srcdir="`get_srcdir $1`"
     local status="$2"
     local resultsfile="${3:-}"
     local revision="`get_git_revision ${srcdir}`"
-    local msgfile="${local_builds}/${host}/${target}/test-results.txt"
+    local msgfile="/tmp/test-results-$$.txt"
     local code="0"
 
     # Initialize setting for gerrit if not done so already
     if test x"${gerrit_username}" = x; then
-	gerrit_info ${rcdir}
+	gerrit_info ${srcdir}
     fi
 
     declare -a statusmsg=("Build was Successful" "Build Failed!" "No Test Failures" "Found Test Failures" "No Regressions found" "Found regressions" "Test run completed")
 
-    rm -f  ${msgfile}
     cat<<EOF > ${msgfile}
 Your patch is being reviewed. The build step has completed with a status of: ${statusmsg[${status}]} Build at: ${jenkins_job_url}"
 
 EOF
 
-#http://cbuild.validation.linaro.org/logs/gcc-linaro-5.0.0/
+#http://abe.validation.linaro.org/logs/gcc-linaro-5.0.0/
 
-    add_gerrit_comment ${revision} ${msgfile} ${code}
+    add_gerrit_comment ${msgfile} ${revision} ${code}
     if test $? -gt 0; then
 	error "Couldn't add Gerrit comment!"
 	rm -f  ${msgfile}
@@ -228,6 +238,7 @@ EOF
 	cat ${resultsfile} >> ${msgfile}
     fi
 
+    rm -f  ${msgfile}
     return 0
 }
 
@@ -266,7 +277,7 @@ gerrit_query()
     local status=${2:-status:open}
 
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
-    gerrit_username=robert.savoye
+    gerrit_username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
     ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a records

@@ -25,6 +25,12 @@ if {[info exists env(PREFIX_UNDER_TEST)]} {
     set GNAT_UNDER_TEST "[set prefix]gnat $flags"
 }
 
+if {[info exists env(SYSROOT_UNDER_TEST)]} {
+    set native ""
+} else {
+    set native "native"
+}
+
 set myname [get_local_hostname]
 
 case "$myname" in {
@@ -33,61 +39,86 @@ case "$myname" in {
     }
 }
 
+if { "$tcl_platform(user)" == "buildslave" } {
+    set machine_prefix "infra"
+} else {
+    set machine_prefix "tcwg"
+}
+
 case "$target_triplet" in { 
-    { "arm-*linux-gnueabi*"} {
-	case "$myname" in {
+    { "arm-*linux-gnueabi*" } {
+	case "$native$myname" in {
 	    { tcwgrob* ripple* darkstar* } {
 #		set target_list { tcwgchromebook }
 #		set target_list { tcwgd01 }
 #		set target_list { chrome1-01 }
+#		set target_list { "arm-qemu" } 
 		set target_list { dragon-01 }
 	    }
-	    { tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { dragon-d01 }
+	    { build-* tcwg-ex40-* d01-* apm-* juno-* amd-* } {
+		set target_list [list $machine_prefix-armv8]
 	    }
-	    { tcwgchromebook* tcwg-d01-* tcwg-chrome2-* } {
+	    { natived01-* nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
+	    default{
+		global SIM
+		# CPU and sysroot are set through the environment
+		set SIM "qemu-arm"
+		set target_list { "arm-qemu" } 
+            }
 	}
     }
-    { "arm-*eabi" } {
+    { "arm-*-eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
 	set target_list { "arm-qemu" } 
     }
-    { "armeb-*" } {
+    { "armeb-*-eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-armeb"
 	set target_list { "arm-qemu" } 
     }
-    { "aarch64*-none-elf*" } {
+    { "aarch64*-*elf*" } {
 	set target_list { "v8model" } 
 	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
     }
-    { "aarch64-*linux-gnu" } {
-	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40* } {
-		set target_list { aus-colo-01 }
+    { "aarch64-*linux*" } {
+	case "$native$myname" in {
+	    { tcwgrob build-* tcwg-ex40-* apm-* juno-* amd-* } {
+		set target_list [list $machine_prefix-armv8]
 	    }
-	    { tcwg-apm-* } {
+	    { nativeapm-* nativejuno-* nativeamd-* } {
 		set target_list { unix }
 	    }
+	    default {
+		set SIM "qemu-aarch64"
+                set target_list { aarch64-qemu }
+            }
 	}
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
-	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
+	case "$native$myname" in {
+	    { build-* } {
+		set target_list [list $machine_prefix-build]
+	    }
+	    { tcwg-ex40-* } {
+		set target_list [list $machine_prefix-tcwgex40]
+	    }
+	    { nativebuild-* nativetcwg-ex40-* } {
 		set target_list { unix }
 	    }
 	}
     }
     { "*linux-gnu*" } {
 	case "$myname" in {
-	    { tcwgrob tcwgbuild* toolchain64 tcwg-ex40-* } {
-		set target_list { tcwgbuild  tcwg-ex40 }
-		set board_info(tcwgbuild,remote_sim) "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
+	    { build-* } {
+		set target_list [list $machine_prefix-buildqemu]
+	    }
+	    { tcwg-ex40-* } {
+		set target_list [list $machine_prefix-tcwgex40qemu]
 	    }
 	}
     }

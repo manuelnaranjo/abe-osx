@@ -3,8 +3,8 @@
 #implementation that will avoid wheel re-invention. Let's not
 #sink too much time into making this script beautiful.
 
-#TODO Convert as much as possible into a function, so that we don't share global namespace with cbuild2 except where we mean to
-#     Better - confine cbuild2 to a subshell
+#TODO Convert as much as possible into a function, so that we don't share global namespace with abe except where we mean to
+#     Better - confine abe to a subshell
 
 set -o pipefail
 set -o nounset
@@ -91,7 +91,7 @@ else
     echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
     exit 1
 fi
-topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
+topdir="${abe_path}" #abe global, but this should be the right value for abe
 
 
 #Sanity Checks
@@ -123,7 +123,7 @@ while getopts a:i:t:b:kchs flag; do
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
     i) toolchain_path="${OPTARG}";;
-    t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced cbuild2 files in subshells below
+    t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced abe files in subshells below
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     k)
@@ -175,15 +175,15 @@ else #cross-build, implies we need remote devices
 fi
 
 if test x"${skip_build:-}" = x; then
-  #cbuild2 can build the benchmarks just fine
-  ("${topdir}"/cbuild2.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  #abe can build the benchmarks just fine
+  ("${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
   fi
 fi
 
-builddir="`target2="${target}"; . ${cbuild_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`target2="${target}"; . ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   exit 1
@@ -192,7 +192,7 @@ fi
 #Compress build to a tmpfile in our top-level working directory
 #This should be good for bandwidth
 #By keeping file at top level, we make sure that everything sensitive is in one place
-cmpbuild="`mktemp -p ${cbuild_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
+cmpbuild="`mktemp -p ${abe_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
 if test $? -ne 0; then
   echo "Unable to create temporary file for compressed build output" 1>&2
   exit 1

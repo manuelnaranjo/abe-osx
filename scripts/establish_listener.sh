@@ -9,7 +9,7 @@ else
     echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
     exit 1
 fi
-topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
+topdir="${abe_path}" #abe global, but this should be the right value for abe
 . "${topdir}"/scripts/benchutil.sh
 if test $? -ne 0; then
   echo "Unable to source ${topdir}/benchutil.sh" 1>&2

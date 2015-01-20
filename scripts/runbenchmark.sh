@@ -48,7 +48,7 @@ else
     echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
     exit 1
 fi
-topdir="${cbuild_path}" #cbuild2 global, but this should be the right value for cbuild2
+topdir="${abe_path}" #abe global, but this should be the right value for abe
 confdir="${topdir}/config/boards/bench"
 if test x"${LAVA_SERVER:-}" != x; then
   lava_url="${LAVA_SERVER}"
@@ -57,7 +57,7 @@ else
   echo "Environment variable LAVA_SERVER not set, defaulted to ${lava_url}" 1>&2
 fi
 
-benchlog="`. ${cbuild_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
+benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   exit 1
@@ -68,7 +68,7 @@ if test $? -ne 0; then
   echo "+++ Unable to source ${topdir}/benchutil.sh" 1>&2
   exit 1
 fi
-. "${confdir}/${device}.conf" #We can't use cbuild2's source_config here as it requires us to have something get_toolname can parse
+. "${confdir}/${device}.conf" #We can't use abe's source_config here as it requires us to have something get_toolname can parse
 if test $? -ne 0; then
   echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
   exit 1
@@ -232,7 +232,7 @@ if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/
 fi
 
 #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
-logdir="${cbuild_top}/${benchmark}-log/${device}_${ip}_`date -u +%F_%T.%N`"
+logdir="${abe_top}/${benchmark}-log/${device}_${ip}_`date -u +%F_%T.%N`"
 if test -e "${logdir}"; then
   echo "Log output directory ${logdir} already exists" 1>&2
 fi

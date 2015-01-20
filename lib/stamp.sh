@@ -100,7 +100,7 @@ create_stamp()
 #       you should not proceed with processing.
 #
 #   255 - There is an error condition during stamp generation.  This is
-#         a bug in cbuild2 or the filesystem.
+#         a bug in abe or the filesystem.
 #
 check_stamp()
 {

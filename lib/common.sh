@@ -31,6 +31,7 @@ set -o pipefail
 . "${topdir}/lib/testcode.sh" || exit 1
 . "${topdir}/lib/git-parser.sh" || exit 1
 . "${topdir}/lib/stamp.sh" || exit 1
+. "${topdir}/lib/schroot.sh" || exit 1
 . "${topdir}/lib/gerrit.sh" || exit 1
 . "${topdir}/lib/remote.sh" || exit 1
 
@@ -57,7 +58,7 @@ set_dbpasswd()
     dbpasswd="$1"
 }
 
-# if --dryrun is passed to cbuild2.sh, then commands are echoed instead of
+# if --dryrun is passed to abe.sh, then commands are echoed instead of
 # of executed.
 dryrun()
 {

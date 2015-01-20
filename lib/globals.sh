@@ -68,14 +68,14 @@ distribution=
 make_flags=
 
 # These can be changed by environment variables
-if test x"${SNAPSHOTS_URL:-}" != x -o x"${CBUILD_SNAPSHOTS:-}" != x; then
+if test x"${SNAPSHOTS_URL:-}" != x -o x"${ABE_SNAPSHOTS:-}" != x; then
     snapshots="${SNAPSHOTS_URL}"
 fi
-if test x"${CBUILD_DBUSER:-}" != x; then
-    dbuser="${CBUILD_DBUSER}"
+if test x"${ABE_DBUSER:-}" != x; then
+    dbuser="${ABE_DBUSER}"
 fi
-if test x"${CBUILD_DBPASSWD:-}" != x; then
-    dbpasswd="${CBUILD_DBPASSWD}"
+if test x"${ABE_DBPASSWD:-}" != x; then
+    dbpasswd="${ABE_DBPASSWD}"
 fi
 
 clobber=no
@@ -86,7 +86,7 @@ verbose=1
 network=""
 runtests=no
 ccache=no
-gerrit=no
+#gerrit=no
 
 release=""
 with_packages="toolchain,sysroot,gdb"
@@ -120,7 +120,7 @@ jenkins_job_url=""
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
-if test -e ~/.cbuildrc; then
-    . ~/.cbuildrc
+if test -e ~/.aberc; then
+    . ~/.aberc
 fi
 

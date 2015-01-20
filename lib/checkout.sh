@@ -24,7 +24,7 @@
 # but we also want to work with the native source code control system.
 usegit=no
 
-# This is used by cbuild2.sh --checkout all but not by --build
+# This is used by abe.sh --checkout all but not by --build
 checkout_infrastructure()
 {
     trace "$*"
@@ -254,6 +254,7 @@ checkout()
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
 	    fi
+
 	    if test ! -d ${srcdir}; then
 		# By definition a git commit resides on a branch.  Therefore specifying a
 		# branch AND a commit is redundant and potentially contradictory.  For this
@@ -270,23 +271,6 @@ checkout()
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    if test x"${branch}" != x""; then
-			# Sometimes, after removing a srcdir and re-running, the branch
-			# you're trying to checkout will already be a named branch in the
-			# repodir, so we have to delete it so that the new checkout will
-			# get the latest, updated branch source.
-			notice "Checking for existing named branch ${branch} in ${repodir}"
-
-			# Don't test this for dryrun because repodir probably won't exist.
-			if test x"${dryrun}" = no; then
-			    local existing_branch=`(cd ${repodir} && git branch -a | grep -c "^.*[[:space:]]\{1,\}${branch}")`
-			    if test ${existing_branch} -gt 0; then
-				notice "Removing previously named branch ${branch} from ${repodir}"
-				dryrun "(cd ${repodir} && git branch -D ${branch})"
-			    fi
-			fi
-		    fi
-
 		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
 		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		    if test $? -gt 0; then
@@ -295,10 +279,10 @@ checkout()
 		    fi
 		fi
 		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
-		# dryrun "(cd ${srcdir} && git checkout ${branch})"
+		# dryrun "(cd ${srcdir} && git checkout -B ${branch})"
 	    elif test x"${supdate}" = xyes; then
 		# Some packages allow the build to modify the source directory and
-		# that might screw up cbuild2's state so we restore a pristine branch.
+		# that might screw up abe's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git reset --hard)"
@@ -310,12 +294,12 @@ checkout()
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
-		    dryrun "(cd ${srcdir} && git checkout local_${revision})"
+		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 		else
 		    # Make sure we are on the correct branch.
 		    # This is a no-op if $branch is empty and it
 		    # just gets master.
-		    dryrun "(cd ${srcdir} && git checkout ${branch})"
+		    dryrun "(cd ${srcdir} && git checkout -B ${branch} origin/${branch})"
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi

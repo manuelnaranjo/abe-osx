@@ -1,19 +1,19 @@
                         README
 
-Cbuildv2 is a bourne shell rewrite of the existing cbuild system as
+Abe is a bourne shell rewrite of the existing Cbuildv1 system as
 used by Linaro. While being oriented to the Linaro way of doing
-things, Cbuildv2 should be usable by others by just reconfiguring.
+things, Abe should be usable by others by just reconfiguring.
 
-Configuring Cbuildv2:
+Configuring Abe:
 ---------------------
-  While it is possible to run Cbuildv2 from it's source tree, this
+  While it is possible to run Abe from it's source tree, this
 isn't recommended. The best practice is to create a new build
-directory, and configure Cbuildv2 in that directory. That makes it
+directory, and configure Abe in that directory. That makes it
 easy to change branches, or even delete subdirectories. There
 are defaults for all paths, which is to create them under the same
 directory configure is run in.
 
-  There are several directories that Cbuildv2 needs. These are the
+  There are several directories that Abe needs. These are the
 following:
 
   * local snapshots - This is where all the downloaded sources get
@@ -23,17 +23,17 @@ following:
     full hostname of the build machine. Under this a directory is
     created for the target architecture.
   * remote snapshots - This is where remote tarballs are stored. This
-    currently defaults to cbuild.validation.linaro.org, which is
+    currently defaults to abe.validation.linaro.org, which is
     accessible via HTTP to the general public.
 
   If configure is executed without any parameters. the defaults are
 used. It is also possible to change those values at configure
 time. For example:
 
-$CBUILD-PATH/configure
---with-local-snapshots=$CBUILD_PATH/snapshots 
---with-local-builds=$CBUILD-PATH/destdir
---with-remote-snapshots=cbuild@toolchain64.lab:/home/cbuild/var/snapshots/
+$ABE-PATH/configure
+--with-local-snapshots=$ABE_PATH/snapshots 
+--with-local-builds=$ABE-PATH/destdir
+--with-remote-snapshots=abe@toolchain64.lab:/home/abe/var/snapshots/
 
   This changes the 3 primary paths, including changing the remote host
 to use rsync or ssh to download tarballs instead of HTTP. You can
@@ -41,8 +41,8 @@ execute ./configure --help to get the full list of configure time
 parameters.
 
   The configure process produces a host.conf file, with the default
-settings. This file is read by cbuildv2 at runtime, so it's possible to
-change the values and rerun cbuild2.sh to use the new values. Each
+settings. This file is read by abe at runtime, so it's possible to
+change the values and rerun abe.sh to use the new values. Each
 toolchain component also has a config file. The default version is
 copied at build time to the build tree. It is also possible to edit
 this file, usually called something like gcc.conf, to change the
@@ -96,28 +96,28 @@ host, and contains the other packages needed to build GCC, like
 gmp. Snapshots is the primary location of all source tarballs. To list
 all the available snapshots, you can do this"
 
-    "cbuild2.sh --list snapshots".
+    "abe.sh --list snapshots".
 
-You can also run cbuildv2 with the --interactive options, which will
+You can also run abe with the --interactive options, which will
 display a subset of all the packages that matches the supplied
 string. To build a specific component, use the --build option to
-cbuildv2. the --target option is also used for cross builds. For
+abe. the --target option is also used for cross builds. For
 example:
 
-"cbuild2.sh --target arm-none-linux-gnueabihf gcc-linaro-4.8.2013.07-1"
+"abe.sh --target arm-none-linux-gnueabihf gcc-linaro-4.8.2013.07-1"
 
 This would fetch the source tarball for this release, build anything
 it needs to compile, the binutils for example, and then build these
 sources. You can also specify a URL to a source repository
 instead. For example:
 
-"cbuild2.sh --target arm-none-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
+"abe.sh --target arm-none-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
 
 To build an entire cross toolchain, the simplest way is to let
-cbuildv2 control all the steps. Although it is also possible to do each
+abe control all the steps. Although it is also possible to do each
 step separately. To build the full toolchain, do this:
 
-"cbuild2.sh --target arm-none-linux-gnueabihf --build all"
+"abe.sh --target arm-none-linux-gnueabihf --build all"
 
 ---------------------------------------------------------------------
 Older NOTES
@@ -161,7 +161,7 @@ Features:
  * Queue jobs for LAVA
  * Lists possible versions and components for build
 
-cbuild2 command line arguments:
+abe command line arguments:
 -------------------------------
  * --build (architecture for the build machine, default native)
  * --target (architecture for the target machine, default native)

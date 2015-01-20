@@ -50,6 +50,9 @@ if { [lindex $ret 0] == 0 } {
 }
 set specdir "$sysroot/usr/lib"
 
+# set library path environment variable for qemu
+set env(QEMU_LD_PREFIX) $sysroot
+
 # The basic set of flags needed to build "hello world" for this
 # board. This board uses libgloss and newlib.
 
@@ -58,7 +61,7 @@ if { [ istarget "arm*-none-*"] } {
     set_board_info cflags  "-specs=$specdir/rdimon.specs"
     set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags] $additional_options"
 } else {
-    set_board_info ldflags "-static"
+    set_board_info ldflags "-lpthread -ldl"
 }
 
 # This board doesn't use a linker script.

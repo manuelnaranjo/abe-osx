@@ -27,12 +27,12 @@ build_all()
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
         local builds="infrastructure binutils stage1 libc stage2 gdb"
-	if test "`echo ${target} | grep -c -- -none-`" -eq 0; then
+	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 gdb" # native build
+        local builds="infrastructure binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
@@ -107,7 +107,7 @@ build_all()
                     local sysroot="`${target}-gcc -print-sysroot`"
                     if test ! -d ${sysroot}; then
                         dryrun "mkdir -p /opt/linaro"
-                        dryrun "ln -sfnT ${cbuild_top}/sysroots/${target} ${sysroot}"
+                        dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
                     fi
                 fi
                 ;; 
@@ -162,7 +162,7 @@ build_all()
     fi
     rm -f ${sumsfile}
     
-    if test x"${runtests}" = xyes; then
+    if test x"${runtests}" = xyes -a x"${tarbin}" != x"yes"; then
 	notice "Testing components"
 	buildingall=no
 	make_check ${binutils_version}
@@ -249,7 +249,7 @@ build()
     # If this is a native build, we always checkout/fetch.  If it is a 
     # cross-build we only checkout/fetch if this is stage1
     if test x"${target}" = x"${build}" \
-        -o "${target}" != x"${build}" -a x"$2" != x"stage2"; then
+        -o x"${target}" != x"${build}" -a x"$2" != x"stage2"; then
         if test `echo ${gitinfo} | egrep -c "^bzr|^svn|^git|^ssh|^lp|^http|^git|\.git"` -gt 0; then     
             # Don't update the compiler sources between stage1 and stage2 builds if this
             # is a cross build.
@@ -409,7 +409,7 @@ make_all()
     local default_makeflags="`read_config $1 default_makeflags`"
 
     if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
-       default_makeflags="gdbserver CFLAGS=--sysroot=${local_builds}/sysroot-${target}"
+       default_makeflags="gdbserver CFLAGS=--sysroot=${sysroots}"
     fi
 
     if test x"${default_makeflags}" !=  x; then
@@ -455,16 +455,20 @@ make_all()
 
 # Print path to dynamic linker in sysroot
 # $1 -- sysroot path
+# $2 -- whether dynamic linker is expected to exist
 find_dynamic_linker()
 {
     local sysroots="$1"
+    local strict="$2"
     local dynamic_linker c_library_version
 
     # Programmatically determine the embedded glibc version number for
     # this version of the clibrary.
-    c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
-    dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
-    if [ -z "$dynamic_linker" ]; then
+    if test -x "${sysroots}/usr/bin/ldd"; then
+	c_library_version="`${sysroots}/usr/bin/ldd --version | head -n 1 | sed -e "s/.* //"`"
+	dynamic_linker="`find ${sysroots} -type f -name ld-${c_library_version}.so`"
+    fi
+    if $strict && [ -z "$dynamic_linker" ]; then
         error "Couldn't find dynamic linker ld-${c_library_version}.so in ${sysroots}"
         exit 1
     fi
@@ -567,25 +571,21 @@ make_install()
     fi
 
     if test x"${tool}" = x"gcc"; then
-        local libs="`find ${builddir}/${target} -name \*.so\* -o -name \*.a`"
-        if test ! -e ${sysroots}/usr/lib; then
-            dryrun "mkdir -p ${sysroots}/usr/lib/"
-        fi
-        dryrun "rsync -av ${libs} ${sysroots}/usr/lib/"
+	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
     fi
 
     if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
         local dynamic_linker
-        dynamic_linker="$(find_dynamic_linker "$sysroots")"
+        dynamic_linker="$(find_dynamic_linker "$sysroots" true)"
         local dynamic_linker_name="`basename ${dynamic_linker}`"
 
-        # aarch64 is 64 bit, so doesn't populate sysroot/lib, which unfortunately other
-        # things look for shared libraries in.
+        # 64 bit architectures don't populate sysroot/lib, which unfortunately other
+        # things look in for shared libraries.
         dryrun "rsync -a ${sysroots}/lib/ ${sysroots}/lib64/"
         dryrun "rm -rf ${sysroots}/lib"
-        dryrun "ln -sfnT ${sysroots}/lib64 ${sysroots}/lib"
+        dryrun "(cd ${sysroots} && ln -sfnT lib64 lib)"
 #        dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
-        dryrun "(rm -f ${sysroots}/lib/ld-linux-aarch64.so.1)"
+        dryrun "rm -f ${sysroots}/lib/ld-linux-aarch64.so.1"
         dryrun "ln -sfnT ${dynamic_linker_name} ${sysroots}/lib64/ld-linux-aarch64.so.1"
     fi
 
@@ -695,16 +695,54 @@ make_check()
     fi
 
     if test x"${parallel}" = x"yes"; then
-        local make_flags="${make_flags} -j ${cpus}"
+	local make_flags
+	case "${target}" in
+	    "$build"|*"-elf"*) make_flags="${make_flags} -j ${cpus}" ;;
+	    # Double parallelization when running tests on remote boards
+	    # to avoid host idling when waiting for the board.
+	    *) make_flags="${make_flags} -j $((2*${cpus}))" ;;
+	esac
     fi
 
     # load the config file for Linaro build farms
     export DEJAGNU=${topdir}/config/linaro.exp
 
+    # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
-        dryrun "make check RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+        dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
     else
+	local exec_tests
+	exec_tests=false
+	case "$tool" in
+	    gcc) exec_tests=true ;;
+	    binutils)
+		if [ x"$2" = x"gdb" ]; then
+		    exec_tests=true
+		fi
+		;;
+	esac
+
+	eval "schroot_make_opts="
+	eval "schroot_boards="
+
+	local schroot_port
+	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
+	    # Start schroot sessions on target boards that support it
+	    schroot_port="$(print_schroot_port)"
+	    local schroot_sysroot
+	    case "${target}" in
+		*"-elf"*) schroot_sysroot="" ;;
+		*) schroot_sysroot="$(make_target_sysroot)" ;;
+	    esac
+	    start_schroot_sessions "${target}" "${schroot_port}" "${schroot_sysroot}" "${builddir}"
+	    if test "$?" != "0"; then
+		stop_schroot_sessions "${schroot_port}" ${schroot_boards}
+		return 1
+	    fi
+	    rm -rf "$schroot_sysroot"
+	fi
+
 	case ${tool} in
 	    binutils)
 		local dirs="/binutils /ld /gas"
@@ -714,21 +752,28 @@ make_check()
 		local dirs="/gdb"
 		local check_targets="check-gdb"
 		;;
-#	    gcc)
-#		local dirs="/gcc"
-#		local check_targets="check-gcc check-c++ check-gfortran check-go check-target-libstdc++-v3 check-target-libgomp"
-#		;;
 	    *)
 		local dirs="/"
 		local check_targets="check"
 		;;
 	esac
+	if test x"${tool}" = x"gcc"; then
+            touch ${sysroots}/etc/ld.so.cache
+            chmod 700 ${sysroots}/etc/ld.so.cache
+	fi
 
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
 	done
+
+	# Stop schroot sessions
+	stop_schroot_sessions "$schroot_port" ${schroot_boards}
+       
+        if test x"${tool}" = x"gcc"; then
+            rm -rf ${sysroots}/etc/ld.so.cache
+	fi
     fi
-    
+
     return 0
 }
 
@@ -829,3 +874,48 @@ EOF
     return 0
 }
 
+# Make a single-use target sysroot with all shared libraries for testing.
+# NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
+# $1 - compiler (and any compiler flags) to query multilib information
+make_target_sysroot()
+{
+    trace "$*"
+
+    local sysroot
+    sysroot=/tmp/sysroot.$$
+    rsync -a $sysroots/ $sysroot/
+
+    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
+	# Remove symlink lib64 -> lib to make sysroot debian-compatible.
+	rm $sysroot/lib
+    fi
+
+    echo $sysroot
+}
+
+# $1 - compiler (and any compiler flags) to query multilib information
+copy_gcc_libs_to_sysroot()
+{
+    local libgcc
+    local ldso
+    local gcc_lib_path
+    local sysroot_lib_dir
+
+    ldso="$(find_dynamic_linker "${sysroots}" false)"
+    if ! test -z "${ldso}"; then
+	libgcc="libgcc_s.so"
+    else
+	libgcc="libgcc.a"
+    fi
+
+    libgcc="$($@ -print-file-name=${libgcc})"
+    gcc_lib_path="$(dirname "${libgcc}")"
+
+    if ! test -z "${ldso}"; then
+	sysroot_lib_dir="$(dirname ${ldso})"
+    else
+	sysroot_lib_dir="${sysroots}/usr/lib"
+    fi
+
+    rsync -a ${gcc_lib_path}/ ${sysroot_lib_dir}/
+}
