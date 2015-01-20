@@ -2,7 +2,7 @@
     "job_name": "bench-juno-a57",
     "device_type": "juno",
     "tags": [ "serial-console-server" ],
-    "timeout": 36000,
+    "timeout": 691200,
     "actions": [
         {
             "command": "deploy_linaro_image",
