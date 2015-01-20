@@ -254,7 +254,7 @@ if ! check_private_route "${gateway}"; then
   exit 1
 fi
 for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
-  (. "${topdir}"/lib/common.sh; remote_upload "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
+  (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
     exit 1
@@ -348,7 +348,7 @@ if ! check_private_route "${gateway}"; then
 fi
 for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
   mkdir -p "${logdir}/${benchmark}.git/`dirname ${log}`"
-  (. "${topdir}"/lib/common.sh; remote_download "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
+  (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
   if test $? -ne 0; then
     echo "Error while getting log ${log}: will try to get others" 1>&2
     error=1

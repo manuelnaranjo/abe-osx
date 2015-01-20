@@ -42,9 +42,23 @@
 
 remote_download()
 {
+  OPTIND=1
+  local retries=0
+  while getopts r: flag; do
+    case "${flag}" in
+      r) retries="${OPTARG}";;
+      *)
+         echo "Bad arg" 1>&2
+         return 1
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
   local target="$1"
   local sourcefile="$2"
   local destfile="$3"
+  local retries=0
   if test x"${target}" = x; then
     error "target not specified"
     return 1
@@ -58,16 +72,35 @@ remote_download()
     return 1
   fi
   shift 3
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${target}:${sourcefile}' '${destfile}' > /dev/null"
-  if test $? -ne 0; then
-    error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
-    return 1
-  fi
-  return 0
+
+  local c
+  for c in {0..$retries}; do
+    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${target}:${sourcefile}' '${destfile}' > /dev/null"
+    if test $? -eq 0; then
+      return 0
+    elif test ${retries} -gt 0; then
+      warn "Download of '${target}:${sourcefile}' to '${destfile}' failed: will try $c more times"
+    fi
+  done
+  error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
+  return 1
 }
 
 remote_upload()
 {
+  OPTIND=1
+  local retries=0
+  while getopts r: flag; do
+    case "${flag}" in
+      r) retries="${OPTARG}";;
+      *)
+         echo "Bad arg" 1>&2
+         return 1
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
   local target="$1"
   local sourcefile="$2"
   local destfile="$3"
@@ -84,12 +117,18 @@ remote_upload()
     return 1
   fi
   shift 3
-  dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${sourcefile}' '${target}:${destfile}' > /dev/null"
-  if test $? -ne 0; then
-    error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
-    return 1
-  fi
-  return 0
+
+  local c
+  for c in {$retries..0}; do
+    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${sourcefile}' '${target}:${destfile}' > /dev/null"
+    if test $? -eq 0; then
+      return 0
+    elif test ${retries} -gt 0; then
+      warn "Upload of '${sourcefile}' to '${target}:${destfile}' failed: will try $c more times"
+    fi
+  done
+  error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
+  return 1
 }
 
 remote_exec()
