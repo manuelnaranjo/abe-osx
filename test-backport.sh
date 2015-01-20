@@ -116,16 +116,22 @@ done
 if test x"${fileserver}" != x; then
     # Get a list of all files that need to be copied
     basedir="/work/logs"
-    dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh ${fileserver} mkdir -p ${basedir}/${dir}
+    job="Backport.job"
+    dir1="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[0]}"
+    ssh ${fileserver} mkdir -p ${basedir}/${dir1}
     # Compress and copy all files from the first build
     xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
-    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${basedir}/${dir}/
+    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${dir}/
     
 # Compress and copy all files from the second build
+    dir2="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[1]}"
+    ssh ${fileserver} mkdir -p ${basedir}/${dir1}
     xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
-    scp ${resultsdir}${revisions[1]}/* ${fileserver}:${basedir}/${dir}/
+    scp ${resultsdir}${revisions[1]}/* ${fileserver}:${dir2}/
+
+    scp ${topdir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+    ssh  ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${dir1} ${dir2}
 fi
 
 # Diff the two directories
-/bin/bash -x ${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
+#/bin/bash -x ${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
