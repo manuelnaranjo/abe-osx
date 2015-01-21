@@ -23,6 +23,7 @@ fi
 
 # load commonly used functions
 abe="`which $0`"
+abe_path="`dirname ${abe}`"
 topdir="${abe_path}"
 abe="`basename $0`"
 
@@ -286,7 +287,7 @@ if test $# -eq 0; then
     usage
 fi
 
-OPTS="`getopt -o etb:h -l email:tdir:help:branch -- "$@"`"
+OPTS="`getopt -o etb:h -l email:,tdir:,help:,branch -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
