@@ -157,5 +157,7 @@ remote_exec_async()
   shift 4
 
   dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $* ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
-  return $?
+
+  #Backgrounded command won't give a meaningful error code
+  return 0
 }
