@@ -90,14 +90,21 @@ function lava_server
 #Once we've established that there seems to be a record, try to read it with a
 #read timeout. If we fail to read within read_timeout, return 1 to indicate
 #read failure - but the producer may still be alive in this case.
+#Can also set a deadline - bgread will return 3 if it hasn't seen any new output
+#before deadline expires. deadline is only checked at read_timeout intervals.
 #Typical invocation: foo="`bgread ${child_pid} <&3`"
+#Invocation with read checks every 5 seconds, failure after 2 minutes and two
+#pids to monitor:
+#foo="`bgread -T 120 -t 5 ${child_pid} ${other_pid} <&3`"
 function bgread
 {
   OPTIND=1
   local read_timeout=60
-  while getopts t: flag; do
+  local deadline=
+  while getopts T:t: flag; do
     case "${flag}" in
       t) read_timeout="${OPTARG}";;
+      T) deadline="$((${OPTARG} + `date +%s`))";;
       *)
          echo "Bad arg" 1>&2
          return 1
@@ -125,6 +132,12 @@ function bgread
     for pid in "$@"; do
       kill -0 "${pid}" > /dev/null 2>&1 || return 2
     done
+    if test x"${deadline:-}" != x; then
+      if test `date +%s` -ge ${deadline}; then
+        echo "bgread timed out" 1>&2
+        return 3
+      fi
+    fi
   done
 
   #If we get here, we managed to read 1 char. If we have a null string just

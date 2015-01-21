@@ -187,7 +187,7 @@ if test $? -eq 0; then
   fi
   lava_pid=$!
   while true; do
-    line="`bgread ${lava_pid} <&4`"
+    line="`bgread -T 300 ${lava_pid} <&4`"
     if test $? -ne 0; then
       echo "${lava_target}: Failed to read lava output" 1>&2
       exit 1
@@ -221,12 +221,12 @@ if test $? -ne 0; then
 fi
 "${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} "${listener_addr}" 4200 5200 >&3 &
 listener_pid=$!
-listener_addr="`bgread ${listener_pid} <&3`"
+listener_addr="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener address" 1>&2
   exit 1
 fi
-listener_port="`bgread ${listener_pid} <&3`"
+listener_port="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener port" 1>&2
   exit 1
@@ -337,6 +337,7 @@ fi
 session_pid=$!
 
 #lava_pid will expand to empty if we're not using lava
+#No sense in setting a deadline on this one, it's order of days for many cases
 ip="`bgread ${listener_pid} ${lava_pid} <&3`"
 if test $? -ne 0; then
   if test x"${lava_pid:-}" = x; then
