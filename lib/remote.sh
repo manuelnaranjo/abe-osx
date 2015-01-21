@@ -156,15 +156,6 @@ remote_exec_async()
   fi
   shift 4
 
-  #The combination of backgrounding the command that we run, the -n option to 
-  #ssh (don't read stdin) and the redirection of stdout appears to be enough
-  #to allow the ssh command to effectively do a dispatch-and-exit. Seems to
-  #no actual need for nohup.
-
-  #Logging command that docs say is needed to work
-  #dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${target} -- \"nohup bash -c 'exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \$?' &\""
-
-  #Using command that experiments show is sufficient
   dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $* ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
   return $?
 }
