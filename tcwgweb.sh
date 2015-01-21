@@ -32,7 +32,6 @@ abe="`basename $0`"
 # Globals shared between email and gerrit notifications
 returncode="0"
 returnstr="ALLGOOD"
-resultsfile="/tmp/test-results$$.txt"
 
 usage()
 {
@@ -40,8 +39,16 @@ usage()
 --email          : Send email of the validation results
 --tdir dir1 dir2 : Compare the test results in 2 subdirectories
 EOF
-    return 0
+    exit 0
 }
+
+if test $# -eq 0; then
+    usage
+fi
+
+branch=""
+email=no
+resultsfile="/tmp/test-results$$.txt"
 
 # $1 - the check.log file to scan
 scancheck () 
@@ -77,7 +84,9 @@ scancheck ()
 	i="`expr $i + 1`"
     done
 
-    mailto "Testsuite build failures in ${build}!" /tmp/mail$$.txt
+    if test x"${email}" = x"yes"; then
+	mailto "Testsuite build failures in ${build}!" /tmp/mail$$.txt
+    fi
 
     rm /tmp/mail$$.txt
 }
@@ -150,8 +159,7 @@ difftwodirs ()
     if test ${files} -gt 0; then
 	unxz ${prev}/*.sum.xz
     fi
-    unxz ${next}/*.sum.xz
-    unxz ${next}/check*.log.xz
+    unxz ${next}/*.xz
     # FIXME: LD and gfortran has problems in the testsuite, so it's temporarily not
     # analyzed for errors.
     local regressions=0
@@ -222,7 +230,9 @@ difftwodirs ()
 	echo "" >> ${resultsfile}
     fi
 
-    mailto "Test results for ${gcc_branch}" ${resultsfile} ${userid}
+    if test x"${email}" = x"yes"; then
+	mailto "Test results for ${gcc_branch}" ${resultsfile} ${userid}
+    fi
 
     rm -fr ${tmpdir}
 
@@ -280,18 +290,11 @@ EOF
     cp  ${diffdir}/testsuite-diff.txt  $2
 }
 
-# ----------------------------------------------------------------------
-# Start to actually do something
-
-if test $# -eq 0; then
-    usage
-fi
-
-OPTS="`getopt -o etb:h -l email:,tdir:,help:,branch -- "$@"`"
+OPTS="`getopt -o etb:o:h -l email,tdir:,help,outfile:,branch -- "$@"`"
 while test $# -gt 0; do
-    echo 1 = "$1"
     case $1 in
 	-e|--email) email=yes ;;
+	-o|--outfile) resultsfile=$2 ;;
 	-b|--branch) branch=$2 ;;
 	-t|--tdir) difftwodirs "$2" "$3"
 	    shift ; shift ;;
@@ -301,9 +304,12 @@ while test $# -gt 0; do
     shift
 done
 
-srcdir="/linaro/shared/snapshots/gcc.git"
-gerrit_info ${srcdir}
-gerrit_build_status ${srcdir} 0 ${resultsfile}
+# Don't try to add comments to Gerrit if run manually
+if test x"${GERRIT_PATCHSET_REVISION}" != x; then
+    srcdir="/linaro/shared/snapshots/gcc.git"
+    gerrit_info ${srcdir}
+    gerrit_build_status ${srcdir} 0 ${resultsfile}
+fi
 
-cat ${resultsfile}
-rm -fr ${resultsfile}
+#cat ${resultsfile}
+#rm -fr ${resultsfile}
