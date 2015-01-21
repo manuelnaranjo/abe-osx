@@ -42,14 +42,16 @@ else
     echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
 fi
 abe="`which $0`"
+abe_path="`dirname ${abe}`"
 topdir="${abe_path}"
 abe="`basename $0`"
 
+basedir="/work/logs"
 repo="gcc.git"
-fileserver=""
+fileserver="abe.tcwglab.linaro.org"
 branch=""
 
-OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:fileserver:help:snapshots:repo:workspace:options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help:,snapshots:,repo:,workspace:,options -- "$@"`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -86,13 +88,28 @@ declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' 
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
+# Don't try to add comments to Gerrit if run manually
+if test x"${GERRIT_PATCHSET_REVISION}" != x; then
+    gerrit="--enable gerrit"
+else
+    gerrit=""
+fi
+
 # Checkout all the sources
 bash -x ${topdir}/abe.sh --checkout all
 
 resultsdir="/tmp/abe-${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    bash -x ${topdir}/abe.sh --enable gerrit --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    job="Backport.job"
+    dir="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[$i]}"
+
+    # Don't build if a previous build of this revision exists
+    exists="`ssh ${fileserver} "if test -d ${dir}; then echo YES; else echo NO; fi"`"
+    if test x"${exists}" = x"YES"; then
+	continue
+    fi
+    bash -x ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
@@ -108,30 +125,22 @@ while test $i -lt ${#revisions[@]}; do
 	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
 	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.*
     fi
+
     mv ${manifest} ${manifest}.${revisions[$i]}
+    ssh ${fileserver} mkdir -p ${dir}
+
+    # Compress and copy all files from the first build
+    xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[$i]}/*.log
+    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${dir}/
+    
     i="`expr $i + 1`"
 done
 
 # Test results and logs optionally get copied to this fileserver.
 if test x"${fileserver}" != x; then
-    # Get a list of all files that need to be copied
-    basedir="/work/logs"
-    job="Backport.job"
-    dir1="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[0]}"
-    ssh ${fileserver} mkdir -p ${dir1}
-    # Compress and copy all files from the first build
-    xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[0]}/*.log
-    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${dir}/
-    
-# Compress and copy all files from the second build
-    dir2="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[1]}"
-    ssh ${fileserver} mkdir -p ${dir2}
-    xz ${resultsdir}${revisions[1]}/*.sum ${resultsdir}${revisions[1]}/*.log
-    scp ${resultsdir}${revisions[1]}/* ${fileserver}:${dir2}/
-
+    # Diff the two directories
     scp ${topdir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
+    dir1="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[0]}"
+    dir2="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[1]}"
     ssh  ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${dir1} ${dir2}
 fi
-
-# Diff the two directories
-#/bin/bash -x ${topdir}/tcwgweb.sh --email --tdir ${resultsdir}${revisions[0]} ${resultsdir}${revisions[1]}
