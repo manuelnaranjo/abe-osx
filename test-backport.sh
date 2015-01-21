@@ -130,8 +130,8 @@ while test $i -lt ${#revisions[@]}; do
     ssh ${fileserver} mkdir -p ${dir}
 
     # Compress and copy all files from the first build
-    xz ${resultsdir}${revisions[0]}/*.sum ${resultsdir}${revisions[$i]}/*.log
-    scp ${resultsdir}${revisions[0]}/* ${fileserver}:${dir}/
+    xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
+    scp ${resultsdir}${revisions[$i]}/* ${fileserver}:${dir}/
     
     i="`expr $i + 1`"
 done
