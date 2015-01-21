@@ -9,6 +9,7 @@ set -o nounset
 trap clean_benchmark EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
+session_pid=
 lava_pid=
 listener_pid=
 benchmark=
@@ -110,6 +111,11 @@ clean_benchmark()
     fi
   else
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
+  fi
+
+  if test x"${session_pid:-}" != x; then
+    kill "${session_pid}" 2>/dev/null
+    wait "${session_pid}"
   fi
 
   if test x"${listener_pid:-}" != x; then
@@ -285,7 +291,22 @@ fi
 
 #TODO: Repetition of hostname echoing is ugly, but seems to be needed -
 #      perhaps there is some delay after the interface comes up
-(. "${topdir}"/lib/common.sh
+(
+   pids=()
+   cleanup()
+   {
+     local pid
+     for pid in "${pids[@]}"; do
+       if test x"${pid:-}" != x; then
+         kill ${pid} 2>/dev/null
+         wait ${pid} 2>/dev/null
+       fi
+     done
+     exit
+   }
+   trap cleanup EXIT
+
+   . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
      "cd ${target_dir} && \
@@ -302,11 +323,18 @@ fi
        false; \
      fi" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
-     ${ssh_opts})
-if test $? -ne 0; then
-  echo "Something went wrong when we tried to dispatch job" 1>&2
-  exit 1
-fi
+     ${ssh_opts}
+   if test $? -ne 0; then
+     echo "Something went wrong when we tried to dispatch job" 1>&2
+     exit 1
+   fi
+   pids+=($!)
+   sleep infinity&
+   waiter=$!
+   pids+=(${waiter})
+   wait ${waiter}
+)&
+session_pid=$!
 
 #lava_pid will expand to empty if we're not using lava
 ip="`bgread 60 ${listener_pid} ${lava_pid} <&3`"
