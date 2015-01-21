@@ -1,10 +1,21 @@
 #!/bin/bash
 
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  Backport.job [--help] [f|--fileserver 'remote file server'] --target triplet branch
+EOF
+    return 0
+}
+
+# Server to store results on.
 abe_dir="${WORKSPACE}/abe"
 user_snapshots="${WORKSPACE}/snapshots"
 shared="/home/buildslave/workspace/shared/"
 snapshots_ref="${shared}/snapshots"
 export CONFIG_SHELL="/bin/bash"
+
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
@@ -17,7 +28,7 @@ rm -fr ${WORKSPACE}/_build/builds/* ${WORKSPACE}/_build/sysroots/*
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If started by a Gerrit Trigger, use that for the branch.
 if test x"${GERRIT_BRANCH}" != x; then
@@ -29,3 +40,4 @@ $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 if test $? -gt 0; then
   exit 1
 fi
+
