@@ -68,7 +68,6 @@ user_options=""
 
 OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
 while test $# -gt 0; do
-    echo 1 = "$1"
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
         -g|--gitrepo) user_git_repo=$2 ;;
