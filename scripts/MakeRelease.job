@@ -138,7 +138,7 @@ if test x"${tarbin}" = xyes; then
 	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
 	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
 	    ssh ${fileserver} "mkdir -p ${binaries}/"
-	    scp ${sums} ${fileserver}:${binaries}/
+	    scp ${sums} ${logs} ${fileserver}:${binaries}/
 	else
 	    echo "ERROR: No test results were found!"
 	fi
