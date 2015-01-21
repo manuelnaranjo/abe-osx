@@ -222,7 +222,8 @@ while true; do
   if test ${#running_pids[@]} -eq 0; then
     break
   else
-    sleep 60
+    sleep 60&
+    wait $!
   fi
 done
 

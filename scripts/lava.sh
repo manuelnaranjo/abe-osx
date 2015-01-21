@@ -281,7 +281,8 @@ if test $? -ne 0; then
 fi
 echo "Dispatched LAVA job ${id}"
 
-sleep 15 #A short delay here is handy when debugging (if the LAVA queues are empty then we'll dispatch fast, but not instantly)
+sleep 15& #A short delay here is handy when debugging (if the LAVA queues are empty then we'll dispatch fast, but not instantly)
+wait $!
 
 #Monitor job status until it starts running or fails
 #TODO: This block assumes that lava_tool doesn't return until the job is in 'Submitted' state, which I haven't checked
@@ -302,7 +303,8 @@ while true; do
     echo -e "${jobstatus}" 1>&2
     exit 1
   fi
-  sleep 60
+  sleep 60&
+  wait $!
 done
 
 echo "Job ${id} is running, waiting for boot"
