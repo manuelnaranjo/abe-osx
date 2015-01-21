@@ -26,7 +26,7 @@ usage()
     cat << EOF
   test-backport.sh [--help] [f|--fileserver remote file server] --target triplet branch
 EOF
-    return 0
+    exit 0
 }
 
 if test $# -lt 2; then
@@ -51,9 +51,8 @@ repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch=""
 
-OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help:,snapshots:,repo:,workspace:,options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options -- "$@"`"
 while test $# -gt 0; do
-    echo 1 = "$1"
     case $1 in
         -s|--snapshots) local_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
@@ -98,15 +97,17 @@ fi
 # Checkout all the sources
 bash -x ${topdir}/abe.sh --checkout all
 
-resultsdir="/tmp/abe-${target}@"
+resultsdir="/tmp/abe$$/${target}@"
 i=0
 while test $i -lt ${#revisions[@]}; do
-    job="Backport.job"
-    dir="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[$i]}"
+    job="Backport"
+    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
 
     # Don't build if a previous build of this revision exists
     exists="`ssh ${fileserver} "if test -d ${dir}; then echo YES; else echo NO; fi"`"
     if test x"${exists}" = x"YES"; then
+	echo "${dir} already exists"
+	i="`expr $i + 1`"
 	continue
     fi
     bash -x ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
@@ -122,25 +123,26 @@ while test $i -lt ${#revisions[@]}; do
 	cp -f ${sums} ${logs} ${manifest} ${resultsdir}${revisions[$i]}/
 	    # We don't need these files leftover from the DejaGnu testsuite
             # itself.
-	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
 	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.*
+	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
+
+	ssh ${fileserver} mkdir -p ${dir}
+	scp ${manifest} ${fileserver}:${dir}/
+
+#	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
+	scp ${resultsdir}${revisions[$i]}/* ${fileserver}:${dir}/
     fi
 
-    mv ${manifest} ${manifest}.${revisions[$i]}
-    ssh ${fileserver} mkdir -p ${dir}
-
-    # Compress and copy all files from the first build
-    xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
-    scp ${resultsdir}${revisions[$i]}/* ${fileserver}:${dir}/
-    
     i="`expr $i + 1`"
 done
 
 # Test results and logs optionally get copied to this fileserver.
 if test x"${fileserver}" != x; then
     # Diff the two directories
-    scp ${topdir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-    dir1="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[0]}"
-    dir2="${basedir}/gcc-linaro-${version}/${branch}/${job}${BUILD_NUMBER}/${arch}.${target}/${revisions[1]}"
-    ssh  ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${dir1} ${dir2}
+    ssh ${fileserver} mkdir -p /tmp/abe$$
+    scp -r ${topdir}/* ${fileserver}:/tmp/abe$$/
+    toplevel="`dirname ${dir}`"
+    dir1="${toplevel}/${revisions[0]}"
+    dir2="${toplevel}/${revisions[1]}"
+    ssh ${fileserver} /tmp/abe$$/tcwgweb.sh --outfile ${toplevel}/results-${revisions[0]}-${revisions[1]}.txt --tdir ${dir1} ${dir2}
 fi
