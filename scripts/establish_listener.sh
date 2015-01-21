@@ -165,7 +165,7 @@ echo "${listener_addr}"
 echo "${listener_port}"
 
 while true; do
-  line="`bgread 60 ${pseudofifo_pid} <&3`"
+  line="`bgread ${pseudofifo_pid} <&3`"
   if test $? -ne 0; then
     echo "Failed to read pseudofifo pid" 1>&2
     exit 1
