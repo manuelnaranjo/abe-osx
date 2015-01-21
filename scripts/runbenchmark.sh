@@ -349,9 +349,9 @@ fi
 ip="`bgread ${listener_pid} ${lava_pid} <&3`"
 if test $? -ne 0; then
   if test x"${lava_pid:-}" = x; then
-    echo "LAVA process died, or otherwise failed while waiting to read post-benchmark-run IP" 1>&2
-  else
     echo "Failed to read post-benchmark-run IP" 1>&2
+  else
+    echo "LAVA process died, or otherwise failed while waiting to read post-benchmark-run IP" 1>&2
   fi
   exit 1
 fi
