@@ -325,6 +325,11 @@ while test `date +%s` -lt ${deadline}; do
   fi
 done
 
+#We've finished with the listener
+kill ${listener_pid} 2>/dev/null
+#Don't wait on it - that way, when we kill and wait on exit, we know we're
+#still dealing with the same process. (Killing it more than once is harmless.)
+
 if test x"${user_ip:-}" = x; then
   echo "LAVA boot abandoned after $((boot_timeout/60)) minutes" 1>&2
   exit 1
