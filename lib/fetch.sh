@@ -272,7 +272,7 @@ extract()
 	    ;;
 	*.gz)
 	    local extractor="gunzip "
-	    local taropt="x"
+	    local taropt="z"
 	    ;;
 	*) ;;
     esac
