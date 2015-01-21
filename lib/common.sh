@@ -60,6 +60,9 @@ set_dbpasswd()
 
 # if --dryrun is passed to abe.sh, then commands are echoed instead of
 # of executed.
+# NOTE: This function must not run any commands in the background between
+#       'eval' and 'return'. This is so that runes such as
+#       'dryrun "foo&"; wait $!' will work.
 dryrun()
 {
     if test x"${dryrun}" = xyes; then
