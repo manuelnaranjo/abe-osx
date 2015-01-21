@@ -101,6 +101,8 @@ function bgread
   OPTIND=1
   local read_timeout=60
   local deadline=
+  local pid
+
   while getopts T:t: flag; do
     case "${flag}" in
       t) read_timeout="${OPTARG}";;
