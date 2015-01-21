@@ -309,7 +309,8 @@ fi
    . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
-     "cd ${target_dir} && \
+     "echo 'STARTED' | nc ${listener_addr} ${listener_port} && \
+      cd ${target_dir} && \
       tar xjf `basename ${buildtar}` && \
       cd `tar tjf ${buildtar} | head -n1` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
@@ -335,6 +336,13 @@ fi
    wait ${waiter}
 )&
 session_pid=$!
+
+#lava_pid will expand to empty if we're not using lava
+handshake="`bgread -T 300 ${listener_pid} ${lava_pid} <&3`"
+if test $? -ne 0 -o x"${handshake:-}" != 'xSTARTED'; then
+  echo "Did not get handshake from target, giving up" 1>&2
+  exit 1
+fi
 
 #lava_pid will expand to empty if we're not using lava
 #No sense in setting a deadline on this one, it's order of days for many cases
