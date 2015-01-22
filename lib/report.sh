@@ -19,6 +19,8 @@
 run_status ()
 {
     local declare msgs=("${!1}")
+    local declare refs=("${!2}")
+    local declare ress=("${!3}")
 
     echo "                                           +---------+---------+"
     echo "o RUN STATUS                               |   REF   |   RES   |"
@@ -26,7 +28,7 @@ run_status ()
     local i=0
     local count="${#msgs[@]}"
     while test $i -lt ${count}; do
-	printf "| %-40s | %7s | %7s |\n" "${msgs[$i]}" ${count} ${count}
+	printf "| %-40s | %7s | %7s |\n" "${msgs[$i]}" "${refs[$i]}" "${ress[$i]}"
 	i="`expr $i + 1`"
 	total="`expr ${total} + ${count}`"
     done
@@ -82,15 +84,11 @@ regression_table ()
     echo ""
 }
 
-declare -a msgs=('burly adwdf bar' 'afsfsdf')
-declare -a counts=('3' '1')
+#display_header "x6_64.arm-linux.gnueabihf" dir1 dir2 4
+#regression_table "REGRESSIONS" msgs[@] counts[@]
+#regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
 
-display_header "x6_64.arm-linux.gnueabihf" dir1 dir2 4
-
-regression_table "REGRESSIONS" msgs[@] counts[@]
-regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
-
-run_status  msgs[@]
+#run_status  msgs[@]
 
 extract_results ()
 {
@@ -111,9 +109,6 @@ extract_results ()
     return 0
 }
 
-#eval "`extract_results /linaro/build/x86_64-linux-gnu/abe/master/builds/x86_64-unknown-linux-gnu/aarch64-none-elf/gcc.git@9287b9627c3f1ce26f740820e144c941614ffcb9-stage2/gcc/testsuite/gcc/gcc.sum`"
-#head="`extract_results /linaro/build/x86_64-linux-gnu/abe/master/builds/x86_64-unknown-linux-gnu/aarch64-none-elf/gcc.git@9287b9627c3f1ce26f740820e144c941614ffcb9-stage2/gcc/testsuite/gcc/gcc.sum`"
-
 toplevel="/var/www/abe/logs/gcc-linaro-5.0.0/"
 sums="`find ${toplevel} -name gcc.sum*`"
 declare -a head=()
@@ -124,7 +119,7 @@ for sum in ${sums}; do
 done
 
 #echo "FOOBY ${#head[@]}"
-eval declare -A header=(${head[4]})
+#eval declare -A header=(${head[4]})
 #echo "FIXME: ${header[DATE]}"
 #echo "FIXME: ${header[BOARD]}"
 
@@ -155,23 +150,20 @@ echo "Total xfailure : ${totals[XFAILURES]}"
 echo "Total unresolved: ${totals[UNRESOLVED]}"
 echo "Total unsupported: ${totals[UNSUPPORTED]}"
 
-# To create a new associative array from a string, we have to eval it.
-#eval declare -A header=(`extract_results /var/www/abe/logs/gcc-linaro-5.0.0/master-15d9538ce14ff5f8d8a1dc54b81d13d599edcbd8/x86_64.i686-linux-gnu-SchrootFarm319/gcc.sum`)
-#head=`extract_results /var/www/abe/logs/gcc-linaro-5.0.0/master-15d9538ce14ff5f8d8a1dc54b81d13d599edcbd8/x86_64.i686-linux-gnu-SchrootFarm319/gcc.sum`
-#declare  header
-#header[0]=${head}
-#header[1]=${head}
 
-#eval declare -A foo=(${header[0]})
-#echo "FIXME: ${foo[DATE]}"
-#echo "FIXME: ${foo[BOARD]}"
-#echo "FIXME00: ${head[0]}"
-#echo "FIXME00: ${header[TARGET]}"
-#echo "FIXME11: ${header[DATE]}"
-#echo "FIXME22: ${header[BOARD]}"
-#echo "FIXME33: ${header[PASSES]}"
-#echo "FIXME44: ${header[XPASSES]}"
-#echo "FIXME55: ${header[FAILURES]}"
-#echo "FIXME66: ${header[XFAILURES]}"
-#echo "FIXME77: ${header[UNRESOLVED]}"
-#echo "FIXME88: ${header[UNSUPPORTED]}"
+declare categories=("Passes                      [PASS+XPASS]" "Unexpected fails                  [FAIL]" "Expected fails                   [XFAIL]" "Unresolved                  [UNRESOLVED]" "Unsupported       [UNTESTED+UNSUPPORTED]")
+declare final=("${totals[PASSES]}" "${totals[XFAILURES]}" "${totals[FAILURES]}" "${totals[UNRESOLVED]}" "${totals[UNSUPPORTED]}")
+
+i=0
+while test $i -lt ${#head[@]}; do
+    eval declare -A data=(${head[$i]})
+    ${data[UNSUPPORTED]:-0}
+    display_header "${data[TARGET]}" dir1 dir2 4
+    i="`expr $i + 1`"
+done
+
+#regression_table "REGRESSIONS" msgs[@] counts[@]
+#regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
+
+run_status categories[@] final[@] final[@]
+
