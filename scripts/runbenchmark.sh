@@ -187,7 +187,7 @@ if test $? -eq 0; then
   fi
   lava_pid=$!
   while true; do
-    line="`bgread -T 300 ${lava_pid} <&4`"
+    line="`bgread -t 5 ${lava_pid} <&4`"
     if test $? -ne 0; then
       echo "${lava_target}: Failed to read lava output" 1>&2
       exit 1
