@@ -75,7 +75,7 @@ fi
 #    srcdir="${git_reference_dir}/${branch}"
 #else
     git_reference_dir="${local_snapshots}"
-    srcdir="${local_snapshots}/${branch}"
+    srcdir="${local_snapshots}/gcc.git~${branch}"
 #fi
 
 rm -fr ${srcdir}
@@ -95,7 +95,7 @@ else
 fi
 
 # Checkout all the sources
-bash -x ${topdir}/abe.sh --checkout all
+#bash -x ${topdir}/abe.sh --checkout all
 
 resultsdir="/tmp/abe$$/${target}@"
 i=0
