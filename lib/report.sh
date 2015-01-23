@@ -22,17 +22,17 @@ run_status ()
     local declare refs=("${!2}")
     local declare ress=("${!3}")
 
-    echo "                                           +---------+---------+"
-    echo "o RUN STATUS                               |   REF   |   RES   |"
-    echo "+------------------------------------------+---------+---------+"
+    echo "                                             +---------+---------+"
+    echo "o RUN STATUS                                 |   REF   |   RES   |"
+    echo "  +------------------------------------------+---------+---------+"
     local i=0
     local count="${#msgs[@]}"
     while test $i -lt ${count}; do
-	printf "| %-40s | %7s | %7s |\n" "${msgs[$i]}" "${refs[$i]}" "${ress[$i]}"
+	printf "  | %-40s | %7s | %7s |\n" "${msgs[$i]}" "${refs[$i]}" "${ress[$i]}"
 	i="`expr $i + 1`"
 	total="`expr ${total} + ${count}`"
     done
-    echo "+------------------------------------------+---------+---------+"
+    echo "  +------------------------------------------+---------+---------+"
     echo ""
     
 }
@@ -58,8 +58,9 @@ display_header ()
     echo "# ${dir2}"
     echo ""
  
-    echo "# Comparing ${files} common sum files"
-    echo "" 
+#    FIXME: not sure how useful this is, we only compare two files always.
+#    echo "# Comparing ${files} common sum files"
+#    echo "" 
 }
 
 regression_table ()
@@ -71,29 +72,24 @@ regression_table ()
     local count="${#msgs[@]}"
     local declare num=("${!3}")
 
-    echo "o `echo ${title} | tr "[:lower:]" "[:upper:]"`"
-    echo   "+------------------------------------------+---------+"
+    echo "o  `echo ${title} | tr "[:lower:]" "[:upper:]"` :"
+    echo   "  +------------------------------------------+---------+"
     while test $i -lt ${count}; do
-	printf "| %-40s | %7s |\n" "${msgs[$i]}" "${num[$i]}"
+	printf "  | %-40s | %7s |\n" "${msgs[$i]}" "${num[$i]}"
 	total="`expr ${total} + "${num[$i]}"`"
 	i="`expr $i + 1`"
     done
-    echo   "+------------------------------------------+---------+"
-    printf "| %-40s | %7s |\n" "TOTAL_REGRESSIONS" ${total}
-    echo   "+------------------------------------------+---------+"
+    echo   "  +------------------------------------------+---------+"
+    printf "  | %-40s | %7s |\n" "TOTAL_REGRESSIONS" ${total}
+    echo   "  +------------------------------------------+---------+"
     echo ""
 }
-
-#display_header "x6_64.arm-linux.gnueabihf" dir1 dir2 4
-#regression_table "REGRESSIONS" msgs[@] counts[@]
-#regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
-
-#run_status  msgs[@]
 
 extract_results ()
 {
     local sum="$1"
     declare -A headerinfo
+    headerinfo[FILESPEC]="${sum}"
     headerinfo[TARGET]="`grep "Target is" ${sum} | cut -d ' ' -f 3`"
     headerinfo[BOARD]="`grep "Running target" ${sum} | cut -d ' ' -f 3`"
     headerinfo[DATE]="`grep "Test Run" ${sum} | cut -d ' ' -f 6-10`"
@@ -109,19 +105,19 @@ extract_results ()
     return 0
 }
 
-toplevel="/var/www/abe/logs/gcc-linaro-5.0.0/"
+# FIXME: for now this is hardcoded, but wil lbe passed in by Jenkins
+toplevel="/work/logs/gcc-linaro/4.9-backport-218451-2/Backport32"
 sums="`find ${toplevel} -name gcc.sum*`"
 declare -a head=()
 i=0
 for sum in ${sums}; do
-    head[$i]="`extract_results ${sum}`"
+    if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
+	unxz ${sum}
+    fi
+    file="`echo ${sum} | sed -e 's:\.xz::'`"
+    head[$i]="`extract_results ${file}`"
     i="`expr $i + 1`"
 done
-
-#echo "FOOBY ${#head[@]}"
-#eval declare -A header=(${head[4]})
-#echo "FIXME: ${header[DATE]}"
-#echo "FIXME: ${header[BOARD]}"
 
 declare -A totals=()
 totals[PASSES]=0
@@ -133,7 +129,6 @@ totals[UNSUPPORTED]=0
 i=0
 while test $i -lt ${#head[@]}; do
     eval declare -A data=(${head[$i]})
-    echo "FUR: ${data[TARGET]}: ${data[PASSES]:-0}"
     totals[PASSES]="`expr ${totals[PASSES]} + ${data[PASSES]:-0}`"
     totals[XPASSES]="`expr ${totals[XPASSES]} + ${data[XPASSES]:-0}`"
     totals[FAILURES]="`expr ${totals[FAILURES]} + ${data[FAILURES]:-0}`"
@@ -143,27 +138,80 @@ while test $i -lt ${#head[@]}; do
     i="`expr $i + 1`"
 done
 
-echo "Total passes: ${totals[PASSES]}"
-echo "Total xpasses: ${totals[XPASSES]}"
-echo "Total failures: ${totals[FAILURES]}"
-echo "Total xfailure : ${totals[XFAILURES]}"
-echo "Total unresolved: ${totals[UNRESOLVED]}"
-echo "Total unsupported: ${totals[UNSUPPORTED]}"
+# Status messages
+declare ok_msgs=(\
+    "Still passes              [PASS => PASS]" \
+    "Still fails               [FAIL => FAIL]")
+
+declare checked_msgs=(\
+    "Xfail appears             [PASS =>XFAIL]" \
+    "Timeout                   [PASS =>T.OUT]" \
+    "Fail disappears           [FAIL =>     ]" \
+    "Expected fail passes      [XFAIL=>XPASS]" \
+    "Fail now passes           [FAIL => PASS]" \
+    "New pass                  [     => PASS]" \
+    "Unhandled cases           [   ..??..   ]" \
+    "Unstable cases            [PASS => FAIL]")
+
+declare error_msgs=(
+    "Passed now fails          [PASS => FAIL]" \
+    "Fail now passes           [FAIL => PASS]" \
+    "Pass disappears           [PASS =>     ]" \
+    "Fail appears              [     => FAIL]" \
+    "Timeout                   [PASS =>T.OUT]")
+
+# Run status categories and totals
+declare categories=(\
+    "Passes                      [PASS+XPASS]" \
+    "Unexpected fails                  [FAIL]" \
+    "Expected fails                   [XFAIL]" \
+    "Unresolved                  [UNRESOLVED]" \
+    "Unsupported       [UNTESTED+UNSUPPORTED]")
 
 
-declare categories=("Passes                      [PASS+XPASS]" "Unexpected fails                  [FAIL]" "Expected fails                   [XFAIL]" "Unresolved                  [UNRESOLVED]" "Unsupported       [UNTESTED+UNSUPPORTED]")
-declare final=("${totals[PASSES]}" "${totals[XFAILURES]}" "${totals[FAILURES]}" "${totals[UNRESOLVED]}" "${totals[UNSUPPORTED]}")
+declare -a dir=()
+i=0
+#j=1
+while test $i -lt ${#head[@]}; do
+    eval declare -A data=(${head[$i]})
+    tmp="`dirname ${data[FILESPEC]}`"
+   if test x"${tmp}" != dir[$i]; then
+	dir[$i]="`dirname ${tmp}`"
+	echo "DIR: ${dir[$i]}"
+    fi
+#    j="`expr $j - 1`"
+    i="`expr $i + 1`"
+done
+
 
 i=0
 while test $i -lt ${#head[@]}; do
     eval declare -A data=(${head[$i]})
-    ${data[UNSUPPORTED]:-0}
-    display_header "${data[TARGET]}" dir1 dir2 4
+    display_header "${data[TARGET]}" "dir1" "dir2" 2
+    declare msgs=("${error_msgs[0]}" "${error_msgs[2]}")
+    regression_table "REGRESSIONS" msgs[@] totals[@]
+    #regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
+    declare final=(\
+         "${data[PASSES]}" \
+	"${data[XFAILURES]}" \
+	"${data[FAILURES]}" \
+	"${data[UNRESOLVED]}" \
+	"${data[UNSUPPORTED]}")
+    run_status categories[@] final[@] final[@]
     i="`expr $i + 1`"
 done
 
-#regression_table "REGRESSIONS" msgs[@] counts[@]
-#regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
+#local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
+#if test x"${lineno}" != x; then
+#    sed -e "1,${lineno}d" ${prev}/manifest.txt
+#fi
 
-run_status categories[@] final[@] final[@]
-
+#echo "Compressing sum files, will take a little while"
+#for sum in ${sums}; do
+#    if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
+#	file="`echo ${sum} | sed -e 's:\.xz::'`"
+#	printf "."
+#	xz ${file} 2>&1 > /dev/null
+#    fi
+#done
+#echo ""
