@@ -1,10 +1,10 @@
 #!/bin/bash
 
 whoami
-if test x"`whoami`" != benchmark; then
-  ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no benchmark@localhost whoami
-  exit 1
-fi
+#if test x"`whoami`" != benchmark; then
+#  ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no benchmark@localhost whoami
+#  exit 1
+#fi
 rm -rf ${WORKSPACE}/bin
 mkdir ${WORKSPACE}/bin
 cd ${WORKSPACE}/bin
