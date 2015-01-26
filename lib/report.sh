@@ -148,46 +148,46 @@ dodiff ()
 		case "${diff[$i]} ${diff[$j]}" in
 		    -FAIL:*PASS:*)
 			echo "FIXME: FAIL->PASS"
-			status[FAILNOWPASS,$a]="${str1}"
+#			status[FAILNOWPASS,$a]="${str1}"
 			a="`expr $a + 1`"
 			;;
 		    -PASS:*+XFAIL:*)
 			status[PASSNOWXFAIL,$b]="${str1}"
 			b="`expr $b + 1`"
-			echo "FIXME: PASS->XFAIL"
+#			echo "FIXME: PASS->XFAIL"
 			;;
 		    -PASS:*+FAIL:*)
 			status[PASSNOWFAILS,$c]="${str1}"
 			c="`expr $c + 1`"
-			echo "FIXME: PASS->FAIL"
+#			echo "FIXME: PASS->FAIL"
 			;;
 		    +XPASS:*-FAIL:*) 
 			status[XPASSNOWXFAIL,$d]="${str1}"
 			d="`expr $d + 1`"
-			echo "FIXME: XPASS->FAIL"
+#			echo "FIXME: XPASS->FAIL"
 			;;
 		    +XFAIL:*-FAIL:*)
 			status[XFAILNOWXFAIL,$e]="${str1}"
 			e="`expr $e + 1`"
-			echo "FIXME: XFAIL->FAIL"
+#			echo "FIXME: XFAIL->FAIL"
 			;;
 		    +XFAIL:*-PASS:*) 
 			status[XFAILNOWPASS,$f]="${str1}"
 			f="`expr $f + 1`"
-			echo "FIXME: XFAIL->PASS"
+#			echo "FIXME: XFAIL->PASS"
 			;;
 		    -PASS:*XPASS:*)
 			status[XFAILNOWPASS,$g]="${str1}"
 			g="`expr $g + 1`"
-			echo "FIXME: PASS=>XPASS"
+#			echo "FIXME: PASS=>XPASS"
 			;;
 		    +FAIL:*-PASS:*)
 			status[FAILNOWPASS,$h]="${str1}"
-			echo "FIXME: FAIL->PASS"
+#			echo "FIXME: FAIL->PASS"
 			h="`expr $h + 1`"
 			;;
 		    *) echo
-			"FIXEEE: ${foo}"
+			"ERROR: Unknown status ${str1}"
 			;;
 		esac
 #		local state="`expr substr "${diff[$i]}" 1 5`"
@@ -226,53 +226,57 @@ dump_status ()
     eval "`echo ${1} | sed -e 's:status:states:'`"
 
     local z=0
-    # states[FAILNOWPASS,$z]="${str1}"
-    #z="`expr $z + 1`"
-    # done
+    while test x"${states[FAILNOWPASS,$z]}" != x; do
+       	echo "Status: FAILNOWPASS $z: ${states[FAILNOWPASS,$z]}"
+	z="`expr $z + 1`"
+    done
     local z=0
-    # states[PASSNOWXFAIL,$z]="${str1}"
-    #z="`expr $z + 1`"
-    # done
+    while test x"${states[PASSNOWXFAIL,$z]}" != x; do
+       	echo "Status: PASSNOWXFAIL $z: ${states[PASSNOWXFAIL,$z]}"
+	z="`expr $z + 1`"
+    done
     local z=0
-    # states[PASSNOWFAILS,$z]="${str1}"
-    #z="`expr $z + 1`"
-    # done
+    while test x"${states[PASSNOWFAILS,$z]}" != x; do
+       	echo "Status: PASSNOWFAILS $z: ${states[PASSNOWFAILS,$z]}"
+	z="`expr $z + 1`"
+    done
     local z=0
-#    while test x"$states[XPASSNOWXFAIL,$z]" != x; do
-#	z="`expr $z + 1`"
-#    done
-#    local z=0
-#    while test x"${states[XFAILNOWXFAIL,$z]" != x; do
-#	z="`expr $z + 1`"
-#    done
-    # local z=0
-    # while test x"${states[XFAILNOWPASS,$z]" != x; do
-    #   	echo "FIXOOO XFAILNOWPASS $z: $states[XFAILNOWPASS,$z]"
-    #   	z="`expr $z + 1`"
-    # done
-
+    while test x"${states[XPASSNOWXFAIL,$z]}" != x; do
+       	echo "Status: XPASSNOWXFAIL $z: ${states[XPASSNOWXFAIL,$z]}"
+	z="`expr $z + 1`"
+    done
+    local z=0
+    while test x"${states[XFAILNOWXFAIL,$z]}" != x; do
+       	echo "Status: XFAILNOWXFAIL $z: ${states[XFAILNOWXFAIL,$z]}"
+	z="`expr $z + 1`"
+    done
+    local z=0
+    while test x"${states[XFAILNOWPASS,$z]}" != x; do
+       	echo "Status: XFAILNOWPASS $z: ${states[XFAILNOWPASS,$z]}"
+	z="`expr $z + 1`"
+    done
     local z=0
     while test x"${states[S,$z]}" != x; do
-     	echo "FIXOOO XFAILNOWPASS $z: $states[XFAILNOWPASS,$z]"
+     	echo "Status: XFAILNOWPASS $z: ${states[XFAILNOWPASS,$z]}"
       	z="`expr $z + 1`"
     done
 
     local z=0
     while test x"${states[FAILNOWPASS,$z]}" != x; do
-	echo "FIXOOO FAILNOWPASS $z: ${states[FAILNOWPASS,$z]}"
+	echo "Status: FAILNOWPASS $z: ${states[FAILNOWPASS,$z]}"
 	z="`expr $z + 1`"
     done
  
    echo "FIXME TOO: ${states[PASSNOWFAIL]}"
     local z=0
     while test x"${states[APPEARS,$z]}" !=x; do
-	echo "FIXOOO APPEARS: ${states[APPEARS,$z]}"
+	echo "Status: APPEARS: ${states[APPEARS,$z]}"
     z="`expr $z + 1`"
     done
     
     local z=0
     while test x"${states[DISAPPEARED,$z]}" != x; do
-	echo "FIXOOO DISAPPEARED: ${states[DISAPPEARED,$z]}"
+	echo "Status: DISAPPEARED: ${states[DISAPPEARED,$z]}"
 	z="`expr $z + 1`"
     done
 }
