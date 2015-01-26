@@ -101,7 +101,7 @@ extract_results ()
     headerinfo[UNSUPPORTED]="`grep "# of unsupported tests" ${sum} | grep -o "[0-9]*"`"
 
     # This obscure option to declare dumps headerinfo as an associative array
-    declare -p headerinfo 2>&1 | sed -e 's:^.*(::' -e 's:).*$::'
+    declare -ptu headerinfo 2>&1 | sed -e 's:^.*(::' -e 's:).*$::'
     return 0
 }
 
@@ -124,6 +124,17 @@ dodiff ()
 
 	local i=0
 	local j=0
+	# For indexes in the status array
+	local a=0
+	local b=0
+	local c=0
+	local d=0
+	local e=0
+	local f=0
+	local g=0
+	local h=0
+	local x=0
+	local y=0
 	declare -A status
 	while test $j -lt ${#diff[@]}; do
 	    j="`expr $i + 1`"
@@ -136,30 +147,44 @@ dodiff ()
 #		echo "FIXME: regression in!!! ${str1}"
 		case "${diff[$i]} ${diff[$j]}" in
 		    -FAIL:*PASS:*)
-#			echo "FIXME: FAIL->PASS"
+			echo "FIXME: FAIL->PASS"
+			status[FAILNOWPASS,$a]="${str1}"
+			a="`expr $a + 1`"
 			;;
 		    -PASS:*+XFAIL:*)
-#			echo "FIXME: PASS->XFAIL"
+			status[PASSNOWXFAIL,$b]="${str1}"
+			b="`expr $b + 1`"
+			echo "FIXME: PASS->XFAIL"
 			;;
 		    -PASS:*+FAIL:*)
-			status[PASSNOWFAILS]="${str1}"
-#			echo "FIXME: PASS->FAIL"
+			status[PASSNOWFAILS,$c]="${str1}"
+			c="`expr $c + 1`"
+			echo "FIXME: PASS->FAIL"
 			;;
 		    +XPASS:*-FAIL:*) 
-#			echo "FIXME: XPASS->FAIL"
+			status[XPASSNOWXFAIL,$d]="${str1}"
+			d="`expr $d + 1`"
+			echo "FIXME: XPASS->FAIL"
 			;;
 		    +XFAIL:*-FAIL:*)
-#			echo "FIXME: XFAIL->FAIL"
+			status[XFAILNOWXFAIL,$e]="${str1}"
+			e="`expr $e + 1`"
+			echo "FIXME: XFAIL->FAIL"
 			;;
 		    +XFAIL:*-PASS:*) 
-#			echo "FIXME: XFAIL->PASS"
+			status[XFAILNOWPASS,$f]="${str1}"
+			f="`expr $f + 1`"
+			echo "FIXME: XFAIL->PASS"
 			;;
 		    -PASS:*XPASS:*)
-#			echo "FIXME: PASS=>XPASS"
+			status[XFAILNOWPASS,$g]="${str1}"
+			g="`expr $g + 1`"
+			echo "FIXME: PASS=>XPASS"
 			;;
 		    +FAIL:*-PASS:*)
-			status[FAILNOWPASS]="${str1}"
-#			echo "FIXME: FAIL->PASS"
+			status[FAILNOWPASS,$h]="${str1}"
+			echo "FIXME: FAIL->PASS"
+			h="`expr $h + 1`"
 			;;
 		    *) echo
 			"FIXEEE: ${foo}"
@@ -174,11 +199,13 @@ dodiff ()
 #		echo "FIXME: New or deleted test!!!!"
 		if test x"${sign[0]}" = x"-"; then
 #		    echo "FIXME: ${str1} was removed"
-		    status[DISAPPEARED]="${str1}"
+		    status[DISAPPEARED,$x]="${str1}"
+		    x="`expr $x + 1`"
 		else
 		    if test x"${sign[1]}" = x"+"; then
 #			echo "FIXME: ${str2} was added"			
-			status[APPEARS]="${str1}"
+			status[APPEARS,$y]="${str1}"
+			y="`expr $y + 1`"
 		    fi
 		fi
 		i="`expr $i + 1`"
@@ -191,6 +218,63 @@ dodiff ()
     fi
     
     return 1
+}
+
+
+dump_status ()
+{
+    eval "`echo ${1} | sed -e 's:status:states:'`"
+
+    local z=0
+    # states[FAILNOWPASS,$z]="${str1}"
+    #z="`expr $z + 1`"
+    # done
+    local z=0
+    # states[PASSNOWXFAIL,$z]="${str1}"
+    #z="`expr $z + 1`"
+    # done
+    local z=0
+    # states[PASSNOWFAILS,$z]="${str1}"
+    #z="`expr $z + 1`"
+    # done
+    local z=0
+#    while test x"$states[XPASSNOWXFAIL,$z]" != x; do
+#	z="`expr $z + 1`"
+#    done
+#    local z=0
+#    while test x"${states[XFAILNOWXFAIL,$z]" != x; do
+#	z="`expr $z + 1`"
+#    done
+    # local z=0
+    # while test x"${states[XFAILNOWPASS,$z]" != x; do
+    #   	echo "FIXOOO XFAILNOWPASS $z: $states[XFAILNOWPASS,$z]"
+    #   	z="`expr $z + 1`"
+    # done
+
+    local z=0
+    while test x"${states[S,$z]}" != x; do
+     	echo "FIXOOO XFAILNOWPASS $z: $states[XFAILNOWPASS,$z]"
+      	z="`expr $z + 1`"
+    done
+
+    local z=0
+    while test x"${states[FAILNOWPASS,$z]}" != x; do
+	echo "FIXOOO FAILNOWPASS $z: ${states[FAILNOWPASS,$z]}"
+	z="`expr $z + 1`"
+    done
+ 
+   echo "FIXME TOO: ${states[PASSNOWFAIL]}"
+    local z=0
+    while test x"${states[APPEARS,$z]}" !=x; do
+	echo "FIXOOO APPEARS: ${states[APPEARS,$z]}"
+    z="`expr $z + 1`"
+    done
+    
+    local z=0
+    while test x"${states[DISAPPEARED,$z]}" != x; do
+	echo "FIXOOO DISAPPEARED: ${states[DISAPPEARED,$z]}"
+	z="`expr $z + 1`"
+    done
 }
 
 if test x"${1}" != x; then
@@ -280,11 +364,6 @@ done
 
 i=0
 
-eval "`dodiff ${sums[0]} ${sums[1]}`"
-if test "$?" -eq 0; then
-    echo "No regressions"
-fi
-
 if test x"${1}" != x; then
     toplevel="$1"
 else
@@ -313,10 +392,8 @@ if test "$?" -eq 0; then
     echo "No regressions"
 fi
 
-echo "FIXME TOO: ${status[FAILNOWPASS]}"
-echo "FIXME TOO: ${status[PASSNOWFAIL]}"
-echo "FIXME TOO: ${status[DISAPPEARED]}"
-echo "FIXME TOO: ${status[APPEARS]}"
+# FIXME: debug stuff, should format output for the tables instead
+dump_status "`declare -p status`"
 
 i=0
 while test $i -lt ${#head[@]}; do
@@ -334,6 +411,7 @@ while test $i -lt ${#head[@]}; do
     run_status categories[@] final[@] final[@]
     i="`expr $i + 1`"
 done
+
 
 #local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
 #if test x"${lineno}" != x; then
