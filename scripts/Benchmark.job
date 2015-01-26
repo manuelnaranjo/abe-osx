@@ -1,0 +1,17 @@
+#!/bin/bash
+
+whoami
+if test x"`whoami`" != benchmark; then
+  ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no benchmark@localhost whoami
+  exit 1
+fi
+rm -rf ${WORKSPACE}/bin
+mkdir ${WORKSPACE}/bin
+cd ${WORKSPACE}/bin
+wget ${aarch64_gcc}
+tar xf gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz
+export PATH=${WORKSPACE}/bin/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/bin:$PATH
+cd ${WORKSPACE}/abe
+./configure
+LAVA_SERVER=bogden:q6ndgs71bgocf7lc3q4s2gpqal0shnfy6h32x4i3oy4q9u8qos0su3zjy6qhco7akc6tddujs4dmyt2osojfx9fq500fci95sh20bzxoolhhq2u9sqyyif8qk4d68kaw@validation.linaro.org/RPC2/ ./scripts/benchmark.sh -t aarch64-linux-gnu -b fakebench kvm
+scp -r ./fakebench-log abe:/work/benchmarking
