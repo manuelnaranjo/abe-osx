@@ -41,7 +41,7 @@ clean_top()
 function usage
 {
   cat << EOF
-$0 [-tckh] -b <benchmark> <board...>
+$0 [-tckhl] -b <benchmark> <board...>
 
   -b   Identify the benchmark to build, e.g. fakebench, eembc. Compulsory.
   -c   Cautious. If this is set, failure in any stage of target setup will
@@ -51,6 +51,8 @@ $0 [-tckh] -b <benchmark> <board...>
        target. LAVA targets will not be released.
   -t   Target triple to build benchmark for e.g. arm-linux-gnueabihf. Used
        only for building. Blank implies native build.
+  -l   Sysroot to install on target. Blank uses native libraries. This option
+       can only be used for LAVA targets.
 
   <board...> may be anything that has a file in config/boards/bench, e.g. the
   existence of arndale.conf means that you can put arndale here. At least one
@@ -118,11 +120,13 @@ toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
-while getopts a:i:t:b:kchs flag; do
+sysroot_path=
+while getopts a:i:t:b:l:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
     i) toolchain_path="${OPTARG}";;
+    l) sysroot_path="${OPTARG}";;
     t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced abe files in subshells below
     b) benchmark="${OPTARG}";;
     c) cautious=;;
@@ -155,6 +159,17 @@ if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
   exit 1
+fi
+if test x"${sysroot_path:-}" != x; then
+  if ! test -d "${sysroot_path}"; then
+    echo "Sysroot path '${sysroot_path}' does not exist" 1>&2
+    exit 1
+  else
+    if ! test -d "${sysroot_path}"/lib -a -d "${sysroot_path}"/usr/lib; then
+      echo "Sysroot path '${sysroot_path}' does not look like a sysroot" 1>&2
+      exit 1
+    fi
+  fi
 fi
 if test x"${target:-}" = x; then #native build
   if test ${#devices[@]} -eq 0; then
@@ -202,7 +217,7 @@ if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   exit 1
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${sysroot_path:+-l "${sysroot_path}"} ${keep} ${cautious} &
   runpids[$!]=''
 done
 
