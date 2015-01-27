@@ -74,7 +74,7 @@ remote_download()
 
   local c
   for ((c = ${retries}; c >= 0; c--)); do
-    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${target}:${sourcefile}' '${destfile}' > /dev/null"
+    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $*\" -avzx '${target}:${sourcefile}' '${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
     elif test $c -gt 0; then
@@ -120,7 +120,7 @@ remote_upload()
 
   local c
   for ((c = ${retries}; c >= 0; c--)); do
-    dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${sourcefile}' '${target}:${destfile}' > /dev/null"
+    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $*\" -avzx '${sourcefile}' '${target}:${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
     elif test $c -gt 0; then
