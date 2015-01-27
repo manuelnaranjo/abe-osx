@@ -79,6 +79,7 @@ remote_download()
       return 0
     elif test $c -gt 0; then
       warning "Download of '${target}:${sourcefile}' to '${destfile}' failed: will try $c more times"
+      sleep 3
     fi
   done
   error "Download of '${target}:${sourcefile}' to '${destfile}' failed"
@@ -124,6 +125,7 @@ remote_upload()
       return 0
     elif test $c -gt 0; then
       warning "Upload of '${sourcefile}' to '${target}:${destfile}' failed: will try $c more times"
+      sleep 3
     fi
   done
   error "Upload of '${sourcefile}' to '${target}:${destfile}' failed"
