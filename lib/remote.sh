@@ -58,7 +58,6 @@ remote_download()
   local target="${1:-}"
   local sourcefile="${2:-}"
   local destfile="${3:-}"
-  local retries=0
   if test x"${target}" = x; then
     error "target not specified"
     return 1
