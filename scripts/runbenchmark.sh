@@ -207,7 +207,7 @@ if test $? -eq 0; then
       exit 1
     fi
     tmpsysdir="`(. ${topdir}/lib/common.sh; remote_exec ${ip} "mktemp -dt sysroot_XXXXX" ${ssh_opts})`"
-    (. ${topdir}/lib/common.sh; remote_upload -r 3 "${ip}" "${sysroot_path}" "${tmpsysdir}"/sysroot ${ssh_opts})
+    (. ${topdir}/lib/common.sh; remote_upload -r 3 "${ip}" "${sysroot_path}/" "${tmpsysdir}"/sysroot ${ssh_opts})
     if test $? -ne 0; then
       echo "Failed to upload sysroot to target" 1>&2
       exit 1
