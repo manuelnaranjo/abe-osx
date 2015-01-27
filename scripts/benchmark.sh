@@ -41,7 +41,7 @@ clean_top()
 function usage
 {
   cat << EOF
-$0 [-tckh] -b <benchmark> <board...>
+$0 [-tckhl] -b <benchmark> <board...>
 
   -b   Identify the benchmark to build, e.g. fakebench, eembc. Compulsory.
   -c   Cautious. If this is set, failure in any stage of target setup will
@@ -49,6 +49,8 @@ $0 [-tckh] -b <benchmark> <board...>
   -h   Show this help.
   -k   Keep. If this is set, benchmark sources and results will be left on
        target. LAVA targets will not be released.
+  -l   Sysroot to install on target. Blank uses native libraries. This option
+       can only be used for LAVA targets.
 
   <board...> may be anything that has a file in config/boards/bench, e.g. the
   existence of arndale.conf means that you can put arndale here. At least one
@@ -95,11 +97,13 @@ benchmark_gcc_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
-while getopts f:a:i:b:kchs flag; do
+sysroot_path=
+while getopts f:a:i:b:l:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
     i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
+    l) sysroot_path="${OPTARG}";;
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     k)
@@ -131,6 +135,17 @@ if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
   exit 1
+fi
+if test x"${sysroot_path:-}" != x; then
+  if ! test -d "${sysroot_path}"; then
+    echo "Sysroot path '${sysroot_path}' does not exist" 1>&2
+    exit 1
+  else
+    if ! test -d "${sysroot_path}"/lib -a -d "${sysroot_path}"/usr/lib; then
+      echo "Sysroot path '${sysroot_path}' does not look like a sysroot" 1>&2
+      exit 1
+    fi
+  fi
 fi
 if test x"${benchmark_gcc_path:-}" = x; then
   echo "No GCC given (-i)" 1>&2
@@ -188,7 +203,7 @@ if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   exit 1
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${sysroot_path:+-l "${sysroot_path}"} ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
