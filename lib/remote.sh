@@ -74,11 +74,11 @@ remote_download()
   shift 3
 
   local c
-  for c in {0..$retries}; do
+  for ((c = ${retries}; c >= 0; c--)); do
     dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${target}:${sourcefile}' '${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
-    elif test ${retries} -gt 0; then
+    elif test $c -gt 0; then
       warning "Download of '${target}:${sourcefile}' to '${destfile}' failed: will try $c more times"
     fi
   done
@@ -119,11 +119,11 @@ remote_upload()
   shift 3
 
   local c
-  for c in {$retries..0}; do
+  for ((c = ${retries}; c >= 0; c--)); do
     dryrun "scp -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -rq $* '${sourcefile}' '${target}:${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
-    elif test ${retries} -gt 0; then
+    elif test $c -gt 0; then
       warning "Upload of '${sourcefile}' to '${target}:${destfile}' failed: will try $c more times"
     fi
   done
