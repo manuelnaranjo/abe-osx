@@ -75,7 +75,8 @@ regression_table ()
     echo "o  `echo ${title} | tr "[:lower:]" "[:upper:]"` :"
     echo   "  +------------------------------------------+---------+"
     while test $i -lt ${count}; do
-	printf "  | %-40s | %7s |\n" "${msgs[$i]}" "${num[$i]}"
+	local item="`expr substr "${msgs[$i]}" 1 40`"
+	printf "  | %-40s | %7s |\n" "${item}" "${num[$i]}"
 	total="`expr ${total} + "${num[$i]}"`"
 	i="`expr $i + 1`"
     done
@@ -220,7 +221,6 @@ dodiff ()
     return 1
 }
 
-
 dump_status ()
 {
     eval "`echo ${1} | sed -e 's:status:states:'`"
@@ -279,6 +279,126 @@ dump_status ()
 	echo "Status: DISAPPEARED: ${states[DISAPPEARED,$z]}"
 	z="`expr $z + 1`"
     done
+}
+
+status_tables ()
+{
+    eval "`echo ${1} | sed -e 's:status:states:'`"
+
+    declare -A regressions=()
+    declare -A total_regressions=()
+    local y=0
+    local z=0
+    while test x"${states[PASSNOWFAILS,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[0]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
+    if test "$z" -gt 0; then
+	regression_table "REGRESSIONS" regressions[@] total_regressions[@]
+    fi
+    
+    declare -A minor=()
+    declare -A total_minor=()
+    local z=0
+    while test x"${states[FAILNOWPASS,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	minor[$y]="${error_msgs[1]}"
+	total_minor[$y]=$z
+	y="`expr $y + 1`"
+    fi
+    local z=0
+    while test x"${states[APPEARS,$z]}" != x; do
+	z="`expr $z + 1`"
+    done 
+    if test "$z" -gt 0; then
+	minor[$y]="${error_msgs[3]}"
+	total_minor[$y]=$z
+	y="`expr $y + 1`"
+    fi
+   
+    local z=0
+    while test x"${states[DISAPPEARED,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	minor[$y]="${error_msgs[2]}"
+	total_minor[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
+    if test "$z" -gt 0; then
+	regression_table "MINOR TO BE CHECKED" minor[@] total_minor[@]
+    fi
+
+    local z=0
+    while test x"${states[FAILNOWPASS,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[1]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+ 
+    # local z=0
+    # declare -A regressions=()
+    # declare -A total_regressions=()
+    # while test x"${states[PASSNOWXFAIL,$z]}" != x; do
+    # 	z="`expr $z + 1`"
+    # done
+    # if test "$z" -gt 0; then
+    # 	regressions[$y]="${error_msgs[0]}"
+    # 	total_regressions[$y]=$z
+    # 	y="`expr $y + 1`"
+    # fi
+
+    local z=0
+    while test x"${states[XPASSNOWXFAIL,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[0]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
+    local z=0
+    while test x"${states[XFAILNOWXFAIL,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[0]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
+    local z=0
+    while test x"${states[XFAILNOWPASS,$z]}" != x; do
+	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[0]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
+    local z=0
+    while test x"${states[S,$z]}" != x; do
+      	z="`expr $z + 1`"
+    done
+    if test "$z" -gt 0; then
+	regressions[$y]="${error_msgs[0]}"
+	total_regressions[$y]=$z
+	y="`expr $y + 1`"
+    fi
+
 }
 
 if test x"${1}" != x; then
@@ -399,13 +519,14 @@ fi
 # FIXME: debug stuff, should format output for the tables instead
 dump_status "`declare -p status`"
 
+status_tables "`declare -p status`"
+ 
 i=0
 while test $i -lt ${#head[@]}; do
     eval declare -A data=(${head[$i]})
     display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
     declare msgs=("${error_msgs[0]}" "${error_msgs[2]}")
     regression_table "REGRESSIONS" msgs[@] totals[@]
-    #regression_table "MINOR TO BE CHECKED" msgs[@] counts[@]
     declare final=(\
          "${data[PASSES]}" \
 	"${data[XFAILURES]}" \
