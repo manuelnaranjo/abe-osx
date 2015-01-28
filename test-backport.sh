@@ -144,5 +144,8 @@ if test x"${fileserver}" != x; then
     toplevel="`dirname ${dir}`"
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
-    ssh ${fileserver} /tmp/abe$$/tcwgweb.sh --outfile ${toplevel}/results-${revisions[0]}-${revisions[1]}.txt --tdir ${dir1} ${dir2}
+    out="`ssh ${fileserver} /tmp/abe$$/tcwgweb.sh --outfile ${toplevel}/results-${revisions[0]}-${revisions[1]}.txt --tdir ${dir1} ${dir2}`"
+    if test "`echo ${out} | grep -c REGRESSIONS`"; then
+	exit 1
+    fi
 fi
