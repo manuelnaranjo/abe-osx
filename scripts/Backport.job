@@ -24,15 +24,15 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-rm -fr ${WORKSPACE}/_build/builds/* ${WORKSPACE}/_build/sysroots/*
+rm -fr ${WORKSPACE}/_build/
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If started by a Gerrit Trigger, use that for the branch.
-if test x"${GERRIT_BRANCH}" != x; then
-    gcc_branch="gcc.git~${GERRIT_BRANCH}"
+if test x"${GERRIT_TOPIC}" != x; then
+    gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
 $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 

@@ -81,7 +81,7 @@ regression_table ()
 	i="`expr $i + 1`"
     done
     echo   "  +------------------------------------------+---------+"
-    printf "  | %-40s | %7s |\n" "TOTAL_REGRESSIONS" ${total}
+    printf "  | %-40s | %7s |\n" $4 ${total}
     echo   "  +------------------------------------------+---------+"
     echo ""
 }
@@ -187,8 +187,8 @@ dodiff ()
 #			echo "FIXME: FAIL->PASS"
 			h="`expr $h + 1`"
 			;;
-		    *) echo
-			"ERROR: Unknown status ${str1}"
+		    *)
+#			echo "ERROR: Unknown status ${str1}"
 			;;
 		esac
 #		local state="`expr substr "${diff[$i]}" 1 5`"
@@ -299,7 +299,7 @@ status_tables ()
     fi
 
     if test "$z" -gt 0; then
-	regression_table "REGRESSIONS" regressions[@] total_regressions[@]
+	regression_table "REGRESSIONS" regressions[@] total_regressions[@] "TOTAL_REGRESSIONS"
     fi
     
     declare -A minor=()
@@ -334,7 +334,7 @@ status_tables ()
     fi
 
     if test "$z" -gt 0; then
-	regression_table "MINOR TO BE CHECKED" minor[@] total_minor[@]
+	regression_table "MINOR TO BE CHECKED" minor[@] total_minor[@] "TOTAL_MINOR_TO_BE_CHECKED"
     fi
 
     local z=0
@@ -480,7 +480,7 @@ while test $i -lt ${#head[@]}; do
     tmp="`dirname ${data[FILESPEC]}`"
    if test x"${tmp}" != dir[$i]; then
 	dir[$i]="`dirname ${tmp}`"
-	echo "DIR: ${dir[$i]}"
+#	echo "DIR: ${dir[$i]}"
     fi
 #    j="`expr $j - 1`"
     i="`expr $i + 1`"
@@ -511,31 +511,34 @@ done
 
 
 eval "`dodiff ${sums[0]} ${sums[1]}`"
-dodiff ${sums[0]} ${sums[1]}
-if test "$?" -eq 0; then
-    echo "No regressions"
-fi
+#dodiff ${sums[0]} ${sums[1]}
+#if test "$?" -eq 0; then
+#    echo "No regressions"
+#fi
 
 # FIXME: debug stuff, should format output for the tables instead
-dump_status "`declare -p status`"
+#dump_status "`declare -p status`"
+
+eval declare -A data=(${head[0]})
+display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
 
 status_tables "`declare -p status`"
  
-i=0
-while test $i -lt ${#head[@]}; do
-    eval declare -A data=(${head[$i]})
-    display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
-    declare msgs=("${error_msgs[0]}" "${error_msgs[2]}")
-    regression_table "REGRESSIONS" msgs[@] totals[@]
-    declare final=(\
-         "${data[PASSES]}" \
-	"${data[XFAILURES]}" \
-	"${data[FAILURES]}" \
-	"${data[UNRESOLVED]}" \
-	"${data[UNSUPPORTED]}")
-    run_status categories[@] final[@] final[@]
-    i="`expr $i + 1`"
-done
+#i=0
+#while test $i -lt ${#head[@]}; do
+#    eval declare -A data=(${head[$i]})
+#    display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
+#    declare msgs=("${error_msgs[0]}" "${error_msgs[2]}")
+#    regression_table "REGRESSIONS" msgs[@] totals[@]
+#    declare final=(\
+#         "${data[PASSES]}" \
+#	"${data[XFAILURES]}" \
+#	"${data[FAILURES]}" \
+#	"${data[UNRESOLVED]}" \
+#	"${data[UNSUPPORTED]}")
+#    run_status categories[@] final[@] final[@]
+#    i="`expr $i + 1`"
+#done
 
 
 #local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
