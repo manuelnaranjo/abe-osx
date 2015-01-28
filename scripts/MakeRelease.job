@@ -147,7 +147,7 @@ if test x"${tarbin}" = xyes; then
 	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
 	if test x"${out}" = x"YES"; then 
-	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
+	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}`"
 	    if test "`echo ${out} | grep -c REGRESSIONS`"; then
 		exit 1
 	    fi
