@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-#   Copyright (C) 2014 Linaro, Inc
+#   Copyright (C) 2014,2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,12 +71,12 @@ if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
     branch="`echo ${branch} | sed -e 's:gcc.git~::'`"
 fi
 
-#if test x"${git_reference_dir}" != x; then
-#    srcdir="${git_reference_dir}/${branch}"
-#else
+if test x"${git_reference_dir}" != x; then
+    srcdir="${git_reference_dir}/${branch}"
+else
     git_reference_dir="${local_snapshots}"
     srcdir="${local_snapshots}/gcc.git~${branch}"
-#fi
+fi
 
 rm -fr ${srcdir}
 git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
