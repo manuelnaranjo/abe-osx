@@ -24,7 +24,7 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-rm -fr ${WORKSPACE}/_build/
+rm -fr ${WORKSPACE}/_build/builds/* ${WORKSPACE}/_build/sysroots/*
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
