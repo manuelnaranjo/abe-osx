@@ -17,7 +17,7 @@
 # 
 
 # To run, this script takes arguments in the same format as abe.sh. The two
-# arguments it needs is the target archicture to build, and the gcc backport
+# arguments it needs are the target architecture to build, and the gcc backport
 # branch name. Example:
 # $PATH/test-backport.sh --target arm-linux-gnueabihf gcc.git~4.9-backport-209419
 usage()
@@ -30,7 +30,7 @@ EOF
 }
 
 if test $# -lt 2; then
-    echo "ERROR: No branches to build!"
+    echo "ERROR: No branch to build!"
     usage
     exit
 fi
