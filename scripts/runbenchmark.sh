@@ -202,6 +202,12 @@ if test $? -eq 0; then
   done
 
   if test x"${sysroot_path:-}" != x; then
+    sysroot_lib="${sysroot_path#*:}"
+    if test x"${sysroot_lib}" = x"${sysroot_path}"; then
+      sysroot_lib=lib
+    else
+      sysroot_path="${sysroot_path%:*}"
+    fi
     if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
       echo "Unable to connect to target ${ip:+(unknown)} after boot" 1>&2
       exit 1

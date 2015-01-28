@@ -137,12 +137,21 @@ if test x"${benchmark:-}" = x; then
   exit 1
 fi
 if test x"${sysroot_path:-}" != x; then
-  if ! test -d "${sysroot_path}"; then
-    echo "Sysroot path '${sysroot_path}' does not exist" 1>&2
+  tmp_sysroot_lib="${sysroot_path#*:}"
+  if test x"${tmp_sysroot_lib}" = x"${sysroot_path}"; then
+    tmp_sysroot_lib=lib
+  fi
+  tmp_sysroot_path="${sysroot_path%:*}"
+  if ! test -d "${tmp_sysroot_path}"; then
+    echo "Sysroot path '${tmp_sysroot_path}' does not exist" 1>&2
     exit 1
   else
-    if ! test -d "${sysroot_path}"/lib -a -d "${sysroot_path}"/usr/lib; then
-      echo "Sysroot path '${sysroot_path}' does not look like a sysroot" 1>&2
+    if ! test -d "${tmp_sysroot_path}/${tmp_sysroot_lib}"; then
+      echo "Sysroot path '${sysroot_path}' does not look like a sysroot: lib dir ${tmp_sysroot_lib} does not exist" 1>&2
+      exit 1
+    fi
+    if ! test -d "${tmp_sysroot_path}/usr/${tmp_sysroot_lib}"; then
+      echo "Sysroot path '${sysroot_path}' does not look like a sysroot: lib dir usr/${tmp_sysroot_lib} does not exist" 1>&2
       exit 1
     fi
   fi
