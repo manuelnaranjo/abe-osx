@@ -1,0 +1,41 @@
+{
+  "job_name": "bench-panda-es",
+  "device_type": "panda-es",
+  "timeout": 1800,
+  "actions": [
+    {
+      "command": "deploy_linaro_image",
+      "parameters": {
+           "hwpack": "http://releases.linaro.org/14.05/ubuntu/panda/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz",
+           "rootfs": "http://releases.linaro.org/14.05/ubuntu/panda/linaro-trusty-developer-20140522-661.tar.gz"
+        }
+    },
+    {
+      "command": "lava_test_shell",
+      "parameters": {
+          "testdef_repos": [
+            {
+                "git-repo": "http://git.linaro.org/toolchain/lavabench.git",
+                "testdef": "bench-session-debian.yaml",
+                "parameters": {
+                    "GATEWAY": "10.0.0.1",
+                    "PUB_KEY": "",
+                    "LISTENER_ADDR": "",
+                    "LISTENER_PORT": ""
+                }
+            }
+        ],
+	"timeout": 691200
+      }
+    },
+    {
+      "command": "submit_results",
+      "parameters":
+        {
+          "server": "",
+          "stream": ""
+        }
+    } 
+
+  ]
+}

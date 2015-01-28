@@ -1,0 +1,81 @@
+mountall-net
+mountnfs-bootclean.sh
+passwd
+rc
+rsyslog
+#screen-cleanup
+#tty4 KEEP
+udev
+upstart-udev-bridge
+ureadahead-other
+console-setup
+hwclock-save
+plymouth-log
+#tty5 KEEP
+failsafe
+mountall.sh
+mounted-var
+plymouth
+resolvconf
+ssh
+udev-fallback-graphics
+checkroot.sh
+control-alt-delete
+gator-daemon
+hwclock
+mounted-proc
+alsa-store
+#auto-serial-console KEEP
+setvtrgb
+shutdown
+alsa-restore
+cron
+mountall
+mounted-debugfs
+mountkernfs.sh
+console
+mounted-run
+checkfs.sh
+checkroot-bootclean.sh
+kmod
+mountnfs.sh
+openvt
+plymouth-stop
+#rcS KEEP
+#wait-for-state DON'T EXPECT THIS TO BE RUNNING, IT DOESN'T BEHAVE NICELY IN RESPONSE TO SERVICE COMMANDS
+bootmisc.sh
+flush-early-job-log
+rc-sysinit
+upstart-socket-bridge
+mountdevsubfs.sh
+#tty2 KEEP
+udevtrigger
+upstart-file-bridge
+container-detect
+mounted-dev
+mtab.sh
+#tty3 KEEP
+udev-finish
+hostname
+mountall-reboot
+mountall-shell
+mounted-tmp
+#network-interface KEEP
+#network-interface KEEP
+#network-interface KEEP
+plymouth-splash
+plymouth-upstart-bridge
+#tty1 KEEP
+udevmonitor
+dmesg
+mountall-bootclean.sh
+#network-interface-security KEEP
+#network-interface-security KEEP
+#network-interface-security KEEP
+#network-interface-security KEEP
+#networking KEEP
+procps
+#tty6 KEEP
+console-font
+#network-interface-container KEEP
+ureadahead

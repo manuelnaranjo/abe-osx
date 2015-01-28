@@ -33,6 +33,7 @@ set -o pipefail
 . "${topdir}/lib/stamp.sh" || exit 1
 . "${topdir}/lib/schroot.sh" || exit 1
 . "${topdir}/lib/gerrit.sh" || exit 1
+. "${topdir}/lib/remote.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
@@ -59,6 +60,9 @@ set_dbpasswd()
 
 # if --dryrun is passed to abe.sh, then commands are echoed instead of
 # of executed.
+# NOTE: This function must not run any commands in the background between
+#       'eval' and 'return'. This is so that runes such as
+#       'dryrun "foo&"; wait $!' will work.
 dryrun()
 {
     if test x"${dryrun}" = xyes; then
@@ -70,8 +74,8 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-        echo "RUN: $1"
-	eval $1
+        echo "RUN: $1" 1>&2
+	eval "$1"
 	return $?
     fi
 
@@ -273,7 +277,7 @@ get_builddir()
     # as well because we might be passed a tar file.
     local dir="`normalize_path $1`"
 
-    if test x"$2" = x"libgloss"; then
+    if test x"${2:+$2}" = x"libgloss"; then
      	echo "${local_builds}/${host}/${target}/${dir}/${target}/libgloss"
     else
 	echo "${local_builds}/${host}/${target}/${dir}${ABI:+-$ABI}${2:+-$2}"

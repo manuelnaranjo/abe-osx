@@ -68,13 +68,13 @@ distribution=
 make_flags=
 
 # These can be changed by environment variables
-if test x"${SNAPSHOTS_URL}" != x -o x"${ABE_SNAPSHOTS}" != x; then
+if test x"${SNAPSHOTS_URL:-}" != x -o x"${ABE_SNAPSHOTS:-}" != x; then
     snapshots="${SNAPSHOTS_URL}"
 fi
-if test x"${ABE_DBUSER}" != x; then
+if test x"${ABE_DBUSER:-}" != x; then
     dbuser="${ABE_DBUSER}"
 fi
-if test x"${ABE_DBPASSWD}" != x; then
+if test x"${ABE_DBPASSWD:-}" != x; then
     dbpasswd="${ABE_DBPASSWD}"
 fi
 
@@ -98,8 +98,13 @@ override_runtestflags=
 
 aarch64_abilist=lp64
 
-if test x"${BUILD_NUMBER}" = x; then
+if test x"${BUILD_NUMBER:-}" = x; then
     export BUILD_NUMBER=${RANDOM}
+fi
+
+export CBUILD2_SHA="`cd ${topdir} && git rev-parse HEAD`"
+if test $? -ne 0; then
+    CBUILD2_SHA=0
 fi
 
 gerrit_host="review.linaro.org"

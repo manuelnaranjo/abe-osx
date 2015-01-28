@@ -1,0 +1,39 @@
+{
+    "job_name": "bench-kvm",
+    "device_type": "kvm",
+    "timeout": 1800,
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/toolchain/lavabench.git",
+                        "testdef": "bench-session-debian.yaml",
+                        "parameters": {
+                           "GATEWAY": "10.0.0.1",
+                           "PUB_KEY": "",
+                           "LISTENER_ADDR": "",
+                           "LISTENER_PORT": ""
+                        }
+                    }
+                ],
+                "timeout": 691200
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "",
+                "stream": ""
+            }
+        }
+    ]
+}
+
