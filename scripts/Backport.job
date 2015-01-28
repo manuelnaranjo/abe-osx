@@ -31,8 +31,8 @@ cd ${WORKSPACE}/_build
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If started by a Gerrit Trigger, use that for the branch.
-if test x"${GERRIT_BRANCH}" != x; then
-    gcc_branch="gcc.git~${GERRIT_BRANCH}"
+if test x"${GERRIT_TOPIC}" != x; then
+    gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
 $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
