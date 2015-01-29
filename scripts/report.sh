@@ -28,6 +28,12 @@ run_status ()
     local i=0
     local count="${#msgs[@]}"
     while test $i -lt ${count}; do
+	if test x"${refs[$i]}" = x; then
+	    refs[$i]=0
+	fi
+	if test x"${ress[$i]}" = x; then
+	    ress[$i]=0
+	fi
 	printf "  | %-40s | %7s | %7s |\n" "${msgs[$i]}" "${refs[$i]}" "${ress[$i]}"
 	i="`expr $i + 1`"
 	total="`expr ${total} + ${count}`"
@@ -205,7 +211,7 @@ dodiff ()
 		else
 		    if test x"${sign[1]}" = x"+"; then
 #			echo "FIXME: ${str2} was added"			
-			status[APPEARS,$y]="${str1}"
+			status[APPEARS,$y]="${str2}"
 			y="`expr $y + 1`"
 		    fi
 		fi
@@ -256,7 +262,7 @@ dump_status ()
 	z="`expr $z + 1`"
     done
     local z=0
-    while test x"${states[S,$z]}" != x; do
+    while test x"${states[XFAILNOWPASS,$z]}" != x; do
      	echo "Status: XFAILNOWPASS $z: ${states[XFAILNOWPASS,$z]}"
       	z="`expr $z + 1`"
     done
@@ -269,7 +275,7 @@ dump_status ()
  
    echo "FIXME TOO: ${states[PASSNOWFAIL]}"
     local z=0
-    while test x"${states[APPEARS,$z]}" !=x; do
+    while test x"${states[APPEARS,$z]}" != x; do
 	echo "Status: APPEARS: ${states[APPEARS,$z]}"
     z="`expr $z + 1`"
     done
@@ -285,6 +291,7 @@ status_tables ()
 {
     eval "`echo ${1} | sed -e 's:status:states:'`"
 
+    declare -A items=()
     declare -A regressions=()
     declare -A total_regressions=()
     local y=0
@@ -300,11 +307,13 @@ status_tables ()
 
     if test "$z" -gt 0; then
 	regression_table "REGRESSIONS" regressions[@] total_regressions[@] "TOTAL_REGRESSIONS"
+	echo "- ${error_msgs[0]}"
     fi
     
     declare -A minor=()
     declare -A total_minor=()
     local z=0
+    y="`expr $y + 1`"
     while test x"${states[FAILNOWPASS,$z]}" != x; do
 	z="`expr $z + 1`"
     done
@@ -335,16 +344,23 @@ status_tables ()
 
     if test "$z" -gt 0; then
 	regression_table "MINOR TO BE CHECKED" minor[@] total_minor[@] "TOTAL_MINOR_TO_BE_CHECKED"
-    fi
-
-    local z=0
-    while test x"${states[FAILNOWPASS,$z]}" != x; do
-	z="`expr $z + 1`"
-    done
-    if test "$z" -gt 0; then
-	regressions[$y]="${error_msgs[1]}"
-	total_regressions[$y]=$z
-	y="`expr $y + 1`"
+	local index="PASSNOWFAIL FAILNOWPASS DISAPPEARED APPEARS TIMEOOUT"
+	local z=0
+	for v in ${index}; do
+#	    echo "FIXZ: $v $z \"${states[$v,$z]}\""
+	    if test x"${states[$v,0]}" != x; then
+		echo "- ${error_msgs[$z]}:"
+		echo ""
+		local y=0
+		while test x"${states[$v,$y]}" != x; do
+#		    echo "FIXY: $y \"${states[$v,$y]}\""
+		    echo " ${states[$v,$y]}"
+		    y="`expr $y + 1`"
+		done
+	    fi
+	    echo ""
+	    z="`expr $z + 1`"
+	done
     fi
  
     # local z=0
@@ -399,6 +415,7 @@ status_tables ()
 	y="`expr $y + 1`"
     fi
 
+    echo ""
 }
 
 if test x"${1}" != x; then
@@ -463,15 +480,6 @@ declare error_msgs=(
     "Fail appears              [     => FAIL]" \
     "Timeout                   [PASS =>T.OUT]")
 
-# Run status categories and totals
-declare categories=(\
-    "Passes                      [PASS+XPASS]" \
-    "Unexpected fails                  [FAIL]" \
-    "Expected fails                   [XFAIL]" \
-    "Unresolved                  [UNRESOLVED]" \
-    "Unsupported       [UNTESTED+UNSUPPORTED]")
-
-
 declare -a dir=()
 i=0
 #j=1
@@ -524,25 +532,34 @@ display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
 
 status_tables "`declare -p status`"
  
-#i=0
-#while test $i -lt ${#head[@]}; do
-#    eval declare -A data=(${head[$i]})
-#    display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
-#    declare msgs=("${error_msgs[0]}" "${error_msgs[2]}")
-#    regression_table "REGRESSIONS" msgs[@] totals[@]
-#    declare final=(\
-#         "${data[PASSES]}" \
-#	"${data[XFAILURES]}" \
-#	"${data[FAILURES]}" \
-#	"${data[UNRESOLVED]}" \
-#	"${data[UNSUPPORTED]}")
-#    run_status categories[@] final[@] final[@]
-#    i="`expr $i + 1`"
-#done
+# Run status categories and totals
+declare categories=(\
+    "Passes                      [PASS+XPASS]" \
+    "Unexpected fails                  [FAIL]" \
+    "Expected fails                   [XFAIL]" \
+    "Unresolved                  [UNRESOLVED]" \
+    "Unsupported       [UNTESTED+UNSUPPORTED]")
 
+# Get the totals of the two builds
+eval declare -A data1=(${head[0]})
+eval declare -A data2=(${head[1]})
+declare final1=(\
+    "${data1[PASSES]}" \
+    "${data1[XFAILURES]}" \
+    "${data1[FAILURES]}" \
+    "${data1[UNRESOLVED]}" \
+    "${data1[UNSUPPORTED]}")
+declare final2=(\
+    "${data2[PASSES]}" \
+    "${data2[XFAILURES]}" \
+    "${data2[FAILURES]}" \
+    "${data2[UNRESOLVED]}" \
+    "${data21[UNSUPPORTED]}")
+
+run_status categories[@] final1[@] final2[@]
 
 #local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
-#if test x"${lineno}" != x; then
+#if test x"${lineno}" != x;then
 #    sed -e "1,${lineno}d" ${prev}/manifest.txt
 #fi
 
