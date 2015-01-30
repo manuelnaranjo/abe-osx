@@ -44,7 +44,7 @@ function cleanup
     wait "${forward_pid}"
   fi
   if test -d "${temps}"; then
-    exec 3<&-
+    exec {pseudofifo_handle}<&-
     rm -rf ${temps}
     if test $? -ne 0; then
       echo "Failed to delete temporary file store ${temps}" 1>&2
@@ -62,9 +62,8 @@ if test $? -ne 0; then
 fi
 
 #The trap is just to suppress the 'Terminated' message
-exec 3<&-
-exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
-read -t 60 pseudofifo_pid <&3
+exec {pseudofifo_handle}< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
+read -t 60 pseudofifo_pid <&"${pseudofifo_handle}"
 if test $? -ne 0; then
   echo "Failed to read pseudofifo pid" 1>&2
   exit 1
@@ -165,7 +164,7 @@ echo "${listener_addr}"
 echo "${listener_port}"
 
 while true; do
-  line="`bgread ${pseudofifo_pid} <&3`"
+  line="`bgread ${pseudofifo_pid} <&${pseudofifo_handle}`"
   if test $? -ne 0; then
     echo "Failed to read pseudofifo pid" 1>&2
     exit 1
