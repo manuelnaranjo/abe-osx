@@ -80,7 +80,11 @@ listener_file="${temps}/listener_file"
 listener_fifo="${temps}/listener_fifo"
 lava_fifo="${temps}/lava_fifo"
 mkfifo "${listener_fifo}" || exit 1
+exec 3>&-
+exec 3<> "${listener_fifo}"
 mkfifo "${lava_fifo}" || exit 1
+exec 4>&-
+exec 4<> "${lava_fifo}"
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
@@ -128,10 +132,15 @@ clean_benchmark()
       kill -USR1 "${lava_pid}" 2>/dev/null
       wait "${lava_pid}"
     fi
+
+    #Make sure we see any messages from the lava.sh handlers
+    dd iflag=nonblock <&4 2>/dev/null | awk "{print \"${lava_target}: \" \$0}"
   fi
 
   #Delete these last so that we can still get messages through the lava fifo
   if test -d "${temps}"; then
+    exec 3>&-
+    exec 4>&-
     rm -rf "${temps}"
     if test $? -ne 0; then
       echo "Failed to delete ${temps}" 1>&2
@@ -171,14 +180,14 @@ if test $? -eq 0; then
   echo "Acquiring LAVA target ${lava_target}"
   echo "${topdir}/scripts/lava.sh -s ${lava_url} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
-  ${topdir}/scripts/lava.sh -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >"${lava_fifo}" 2>&1 &
+  ${topdir}/scripts/lava.sh -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&4 2>&1 &
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
   lava_pid=$!
   while true; do
-    line="`bgread -t 5 ${lava_pid} <${lava_fifo}`"
+    line="`bgread -t 5 ${lava_pid} <&4`"
     if test $? -ne 0; then
       echo "${lava_target}: Failed to read lava output" 1>&2
       exit 1
@@ -210,14 +219,14 @@ if test $? -ne 0; then
   echo "Unable to get IP for listener" 1>&2
   exit 1
 fi
-"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} "${listener_addr}" 4200 5200 >"${listener_fifo}" &
+"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} "${listener_addr}" 4200 5200 >&3 &
 listener_pid=$!
-listener_addr="`bgread -T 60 ${listener_pid} <${listener_fifo}`"
+listener_addr="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener address" 1>&2
   exit 1
 fi
-listener_port="`bgread -T 60 ${listener_pid} <${listener_fifo}`"
+listener_port="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener port" 1>&2
   exit 1
@@ -329,7 +338,7 @@ fi
 session_pid=$!
 
 #lava_pid will expand to empty if we're not using lava
-handshake="`bgread -T 300 ${listener_pid} ${lava_pid} <${listener_fifo}`"
+handshake="`bgread -T 300 ${listener_pid} ${lava_pid} <&3`"
 if test $? -ne 0 -o x"${handshake:-}" != 'xSTARTED'; then
   echo "Did not get handshake from target, giving up" 1>&2
   exit 1
@@ -337,7 +346,7 @@ fi
 
 #lava_pid will expand to empty if we're not using lava
 #No sense in setting a deadline on this one, it's order of days for many cases
-ip="`bgread ${listener_pid} ${lava_pid} <${listener_fifo}`"
+ip="`bgread ${listener_pid} ${lava_pid} <&3`"
 if test $? -ne 0; then
   if test x"${lava_pid:-}" = x; then
     echo "Failed to read post-benchmark-run IP" 1>&2

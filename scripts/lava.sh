@@ -75,6 +75,7 @@ release()
   fi
   if test x"${temps:-}" != x; then
     if test -d "${temps}"; then
+      exec 3>&-
       rm -rf "${temps}"
       if test $? -ne 0; then
         echo "Failed to delete temporary file store ${temps}" 1>&2
@@ -205,6 +206,8 @@ key="$(set -f; echo ${key} | sed 's/[\/&]/\\&/g')"
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_fifo="${temps}/listener_fifo"
 mkfifo "${listener_fifo}" || exit 1
+exec 3>&-
+exec 3<> "${listener_fifo}"
 json_copy="${temps}/job.json"
 cp "${lava_json}" "${json_copy}"
 sed -i "s/^\(.*\"PUB_KEY\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*$/\1 \"${key}\"\2/" "${json_copy}"
@@ -227,17 +230,17 @@ if test $? -ne 0; then
   exit 1
 fi
 if test ${in_lab} -eq 0; then
-  "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >"${listener_fifo}" &
+  "${topdir}"/scripts/establish_listener.sh ${listener_addr} 4200 5200 >&3 &
 else
-  "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:${lava_user}@lab.validation.linaro.org ${listener_addr} 4200 5200 >"${listener_fifo}" &
+  "${topdir}"/scripts/establish_listener.sh -f 10.0.0.10:${lava_user}@lab.validation.linaro.org ${listener_addr} 4200 5200 >&3 &
 fi
 listener_pid=$!
-listener_addr="`bgread -T 60 ${listener_pid} <${listener_fifo}`"
+listener_addr="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener address" 1>&2
   exit 1
 fi
-listener_port="`bgread -T 60 ${listener_pid} <${listener_fifo}`"
+listener_port="`bgread -T 60 ${listener_pid} <&3`"
 if test $? -ne 0; then
   echo "Failed to read listener port" 1>&2
   exit 1
@@ -308,7 +311,7 @@ echo "Job ${id} is running, waiting for boot"
 
 deadline=$((`date +%s` + boot_timeout))
 while test `date +%s` -lt ${deadline}; do
-  read -t 60 user_ip <"${listener_fifo}"
+  read -t 60 user_ip <&3
   err=$?
   if test ${err} -eq 0; then
     break
