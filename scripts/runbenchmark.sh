@@ -164,7 +164,7 @@ if test $? -eq 0; then
     2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
     1)
       gateway=lab.validation.linaro.org
-      ssh_opts="${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
+      ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
       establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
 
       #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast

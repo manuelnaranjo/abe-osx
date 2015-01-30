@@ -142,7 +142,7 @@ fi
 if test x"${gateway:-}" != x; then
   internal_interface="${gateway/%:*}"
   external_interface="${gateway/#*:}"
-  ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface} >"${forward_fifo}" 2>&1 &
+  ssh -F /dev/null -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface} >"${forward_fifo}" 2>&1 &
   forward_pid=$!
   read -t 30 line < "${forward_fifo}"
   if test $? -ne 0; then
@@ -153,7 +153,7 @@ if test x"${gateway:-}" != x; then
     listener_port="`echo ${line} | cut -d ' ' -f 3`"
   else
     echo "Unable to get port forwarded for listener" 1>&2
-    echo "Tried: ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface}" 1>&2
+    echo "Tried: ssh -F /dev/null -o PasswordAuthentication=no -o PubkeyAuthentication=yes -NR ${internal_interface/%:*}:0:${listener_addr}:${listener_port} ${external_interface}" 1>&2
     echo "Got: $line" 1>&2
     exit 1
   fi
