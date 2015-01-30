@@ -32,7 +32,7 @@ EOF
 if test $# -lt 2; then
     echo "ERROR: No branch to build!"
     usage
-    exit
+    exit 1
 fi
 
 # load commonly used functions
@@ -40,6 +40,7 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
+    exit 1
 fi
 abe="`which $0`"
 abe_path="`dirname ${abe}`"
@@ -79,7 +80,7 @@ else
 fi
 
 rm -fr ${srcdir}
-git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch}
+git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
