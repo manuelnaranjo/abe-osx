@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 #   Copyright (C) 2015 Linaro, Inc
 # 
@@ -46,8 +46,8 @@ run_status ()
 display_header () 
 {
     local target="*** $1 ***"
-    local dir1="$2"
-    local dir2="$3"
+    local dir1="`dirname $2`"
+    local dir2="`dirname $3`"
     local files=$4
 
     local bar="# ============================================================== #"
@@ -427,10 +427,17 @@ fi
 
 builds="`find ${toplevel} -type d`"
 
-sums="`find ${toplevel} -name gcc.sum*`"
+declare -a sums=()
+i=0
+for sum in `find ${toplevel} -name gcc.sum*`; do
+    sums[$i]=$sum
+    i="`expr $i + 1`"
+done
+
 declare -a head=()
 i=0
-for sum in ${sums}; do
+
+for sum in ${sums[@]}; do
     if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
 	unxz ${sum}
     fi
@@ -494,30 +501,8 @@ while test $i -lt ${#head[@]}; do
     i="`expr $i + 1`"
 done
 
-i=0
-
-if test x"${1}" != x; then
-    toplevel="$1"
-else
-    # FIXME: for now this is hardcoded, but will be passed in by Jenkins
-    toplevel="/work/logs/gcc-linaro/4.9-backport-218451-2/Backport32"
-fi
-
-builds="`find ${toplevel} -type d`"
-
-sums="`find ${toplevel} -name gcc.sum*`"
-declare -a head=()
-i=0
-for sum in ${sums}; do
-    if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
-	unxz ${sum}
-    fi
-    file="`echo ${sum} | sed -e 's:\.xz::'`"
-    head[$i]="`extract_results ${file}`"
-    i="`expr $i + 1`"
-done
-
-
+# FIXME: should assert we got only 2 .sum files to compare, and that
+# they were both for the same arch etc...
 eval "`dodiff ${sums[0]} ${sums[1]}`"
 #dodiff ${sums[0]} ${sums[1]}
 #if test "$?" -eq 0; then
