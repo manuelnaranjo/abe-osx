@@ -19,8 +19,7 @@ cautious=''
 build_dir=
 lava_target=
 run_benchargs=
-sysroot_path=
-while getopts b:d:t:a:l:kc flag; do
+while getopts b:d:t:a:kc flag; do
   case "${flag}" in
     k) keep='-k';;
     c) cautious='-c';;
@@ -28,7 +27,6 @@ while getopts b:d:t:a:l:kc flag; do
     d) device="${OPTARG}";;
     t) buildtar="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
-    l) sysroot_path="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1
@@ -191,37 +189,6 @@ if test $? -eq 0; then
       break
     fi
   done
-
-  if test x"${sysroot_path:-}" != x; then
-    if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-      echo "Unable to connect to target ${ip:+(unknown)} after boot" 1>&2
-      exit 1
-    fi
-    tmpsysdir="`(. ${topdir}/lib/common.sh; remote_exec ${ip} "mktemp -dt sysroot_XXXXX" ${ssh_opts})`"
-    (. ${topdir}/lib/common.sh; remote_upload -r 3 "${ip}" "${sysroot_path}" "${tmpsysdir}"/sysroot ${ssh_opts})
-    if test $? -ne 0; then
-      echo "Failed to upload sysroot to target" 1>&2
-      exit 1
-    fi
-    #TODO We're relying on a symlink from lib to lib64 being present, where relevant
-    #TODO Would really be better to do this with a (s)chroot, to allow use on non-LAVA
-    #     targets. But after ~1 day of experimenting with test-schroot.sh, opted to do
-    #     this to unblock this use case for LAVA targets.
-    (. ${topdir}/lib/common.sh; remote_exec "${ip}" "echo -e '/lib\n/usr/lib\n > ld.so.conf.new' && \
-                         cat /etc/ld.so.conf >> /etc/ld.so.conf.new && \
-                         mv /etc/ld.so.conf.new /etc/ld.so.conf && \
-                         rsync -a ${tmpsysdir}/sysroot/ / && \
-                         ldconfig" ${ssh_opts})
-    if test $? -ne 0; then
-      echo "Failed to install sysroot on target" 1>&2
-      exit 1
-    fi
-    if ! (. ${topdir}/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-      echo "Unable to run simple command on target after sysroot installation" 1>&2
-      exit 1
-    fi
-  fi
-
   #After this point, lava.sh should produce no output until we reach the exit handlers.
   #Our exit handler checks the pipe from lava.sh before closing down.
 
@@ -230,10 +197,6 @@ if test $? -eq 0; then
     exit 1
   fi
 else
-  if test x"${sysroot_path:-}" != x; then
-    echo "Cannot install a sysroot on non-LAVA targets" 1>&2
-    exit 1
-  fi
   gateway="${ip/*@}"
   ssh_opts=
   establish_listener_opts=
