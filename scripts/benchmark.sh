@@ -12,9 +12,9 @@ set -o nounset
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 #we should not leave lava targets reserved
 trap clean_top EXIT
-trap 'exit ${error}' TERM INT HUP QUIT
+trap 'error=1; exit' TERM INT HUP QUIT
 
-error=1
+error=0
 declare -A runpids
 
 clean_top()
@@ -228,7 +228,11 @@ while true; do
 done
 
 echo
-echo "All runs completed"
+if test ${error} -eq 0; then
+  echo "All runs succeeded"
+else
+  echo "At least one run failed"
+fi
 exit ${error}
 
 #TODO: I suppose I might want a 'delete local copies of source/built benchmark'
