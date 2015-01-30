@@ -726,6 +726,10 @@ make_check()
 	eval "schroot_make_opts="
 	eval "schroot_boards="
 
+	# Export SCHROOT_TEST so that we can choose correct boards
+	# in config/linaro.exp
+	export SCHROOT_TEST="$schroot_test"
+
 	local schroot_port
 	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
 	    # Start schroot sessions on target boards that support it
@@ -768,6 +772,7 @@ make_check()
 
 	# Stop schroot sessions
 	stop_schroot_sessions "$schroot_port" ${schroot_boards}
+	unset SCHROOT_TEST
        
         if test x"${tool}" = x"gcc"; then
             rm -rf ${sysroots}/etc/ld.so.cache

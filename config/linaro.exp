@@ -14,6 +14,7 @@ if {[info exists env(PREFIX_UNDER_TEST)]} {
 	set flags "$env(FLAGS_UNDER_TEST)"
     }
     if {[info exists env(SYSROOT_UNDER_TEST)]} {
+	set sysroot "$env(SYSROOT_UNDER_TEST)"
 	set flags "${flags} --sysroot=$env(SYSROOT_UNDER_TEST)"
     }
 
@@ -113,13 +114,20 @@ case "$target_triplet" in {
 	}
     }
     { "*linux-gnu*" } {
-	case "$myname" in {
-	    { build-* } {
-		set target_list [list $machine_prefix-buildqemu]
+	if { [info exists env(SCHROOT_TEST)] && $env(SCHROOT_TEST) == "yes" } {
+	    case "$myname" in {
+		{ build-* } {
+		    set target_list [list $machine_prefix-buildqemu]
+		}
+		{ tcwg-ex40-* } {
+		    set target_list [list $machine_prefix-tcwgex40qemu]
+		}
 	    }
-	    { tcwg-ex40-* } {
-		set target_list [list $machine_prefix-tcwgex40qemu]
-	    }
+	} else {
+	    global SIM
+	    set target_list { "arm-sim" }
+	    set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
+	    set SIM "setarch x86_64 -R qemu-[lindex [split $target_triplet -] 0]"
 	}
     }
     default {
