@@ -81,9 +81,11 @@ listener_fifo="${temps}/listener_fifo"
 lava_fifo="${temps}/lava_fifo"
 mkfifo "${listener_fifo}" || exit 1
 exec 3>&-
+exec 3<&-
 exec 3<> "${listener_fifo}"
 mkfifo "${lava_fifo}" || exit 1
 exec 4>&-
+exec 4<&-
 exec 4<> "${lava_fifo}"
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
@@ -140,7 +142,9 @@ clean_benchmark()
   #Delete these last so that we can still get messages through the lava fifo
   if test -d "${temps}"; then
     exec 3>&-
+    exec 3<&-
     exec 4>&-
+    exec 4<&-
     rm -rf "${temps}"
     if test $? -ne 0; then
       echo "Failed to delete ${temps}" 1>&2

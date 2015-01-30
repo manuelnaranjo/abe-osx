@@ -76,6 +76,7 @@ release()
   if test x"${temps:-}" != x; then
     if test -d "${temps}"; then
       exec 3>&-
+      exec 3<&-
       rm -rf "${temps}"
       if test $? -ne 0; then
         echo "Failed to delete temporary file store ${temps}" 1>&2
@@ -207,6 +208,7 @@ temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_fifo="${temps}/listener_fifo"
 mkfifo "${listener_fifo}" || exit 1
 exec 3>&-
+exec 3<&-
 exec 3<> "${listener_fifo}"
 json_copy="${temps}/job.json"
 cp "${lava_json}" "${json_copy}"

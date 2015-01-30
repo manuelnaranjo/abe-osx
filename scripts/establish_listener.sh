@@ -44,7 +44,7 @@ function cleanup
     wait "${forward_pid}"
   fi
   if test -d "${temps}"; then
-    exec 3>&-
+    exec 3<&-
     rm -rf ${temps}
     if test $? -ne 0; then
       echo "Failed to delete temporary file store ${temps}" 1>&2
@@ -62,7 +62,7 @@ if test $? -ne 0; then
 fi
 
 #The trap is just to suppress the 'Terminated' message
-exec 3>&-
+exec 3<&-
 exec 3< <(trap 'exit' TERM; tail -f "${listener_file}"& echo $! >> "${listener_file}"; wait)
 read -t 60 pseudofifo_pid <&3
 if test $? -ne 0; then
