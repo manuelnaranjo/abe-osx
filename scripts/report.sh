@@ -49,6 +49,7 @@ display_header ()
     local dir1="`dirname $2`"
     local dir2="`dirname $3`"
     local files=$4
+    local sumname="$5"
 
     local bar="# ============================================================== #"
     local pad="`expr ${#bar} / 2`"
@@ -59,7 +60,7 @@ display_header ()
     echo "        ${bar}"
     echo ""
 
-    echo "# Comparing directories"
+    echo "# Comparing ${sumname} in directories"
     echo "# ${dir1}"
     echo "# ${dir2}"
     echo ""
@@ -115,6 +116,7 @@ extract_results ()
 # Process and diff two sum files.
 dodiff ()
 {
+    declare -A status=()
     sort $1 -o ${toplevel}/head-sort.sum
     sort $2 -o ${toplevel}/head-1-sort.sum
 
@@ -142,7 +144,6 @@ dodiff ()
 	local h=0
 	local x=0
 	local y=0
-	declare -A status
 	while test $j -lt ${#diff[@]}; do
 	    j="`expr $i + 1`"
 	    local str1="`echo ${diff[$i]} | cut -d ' ' -f 2-30`"
@@ -224,6 +225,7 @@ dodiff ()
 	return 0
     fi
     
+    declare -p status
     return 1
 }
 
@@ -425,11 +427,17 @@ else
     toplevel="/work/logs/gcc-linaro/4.9-backport-218451-2/Backport32"
 fi
 
+if test x"${2}" != x; then
+    sumname="$2"
+else
+    sumname="gcc.sum"
+fi
+
 builds="`find ${toplevel} -type d`"
 
 declare -a sums=()
 i=0
-for sum in `find ${toplevel} -name gcc.sum*`; do
+for sum in `find ${toplevel} -name ${sumname}*`; do
     sums[$i]=$sum
     i="`expr $i + 1`"
 done
@@ -513,7 +521,7 @@ eval "`dodiff ${sums[0]} ${sums[1]}`"
 #dump_status "`declare -p status`"
 
 eval declare -A data=(${head[0]})
-display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2
+display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2 "${sumname}"
 
 status_tables "`declare -p status`"
  
