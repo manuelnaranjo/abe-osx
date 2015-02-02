@@ -79,6 +79,12 @@ else
     srcdir="${local_snapshots}/gcc.git~${branch}"
 fi
 
+# Due to update cycles, sometimes the branch isn't in the repository yet.
+exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
+if test "${exists}" -eq 0; then
+    cd ${git_reference_dir}/${repo} && git fetch
+fi
+
 rm -fr ${srcdir}
 git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
 
