@@ -154,45 +154,40 @@ dodiff ()
 	    if test x"${str1}" = x"${str2}" -a x"${str1}" != x; then
 #		echo "FIXME: regression in!!! ${str1}"
 		case "${diff[$i]} ${diff[$j]}" in
-		    -FAIL:*PASS:*)
-			echo "FIXME: FAIL->PASS"
-#			status[FAILNOWPASS,$a]="${str1}"
+		    -FAIL:*+PASS:*)
+			status[FAILNOWPASS,$a]="${str1}"
 			a="`expr $a + 1`"
-			;;
-		    -PASS:*+XFAIL:*)
-			status[PASSNOWXFAIL,$b]="${str1}"
-			b="`expr $b + 1`"
-#			echo "FIXME: PASS->XFAIL"
+#			echo "FIXME: FAIL->PASS"
 			;;
 		    -PASS:*+FAIL:*)
 			status[PASSNOWFAILS,$c]="${str1}"
 			c="`expr $c + 1`"
 #			echo "FIXME: PASS->FAIL"
 			;;
+		    -PASS:*+XFAIL:*)
+			status[PASSNOWXFAIL,$b]="${str1}"
+			b="`expr $b + 1`"
+#			echo "FIXME: PASS->XFAIL"
+			;;
 		    +XPASS:*-FAIL:*) 
-			status[XPASSNOWXFAIL,$d]="${str1}"
+			status[FAILNOWXPASS,$d]="${str1}"
 			d="`expr $d + 1`"
 #			echo "FIXME: XPASS->FAIL"
 			;;
 		    +XFAIL:*-FAIL:*)
-			status[XFAILNOWXFAIL,$e]="${str1}"
+			status[FAILNOWXFAIL,$e]="${str1}"
 			e="`expr $e + 1`"
 #			echo "FIXME: XFAIL->FAIL"
 			;;
 		    +XFAIL:*-PASS:*) 
-			status[XFAILNOWPASS,$f]="${str1}"
+			status[PASSNOWXFAIL,$f]="${str1}"
 			f="`expr $f + 1`"
 #			echo "FIXME: XFAIL->PASS"
 			;;
 		    -PASS:*XPASS:*)
-			status[XFAILNOWPASS,$g]="${str1}"
+			status[PASSNOWXPASS,$g]="${str1}"
 			g="`expr $g + 1`"
 #			echo "FIXME: PASS=>XPASS"
-			;;
-		    +FAIL:*-PASS:*)
-			status[FAILNOWPASS,$h]="${str1}"
-#			echo "FIXME: FAIL->PASS"
-			h="`expr $h + 1`"
 			;;
 		    *)
 #			echo "ERROR: Unknown status ${str1}"
@@ -455,6 +450,8 @@ for sum in ${sums[@]}; do
 	xzcat ${sum} > ${file}
 	sums[$i]=$file
 	sum=$file
+    else
+	file=${sum}
     fi
     head[$i]="`extract_results ${file}`"
 
