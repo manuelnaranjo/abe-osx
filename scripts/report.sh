@@ -46,8 +46,8 @@ run_status ()
 display_header () 
 {
     local target="*** $1 ***"
-    local dir1="`dirname $2`"
-    local dir2="`dirname $3`"
+    local dir1="$2"
+    local dir2="$3"
     local files=$4
     local sumname="$5"
 
@@ -117,19 +117,19 @@ extract_results ()
 dodiff ()
 {
     declare -A status=()
-    sort $1 -o ${toplevel}/head-sort.sum
-    sort $2 -o ${toplevel}/head-1-sort.sum
+    sort $1 -o /tmp/head-sort.sum.$$
+    sort $2 -o /tmp/head-1-sort.sum.$$
 
-    diff -U 0 ${toplevel}/head-sort.sum ${toplevel}/head-1-sort.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL|^[+-]UNRESOLVED|^[+-]UNSUPPORTED|^[+-]UNTESTED' 2>&1 | sort -k 2 2>&1 > ${toplevel}/diff.txt
+    diff -U 0 /tmp/head-sort.sum.$$ /tmp/head-1-sort.sum.$$ 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL|^[+-]UNRESOLVED|^[+-]UNSUPPORTED|^[+-]UNTESTED' 2>&1 | sort -k 2 2>&1 > /tmp/diff.txt.$$
     
-    if test -s ${toplevel}/diff.txt; then
+    if test -s /tmp/diff.txt.$$; then
 	declare -a diff=()
 	local i=0
 	while read line
 	do
 	    diff[$i]="$line"
 	    i="`expr $i + 1`"
-	done < ${toplevel}/diff.txt
+	done < /tmp/diff.txt.$$
 
 	local i=0
 	local j=0
@@ -220,11 +220,13 @@ dodiff ()
 	    fi
 	done
 
+	rm -f /tmp/diff.txt.$$ /tmp/head-1-sort.sum.$$ /tmp/head-sort.sum.$$
 	# This obscure option to declare dumps the array as an associative array
 	declare -p status
 	return 0
     fi
     
+    rm -f /tmp/diff.txt.$$ /tmp/head-1-sort.sum.$$ /tmp/head-sort.sum.$$
     declare -p status
     return 1
 }
@@ -443,14 +445,19 @@ for sum in `find ${toplevel} -name ${sumname}*`; do
 done
 
 declare -a head=()
+declare -a dirs=()
 i=0
-
 for sum in ${sums[@]}; do
+    dirs[$i]=`dirname ${sum}`
+    # Temporarily uncompress ${sum} if needed.
     if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
-	unxz ${sum}
+	file=/tmp/report-$i-$$
+	xzcat ${sum} > ${file}
+	sums[$i]=$file
+	sum=$file
     fi
-    file="`echo ${sum} | sed -e 's:\.xz::'`"
     head[$i]="`extract_results ${file}`"
+
     i="`expr $i + 1`"
 done
 
@@ -521,7 +528,7 @@ eval "`dodiff ${sums[0]} ${sums[1]}`"
 #dump_status "`declare -p status`"
 
 eval declare -A data=(${head[0]})
-display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2 "${sumname}"
+display_header "${data[TARGET]}" "${dirs[0]}" "${dirs[1]}" 2 "${sumname}"
 
 status_tables "`declare -p status`"
  
@@ -550,6 +557,16 @@ declare final2=(\
     "${data21[UNSUPPORTED]}")
 
 run_status categories[@] final1[@] final2[@]
+
+# Cleanup
+i=0
+for sum in ${sums[@]}; do
+    # Remove temporarily uncompressed files
+    if test `echo ${sum} | grep -c "/tmp/report-$i-$$"` -gt 0; then
+	echo rm -f /tmp/report-$i-$$
+    fi
+    i="`expr $i + 1`"
+done
 
 #local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
 #if test x"${lineno}" != x;then
