@@ -82,7 +82,8 @@ fi
 # Due to update cycles, sometimes the branch isn't in the repository yet.
 exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
 if test "${exists}" -eq 0; then
-    cd ${git_reference_dir}/${repo} && git fetch
+    pushd ${git_reference_dir}/${repo} && git fetch
+    popd
 fi
 
 rm -fr ${srcdir}
