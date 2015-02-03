@@ -458,25 +458,6 @@ for sum in ${sums[@]}; do
     i="`expr $i + 1`"
 done
 
-declare -A totals=()
-totals[PASSES]=0
-totals[XPASSES]=0
-totals[FAILURES]=0
-totals[XFAILURES]=0
-totals[UNRESOLVED]=0
-totals[UNSUPPORTED]=0
-i=0
-while test $i -lt ${#head[@]}; do
-    eval declare -A data=(${head[$i]})
-    totals[PASSES]="`expr ${totals[PASSES]} + ${data[PASSES]:-0}`"
-    totals[XPASSES]="`expr ${totals[XPASSES]} + ${data[XPASSES]:-0}`"
-    totals[FAILURES]="`expr ${totals[FAILURES]} + ${data[FAILURES]:-0}`"
-    totals[XFAILURES]="`expr ${totals[XFAILURES]} + ${data[XFAILURES]:-0}`"
-    totals[UNRESOLVED]="`expr ${totals[UNRESOLVED]} + ${data[UNRESOLVED]:-0}`"
-    totals[UNSUPPORTED]="`expr ${totals[UNSUPPORTED]} + ${data[UNSUPPORTED]:-0}`"
-    i="`expr $i + 1`"
-done
-
 # Status messages
 declare ok_msgs=(\
     "Still passes              [PASS => PASS]" \
