@@ -541,17 +541,17 @@ declare categories=(\
 eval declare -A data1=(${head[0]})
 eval declare -A data2=(${head[1]})
 declare final1=(\
-    "${data1[PASSES]}" \
+    "`expr ${data1[PASSES]} + ${data1[XPASSES]}`" \
     "${data1[XFAILURES]}" \
     "${data1[FAILURES]}" \
     "${data1[UNRESOLVED]}" \
-    "${data1[UNSUPPORTED]}")
+    "`expr ${data1[UNSUPPORTED]} + ${data1[UNTESTED]}`")
 declare final2=(\
-    "${data2[PASSES]}" \
+    "`expr ${data2[PASSES]} + ${data2[XPASSES]}`" \
     "${data2[XFAILURES]}" \
     "${data2[FAILURES]}" \
     "${data2[UNRESOLVED]}" \
-    "${data21[UNSUPPORTED]}")
+    "`expr ${data2[UNSUPPORTED]} + ${data2[UNTESTED]}`")
 
 run_status categories[@] final1[@] final2[@]
 
