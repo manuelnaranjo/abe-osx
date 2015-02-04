@@ -54,7 +54,7 @@ fi
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} \
+  $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} \
       --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 fi
 
