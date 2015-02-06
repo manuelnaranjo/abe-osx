@@ -14,9 +14,33 @@ echo "Building benchmark in ${maindir}"
 chmod 700 "${maindir}"
 cd "${maindir}"
 
+#Install toolchain
+mkdir bin
+cd bin
+if echo x"${toolchain}" | grep -q '^xhttp'; then
+  wget "${toolchain}"
+  tar xf "`basename ${toolchain}`"
+  #TODO: abe way to handle this?
+  if test x"${toolchain##.tgz}" = x.tgz; then
+    toolchaindir="$PWD/`basename ${toolchain%%.tgz}`"
+  else
+    toolchaindir="$PWD/`basename ${toolchain%%.tar.*}`"
+  fi
+else
+  echo "Unknown toolchain specification '${toolchain}'" 1>&2
+  exit 1
+fi
+if test x"${toolchaindir}" != x; then
+  if ! test -d "${toolchaindir}"; then
+    echo "Toolchain dir '${toolchaindir}' does not exist or is not a directory" 1>&2
+    exit 1
+  fi
+fi
+
 #Run benchmark
+cd "${maindir}"
 "${WORKSPACE}"/abe/configure
-"${WORKSPACE}"/abe/scripts/benchmark.sh -b fakebench kvm
+"${WORKSPACE}"/abe/scripts/benchmark.sh ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b fakebench kvm
 cp -r ./fakebench-log ~/jenkins-logs
 #scp -r ./fakebench-log abe:/work/benchmarking
 error=0
