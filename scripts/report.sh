@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# Globals shared between email and gerrit notifications
+returncode="0"
+returnstr="ALLGOOD"
+
 run_status ()
 {
     local declare msgs=("${!1}")
@@ -98,7 +102,6 @@ extract_results ()
     local sum="$1"
     declare -A headerinfo
     headerinfo[FILESPEC]="${sum}"
-    headerinfo[TARGET]="`grep "Target is" ${sum} | cut -d ' ' -f 3`"
     headerinfo[BOARD]="`grep "Running target" ${sum} | cut -d ' ' -f 3`"
     headerinfo[DATE]="`grep "Test Run" ${sum} | cut -d ' ' -f 6-10`"
     headerinfo[PASSES]="`grep "# of expected passes" ${sum} | grep -o "[0-9]*"`"
@@ -107,6 +110,14 @@ extract_results ()
     headerinfo[XFAILURES]="`grep "# of unexpected failures" ${sum} | grep -o "[0-9]*"`"
     headerinfo[UNRESOLVED]="`grep "# of unresolved testcases" ${sum} | grep -o "[0-9]*"`"
     headerinfo[UNSUPPORTED]="`grep "# of unsupported tests" ${sum} | grep -o "[0-9]*"`"
+
+    # If the manifest file exists, use that for the target architecture
+    local man="`dirname ${sum}`/manifest.txt"
+    if test -e ${man}; then
+	headerinfo[TARGET]="`grep "target=" ${man} | cut -d '=' -f 2`"
+    else
+	headerinfo[TARGET]="`grep "Target is" ${sum} | cut -d ' ' -f 3`"
+    fi
 
     # This obscure option to declare dumps headerinfo as an associative array
     declare -ptu headerinfo 2>&1 | sed -e 's:^.*(::' -e 's:).*$::'
@@ -508,7 +519,15 @@ eval "`dodiff ${sums[0]} ${sums[1]}`"
 eval declare -A data=(${head[0]})
 display_header "${data[TARGET]}" "${dirs[0]}" "${dirs[1]}" 2 "${sumname}"
 
-status_tables "`declare -p status`"
+
+if test ${#status[@]} -gt 0; then
+    status_tables "`declare -p status`"
+    returncode="1"
+    returnstr="REGRESSIONS"
+else 
+    returncode="0"
+    returnstr="ALLGOOD"
+fi
  
 # Run status categories and totals
 declare categories=(\
@@ -560,3 +579,6 @@ done
 #    fi
 #done
 #echo ""
+
+# echo ${returnstr}
+exit ${returncode}
