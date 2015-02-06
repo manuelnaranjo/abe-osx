@@ -48,11 +48,11 @@ fi
 cd "${maindir}"
 "${WORKSPACE}"/abe/configure
 while test ${#targets[@]} -ge 4; do
-  "${WORKSPACE}"/abe/scripts/benchmark.sh ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b fakebench ${targets[@]:0:4}
+  "${WORKSPACE}"/abe/scripts/benchmark.sh ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]:0:4}
   targets=(${targets[@]:4})
 done
 if test ${#targets[@]} -gt 0; then
-  "${WORKSPACE}"/abe/scripts/benchmark.sh ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b fakebench ${targets[@]}
+  "${WORKSPACE}"/abe/scripts/benchmark.sh ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
 fi
 cp -r ./fakebench-log ~/jenkins-logs
 #scp -r ./fakebench-log abe:/work/benchmarking
