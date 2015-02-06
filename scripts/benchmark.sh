@@ -112,13 +112,14 @@ fi
 #End sanity checks
 
 
+compiler_flags=""
 run_benchargs=""
 skip_build=
 toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
-while getopts a:i:t:b:kchs flag; do
+while getopts f:a:i:t:b:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
@@ -135,6 +136,7 @@ while getopts a:i:t:b:kchs flag; do
          exit 0
        fi
     ;;
+    f) compiler_flags="${OPTARG}";;
     h)
        usage
        exit 0
@@ -176,7 +178,7 @@ fi
 
 if test x"${skip_build:-}" = x; then
   #abe can build the benchmarks just fine
-  ("${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  (COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
