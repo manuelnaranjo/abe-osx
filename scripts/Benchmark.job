@@ -4,6 +4,13 @@ set -e
 set -u
 set -o pipefail
 
+toolchaindir=
+if test x"${triple}" = xnative; then
+  triple=
+fi
+if test x"${target}" = xlocalhost; then
+  target=
+fi
 maindir="`mktemp --tmpdir=${WORKSPACE} -d benchmark-XXXXX`"
 error=1
 
@@ -17,18 +24,20 @@ cd "${maindir}"
 #Install toolchain
 mkdir bin
 cd bin
-if echo x"${toolchain}" | grep -q '^xhttp'; then
-  wget "${toolchain}"
-  tar xf "`basename ${toolchain}`"
-  #TODO: abe way to handle this?
-  if test x"${toolchain##.tgz}" = x.tgz; then
-    toolchaindir="$PWD/`basename ${toolchain%%.tgz}`"
+if test x"${toolchain:-}" != x; then
+  if echo x"${toolchain}" | grep -q '^xhttp'; then
+    wget "${toolchain}"
+    tar xf "`basename ${toolchain}`"
+    #TODO: abe way to handle this?
+    if test x"${toolchain##.tgz}" = x.tgz; then
+      toolchaindir="$PWD/`basename ${toolchain%%.tgz}`"
+    else
+      toolchaindir="$PWD/`basename ${toolchain%%.tar.*}`"
+    fi
   else
-    toolchaindir="$PWD/`basename ${toolchain%%.tar.*}`"
+    echo "Unknown toolchain specification '${toolchain}'" 1>&2
+    exit 1
   fi
-else
-  echo "Unknown toolchain specification '${toolchain}'" 1>&2
-  exit 1
 fi
 if test x"${toolchaindir}" != x; then
   if ! test -d "${toolchaindir}"; then
