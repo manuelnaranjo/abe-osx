@@ -46,6 +46,7 @@ abe="`which $0`"
 abe_path="`dirname ${abe}`"
 topdir="${abe_path}"
 abe="`basename $0`"
+node="`hostname | cut -d '.' -f 1`"
 
 basedir="/work/logs"
 repo="gcc.git"
@@ -105,7 +106,9 @@ fi
 # Checkout all the sources
 #bash -x ${topdir}/abe.sh --checkout all
 
-resultsdir="/tmp/abe$$/${target}@"
+resultsdir="/tmp/${node}/abe$$/${target}@"
+files="`find ${local_builds}/${build}/${target}/ -maxdepth 1 -type d | egrep 'stage2|binutils'`"
+
 i=0
 while test $i -lt ${#revisions[@]}; do
     job="Backport"
@@ -118,42 +121,52 @@ while test $i -lt ${#revisions[@]}; do
 	i="`expr $i + 1`"
 	continue
     fi
+
     bash -x ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
-    fi
-    sums="`find ${local_builds}/${build}/${target} -name \*.sum`"
-    logs="`echo ${sums} | sed 's/\.sum/.log/g'`"
+   fi
+
+    # FIXME: The way this is currently implemented only handles GCC backports. If binutils
+    # backports are desired, this will have to be implented here.
+    sums="`find ${local_builds}/${build}/${target}/binutils-* -name \*.sum -o -name \*.sum.xz`"
+    sums="${sums} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.sum -o -name \*.sum.xz`"
+    # Copy only the log files we want
+    logs="`find ${local_builds}/${build}/${target}/binutils-* -name \*.log -o -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="${logs} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.log -o -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    
     manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
-    if test x"${sums}" != x; then
-	mkdir -p ${resultsdir}${revisions[$i]}
-	cp -f ${sums} ${logs} ${manifest} ${resultsdir}${revisions[$i]}/
-	    # We don't need these files leftover from the DejaGnu testsuite
-            # itself.
-	rm -f ${resultsdir}${revisions[$i]}/{x,xXx,testrun}.*
-	xz -f ${resultsdir}${revisions[$i]}/*.{sum,log}
 
-	ssh ${fileserver} mkdir -p ${dir}
-	scp ${manifest} ${fileserver}:${dir}/
-
-#	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
-	scp ${resultsdir}${revisions[$i]}/* ${fileserver}:${dir}/
-    fi
+    #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
+    echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
+    ssh ${fileserver} mkdir -p ${dir}
+    scp -C ${sums} ${logs} ${fileserver}:${dir}/
+    #	rm -fr ${resultsdir}${revisions[$i]}
 
     i="`expr $i + 1`"
 done
 
-# Test results and logs optionally get copied to this fileserver.
+ret=0
+
+# Test results and logs have been copied to this fileserver, so the validation is
+# done remotely.
 if test x"${fileserver}" != x; then
     # Diff the two directories
-    ssh ${fileserver} mkdir -p /tmp/abe$$
-    scp -r ${topdir}/* ${fileserver}:/tmp/abe$$/
+    tmp="/tmp/${node}/abe$$"
+    ssh ${fileserver} mkdir -p ${tmp}
+    scp -r ${topdir}/scripts/report.sh ${fileserver}:${tmp}
     toplevel="`dirname ${dir}`"
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
-    out="`ssh ${fileserver} /tmp/abe$$/tcwgweb.sh --outfile ${toplevel}/results-${revisions[0]}-${revisions[1]}.txt --tdir ${dir1} ${dir2}`"
-    if test "`echo ${out} | grep -c REGRESSIONS`" -gt 0; then
-	exit 1
-    fi
+    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
+	out="`ssh ${fileserver} ${tmp}/report.sh ${toplevel} $i`"
+	echo "${out}"
+	if test $? -gt 0; then
+	    ret=1
+	fi
+    done
+    rm -fr ${tmp}
 fi
+
+exit ${ret}
