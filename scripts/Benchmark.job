@@ -9,9 +9,12 @@ error=1
 
 trap "rm -rf ${maindir}; exit ${error}" EXIT
 
+#Set up maindir
 echo "Building benchmark in ${maindir}"
 chmod 700 "${maindir}"
 cd "${maindir}"
+
+#Run benchmark
 "${WORKSPACE}"/abe/configure
 "${WORKSPACE}"/abe/scripts/benchmark.sh -b fakebench kvm
 cp -r ./fakebench-log ~/jenkins-logs
