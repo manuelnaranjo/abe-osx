@@ -9,7 +9,7 @@ if test x"${triple}" = xnative; then
   triple=
 fi
 targets=(${targets})
-maindir="`mktemp --tmpdir=${WORKSPACE} -d benchmark-XXXXX`"
+maindir="`mktemp --tmpdir=/tmp -d bench-XXX`"
 error=1
 
 #trap "rm -rf ${maindir}; exit ${error}" EXIT
