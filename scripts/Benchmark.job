@@ -12,7 +12,7 @@ targets=(${targets})
 maindir="`mktemp --tmpdir=/tmp -d bench-XXX`"
 error=1
 
-trap "rm -rf ${maindir}; exit ${error}" EXIT
+trap "rm -rf ${maindir}; exit \${error}" EXIT
 
 #Set up maindir
 echo "Building benchmark in ${maindir}"
