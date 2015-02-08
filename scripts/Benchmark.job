@@ -62,6 +62,5 @@ done
 if test ${#targets[@]} -gt 0; then
   "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags}"} ${compiler_flags:+-f "${compiler_flags}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
 fi
-cp -r ./fakebench-log ~/jenkins-logs
-#scp -r ./fakebench-log abe:/work/benchmarking
+scp -r ./fakebench-log abe:/work/benchmarking
 error=0
