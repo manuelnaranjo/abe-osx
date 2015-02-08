@@ -47,12 +47,6 @@ fi
 #Run benchmark
 cd "${maindir}"
 "${WORKSPACE}"/abe/configure
-while test ${#targets[@]} -ge 4; do
-  "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags}"} ${compiler_flags:+-f "${compiler_flags}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]:0:4}
-  targets=(${targets[@]:4})
-done
-if test ${#targets[@]} -gt 0; then
-  "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags}"} ${compiler_flags:+-f "${compiler_flags}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
-fi
+"${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags}"} ${compiler_flags:+-f "${compiler_flags}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
 scp -r ./fakebench-log abe:/work/benchmarking
 error=0
