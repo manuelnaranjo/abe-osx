@@ -48,5 +48,5 @@ fi
 cd "${maindir}"
 "${WORKSPACE}"/abe/configure
 "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
-scp -r ./fakebench-log abe:/work/benchmarking
+scp -r ./"${benchmark}"-log abe:/work/benchmarking
 error=0
