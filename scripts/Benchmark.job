@@ -47,6 +47,14 @@ fi
 #Run benchmark
 cd "${maindir}"
 "${WORKSPACE}"/abe/configure
+
+set +e
 "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
-scp -r ./"${benchmark}"-log abe:/work/benchmarking
-error=0
+tmperr=$?
+set -e
+if test ${tmperr} -eq 0; then
+  scp -r ./"${benchmark}"-log abe:/work/benchmarking
+  error=0
+else
+  scp -r ./"${benchmark}"-log abe:/work/benchmarking
+fi
