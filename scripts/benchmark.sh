@@ -159,11 +159,10 @@ else #cross-build, implies we need remote devices
     exit 1
   fi
 fi
-PATH="`dirname ${toolchain_path}`":${PATH}
 
 if test x"${skip_build:-}" = x; then
   #abe can build the benchmarks just fine
-  (COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  (PATH="`dirname ${toolchain_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
