@@ -49,8 +49,6 @@ $0 [-tckh] -b <benchmark> <board...>
   -h   Show this help.
   -k   Keep. If this is set, benchmark sources and results will be left on
        target. LAVA targets will not be released.
-  -t   Target triple to build benchmark for e.g. arm-linux-gnueabihf. Used
-       only for building. Blank implies native build.
 
   <board...> may be anything that has a file in config/boards/bench, e.g. the
   existence of arndale.conf means that you can put arndale here. At least one
@@ -60,28 +58,6 @@ $0 [-tckh] -b <benchmark> <board...>
   If building natively, board is optional. If not given, the benchmark will
   run on localhost.
 EOF
-}
-
-set_toolchain()
-{
-  local target_gcc="${target:+${target}-}gcc"
-  if test x"${toolchain_path:-}" = x; then
-    which "${target_gcc}" > /dev/null 2>&1
-    if test $? -ne 0; then
-      echo "No toolchain specified and unable to find a suitable gcc on the path" 1>&2
-      echo "Looked for ${target:+${target}-}gcc" 1>&2
-      exit 1
-    else
-      echo "No toolchain specified, using `which ${target_gcc}`, found on PATH" 1>&2
-    fi
-  else
-    if test -f "${toolchain_path}/bin/${target_gcc}"; then
-      PATH="${toolchain_path}/bin:$PATH"
-    else
-      echo "Toolchain directory ${toolchain_path} does not contain bin/${target_gcc}" 1>&2
-      exit 1
-    fi
-  fi
 }
 
 # load the configure file produced by configure
@@ -119,12 +95,11 @@ toolchain_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
-while getopts f:a:i:t:b:kchs flag; do
+while getopts f:a:i:b:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
-    i) toolchain_path="${OPTARG}";;
-    t) target="${OPTARG}";; #have to be careful with this one, it is meaningful to sourced abe files in subshells below
+    i) toolchain_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     k)
@@ -151,14 +126,22 @@ shift $((OPTIND - 1))
 devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine.
                #Duplicate targets not fine for ssh access, where they will just resolve to the same machine every time.
                #TODO: Check for multiple instances of a given non-lava target
-set_toolchain
 
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
   exit 1
 fi
-if test x"${target:-}" = x; then #native build
+if test x"${toolchain_path:-}" = x; then
+  echo "No GCC given (-i)" 1>&2
+  exit 1
+fi
+if ! test -x "${toolchain_path}"; then
+  echo "GCC '${toolchain_path}' does not exist or is not executable" 1>&2
+  exit 1
+fi
+if test x"`basename ${toolchain_path}`" = xgcc; then #native build
+  target=
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
                           #localhost. This could be fixed if anyone _really_
@@ -170,11 +153,13 @@ if test x"${target:-}" = x; then #native build
   #       check for a device list composed of localhost plus other targets
   fi
 else #cross-build, implies we need remote devices
+  target="`basename ${toolchain_path%-gcc}`"
   if test ${#devices[@]} -eq 0; then
-    echo "--target implies cross-compilation, but no devices given for run" 1>&2
+    echo "Cross-compiling gcc '${toolchain_path} given, but no devices given for run" 1>&2
     exit 1
   fi
 fi
+PATH="`dirname ${toolchain_path}`":${PATH}
 
 if test x"${skip_build:-}" = x; then
   #abe can build the benchmarks just fine

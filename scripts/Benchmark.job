@@ -4,10 +4,7 @@ set -e
 set -u
 set -o pipefail
 
-toolchaindir=
-if test x"${triple}" = xnative; then
-  triple=
-fi
+benchgccpath=
 targets=(${targets})
 maindir="`mktemp --tmpdir=/tmp -d bench-XXX`"
 error=1
@@ -28,18 +25,22 @@ if test x"${toolchain:-}" != x; then
     tar xf "`basename ${toolchain}`"
     #TODO: abe way to handle this?
     if test x"${toolchain##.tgz}" = x.tgz; then
-      toolchaindir="$PWD/`basename ${toolchain%%.tgz}`"
+      benchgccpath="`echo $PWD/\`basename ${toolchain%%.tgz}\`/bin/*gcc`"
     else
-      toolchaindir="$PWD/`basename ${toolchain%%.tar.*}`"
+      benchgccpath="`echo $PWD/\`basename ${toolchain%%.tar.*}\`/bin/*gcc`"
     fi
   else
     echo "Unknown toolchain specification '${toolchain}'" 1>&2
     exit 1
   fi
 fi
-if test x"${toolchaindir}" != x; then
-  if ! test -d "${toolchaindir}"; then
-    echo "Toolchain dir '${toolchaindir}' does not exist or is not a directory" 1>&2
+if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
+  echo "Should be exactly one GCC path" 1>&2
+  exit 1
+fi
+if test x"${benchgccpath}" != x; then
+  if ! test -x "${benchgccpath}"; then
+    echo "GCC binary '${benchgccpath}' does not exist or is not executable" 1>&2
     exit 1
   fi
 fi
@@ -49,7 +50,7 @@ cd "${maindir}"
 "${WORKSPACE}"/abe/configure
 
 set +e
-"${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${toolchaindir:+-i ${toolchaindir}} ${triple:+-t ${triple}} -b ${benchmark} ${targets[@]}
+"${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
 tmperr=$?
 set -e
 if test ${tmperr} -eq 0; then
