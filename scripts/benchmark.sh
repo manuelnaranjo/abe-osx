@@ -91,7 +91,7 @@ fi
 compiler_flags=""
 run_benchargs=""
 skip_build=
-toolchain_path=
+benchmark_gcc_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
@@ -99,7 +99,7 @@ while getopts f:a:i:b:kchs flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
-    i) toolchain_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
+    i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     k)
@@ -132,15 +132,15 @@ if test x"${benchmark:-}" = x; then
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
   exit 1
 fi
-if test x"${toolchain_path:-}" = x; then
+if test x"${benchmark_gcc_path:-}" = x; then
   echo "No GCC given (-i)" 1>&2
   exit 1
 fi
-if ! test -x "${toolchain_path}"; then
-  echo "GCC '${toolchain_path}' does not exist or is not executable" 1>&2
+if ! test -x "${benchmark_gcc_path}"; then
+  echo "GCC '${benchmark_gcc_path}' does not exist or is not executable" 1>&2
   exit 1
 fi
-if test x"`basename ${toolchain_path}`" = xgcc; then #native build
+if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
   target=
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
@@ -153,16 +153,16 @@ if test x"`basename ${toolchain_path}`" = xgcc; then #native build
   #       check for a device list composed of localhost plus other targets
   fi
 else #cross-build, implies we need remote devices
-  target="`basename ${toolchain_path%-gcc}`"
+  target="`basename ${benchmark_gcc_path%-gcc}`"
   if test ${#devices[@]} -eq 0; then
-    echo "Cross-compiling gcc '${toolchain_path} given, but no devices given for run" 1>&2
+    echo "Cross-compiling gcc '${benchmark_gcc_path} given, but no devices given for run" 1>&2
     exit 1
   fi
 fi
 
 if test x"${skip_build:-}" = x; then
   #abe can build the benchmarks just fine
-  (PATH="`dirname ${toolchain_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
