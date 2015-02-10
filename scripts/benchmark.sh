@@ -141,7 +141,7 @@ if ! test -x "${benchmark_gcc_path}"; then
   exit 1
 fi
 if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
-  target=
+  benchmark_gcc_triple=
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
                           #localhost. This could be fixed if anyone _really_
@@ -153,7 +153,7 @@ if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
   #       check for a device list composed of localhost plus other targets
   fi
 else #cross-build, implies we need remote devices
-  target="`basename ${benchmark_gcc_path%-gcc}`"
+  benchmark_gcc_triple="`basename ${benchmark_gcc_path%-gcc}`"
   if test ${#devices[@]} -eq 0; then
     echo "Cross-compiling gcc '${benchmark_gcc_path} given, but no devices given for run" 1>&2
     exit 1
@@ -162,14 +162,14 @@ fi
 
 if test x"${skip_build:-}" = x; then
   #abe can build the benchmarks just fine
-  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${target:+--target "${target}"})
+  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     exit 1
   fi
 fi
 
-builddir="`target2="${target}"; . ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${target2}" != x; then target="${target2}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   exit 1
