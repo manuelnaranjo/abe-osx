@@ -62,9 +62,7 @@ set +e
 "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
 tmperr=$?
 set -e
+scp -r ./"${benchmark}"-log abe:/work/benchmarking
 if test ${tmperr} -eq 0; then
-  scp -r ./"${benchmark}"-log abe:/work/benchmarking
   error=0
-else
-  scp -r ./"${benchmark}"-log abe:/work/benchmarking
 fi
