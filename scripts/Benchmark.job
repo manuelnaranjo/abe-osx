@@ -22,7 +22,7 @@ if test x"${benchmark:-}" = x; then
 fi
 
 #Set up maindir
-echo "Building benchmark in ${maindir}"
+echo "Building benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}"
 cd "${maindir}"
 
