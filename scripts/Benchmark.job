@@ -30,8 +30,8 @@ if test x"${toolchain:-}" != x; then
       benchgccpath="`echo $PWD/\`basename ${toolchain%%.tar.*}\`/bin/*gcc`"
     fi
   else
-    echo "Unknown toolchain specification '${toolchain}'" 1>&2
-    exit 1
+    echo "Toolchain assumed to be path on builder"
+    benchgccpath="${toolchain}"
   fi
 fi
 if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
