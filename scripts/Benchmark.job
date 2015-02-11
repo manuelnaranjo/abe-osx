@@ -11,6 +11,16 @@ error=1
 
 trap "rm -rf ${maindir}; exit \${error}" EXIT
 
+#A little parameter checking
+if test x"${toolchain:-}" = x; then
+  echo "No toolchain given to Benchmark job" 1>&2
+  exit 1
+fi
+if test x"${benchmark:-}" = x; then
+  echo "No benchmark given to Benchmark job" 1>&2
+  exit 1
+fi
+
 #Set up maindir
 echo "Building benchmark in ${maindir}"
 chmod 700 "${maindir}"
@@ -19,20 +29,18 @@ cd "${maindir}"
 #Install toolchain
 mkdir bin
 cd bin
-if test x"${toolchain:-}" != x; then
-  if echo x"${toolchain}" | grep -q '^xhttp'; then
-    wget "${toolchain}"
-    tar xf "`basename ${toolchain}`"
-    #TODO: abe way to handle this?
-    if test x"${toolchain##.tgz}" = x.tgz; then
-      benchgccpath="`echo $PWD/\`basename ${toolchain%%.tgz}\`/bin/*gcc`"
-    else
-      benchgccpath="`echo $PWD/\`basename ${toolchain%%.tar.*}\`/bin/*gcc`"
-    fi
+if echo x"${toolchain}" | grep -q '^xhttp'; then
+  wget "${toolchain}"
+  tar xf "`basename ${toolchain}`"
+  #TODO: abe way to handle this?
+  if test x"${toolchain##.tgz}" = x.tgz; then
+    benchgccpath="`echo $PWD/\`basename ${toolchain%%.tgz}\`/bin/*gcc`"
   else
-    echo "Toolchain assumed to be path on builder"
-    benchgccpath="${toolchain}"
+    benchgccpath="`echo $PWD/\`basename ${toolchain%%.tar.*}\`/bin/*gcc`"
   fi
+else
+  echo "Toolchain assumed to be path on builder"
+  benchgccpath="${toolchain}"
 fi
 if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
   echo "Should be exactly one GCC path" 1>&2
