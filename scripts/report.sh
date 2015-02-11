@@ -442,11 +442,10 @@ else
 fi
 
 builds="`find ${toplevel} -type d`"
-
 declare -a sums=()
 i=0
-for sum in `find ${toplevel} -name ${sumname}*`; do
-    sums[$i]=$sum
+for rev in ${builds}; do
+    sums[$i]="`find ${rev} -name ${sumname}`"
     i="`expr $i + 1`"
 done
 
