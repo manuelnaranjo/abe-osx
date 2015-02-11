@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# Globals shared between email and gerrit notifications
+returncode="0"
+returnstr="ALLGOOD"
+
 run_status ()
 {
     local declare msgs=("${!1}")
@@ -46,8 +50,8 @@ run_status ()
 display_header () 
 {
     local target="*** $1 ***"
-    local dir1="`dirname $2`"
-    local dir2="`dirname $3`"
+    local dir1="$2"
+    local dir2="$3"
     local files=$4
     local sumname="$5"
 
@@ -98,7 +102,6 @@ extract_results ()
     local sum="$1"
     declare -A headerinfo
     headerinfo[FILESPEC]="${sum}"
-    headerinfo[TARGET]="`grep "Target is" ${sum} | cut -d ' ' -f 3`"
     headerinfo[BOARD]="`grep "Running target" ${sum} | cut -d ' ' -f 3`"
     headerinfo[DATE]="`grep "Test Run" ${sum} | cut -d ' ' -f 6-10`"
     headerinfo[PASSES]="`grep "# of expected passes" ${sum} | grep -o "[0-9]*"`"
@@ -107,6 +110,14 @@ extract_results ()
     headerinfo[XFAILURES]="`grep "# of unexpected failures" ${sum} | grep -o "[0-9]*"`"
     headerinfo[UNRESOLVED]="`grep "# of unresolved testcases" ${sum} | grep -o "[0-9]*"`"
     headerinfo[UNSUPPORTED]="`grep "# of unsupported tests" ${sum} | grep -o "[0-9]*"`"
+
+    # If the manifest file exists, use that for the target architecture
+    local man="`dirname ${sum}`/manifest.txt"
+    if test -e ${man}; then
+	headerinfo[TARGET]="`grep "target=" ${man} | cut -d '=' -f 2`"
+    else
+	headerinfo[TARGET]="`grep "Target is" ${sum} | cut -d ' ' -f 3`"
+    fi
 
     # This obscure option to declare dumps headerinfo as an associative array
     declare -ptu headerinfo 2>&1 | sed -e 's:^.*(::' -e 's:).*$::'
@@ -117,19 +128,19 @@ extract_results ()
 dodiff ()
 {
     declare -A status=()
-    sort $1 -o ${toplevel}/head-sort.sum
-    sort $2 -o ${toplevel}/head-1-sort.sum
+    sort $1 -o /tmp/head-sort.sum.$$
+    sort $2 -o /tmp/head-1-sort.sum.$$
 
-    diff -U 0 ${toplevel}/head-sort.sum ${toplevel}/head-1-sort.sum 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL|^[+-]UNRESOLVED|^[+-]UNSUPPORTED|^[+-]UNTESTED' 2>&1 | sort -k 2 2>&1 > ${toplevel}/diff.txt
+    diff -U 0 /tmp/head-sort.sum.$$ /tmp/head-1-sort.sum.$$ 2>&1 | egrep '^[+-]PASS|^[+-]FAIL|^[+-]XPASS|^[+-]XFAIL|^[+-]UNRESOLVED|^[+-]UNSUPPORTED|^[+-]UNTESTED' 2>&1 | sort -k 2 2>&1 > /tmp/diff.txt.$$
     
-    if test -s ${toplevel}/diff.txt; then
+    if test -s /tmp/diff.txt.$$; then
 	declare -a diff=()
 	local i=0
 	while read line
 	do
 	    diff[$i]="$line"
 	    i="`expr $i + 1`"
-	done < ${toplevel}/diff.txt
+	done < /tmp/diff.txt.$$
 
 	local i=0
 	local j=0
@@ -154,45 +165,40 @@ dodiff ()
 	    if test x"${str1}" = x"${str2}" -a x"${str1}" != x; then
 #		echo "FIXME: regression in!!! ${str1}"
 		case "${diff[$i]} ${diff[$j]}" in
-		    -FAIL:*PASS:*)
-			echo "FIXME: FAIL->PASS"
-#			status[FAILNOWPASS,$a]="${str1}"
+		    -FAIL:*+PASS:*)
+			status[FAILNOWPASS,$a]="${str1}"
 			a="`expr $a + 1`"
-			;;
-		    -PASS:*+XFAIL:*)
-			status[PASSNOWXFAIL,$b]="${str1}"
-			b="`expr $b + 1`"
-#			echo "FIXME: PASS->XFAIL"
+#			echo "FIXME: FAIL->PASS"
 			;;
 		    -PASS:*+FAIL:*)
 			status[PASSNOWFAILS,$c]="${str1}"
 			c="`expr $c + 1`"
 #			echo "FIXME: PASS->FAIL"
 			;;
+		    -PASS:*+XFAIL:*)
+			status[PASSNOWXFAIL,$b]="${str1}"
+			b="`expr $b + 1`"
+#			echo "FIXME: PASS->XFAIL"
+			;;
 		    +XPASS:*-FAIL:*) 
-			status[XPASSNOWXFAIL,$d]="${str1}"
+			status[FAILNOWXPASS,$d]="${str1}"
 			d="`expr $d + 1`"
 #			echo "FIXME: XPASS->FAIL"
 			;;
 		    +XFAIL:*-FAIL:*)
-			status[XFAILNOWXFAIL,$e]="${str1}"
+			status[FAILNOWXFAIL,$e]="${str1}"
 			e="`expr $e + 1`"
 #			echo "FIXME: XFAIL->FAIL"
 			;;
 		    +XFAIL:*-PASS:*) 
-			status[XFAILNOWPASS,$f]="${str1}"
+			status[PASSNOWXFAIL,$f]="${str1}"
 			f="`expr $f + 1`"
 #			echo "FIXME: XFAIL->PASS"
 			;;
 		    -PASS:*XPASS:*)
-			status[XFAILNOWPASS,$g]="${str1}"
+			status[PASSNOWXPASS,$g]="${str1}"
 			g="`expr $g + 1`"
 #			echo "FIXME: PASS=>XPASS"
-			;;
-		    +FAIL:*-PASS:*)
-			status[FAILNOWPASS,$h]="${str1}"
-#			echo "FIXME: FAIL->PASS"
-			h="`expr $h + 1`"
 			;;
 		    *)
 #			echo "ERROR: Unknown status ${str1}"
@@ -220,11 +226,13 @@ dodiff ()
 	    fi
 	done
 
+	rm -f /tmp/diff.txt.$$ /tmp/head-1-sort.sum.$$ /tmp/head-sort.sum.$$
 	# This obscure option to declare dumps the array as an associative array
 	declare -p status
 	return 0
     fi
     
+    rm -f /tmp/diff.txt.$$ /tmp/head-1-sort.sum.$$ /tmp/head-sort.sum.$$
     declare -p status
     return 1
 }
@@ -434,42 +442,29 @@ else
 fi
 
 builds="`find ${toplevel} -type d`"
-
 declare -a sums=()
 i=0
-for sum in `find ${toplevel} -name ${sumname}*`; do
-    sums[$i]=$sum
+for rev in ${builds}; do
+    sums[$i]="`find ${rev} -name ${sumname}`"
     i="`expr $i + 1`"
 done
 
 declare -a head=()
+declare -a dirs=()
 i=0
-
 for sum in ${sums[@]}; do
+    dirs[$i]=`dirname ${sum}`
+    # Temporarily uncompress ${sum} if needed.
     if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
-	unxz ${sum}
+	file=/tmp/report-$i-$$
+	xzcat ${sum} > ${file}
+	sums[$i]=$file
+	sum=$file
+    else
+	file=${sum}
     fi
-    file="`echo ${sum} | sed -e 's:\.xz::'`"
     head[$i]="`extract_results ${file}`"
-    i="`expr $i + 1`"
-done
 
-declare -A totals=()
-totals[PASSES]=0
-totals[XPASSES]=0
-totals[FAILURES]=0
-totals[XFAILURES]=0
-totals[UNRESOLVED]=0
-totals[UNSUPPORTED]=0
-i=0
-while test $i -lt ${#head[@]}; do
-    eval declare -A data=(${head[$i]})
-    totals[PASSES]="`expr ${totals[PASSES]} + ${data[PASSES]:-0}`"
-    totals[XPASSES]="`expr ${totals[XPASSES]} + ${data[XPASSES]:-0}`"
-    totals[FAILURES]="`expr ${totals[FAILURES]} + ${data[FAILURES]:-0}`"
-    totals[XFAILURES]="`expr ${totals[XFAILURES]} + ${data[XFAILURES]:-0}`"
-    totals[UNRESOLVED]="`expr ${totals[UNRESOLVED]} + ${data[UNRESOLVED]:-0}`"
-    totals[UNSUPPORTED]="`expr ${totals[UNSUPPORTED]} + ${data[UNSUPPORTED]:-0}`"
     i="`expr $i + 1`"
 done
 
@@ -521,9 +516,17 @@ eval "`dodiff ${sums[0]} ${sums[1]}`"
 #dump_status "`declare -p status`"
 
 eval declare -A data=(${head[0]})
-display_header "${data[TARGET]}" "${sums[0]}" "${sums[1]}" 2 "${sumname}"
+display_header "${data[TARGET]}" "${dirs[0]}" "${dirs[1]}" 2 "${sumname}"
 
-status_tables "`declare -p status`"
+
+if test ${#status[@]} -gt 0; then
+    status_tables "`declare -p status`"
+    returncode="1"
+    returnstr="REGRESSIONS"
+else 
+    returncode="0"
+    returnstr="ALLGOOD"
+fi
  
 # Run status categories and totals
 declare categories=(\
@@ -537,19 +540,29 @@ declare categories=(\
 eval declare -A data1=(${head[0]})
 eval declare -A data2=(${head[1]})
 declare final1=(\
-    "${data1[PASSES]}" \
-    "${data1[XFAILURES]}" \
-    "${data1[FAILURES]}" \
-    "${data1[UNRESOLVED]}" \
-    "${data1[UNSUPPORTED]}")
+    "`expr ${data1[PASSES]:-0} + ${data1[XPASSES]:-0}`" \
+    "${data1[XFAILURES]:-0}" \
+    "${data1[FAILURES]:-0}" \
+    "${data1[UNRESOLVED]:-0}" \
+    "`expr ${data1[UNSUPPORTED]:-0} + ${data1[UNTESTED]:-0}`")
 declare final2=(\
-    "${data2[PASSES]}" \
-    "${data2[XFAILURES]}" \
-    "${data2[FAILURES]}" \
-    "${data2[UNRESOLVED]}" \
-    "${data21[UNSUPPORTED]}")
+    "`expr ${data2[PASSES]:-0} + ${data2[XPASSES]:-0}`" \
+    "${data2[XFAILURES]:-0}" \
+    "${data2[FAILURES]:-0}" \
+    "${data2[UNRESOLVED]:-0}" \
+    "`expr ${data2[UNSUPPORTED]:-0} + ${data2[UNTESTED]:-0}`")
 
 run_status categories[@] final1[@] final2[@]
+
+# Cleanup
+i=0
+for sum in ${sums[@]}; do
+    # Remove temporarily uncompressed files
+    if test `echo ${sum} | grep -c "/tmp/report-$i-$$"` -gt 0; then
+	echo rm -f /tmp/report-$i-$$
+    fi
+    i="`expr $i + 1`"
+done
 
 #local lineno="`grep -n -- "----" ${}/manifest.txt | grep -o "[0-9]*"`"
 #if test x"${lineno}" != x;then
@@ -565,3 +578,6 @@ run_status categories[@] final1[@] final2[@]
 #    fi
 #done
 #echo ""
+
+# echo ${returnstr}
+exit ${returncode}
