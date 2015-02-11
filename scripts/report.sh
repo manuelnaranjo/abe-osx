@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # 
 #   Copyright (C) 2015 Linaro, Inc
 # 
