@@ -167,7 +167,7 @@ build_all()
 	buildingall=no
 	make_check ${binutils_version}
 	make_check ${gcc_version} stage2
-	make_check ${gdb_version}
+	#make_check ${gdb_version}
     fi
 
     # Notify that the test run completed successfully
@@ -753,8 +753,12 @@ make_check()
 		local check_targets="check-DEJAGNU"
 		;;
 	    gdb)
-		local dirs="/gdb"
-		local check_targets="check-gdb"
+	        # Stop schroot sessions
+	        stop_schroot_sessions "$schroot_port" ${schroot_boards}
+	        unset SCHROOT_TEST
+		#local dirs="/gdb"
+		#local check_targets="check-gdb"
+		return 0
 		;;
 	    *)
 		local dirs="/"
