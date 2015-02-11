@@ -44,6 +44,7 @@ else
 fi
 if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
   echo "Should be exactly one GCC path" 1>&2
+  echo "Got: ${benchgccpath}" 1>&2
   exit 1
 fi
 if test x"${benchgccpath}" != x; then
