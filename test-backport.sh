@@ -159,8 +159,9 @@ if test x"${fileserver}" != x; then
     toplevel="`dirname ${dir}`"
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
-    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
-	out="`ssh ${fileserver} ${tmp}/report.sh ${toplevel} $i`"
+#    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
+    for i in gcc g++ gfortran; do
+	out="`ssh ${fileserver} ${tmp}/report.sh ${toplevel} ${i}.sum`"
 	echo "${out}"
 	if test $? -gt 0; then
 	    ret=1
