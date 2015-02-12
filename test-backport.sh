@@ -141,7 +141,7 @@ while test $i -lt ${#revisions[@]}; do
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
     ssh ${fileserver} mkdir -p ${dir}
-    scp -C ${sums} ${logs} ${fileserver}:${dir}/
+    scp -C ${manifest} ${sums} ${logs} ${fileserver}:${dir}/
     #	rm -fr ${resultsdir}${revisions[$i]}
 
     i="`expr $i + 1`"
