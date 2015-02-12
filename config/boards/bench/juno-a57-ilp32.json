@@ -1,0 +1,51 @@
+{
+    "job_name": "bench-juno-a57-ilp",
+    "device_type": "juno",
+    "tags": [ "serial-console-server" ],
+    "timeout": 691200,
+    "actions": [
+        {
+            "command": "deploy_linaro_kernel",
+            "metadata": {
+                "distribution": "ubuntu",
+                "hwpack.type": "juno"
+            },
+            "parameters": {
+                "dtb": "http://people.linaro.org/~riku.voipio/juno.dtb",
+                "kernel": "http://people.linaro.org/~andrey.konovalov/Image.ll-20141204.0-ilp32",
+                "nfsrootfs": "http://people.linaro.org/~will.newton/linaro-utopic-developer-20150114-87-resolv.tar.gz",
+                "target_type": "ubuntu"
+            }
+        },
+        {
+            "command": "boot_linaro_image"
+        },
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/toolchain/lavabench.git",
+                        "testdef": "bench-session-debian.yaml",
+                        "parameters": {
+                           "GATEWAY": "10.0.0.1",
+                           "PUB_KEY": "",
+                           "LISTENER_ADDR": "",
+                           "LISTENER_PORT": ""
+                        }
+                    }
+                ],
+                "timeout": 691200
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "",
+                "stream": ""
+            }
+        }
+    ]
+}
+
