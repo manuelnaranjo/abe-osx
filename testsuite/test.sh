@@ -1583,6 +1583,18 @@ else
     untested "${testing}"
 fi
 
+testing="checkout: http://git@<url>/<repo>.git~<branch> should pass with appropriate notice"
+if test ! -e "${PWD}/host.conf"; then
+   package="abe.git"
+   branch='staging'
+   revision=""
+   should="pass"
+   expected="^NOTE: Checking out branch staging for abe in .\\+~staging$"
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+else
+   untested "${testing}"
+fi
+
 echo "============= misc tests ================"
 testing="pipefail"
 out="`false | tee /dev/null`"

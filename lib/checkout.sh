@@ -286,7 +286,7 @@ checkout()
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
+		    notice "Checking out branch ${branch} for ${tool} in ${srcdir}"
 		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
 		    flock ${local_builds}/git$$.lock --command "${cmd}"
 		    if test $? -gt 0; then
