@@ -255,6 +255,10 @@ checkout()
 		fi
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
+		if test $? -gt 0; then
+		    error "Failed to clone master branch from ${url} to ${repodir}"
+		    return 1
+		fi
 	    fi
 
 	    if test ! -d ${srcdir}; then

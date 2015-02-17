@@ -1483,6 +1483,18 @@ else
     untested "${testing}"
 fi
 
+testing="checkout: git://testingrepository/foo should fail with 'clone failed' message."
+if test ! -e "${PWD}/host.conf"; then
+   package="foo.git"
+   branch=''
+   revision=''
+   should="fail"
+   expected="^ERROR.*: checkout (Failed to clone master branch from git://testingrepository/foo to ${local_snapshots}/foo)$"
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+else
+    untested "${testing}"
+fi
+
 testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail with 'branch does not exist' message."
 if test ! -e "${PWD}/host.conf"; then
    package="abe.git"
