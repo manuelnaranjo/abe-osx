@@ -1,5 +1,5 @@
 {
-  "job_name": "bench-panda-es",
+  "job_name": "",
   "device_type": "panda-es",
   "timeout": 1800,
   "actions": [

@@ -1,5 +1,5 @@
 {
-    "job_name": "bench-juno-a53",
+    "job_name": "",
     "device_type": "juno",
     "tags": [ "serial-console-server" ],
     "timeout": 691200,
