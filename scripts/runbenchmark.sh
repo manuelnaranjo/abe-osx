@@ -97,6 +97,8 @@ clean_benchmark()
       echo "No directory to remove from ${ip}"
     elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
+    elif test ${error} -ne 0; then
+      echo "Not removing ${target_dir} from ${ip} as there was an error. You might want to go in and clean up."
     elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
       echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
       error=1
