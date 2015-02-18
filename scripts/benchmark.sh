@@ -87,7 +87,7 @@ if ! check_private_route localhost; then
 fi
 #End sanity checks
 
-
+tag=""
 compiler_flags=""
 run_benchargs=""
 skip_build=
@@ -95,8 +95,9 @@ benchmark_gcc_path=
 cautious='-c'
 keep= #if set, don't clean up benchmark output on target, don't kill lava targets
 target=
-while getopts f:a:i:b:kchs flag; do
+while getopts g:f:a:i:b:kchs flag; do
   case "${flag}" in
+    g) tag="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
     s) skip_build=1;;
     i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
@@ -188,7 +189,7 @@ if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   exit 1
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 

@@ -1,5 +1,5 @@
 {
-  "job_name": "bench-arndale",
+  "job_name": "",
   "device_type": "arndale",
   "timeout": 691200,
   "actions": [

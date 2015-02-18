@@ -116,10 +116,12 @@ lava_url="${LAVA_SERVER:-}"
 lava_server=
 lava_user=
 lava_json=
+lava_job_name="tcwg-benchmark"
 boot_timeout="$((120*60))" #2 hours
 key=${LAVA_SSH_KEYFILE:-}
-while getopts s:j:b:p: flag; do
+while getopts s:j:b:p:g: flag; do
   case "${flag}" in
+    g) lava_job_name="${OPTARG}";;
     s) lava_url="${OPTARG}";;
     j) lava_json="${OPTARG}";;
     b) boot_timeout="$((OPTARG*60))";;
@@ -215,6 +217,7 @@ if test $? -ne 0; then
   echo "Failed to populate json file with public key" 1>&2
   exit 1
 fi
+sed -i "s+^\(.*\"job_name\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"${lava_job_name}\"\2+" "${json_copy}"
 sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_user}@${lava_server}\"\2+" "${json_copy}"
 sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${lava_user}/\"\2+" "${json_copy}"
 

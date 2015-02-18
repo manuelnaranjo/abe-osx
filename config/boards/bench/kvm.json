@@ -1,5 +1,5 @@
 {
-    "job_name": "bench-kvm",
+    "job_name": "",
     "device_type": "kvm",
     "timeout": 1800,
     "actions": [

@@ -9,6 +9,7 @@ set -o nounset
 trap clean_benchmark EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
+tag=
 session_pid=
 lava_pid=
 listener_pid=
@@ -19,8 +20,9 @@ cautious=''
 build_dir=
 lava_target=
 run_benchargs=
-while getopts b:d:t:a:kc flag; do
+while getopts g:b:d:t:a:kc flag; do
   case "${flag}" in
+    g) tag="${OPTARG}";;
     k) keep='-k';;
     c) cautious='-c';;
     b) benchmark="${OPTARG}";;
@@ -180,9 +182,9 @@ if test $? -eq 0; then
   ip=''
   tee_output=/dev/console
   echo "Acquiring LAVA target ${lava_target}"
-  echo "${topdir}/scripts/lava.sh -s ${lava_url} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
+  echo "${topdir}/scripts/lava.sh ${tag:+-g "${tag}"} -s ${lava_url} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
 
-  ${topdir}/scripts/lava.sh -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&${lava_handle} 2>&1 &
+  ${topdir}/scripts/lava.sh ${tag:+-g "${tag}"} -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&${lava_handle} 2>&1 &
   if test $? -ne 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
