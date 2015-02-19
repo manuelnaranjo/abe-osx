@@ -400,8 +400,10 @@ cautiousness=0
 do_network=0
 do_aslr=1 #Enabled by default
 do_renice=1 #Enabled by default
-while getopts s:f:b:p:cnul: flag; do
+tee_cmd=0
+while getopts ts:f:b:p:cnul: flag; do
   case $flag in
+    t)  tee_cmd=1;;
     s)  services_file="${OPTARG}";;
     f)  freq="${OPTARG}";;
     b)  bench_cpu="${OPTARG}";;
@@ -585,7 +587,11 @@ if test x"${bench_cpu:-}" != x; then
   cmd="taskset -c ${bench_cpu} ${cmd}"
 fi
 echo "Running ${cmd}"
-${cmd}
+if test ${tee_cmd} -ne 0; then
+  ${cmd} | tee -a "${log}"
+else
+  ${cmd}
+fi
 if test $? -eq 0; then
   echo "Run of ${cmd} complete" | tee -a "${log}"
   exit 0
