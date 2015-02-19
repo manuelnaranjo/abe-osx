@@ -271,7 +271,7 @@ done
 #We have to run the ssh command asynchronously, because having the network down during a long-running benchmark will result in ssh
 #death sooner or later - we can stop ssh client and ssh server from killing the connection, but the TCP layer will get it eventually.
 
-#These parameters sourced from the conf file at beginning of this function
+#These parameters sourced from the board conf file at beginning of this function
 flags="${benchcore:+-b ${benchcore}} ${othercore:+-p ${othercore}}"
 if test x"${netctl:-}" = xyes; then
   flags+=" -n"
