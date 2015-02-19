@@ -65,6 +65,11 @@ if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   exit 1
 fi
+safe_output="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git safe_output`"
+if test $? -ne 0; then
+  echo "Unable to read benchmark config file for ${benchmark}" 1>&2
+  exit 1
+fi
 
 . "${topdir}"/scripts/benchutil.sh
 if test $? -ne 0; then
@@ -285,6 +290,11 @@ if test x"${servicectl:-}" = xyes; then
 fi
 if test x"${freqctl:-}" = xyes; then
   flags+=" -f"
+fi
+
+#This parameter read from the benchmark conf file earlier in this script
+if test x"${safe_output}" = xyes; then
+  flags+=" -t"
 fi
 
 #But, if uncontrolled is set, override all other flags
