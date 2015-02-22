@@ -51,18 +51,23 @@ else
     rm -fr ${user_workspace}/_build/* ${user_workspace}/_build/sysroots/*
 fi
 
+if test x"${runtests}" = xtrue; then
+    chroot="--enable-schroot-test"
+fi
+
 # Use the newly created build directory
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} \
+  $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
       --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 fi
 
 gcc_source="gcc-linaro-${version}-${release}.tar.xz"
 
 if test x"${runtests}" = xtrue; then
-    check=--check
+    chroot="--enable-schroot-test"
+    check="--check"
 else
     check=""
 fi
