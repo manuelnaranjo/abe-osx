@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"

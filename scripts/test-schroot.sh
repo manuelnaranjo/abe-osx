@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 set -e
 
 arch="native"

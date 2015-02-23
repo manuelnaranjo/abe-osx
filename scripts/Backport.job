@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 usage()
 {
     # Format this section with 75 columns.
