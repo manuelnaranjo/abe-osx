@@ -917,7 +917,8 @@ copy_gcc_libs_to_sysroot()
 	libgcc="libgcc.a"
     fi
 
-    libgcc="$($@ -print-file-name=${libgcc})"
+    gcc_exe="`find -name ${target}-gcc`"
+    libgcc="`${gcc_exe} -print-file-name=${libgcc}`"
     gcc_lib_path="$(dirname "${libgcc}")"
 
     if ! test -z "${ldso}"; then
