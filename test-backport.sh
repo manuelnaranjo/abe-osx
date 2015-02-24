@@ -89,6 +89,14 @@ fi
 
 rm -fr ${srcdir}
 git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
+# Make sure we are at the top of ${branch}
+pushd ${srcdir}
+# If in 'detached HEAD' state, don't try to update to the top of the branch
+detached=`git branch | grep detached`
+if test x"${detached}" = x; then
+    git rebase || exit 1
+fi
+popd
 
 # Get the last two revisions
 declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
