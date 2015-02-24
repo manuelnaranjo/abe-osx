@@ -66,6 +66,9 @@ releasestr=
 # This is a string of optional extra arguments to pass to abe at runtime
 user_options=""
 
+# Return status
+status=0
+
 OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
 while test $# -gt 0; do
     case $1 in
@@ -349,22 +352,22 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	done
 
 	logs_dir=$(mktemp -d)
-	cp ${sums} ${test_logs} ${logs_dir}/
+	cp ${sums} ${test_logs} ${logs_dir}/ || status=1
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${user_workspace} -name check\*.log`"
-	cp ${checks} ${logs_dir}/
+	cp ${checks} ${logs_dir}/ || status=1
 	
 	# Copy over the build logs
 	logs="`find ${user_workspace} -name make\*.log`"
-	cp ${logs} ${logs_dir}/
+	cp ${logs} ${logs_dir}/ || status=1
 
 	# Copy stdout and stderr output from abe.
-	cp build.out build.err ${logs_dir}/
+	cp build.out build.err ${logs_dir}/ || status=1
 
-	xz ${logs_dir}/*
-	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/
-	rm -rf ${logs_dir}
+	xz ${logs_dir}/* || status=1
+	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/ || status=1
+	rm -rf ${logs_dir} || status=1
 #	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 #	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 #	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
@@ -374,16 +377,17 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/
-	rm -f ${srcfiles}
+	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/ || status=1
+	rm -f ${srcfiles} || status=1
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} ${fileserver}:/work/space/binaries/
-	rm -f ${binfiles}
+	scp ${binfiles} ${fileserver}:/work/space/binaries/ || status=1
+	rm -f ${binfiles} || status=1
     fi
 
 fi
 
+exit $status
