@@ -493,7 +493,6 @@ check_directive()
 	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
     elif test x"$directive" = x; then
 	error "--${long} requires a directive.  See --usage for details.' "
-	build_failure
     elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
 	error "--${long} requires a directive.  ${abe} found the next -- switch.  See --usage for details.' "
     else
