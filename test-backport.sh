@@ -172,11 +172,11 @@ if test x"${fileserver}" != x; then
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
     for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
-	out="`ssh ${fileserver} ${tmp}/report.sh ${toplevel} ${i}.sum`"
-	echo "${out}"
+	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/report-${i}.txt"
 	if test $? -gt 0; then
 	    ret=1
 	fi
+	ssh ${fileserver} cat ${toplevel}/report-${i}.txt
     done
     rm -fr ${tmp}
 fi
