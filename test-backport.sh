@@ -29,6 +29,10 @@ EOF
     exit 0
 }
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 if test $# -lt 2; then
     echo "ERROR: No branch to build!"
     usage

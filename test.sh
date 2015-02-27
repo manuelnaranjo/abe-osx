@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 testabe="`basename $0`"
 topdir=`dirname $0`
 abe_path=`readlink -f ${topdir}`
