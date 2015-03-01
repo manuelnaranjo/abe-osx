@@ -50,7 +50,15 @@ abe="`which $0`"
 abe_path="`dirname ${abe}`"
 topdir="${abe_path}"
 abe="`basename $0`"
-node="`hostname | cut -d '.' -f 1`"
+
+# Non matrix builds use node_selector, but matrix builds use NODE_NAME
+if test x"${node_selector}" != x; then
+    node="`echo ${node_selector} | tr '-' '_'`"
+    job=${JOB_NAME}
+else
+    node="`echo ${NODE_NAME} | tr '-' '_'`"
+    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
+fi
 
 basedir="/work/logs"
 repo="gcc.git"
@@ -123,7 +131,6 @@ files="`find ${local_builds}/${build}/${target}/ -maxdepth 1 -type d | egrep 'st
 
 i=0
 while test $i -lt ${#revisions[@]}; do
-    job="Backport"
     dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
 
     # Don't build if a previous build of this revision exists
