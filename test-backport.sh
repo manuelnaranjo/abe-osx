@@ -98,7 +98,7 @@ pushd ${srcdir}
 # If in 'detached HEAD' state, don't try to update to the top of the branch
 detached=`git branch | grep detached`
 if test x"${detached}" = x; then
-    git rebase || exit 1
+    git checkout -B ${branch} origin/${branch} || exit 1
 fi
 popd
 
