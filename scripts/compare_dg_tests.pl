@@ -312,7 +312,7 @@ sub print_compare_results_summary($$)
    {
        printf "Comparing:\n";
        printf "REFERENCE:$ref_file_name\n";
-       printf "RESULTS:  $res_file_name\n\n";
+       printf "CURRENT:  $res_file_name\n\n";
    }
 
    #### TESTS STATUS
