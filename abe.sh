@@ -27,7 +27,8 @@ usage()
              [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
-             [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--parallel] [--release <release_version_string>]
+             [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
@@ -189,9 +190,14 @@ OPTIONS
 
   --prefix	Set an alternate value for the prefix used to configure.
 
-  --release <name>
-		The build system will package the resulting toolchain as a
-		release with the 'name' prefix.
+  --release <release_version_string>
+
+                The build system will package the resulting toolchain as a
+                release with the <release_version_string> embedded, e.g., if
+                <release_version_string> is "2014.10-1" the GCC 4.9 tarball
+                that is released will be named:
+
+                    gcc-linaro-4.9-2014.10-1.tar.xz
 
   --set		{libc}={glibc|eglibc|newlib}
 
@@ -209,7 +215,7 @@ OPTIONS
                 command lines options, and are primarily to be only used by
                 developers.
 
-  --set		{labguages}={c|c++|fortran|go|lto|objc|java|ada}
+  --set		{languages}={c|c++|fortran|go|lto|objc|java|ada}
                 This changes the default set of GCC front ends that get built.
                 The default set for most platforms is c, c++, go, fortran,
                 and lto.
@@ -583,6 +589,10 @@ dump()
 
     if test x"${default_march}" != x; then
 	echo "Default march      ${default_march}"
+    fi
+
+    if test x"${release}" != x; then
+        echo "Release Name       ${release}"
     fi
 }
 
