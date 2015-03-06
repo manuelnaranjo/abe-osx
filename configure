@@ -3203,6 +3203,8 @@ fi
 
 
 
+# Linux Foundation installs them in /opt/lsb.  Ubuntu will install them
+# in the default system library path.
 # Extract the first word of "lsbcc", so it can be a program name with args.
 set dummy lsbcc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3216,7 +3218,8 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+as_dummy="/opt/lsb/bin:${PATH}"
+for as_dir in $as_dummy
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -3256,7 +3259,8 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+as_dummy="/opt/lsb/bin:${PATH}"
+for as_dir in $as_dummy
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -3284,8 +3288,14 @@ fi
 
 
 if test x"${LSBCC}" = x; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'lsbcc' and 'lsbc++' to produce binary releases!" >&5
-$as_echo "$as_me: WARNING: You need 'lsbcc' and 'lsbc++' to produce binary releases!" >&2;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'lsbcc' and 'lsbc++' to produce binary releases!
+                    If your system is running the Fedora Linux distribution
+                    running: sudo abe/scripts/fedora_lsb_install.sh will
+                    install the LSB dependencies." >&5
+$as_echo "$as_me: WARNING: You need 'lsbcc' and 'lsbc++' to produce binary releases!
+                    If your system is running the Fedora Linux distribution
+                    running: sudo abe/scripts/fedora_lsb_install.sh will
+                    install the LSB dependencies." >&2;}
 #   missing="${missing} lsbcc"
 fi
 
