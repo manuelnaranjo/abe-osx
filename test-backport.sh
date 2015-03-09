@@ -186,6 +186,14 @@ if test x"${fileserver}" != x; then
 	ssh ${fileserver} cat ${toplevel}/report-${i}.txt
     done
     rm -fr ${tmp}
+
+    echo "### Compared REFERENCE:"
+    ssh ${fileserver} cat ${dir2}/manifest.txt
+    echo "### with NEW COMMIT:"
+    ssh ${fileserver} cat ${dir1}/manifest.txt
+
+    wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
+    echo "Full build logs: http://abe.tcwglab.linaro.org${wwwpath}/"
 fi
 
 exit ${ret}
