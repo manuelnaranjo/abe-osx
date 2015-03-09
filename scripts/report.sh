@@ -436,7 +436,11 @@ else
 fi
 
 if test x"${2}" != x; then
-    sumname="$2"
+    if test `echo $2 | grep -c "\.sum\$"` -eq 0; then
+	sumname="$2.sum"
+    else
+	sumname="$2"
+    fi
 else
     sumname="gcc.sum"
 fi
@@ -445,7 +449,7 @@ builds="`find ${toplevel} -type d`"
 declare -a sums=()
 i=0
 for rev in ${builds}; do
-    sums[$i]="`find ${rev} -name ${sumname}`"
+    sums[$i]="`find ${rev} -name ${sumname}\*`"
     i="`expr $i + 1`"
 done
 
@@ -455,7 +459,7 @@ i=0
 for sum in ${sums[@]}; do
     dirs[$i]=`dirname ${sum}`
     # Temporarily uncompress ${sum} if needed.
-    if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
+    if test `echo ${sum} | grep -c "\.xz"` -gt 0; then
 	file=/tmp/report-$i-$$
 	xzcat ${sum} > ${file}
 	sums[$i]=$file
@@ -569,15 +573,8 @@ done
 #    sed -e "1,${lineno}d" ${prev}/manifest.txt
 #fi
 
-#echo "Compressing sum files, will take a little while"
-#for sum in ${sums}; do
-#    if test `echo ${sum} | grep -c "\.xz$"` -gt 0; then
-#	file="`echo ${sum} | sed -e 's:\.xz::'`"
-#	printf "."
-#	xz ${file} 2>&1 > /dev/null
-#    fi
-#done
-#echo ""
+echo "Compressing sum files, will take a little while"
+xz ${sums}
 
 # echo ${returnstr}
 exit ${returncode}
