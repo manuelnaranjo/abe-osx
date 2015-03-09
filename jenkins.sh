@@ -251,7 +251,10 @@ fi
 
 version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
 if test x"${version}" = x"(experimental)" ; then
-    version=4.10
+    version=5.0
+fi
+if test x"${version}" = x"(prerelease)" ; then
+    version=4.9
 fi
 # bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
 distro="`lsb_release -c -s`"
