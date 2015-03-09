@@ -141,7 +141,7 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    bash -x ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
