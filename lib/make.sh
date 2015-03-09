@@ -65,6 +65,10 @@ build_all()
 
     # Checkout all the sources
     checkout_all
+    if test $? -ne 0; then
+        error "checkout_all failed"
+        return 1;
+    fi
 
     # build each component
     for i in ${builds}; do
