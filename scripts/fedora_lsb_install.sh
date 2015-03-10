@@ -35,7 +35,7 @@ tmp_keyfile="${tmpdir}/$(basename ${remote_keyfile})"
 su - $SUDO_USER -c "wget --quiet ${remote_keyfile} --output-document=${tmp_keyfile}"
 
 # Looking for "PGP public key block"
-if test $(file ${tmp_keyfile} | awk -F ' ' '{ print $2 }') != "PGP"; then
+if test x"$(file ${tmp_keyfile} | awk -F ' ' '{ print $2 }')" != x"PGP"; then
     echo "Keyfile: ${tmp_keyfile} downloaded from ${remote_keyfile} is not a PGP public key block."
     exit 1
 fi
