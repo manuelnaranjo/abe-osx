@@ -1,0 +1,116 @@
+#!/bin/sh
+# This script automatically test the given tool with the tool's test cases,
+# reporting anything of interest.
+
+# Written by Mike Stump <mrs@cygnus.com>
+# Subdir comparison added by Quentin Neill <quentin.neill@amd.com>
+# Modified by Yvan Roux <yvan.roux@linaro.org> and
+# Christophe Lyon <christophe.lyon@linaro.org>
+usage()
+{
+	if [ -n "$1" ] ; then
+		echo "$0: Error: $1" >&2
+		echo >&2
+	fi
+	cat >&2 <<EOUSAGE
+Usage: $0 [-strict] PREVIOUS CURRENT
+
+Compare the PREVIOUS and CURRENT test case .sum files, reporting anything of interest.
+
+	If PREVIOUS and CURRENT are directories, find and compare any *.sum files.
+
+	Unless -strict is given, these discrepancies are not counted as errors:
+		missing/extra .sum files when comparing directories
+		tests that failed in PREVIOUS but pass in CURRENT
+		tests that were not in PREVIOUS but appear in CURRENT
+		tests in PREVIOUS that are missing in CURRENT
+
+	Exit with the following values:
+		0 if there is nothing of interest
+		1 if there are errors when comparing single test case files
+		N for the number of errors found when comparing directories
+EOUSAGE
+	exit 2
+}
+
+export LC_ALL=C
+
+me="`which $0`"
+my_path="`dirname ${me}`"
+
+tool=gxx
+
+tmp1=/tmp/$tool-testing.$$a
+tmp2=/tmp/$tool-testing.$$b
+now_s=/tmp/$tool-testing.$$d
+before_s=/tmp/$tool-testing.$$e
+lst1=/tmp/$tool-lst1.$$
+lst2=/tmp/$tool-lst2.$$
+lst3=/tmp/$tool-lst3.$$
+lst4=/tmp/$tool-lst4.$$
+lst5=/tmp/$tool-lst5.$$
+sum1=/tmp/$tool-sum1.$$
+sum2=/tmp/$tool-sum2.$$
+tmps="$tmp1 $tmp2 $now_s $before_s $lst1 $lst2 $lst3 $lst4 $lst5 $sum1 $sum2"
+
+[ "$1" = "-strict" ] && strict=$1 && shift
+[ "$1" = "-?" ] && usage
+[ "$2" = "" ] && usage "Must specify both PREVIOUS and CURRENT"
+
+trap "rm -f $tmps" 0 1 2 3 5 9 13 15
+exit_status=0
+
+if [ -d "$1" -a -d "$2" ] ; then
+	find "$1/" \( -name '*.sum.xz' ! -name '*go.sum.xz' ! -name 'libgo-all.sum.xz' \)>$lst1
+	find "$2/" \( -name '*.sum.xz' ! -name '*go.sum.xz' ! -name 'libgo-all.sum.xz' \)>$lst2
+	echo "# Comparing directories"
+	echo "# REFERENCE: $1"
+	echo "# CURRENT:   $2"
+	echo
+	# remove leading directory components to compare
+	sed -e "s|^$1[/]*||" $lst1 | sort >$lst3
+	sed -e "s|^$2[/]*||" $lst2 | sort >$lst4
+	comm -23 $lst3 $lst4 >$lst5
+	if [ -s $lst5 ] ; then
+		echo "# Extra sum files in Dir1=$1"
+		sed -e "s|^|< $1/|" $lst5
+		echo
+		[ -n "$strict" ] && exit_status=`expr $exit_status + 1`
+	fi
+	comm -13 $lst3 $lst4 >$lst5
+	if [ -s $lst5 ] ; then
+		echo "# Extra sum files in Dir2=$2"
+		sed -e "s|^|> $2/|" $lst5
+		echo
+		[ -n "$strict" ] && exit_status=`expr $exit_status + 1`
+	fi
+	comm -12 $lst3 $lst4 | sort -u >$lst5
+	if [ ! -s $lst5 ] ; then
+		echo "# No common sum files"
+		exit_status=`expr $exit_status + 1`
+		exit $exit_status
+	fi
+	cmnsums=`cat $lst5 | wc -l`
+	echo "# Comparing $cmnsums common sum files"
+	( for fname in `cat $lst5`; do xzcat $1/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum1
+	( for fname in `cat $lst5`; do xzcat $2/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum2
+	# At some point, we'll add --no-unstable --unstable-test=${my_path}/unstable-tests.txt
+	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l $sum1 $sum2
+	ret=$?
+	if [ $ret -eq 2 ]; then
+		exit_status=`expr $exit_status + 1`
+		echo "# Regressions found"
+	else
+	    if [ $ret -eq 1 ]; then
+		echo "# Improvements found"
+	    fi
+	fi
+	if [ $exit_status -ne 0 ]; then
+		echo "# Regressions in $cmnsums common sum files found"
+	else
+		echo "# No regression found in $cmnsums common sum files"
+	fi
+	exit $exit_status
+elif [ -d "$1" -o -d "$2" ] ; then
+	usage "Must specify either two directories or two files"
+fi
