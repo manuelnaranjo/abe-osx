@@ -147,13 +147,18 @@ while test $i -lt ${#revisions[@]}; do
 	exit 1
    fi
 
+    # Compress .sum and .log files
+    sums="`find ${local_builds}/${build}/${target}/ -name \*.sum`"
+    logs="`find ${local_builds}/${build}/${target}/ -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
+    xz ${sums} ${logs}
+
     # FIXME: The way this is currently implemented only handles GCC backports. If binutils
     # backports are desired, this will have to be implented here.
-    sums="`find ${local_builds}/${build}/${target}/binutils-* -name \*.sum -o -name \*.sum.xz`"
-    sums="${sums} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.sum -o -name \*.sum.xz`"
+    sums="`find ${local_builds}/${build}/${target}/binutils-* -name \*.sum.xz`"
+    sums="${sums} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
     # Copy only the log files we want
-    logs="`find ${local_builds}/${build}/${target}/binutils-* -name \*.log -o -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
-    logs="${logs} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.log -o -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="`find ${local_builds}/${build}/${target}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="${logs} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
     
     manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
 
@@ -174,26 +179,28 @@ if test x"${fileserver}" != x; then
     # Diff the two directories
     tmp="/tmp/${node}/abe$$"
     ssh ${fileserver} mkdir -p ${tmp}
-    scp -r ${topdir}/scripts/report.sh ${fileserver}:${tmp}
+    # report.sh does not support .sum.xz for the moment
+    #scp -r ${topdir}/scripts/report.sh ${fileserver}:${tmp}
     # For comparison with the perl script:
+    scp ${topdir}/scripts/compare_tests ${fileserver}:${tmp}
     scp ${topdir}/scripts/compare_dg_tests.pl ${fileserver}:${tmp}
     scp ${topdir}/scripts/unstable-tests.txt ${fileserver}:${tmp}
     toplevel="`dirname ${dir}`"
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
-    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
-	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/diff-${i}.txt"
+#    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
+#	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/diff-${i}.txt"
 #	if test $? -gt 0; then
 #	    ret=1
 #	fi
-	ssh ${fileserver} cat ${toplevel}/diff-${i}.txt
+#	ssh ${fileserver} cat ${toplevel}/diff-${i}.txt
+#    done
+    ssh ${fileserver} "${tmp}/compare_tests ${dir2} ${dir1} > ${toplevel}/diff.txt"
+    if test $? -ne 0; then
+	ret=1
+    fi
+    ssh ${fileserver} cat ${toplevel}/diff.txt
 
-	ssh ${fileserver} "perl ${tmp}/compare_dg_tests.pl -l --no-unstable --unstable-test=${tmp}/unstable-tests.txt  ${dir2}/${i}.sum ${dir1}/${i}.sum > ${toplevel}/diff2-${i}.txt"
-	if test $? -eq 2; then
-	    ret=1
-	fi
-	ssh ${fileserver} cat ${toplevel}/diff2-${i}.txt
-    done
     rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
