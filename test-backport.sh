@@ -175,15 +175,24 @@ if test x"${fileserver}" != x; then
     tmp="/tmp/${node}/abe$$"
     ssh ${fileserver} mkdir -p ${tmp}
     scp -r ${topdir}/scripts/report.sh ${fileserver}:${tmp}
+    # For comparison with the perl script:
+    scp ${topdir}/scripts/compare_dg_tests.pl ${fileserver}:${tmp}
+    scp ${topdir}/scripts/unstable-tests.txt ${fileserver}:${tmp}
     toplevel="`dirname ${dir}`"
     dir1="${toplevel}/${revisions[0]}"
     dir2="${toplevel}/${revisions[1]}"
     for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
-	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/report-${i}.txt"
-	if test $? -gt 0; then
+	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/diff-${i}.txt"
+#	if test $? -gt 0; then
+#	    ret=1
+#	fi
+	ssh ${fileserver} cat ${toplevel}/diff-${i}.txt
+
+	ssh ${fileserver} "perl ${tmp}/compare_dg_tests.pl -l --no-unstable --unstable-test=${tmp}/unstable-tests.txt  ${dir2}/${i}.sum ${dir1}/${i}.sum > ${toplevel}/diff2-${i}.txt"
+	if test $? -eq 2; then
 	    ret=1
 	fi
-	ssh ${fileserver} cat ${toplevel}/report-${i}.txt
+	ssh ${fileserver} cat ${toplevel}/diff2-${i}.txt
     done
     rm -fr ${tmp}
 
