@@ -190,7 +190,9 @@ if test x"${fileserver}" != x; then
     dir2="${toplevel}/${revisions[1]}"
 #    for i in gcc g++ gfortran libstdc++ ld gas binutils libgomp libitm; do
 #	ssh ${fileserver} "${tmp}/report.sh ${toplevel} ${i}.sum > ${toplevel}/diff-${i}.txt"
-#	diff1_ret=$?
+#	if test $? -gt 0; then
+#	    ret=1
+#	fi
 #	ssh ${fileserver} cat ${toplevel}/diff-${i}.txt
 #    done
     ssh ${fileserver} "${tmp}/compare_tests ${dir2} ${dir1} > ${toplevel}/diff.txt"
