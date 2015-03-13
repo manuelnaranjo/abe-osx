@@ -40,6 +40,31 @@ if test $# -lt 2; then
 fi
 
 # load commonly used functions
+which_dir="`which $0`"
+topdir="`dirname ${which_dir}`"
+
+user_snapshots="${WORKSPACE}/snapshots"
+shared="/home/buildslave/workspace/shared/"
+snapshots_ref="${shared}/snapshots"
+
+if test ! -d ${snapshots_ref}/gcc.git; then
+    git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
+fi
+
+# Configure Abe itself. Force the use of bash instead of the Ubuntu
+# default of dash as some configure scripts go into an infinite loop with
+# dash. Not good...
+export CONFIG_SHELL="/bin/bash"
+if test x"${debug}" = x"true"; then
+    export CONFIG_SHELL="/bin/bash -x"
+fi
+
+if test x"${abe_dir}" = x; then
+    abe_dir=${topdir}
+fi
+$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+
+# load commonly used functions
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
@@ -80,6 +105,15 @@ while test $# -gt 0; do
     esac
     shift
 done
+
+if test x"${target}" != x"native" -a x"${target}" != x; then
+    platform="--target ${target}"
+    targetname=${target}
+else
+    # For native builds, we need to know the effective target name to
+    # be able to find the results
+    targetname=${build}
+fi
 
 if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
     branch="`echo ${branch} | sed -e 's:gcc.git~::'`"
@@ -123,6 +157,14 @@ else
     gerrit=""
 fi
 
+# Force the use of bash as CONFIG_SHELL:
+# - some configure scripts don't work with dash
+# - we may have overridden to use a schroot
+export CONFIG_SHELL="/bin/bash"
+if test x"${debug}" = x"true"; then
+    export CONFIG_SHELL="/bin/bash -x"
+fi
+
 # Checkout all the sources
 #bash -x ${topdir}/abe.sh --checkout all
 
@@ -141,26 +183,26 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} --disable update --check --target ${target} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
+    bash -x ${topdir}/abe.sh ${gerrit} --disable update --check ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
    fi
 
     # Compress .sum and .log files
-    sums="`find ${local_builds}/${build}/${target}/ -name \*.sum`"
-    logs="`find ${local_builds}/${build}/${target}/ -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
+    sums="`find ${local_builds}/${build}/${targetname}/ -name \*.sum`"
+    logs="`find ${local_builds}/${build}/${targetname}/ -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
     xz ${sums} ${logs}
 
     # FIXME: The way this is currently implemented only handles GCC backports. If binutils
     # backports are desired, this will have to be implented here.
-    sums="`find ${local_builds}/${build}/${target}/binutils-* -name \*.sum.xz`"
-    sums="${sums} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
+    sums="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.sum.xz`"
+    sums="${sums} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
     # Copy only the log files we want
-    logs="`find ${local_builds}/${build}/${target}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
-    logs="${logs} `find ${local_builds}/${build}/${target}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
     
-    manifest="`find ${local_builds}/${build}/${target} -name manifest.txt`"
+    manifest="`find ${local_builds}/${build}/${targetname} -name manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."

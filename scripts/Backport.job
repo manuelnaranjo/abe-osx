@@ -29,13 +29,8 @@ EOF
     return 0
 }
 
-# Server to store results on.
 abe_dir="${WORKSPACE}/abe"
-user_snapshots="${WORKSPACE}/snapshots"
-shared="/home/buildslave/workspace/shared/"
-snapshots_ref="${shared}/snapshots"
 export CONFIG_SHELL="/bin/bash"
-
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
@@ -48,11 +43,13 @@ rm -fr ${WORKSPACE}/_build/builds/* ${WORKSPACE}/_build/sysroots/*
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-if test ! -d ${snapshots_ref}/gcc.git; then
-    git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
-fi
-
-$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+case ${target} in
+    schroot-*)
+	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\1/")
+	target=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\2/")
+	CONFIG_SHELL="schroot -c tcwg-build-${schroot_arch}-trusty --preserve-environment -- ${CONFIG_SHELL}"
+	;;
+esac
 
 # If started by a Gerrit Trigger, use that for the branch.
 if test x"${GERRIT_TOPIC}" != x; then
