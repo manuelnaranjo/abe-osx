@@ -596,6 +596,13 @@ dump()
     fi
 }
 
+# Check disk space. Each builds needs about 3.8G free
+df="`df / | tail -1 | tr -s ' ' | cut -d ' ' -f 4`"
+if test ${df} -lt 4194304; then
+    error "Not enough disk space!"
+    exit 1
+fi
+
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
 # do_ switches are commands that should be executed after processing all
