@@ -170,8 +170,19 @@ build_all()
 	notice "Testing components"
 	buildingall=no
 	make_check ${binutils_version}
+	check_ret=$?
 	make_check ${gcc_version} stage2
+	if test $? -ne 0; then
+	    check_ret=1
+	fi
 	#make_check ${gdb_version}
+	#if test $? -ne 0; then
+	#    check_ret=1
+	#fi
+	if test ${check_ret} -ne 0; then
+	    error "Failed checking."
+	    return 1
+	fi
     fi
 
     # Notify that the test run completed successfully
