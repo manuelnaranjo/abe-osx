@@ -195,7 +195,7 @@ if test x"${fileserver}" != x; then
 #	fi
 #	ssh ${fileserver} cat ${toplevel}/diff-${i}.txt
 #    done
-    ssh ${fileserver} "${tmp}/compare_tests ${dir2} ${dir1} > ${toplevel}/diff.txt"
+    ssh ${fileserver} "${tmp}/compare_tests -target ${target} ${dir2} ${dir1} > ${toplevel}/diff.txt"
     if test $? -ne 0; then
 	ret=1
     fi
