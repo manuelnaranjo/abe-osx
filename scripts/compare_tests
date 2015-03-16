@@ -13,7 +13,7 @@ usage()
 		echo >&2
 	fi
 	cat >&2 <<EOUSAGE
-Usage: $0 [-strict] PREVIOUS CURRENT
+Usage: $0 [-strict] [-target target-triplet] PREVIOUS CURRENT
 
 Compare the PREVIOUS and CURRENT test case .sum files, reporting anything of interest.
 
@@ -24,6 +24,9 @@ Compare the PREVIOUS and CURRENT test case .sum files, reporting anything of int
 		tests that failed in PREVIOUS but pass in CURRENT
 		tests that were not in PREVIOUS but appear in CURRENT
 		tests in PREVIOUS that are missing in CURRENT
+
+        -target enables to provide the target name to use when parsing
+         the file containing the list of unstable tests.
 
 	Exit with the following values:
 		0 if there is nothing of interest
@@ -54,6 +57,7 @@ sum2=/tmp/$tool-sum2.$$
 tmps="$tmp1 $tmp2 $now_s $before_s $lst1 $lst2 $lst3 $lst4 $lst5 $sum1 $sum2"
 
 [ "$1" = "-strict" ] && strict=$1 && shift
+[ "$1" = "-target" ] && target=$2 && shift 2
 [ "$1" = "-?" ] && usage
 [ "$2" = "" ] && usage "Must specify both PREVIOUS and CURRENT"
 
@@ -95,7 +99,10 @@ if [ -d "$1" -a -d "$2" ] ; then
 	( for fname in `cat $lst5`; do xzcat $1/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum1
 	( for fname in `cat $lst5`; do xzcat $2/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum2
 	# At some point, we'll add --no-unstable --unstable-test=${my_path}/unstable-tests.txt
-	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l $sum1 $sum2
+	if [ "x${target}" != "x" ] ; then
+	    target="--target ${target}"
+	fi
+	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l --unstable-test=${my_path}/unstable-tests.txt ${target} $sum1 $sum2
 	ret=$?
 	if [ $ret -eq 2 ]; then
 		exit_status=`expr $exit_status + 1`

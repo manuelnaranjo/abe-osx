@@ -30,7 +30,7 @@ my $XFAIL_NOW_PASSES      = "Expected fail passes      [XFAIL=>XPASS]";
 my $FAIL_NOW_PASSES       = "Fail now passes           [FAIL => PASS]";
 my $NEW_PASSES		  = "New pass                  [     => PASS]";
 my $UNHANDLED_CASES	  = "Unhandled cases           [   ..??..   ]";
-my $UNSTABLE_CASES	  = "Unstable cases            [~RANDOM     ]";
+my $UNSTABLE_CASES	  = "Unstable cases, ignored   [~RANDOM     ]";
 
 # ERRORS
 my $PASSED_NOW_FAILS      = "Passed now fails          [PASS => FAIL]";
@@ -80,6 +80,7 @@ my ($testroot, $basename);
 my ($ref_file_name, $res_file_name);
 my $nounstable=0;
 my $unstablefile=0;
+my $target="";
 
 GetOptions ("l"           => \$long,
             "s"           => \$short,
@@ -89,7 +90,8 @@ GetOptions ("l"           => \$long,
             "testroot=s"  => \$testroot,
             "basename=s"  => \$basename,
             "no-unstable"  => \$nounstable,
-            "unstable-tests=s" => \$unstablefile);
+            "unstable-tests=s" => \$unstablefile,
+            "target=s"    => \$target);
 
 $ref_file_name = $ARGV[0] if ($#ARGV == 1);
 $res_file_name = $ARGV[1] if ($#ARGV == 1);
@@ -195,14 +197,28 @@ sub read_unstable($)
    open UNSTABLEFILE, $unstable_file or die $!;
    while (<UNSTABLEFILE>)
    {
-       # Skip lines starting with '#'
-       if (/^#/)
+       # Skip lines starting with '#', or with spaces only
+       if ((/^#/) || (/^[ 	]*$/))
        {
        }
        else
        {
 	   chomp;
-	   push @unstable_tests, $_;
+
+	   my $test = $_;
+
+	   # Check if line is of type: target:testname
+	   if (/^(.*):/)
+	   {
+	       if ($target eq $1) {
+		   # If target matches the one supplied as script
+		   # argument, add the testname to the list
+		   $test =~ s/.*://;
+		   push @unstable_tests, $test;
+	       }
+	   } else {
+	       push @unstable_tests, $test;
+	   }
        }
    }
    close UNSTABLEFILE;
@@ -262,31 +278,31 @@ sub compare_results($$)
    #### ACTIONS FOR EACH CASES
    foreach my $key (sort (keys %{$ref->{testcases}}))
    {
-       # If testcase is listed as 'unstable' mark it as such and skip
-       # other processing.
-       if (grep { (index $key,$_)!=-1} @unstablelist)
+       foreach my $diag_diag (@handler_list)
        {
-	   print "[unstable] $key\n" if ($debug);
-	   push @{$res->{$UNSTABLE_CASES}}, $key if ($nounstable == 0);
-       }
-       else
-       {
-	   foreach my $diag_diag (@handler_list)
+	   if ($ref->{testcases}->{$key}->{$diag_diag->{was}} != $res->{testcases}->{$key}->{$diag_diag->{was}}
+	       and $res->{testcases}->{$key}->{$diag_diag->{is}})
 	   {
-		  if ($ref->{testcases}->{$key}->{$diag_diag->{was}} != $res->{testcases}->{$key}->{$diag_diag->{was}}
-		  and $res->{testcases}->{$key}->{$diag_diag->{is}})
-		  {
-
-			print "[$diag_diag->{was} => $diag_diag->{is}] $key\n" if ($debug);
-			if ($diag_diag->{handler})
-			{
-			  $diag_diag->{handler} ($ref, $res, $diag_diag, $key);
-			}
-			else
-			{
-			  push @{$res->{$diag_diag->{cat}}}, $key;
-			}
-		  }
+	       # If testcase is listed as 'unstable' mark it as
+	       # such and skip other processing.
+	       {
+		   if (grep { (index $key,$_)!=-1} @unstablelist)
+		   {
+		       print "[unstable] $key\n" if ($debug);
+		       push @{$res->{$UNSTABLE_CASES}}, $key if ($nounstable == 0);
+		   }
+		   else {
+		       print "[$diag_diag->{was} => $diag_diag->{is}] $key\n" if ($debug);
+		       if ($diag_diag->{handler})
+		       {
+			   $diag_diag->{handler} ($ref, $res, $diag_diag, $key);
+		       }
+		       else
+		       {
+			   push @{$res->{$diag_diag->{cat}}}, $key;
+		       }
+		   }
+	       }
 	   }
        }
    }
