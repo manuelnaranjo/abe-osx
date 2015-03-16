@@ -295,9 +295,7 @@ build()
     check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
     ret=$?
     if test $ret -eq 0; then
-        if test x"${runtests}" != xyes; then
-            return 0 
-        fi
+	return 0
     elif test $ret -eq 255; then
         # Don't proceed if the srcdir isn't present.  What's the point?
         return 1
