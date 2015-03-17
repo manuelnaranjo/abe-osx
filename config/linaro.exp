@@ -34,12 +34,6 @@ if {[info exists env(SYSROOT_UNDER_TEST)]} {
 
 set myname [get_local_hostname]
 
-case "$myname" in {
-    { localhost } {
-	set target_list { unix }
-    }
-}
-
 if { "$tcl_platform(user)" == "buildslave" } {
     set machine_prefix "infra"
 } else {
