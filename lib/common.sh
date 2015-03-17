@@ -769,3 +769,23 @@ create_release_tag()
 #    echo ${revision}
 #    return 0
 #}
+
+# Search $runtests to see if $package should be unit tested.
+# List of tests to run
+# $1: ${runtests}
+# $2: ${package} to check
+# Return Value(s)
+# 0 = package found in runtests
+# 1 = package not found in runtests
+is_package_in_runtests()
+{
+    local unit_test="$1"
+    local package="$2"
+
+    for i in ${unit_test}; do
+        if test x"$i" = x"$package"; then
+            return 0
+	fi
+    done
+    return 1
+}
