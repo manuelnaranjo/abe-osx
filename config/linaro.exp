@@ -53,7 +53,7 @@ case "$target_triplet" in {
 	    { native* } {
 		set target_list { unix }
 	    }
-	    default{
+	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
 		    set target_list [list $machine_prefix-armv8]
