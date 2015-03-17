@@ -56,7 +56,7 @@ case "$target_triplet" in {
 #		set target_list { "arm-qemu" } 
 		set target_list { dragon-01 }
 	    }
-	    { natived01-* nativeapm-* nativejuno-* nativeamd-* } {
+	    { native* } {
 		set target_list { unix }
 	    }
 	    default{
@@ -90,7 +90,7 @@ case "$target_triplet" in {
     }
     { "aarch64-*linux*" } {
 	case "$native$myname" in {
-	    { nativeapm-* nativejuno-* nativeamd-* } {
+	    { native* } {
 		set target_list { unix }
 	    }
 	    default {
@@ -106,7 +106,7 @@ case "$target_triplet" in {
     }
     { "x86_64-*linux-gnu" "i686-*linux-gnu" } {
 	case "$native$myname" in {
-	    { nativebuild-* nativetcwg-ex40-* } {
+	    { native* } {
 		set target_list { unix }
 	    }
 	    default {
