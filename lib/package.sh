@@ -531,6 +531,29 @@ test_binary_toolchain()
 {
     local install="/tmp/install.$$"
 
+    local testgcc=
+    local testbin=
+    is_package_in_runtests "${runtests}" gcc
+    testgcc=$?
+
+    is_package_in_runtests "${runtests}" binutils
+    testbin=$?
+
+    # Check early and bail if binutils or gcc aren't to be tested.  In reality
+    # binary toolchains will probably be built with --check, or --check all
+    # (which is the same thing).
+    if test $testgcc -ne 0 -a $testbin -ne 0; then
+	notice "Nothing to test in ${runtests} for test_binary_toolchain()."
+	return 0
+    fi
+
+    # ${runtests} might contain something other than just gcc and binutils but
+    # we only test those for binary toolchains.
+    local testing="`if test ${testgcc} -eq 0; then echo -n ' gcc'; fi;`"
+    testing="${testing}`if test ${testbin} -eq 0; then echo -n ' binutils'; fi`"
+
+    notice "Testing the following binary toolchain packages:${testing}"
+
     if test ! -d ${install}; then
 	dryrun "mkdir -p ${install}"
     fi
@@ -545,12 +568,18 @@ test_binary_toolchain()
     local compiler="`dirname ${compiler}`"
     export PATH="${compiler}:$PATH"
 
-    # test GCC using the build we just completed, since we need access to the test cases.
-    make_clean ${binutils_version}
-    make_check ${binutils_version}
+    # Only test binutils if the user has requested it.
+    if test $testbin -eq 0; then
+	# test GCC using the build we just completed, since we need access to the test cases.
+	make_clean ${binutils_version}
+	make_check ${binutils_version}
+    fi
 
-    make_clean ${gcc_version} stage2
-    make_check ${gcc_version} stage2
+    # Only test gcc if the user has requested it.
+    if test $testgcc -eq 0; then
+	make_clean ${gcc_version} stage2
+	make_check ${gcc_version} stage2
+    fi
 
     rm -fr ${install}
 }

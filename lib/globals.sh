@@ -84,7 +84,17 @@ interactive=no
 nodepends=no
 verbose=1
 network=""
-runtests=no
+
+# Don't modify this in this file unless you're adding to it.  This is the list
+# of packages that have make check run against them.  It will be queried for
+# content when the users passes --check <package> or --excludecheck <package>.
+all_unit_tests="glibc gcc gdb binutils"
+
+# Packages to run make check (unit-test) on.  This variable is composed from
+# all --check <package> and --excludecheck <package> switches.  Don't modify
+# this parameter manually.
+runtests=
+
 ccache=no
 #gerrit=no
 
