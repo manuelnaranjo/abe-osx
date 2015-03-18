@@ -814,6 +814,9 @@ while test $# -gt 0; do
 		egrep "_revision|_version" $2 > /tmp/rev$$.txt
 		source /tmp/rev$$.txt
 		rm  /tmp/rev$$.txt
+	    else
+		error "Manifest file '$2' not found"
+		build_failure
 	    fi
 	    shift
 	    echo $gcc_version
