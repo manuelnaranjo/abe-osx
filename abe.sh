@@ -811,7 +811,9 @@ while test $# -gt 0; do
 	    check_directive $1 manifest "m" $2
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
-		. $2
+		egrep "_revision|_version" $2 > /tmp/rev$$.txt
+		source /tmp/rev$$.txt
+		rm  /tmp/rev$$.txt
 	    fi
 	    shift
 	    echo $gcc_version
