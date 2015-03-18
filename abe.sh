@@ -806,6 +806,7 @@ while test $# -gt 0; do
 	    if test -f $2 ; then
 		. $2
 	    fi
+	    shift
 	    echo $gcc_version
 	    ;;
        # download and install the infrastructure libraries GCC depends on
