@@ -1039,6 +1039,13 @@ while test $# -gt 0; do
 	    exit 0
 	    ;;
 	*)
+	    # Look for unsupported -<foo> or --<foo> directives.
+	    if test `echo $1 | grep -Ec "^-+"` -gt 0; then
+		error "${1}: Directive not supported.  See ${abe} --help for supported options."
+		build_failure
+	    fi
+
+	    # Test for <foo>= specifiers
 	    if test `echo $1 | grep -c =` -gt 0; then
 		name="`echo $1 | cut -d '=' -f 1`"
 		value="`echo $1 | cut -d '=' -f 2`"
@@ -1093,14 +1100,21 @@ while test $# -gt 0; do
 				newlib_version="${value}"
 				;;
 			    *)
+				error "FIXME: Execution should never reach this point."
+				build_failure
 				;;
 			esac
 			;;
 		    *)
+			# This will catch unsupported component specifiers like <foo>=
+			error "${name}: Component specified not supported.  See ${abe} --help for supported components."
+			build_failure
 			;;
 		esac
 	    else
-		error "$1: Command not recognized."
+		# This will catch dangling words like <foo> that don't contain
+		# --<foo> and don't contain <foo>=
+		error "$1: Command not recognized.  See ${abe} --help for supported options."
 		build_failure
 	    fi
             ;;
