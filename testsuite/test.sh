@@ -129,8 +129,92 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
+. "${topdir}/testsuite/report-tests.sh"
 
 # ----------------------------------------------------------------------------------
+
+echo "=========== is_package_in_runtests() tests ============="
+
+
+# test the package at the beginning of the list
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests \"${in_runtests}\" glibc"
+in_package="glibc"
+out="`is_package_in_runtests "${in_runtests}" ${in_package}`"
+ret=$?
+if test ${ret} -eq 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests \"${in_runtests}\" ${in_package} resulted in '${ret}'"
+fi
+
+# test the package at the end of the list
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests \"${in_runtests}\" binutils"
+in_package="binutils"
+out="`is_package_in_runtests "${in_runtests}" ${in_package}`"
+ret=$?
+if test ${ret} -eq 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests \"${in_runtests}\" ${in_package} resulted in '${ret}'"
+fi
+
+# test the package in the middle of the list
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests \"${in_runtests}\" gdb"
+in_package="gdb"
+out="`is_package_in_runtests "${in_runtests}" ${in_package}`"
+ret=$?
+if test ${ret} -eq 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests \"${in_runtests}\" ${in_package} resulted in '${ret}'"
+fi
+
+# test a package not in the list
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests \"${in_runtests}\" foo"
+in_package="foo"
+out="`is_package_in_runtests "${in_runtests}" ${in_package}`"
+ret=$?
+if test ${ret} -eq 1; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests \"${in_runtests}\" ${in_package} resulted in '${ret}' expected '1'"
+fi
+
+# test a partial package name
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests \"${in_runtests}\" gd"
+in_package="gd"
+out="`is_package_in_runtests "${in_runtests}" ${in_package}`"
+ret=$?
+if test ${ret} -eq 1; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests \"${in_runtests}\" ${in_package} resulted in '${ret}' expected '1'"
+fi
+
+# test that unquoted $runtests fails
+in_runtests="glibc gdb gcc binutils"
+testing="is_package_in_runtests ${in_runtests} glibc (unquoted \${in_runtests})"
+in_package="glibc"
+out="`is_package_in_runtests ${in_runtests} ${in_package}`"
+ret=$?
+if test ${ret} -eq 1; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "is_package_in_runtests ${in_runtests} ${in_package} resulted in '${ret}'"
+fi
+
+
 
 echo "============= get_toolname() tests ================"
 

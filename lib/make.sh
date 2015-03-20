@@ -146,7 +146,72 @@ build_all()
     # Notify that the build completed successfully
     build_success
 
-    if test x"${gerrit}" = xyes -a x"${runtests}" = xyes; then
+    # If we're building a full toolchain the binutils tests need to be built
+    # with the stage 2 compiler, and therefore we shouldn't run unit-test
+    # until the full toolchain is built.  Therefore we test all toolchain
+    # packages after the full toolchain is built.  If ${runtests} is empty
+    # the user has requested that no tests run.  Binary tarballs have
+    # testing executed on the installed libraries and executables, not on
+    # the source tree.
+    if test x"${runtests}" != x -a x"${tarbin}" != x"yes"; then
+	notice "Testing components ${runtests}..."
+	buildingall=no
+	local check_ret=
+	local check_failed=
+
+	is_package_in_runtests "${runtests}" binutils
+	if test $? -eq 0; then
+	    make_check ${binutils_version}
+	    check_ret=$?
+	    check_failed="${check_failed} binutils"
+	fi
+
+	is_package_in_runtests "${runtests}" gcc
+	if test $? -eq 0; then
+	    make_check ${gcc_version} stage2
+	    check_ret=$?
+	    check_failed="${check_failed} gcc-stage2"
+	fi
+
+	is_package_in_runtests "${runtests}" gdb
+	if test $? -eq 0; then
+	    make_check ${gdb_version}
+	    check_ret=$?
+	    check_failed="${check_failed} gdb"
+	fi
+
+	# Only perform unit tests on [e]glibc when we're building native.
+        if test x"${target}" = x"${build}"; then
+	    # TODO: Get glibc make check working 'native'
+	    is_package_in_runtests "${runtests}" glibc
+	    if test $? -eq 0; then
+		#make_check ${glibc_version}
+	        #check_ret=$?
+	        #check_failed="${check_failed} glibc"
+		notice "make check on native glibc is not yet implemented."
+	    fi
+
+	    is_package_in_runtests "${runtests}" eglibc
+	    if test $? -eq 0; then
+		#make_check ${eglibc_version}
+	        #check_ret=$?
+	        #check_failed="${check_failed} eglibc"
+		notice "make check on native eglibc is not yet implemented."
+	    fi
+	fi
+
+	if test ${check_ret} -ne 0; then
+	    error "Failed checking of ${check_failed}."
+	    return 1
+	fi
+    fi
+
+    # Notify that the test run completed successfully
+    test_success
+
+    # If any unit-tests have been run, then we should send a message to gerrit.
+    # TODO: Authentication from abe to jenkins does not yet work.
+    if test x"${gerrit}" = xyes -a x"${runtests}" != x; then
 	local sumsfile="/tmp/sums$$.txt"
 	local sums="`find ${local_builds}/${host}/${target} -name \*.sum`"
 	for i in ${sums}; do
@@ -165,17 +230,6 @@ build_all()
 	fi
     fi
     rm -f ${sumsfile}
-    
-    if test x"${runtests}" = xyes -a x"${tarbin}" != x"yes"; then
-	notice "Testing components"
-	buildingall=no
-	make_check ${binutils_version}
-	make_check ${gcc_version} stage2
-	#make_check ${gdb_version}
-    fi
-
-    # Notify that the test run completed successfully
-    test_success
 
     if test x"${tarsrc}" = x"yes"; then
         if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
@@ -209,7 +263,9 @@ build_all()
 #            binary_gdb
 #        fi
         notice "Packaging took ${SECONDS} seconds"
-        if test x"${runtests}" = xyes; then
+	# If there aren't any tests specified to run then don't bother calling
+	# test_binary_toolchain.
+        if test x"${runtests}" != x; then
 	    test_binary_toolchain
             notice "Testing packaging took ${SECONDS} seconds"
 	fi
@@ -239,6 +295,11 @@ build()
     tag="`get_git_tag ${gitinfo}`"
 
     local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
+
+    # We have to use get_toolname because binutils-gdb use the same
+    # repository and get_toolname needs to parse the branchname to
+    # determine the tool.
+    local tool="`get_toolname ${srcdir}`"
 
     local stamp=
     stamp="`get_stamp_name build ${gitinfo} ${2:+$2}`"
@@ -284,9 +345,7 @@ build()
     check_stamp "${stampdir}" ${stamp} ${srcdir} build ${force}
     ret=$?
     if test $ret -eq 0; then
-        if test x"${runtests}" != xyes; then
-            return 0 
-        fi
+	return 0
     elif test $ret -eq 255; then
         # Don't proceed if the srcdir isn't present.  What's the point?
         return 1
@@ -354,15 +413,28 @@ build()
 	# compiler, so any tests that get executed on the target can be fully linked.
     fi
 
-    if test x"${runtests}" = xyes -a x"${tool}" != x"eglibc" -a x"${tarbin}" != xyes; then
-        if test x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
-	    if test x"${buildingall}" = xno; then
-		notice "Starting test run for ${tag}${2:+ $2}"
-		make_check ${gitinfo}${2:+ $2}
-		if test $? -gt 0; then
-                    return 1
-		fi
+    # Only execute make_check in build() if build_all() isn't being invoked for
+    # this run of abe.sh.  This is because build_all() will invoke make_check()
+    # in sequence after all builds are executed if it's been directed to run
+    # unit-tests. If --tarbin was specified we're never going to run make check
+    # because it takes too long and testing should have been run with an
+    # earlier invocation of abe.
+    # TODO: eliminate buildingall as a global and make it a local check passed
+    # via a parameter to build().
+    if test x"${buildingall}" = xno -a x"${tarbin}" != xyes; then
+
+	# Skip make_check if it isn't designated to be executed in ${runtests}
+	is_package_in_runtests "${runtests}" ${tool}
+	if test $? -eq 0 -a x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
+	    # We don't run make check on gcc stage1 or on gdbserver because
+	    # it's unnecessary.
+	    notice "Starting test run for ${tag}${2:+ $2}"
+	    make_check ${gitinfo}${2:+ $2}
+	    if test $? -gt 0; then
+	        return 1
 	    fi
+	else
+	    notice "make check skipped for ${tag}${2:+ $2}"
 	fi
     fi
 
@@ -906,6 +978,7 @@ make_target_sysroot()
     echo $sysroot
 }
 
+# TODO: Should copy_gcc_libs_to_sysroot() use the input parameter in $1?
 # $1 - compiler (and any compiler flags) to query multilib information
 copy_gcc_libs_to_sysroot()
 {

@@ -248,14 +248,14 @@ else
 fi
 
 # Setup the remote directory for tcwgweb
-gcc="`find ${user_workspace} -name ${target}\*gcc`"
+xgcc="`find ${user_workspace} -name xgcc`"
 
 # If we can't find GCC, our build failed, so don't continue
-if test x"${gcc}" = x; then
+if test x"${xgcc}" = x; then
     exit 1
 fi
 
-version="`${gcc} --version | head -1 | cut -d ' ' -f 5`"
+version="`${xgcc} --version | head -1 | cut -d ' ' -f 5`"
 if test x"${version}" = x"(experimental)" ; then
     version=5.0
 fi
