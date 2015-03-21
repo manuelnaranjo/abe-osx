@@ -339,16 +339,16 @@ manifest()
 
     local srcdir="`get_srcdir ${gcc_version}`"
     local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-    local gcc_revision="`get_git_revision ${srcdir}`"
+    local gcc_revision="`srcdir_revision ${srcdir}`"
 
     local srcdir="`get_srcdir ${gdb_version}`"
-    local gdb_revision="`get_git_revision ${srcdir}`"
+    local gdb_revision="`srcdir_revision ${srcdir}`"
     
     if test x"${dejagnu_version}" = x; then
 	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${dejagnu_version}`"
-    local dejagnu_revision="`get_git_revision ${srcdir}`"
+    local dejagnu_revision="`srcdir_revision ${srcdir}`"
     
     if test x"${linux_version}" = x; then
 	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
@@ -358,9 +358,9 @@ manifest()
 	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision=="`get_git_revision ${srcdir}`"
+    local binutils_revision="`srcdir_revision ${srcdir}`"
 
-    local abe_revision="`get_git_revision ${abe_path}`"
+    local abe_revision="`srcdir_revision ${abe_path}`"
 
      rm -f ${outfile}
     cat >> ${outfile} <<EOF 
@@ -383,9 +383,9 @@ gcc_revision=${gcc_revision}
 binutils_version=${binutils_version}
 binutils_revision=${binutils_revision}
 dejagnu_version=${dejagnu_version}
-dejagnu_revsion=${dejagnu_revision}
+dejagnu_revision=${dejagnu_revision}
 gdb_version=${gdb_version}
-gdb_revsion=${gdb_revision}
+gdb_revision=${gdb_revision}
 linux_version=${linux_version}
 
 # Abe revision used
