@@ -251,19 +251,43 @@ match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dr"
-match="Command not recognized"
+match="Directive not supported"
 test_failure "${cb_commands}" "${match}"
 
 cb_commands="-dr"
-match="Command not recognized"
+match="Directive not supported"
 test_failure "${cb_commands}" "${match}"
 
 cb_commands="--drnasdfa"
-match="Command not recognized"
+match="Directive not supported"
 test_failure "${cb_commands}" "${match}"
 
 # Test for expected failure for removed deprecated feature --dostep.
 cb_commands="--dostep"
+match="Directive not supported"
+test_failure "${cb_commands}" "${match}"
+
+# Test for expected failure for --libc=<foo>
+# https://bugs.linaro.org/show_bug.cgi?id=1372
+cb_commands="--libc"
+match="Directive not supported"
+test_failure "${cb_commands}" "${match}"
+
+# Test for expected failure for --libc=<foo>
+# https://bugs.linaro.org/show_bug.cgi?id=1372
+cb_commands="--libc="
+match="Directive not supported"
+test_failure "${cb_commands}" "${match}"
+
+# Test for expected failure for unknown toolchain component
+# https://bugs.linaro.org/show_bug.cgi?id=1372
+cb_commands="libc="
+match="Component specified not supported"
+test_failure "${cb_commands}" "${match}"
+
+# Test for non-directive dangling command
+# https://bugs.linaro.org/show_bug.cgi?id=1372
+cb_commands="libc"
 match="Command not recognized"
 test_failure "${cb_commands}" "${match}"
 

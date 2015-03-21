@@ -54,6 +54,8 @@ fi
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
+# In addition, we may have overridden CONFIG_SHELL to use a schroot
+# before, and need to reset it now that we are in the schroot.
 export CONFIG_SHELL="/bin/bash"
 if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
@@ -157,14 +159,6 @@ else
     gerrit=""
 fi
 
-# Force the use of bash as CONFIG_SHELL:
-# - some configure scripts don't work with dash
-# - we may have overridden to use a schroot
-export CONFIG_SHELL="/bin/bash"
-if test x"${debug}" = x"true"; then
-    export CONFIG_SHELL="/bin/bash -x"
-fi
-
 # Checkout all the sources
 #bash -x ${topdir}/abe.sh --checkout all
 
@@ -201,7 +195,7 @@ while test $i -lt ${#revisions[@]}; do
     # Copy only the log files we want
     logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
     logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
-    
+
     manifest="`find ${local_builds}/${build}/${targetname} -name manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
