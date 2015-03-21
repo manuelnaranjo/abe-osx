@@ -759,16 +759,16 @@ create_release_tag()
 }
 
 # Get the SHA-1 for the latest commit to the git repository
-#get_git_revision()
-#{
+srcdir_revision()
+{
 #    trace "$*"
-#    
-#    local srcdir=$1
-#    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
-#    
-#    echo ${revision}
-#    return 0
-#}
+    
+    local srcdir=$1
+    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
+    
+    echo ${revision}
+    return 0
+}
 
 # Search $runtests to see if $package should be unit tested.
 # List of tests to run
