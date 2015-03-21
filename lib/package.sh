@@ -373,23 +373,38 @@ hostname=${hostname}
 distribution=${distribution}
 host_gcc="${host_gcc_version}"
 
-# Component versions
-gmp_version=${gmp_version}
-mpc_version=${mpc_version}
-mpfr_version=${mpfr_version}
-gcc_branch=${gcc_branch}
-gcc_version=${gcc_versionnum}
-gcc_revision=${gcc_revision}
-binutils_version=${binutils_version}
+Component versions
+gmp_versionnum=${gmp_version}
+mpc_versionnum=${mpc_version}
+mpfr_versionnum=${mpfr_version}
+
+# Binutils
+binutils_branch=${binutils_version}
 binutils_revision=${binutils_revision}
-dejagnu_version=${dejagnu_version}
+binutils_version="binutils-gdb.git@${binutils_revision}"
+
+# DejaGnu
+dejagnu_versionnum=${dejagnu_version}
 dejagnu_revision=${dejagnu_revision}
-gdb_version=${gdb_version}
+dejagnu_version="dejagnu.git@${dejagnu_revision}"
+
+# GDB
+gdb_branch=${gdb_version}
 gdb_revision=${gdb_revision}
+gdb_version="binutils-gdb.git@${gdb_revision}"
+
+# GCC
+gcc_branch=${gcc_branch}
+gcc_versionnum=${gcc_versionnum}
+gcc_revision=${gcc_revision}
+gcc_version="gcc.git@${gcc_revision}"
+
+# Kernel
 linux_version=${linux_version}
 
 # Abe revision used
 abe_revision=${abe_revision}
+abe_version="abe.git@${abe_revision}"
 
 EOF
 
