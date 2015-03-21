@@ -129,7 +129,7 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
-. "${topdir}/testsuite/report-tests.sh"
+#. "${topdir}/testsuite/report-tests.sh"
 
 # ----------------------------------------------------------------------------------
 
