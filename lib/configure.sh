@@ -41,6 +41,17 @@ configure_build()
     local stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
     local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
 
+    # Since Binutils and GDB have a shared git repository, this confuses the logic
+    # of loading the right config file. If Binutils is already configured, then 
+    # assume GDB.
+    if test "`echo $1 | grep -c binutils`" -gt 0; then
+	if test -e ${local_builds}/${binutils_version}-configure-stamp; then
+	    local tool="gdb"
+	else
+	    local tool="binutils"
+	fi
+    fi
+    
     # Don't look for the stamp in the builddir because it's in builddir's
     # parent directory.
     local stampdir="`dirname ${builddir}`"
