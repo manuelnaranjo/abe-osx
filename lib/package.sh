@@ -362,7 +362,16 @@ manifest()
 
     local abe_revision="`srcdir_revision ${abe_path}`"
 
-     rm -f ${outfile}
+    if test x"${clibrary}" = x"eglibc"; then
+	local srcdir="`get_srcdir ${eglibc_version}`"
+    elif  test x"${clibrary}" = x"glibc"; then
+	local srcdir="`get_srcdir ${glibc_version}`"
+    elif test x"${clibrary}" = x"newlib"; then
+	local srcdir="`get_srcdir ${newlib_version}`"
+    fi
+    local libc_version="`srcdir_revision ${abe_path}`"
+    
+    rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
 build=${build}
@@ -381,7 +390,7 @@ mpfr_versionnum=${mpfr_version}
 # Binutils
 binutils_branch=${binutils_version}
 binutils_revision=${binutils_revision}
-binutils_version="binutils-gdb.git@${binutils_revision}"
+binutils_version="binutils.git@${binutils_revision}"
 
 # DejaGnu
 dejagnu_versionnum=${dejagnu_version}
@@ -391,13 +400,17 @@ dejagnu_version="dejagnu.git@${dejagnu_revision}"
 # GDB
 gdb_branch=${gdb_version}
 gdb_revision=${gdb_revision}
-gdb_version="binutils-gdb.git@${gdb_revision}"
+gdb_version="gdb.git@${gdb_revision}"
 
 # GCC
 gcc_branch=${gcc_branch}
 gcc_versionnum=${gcc_versionnum}
 gcc_revision=${gcc_revision}
 gcc_version="gcc.git@${gcc_revision}"
+
+# C Library
+clibrary=${clibrary}
+libc_version=${libc_version}
 
 # Kernel
 linux_version=${linux_version}
