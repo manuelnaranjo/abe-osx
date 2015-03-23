@@ -211,7 +211,9 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest ${local_builds}/${host}/${target}/manifest.txt
+    manifest
+    local txt="`find ${local_builds}/${host} -name \*manifest.txt`"
+    dryrun "cp ${txt} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -395,7 +397,7 @@ mpfr_versionnum=${mpfr_version}
 # Binutils
 binutils_branch=${binutils_version}
 binutils_revision=${binutils_revision}
-binutils_version=binutils.git@${binutils_revision}
+binutils_version=binutils-gdb.git@${binutils_revision}
 
 # DejaGnu
 dejagnu_version=${dejagnu_version}
@@ -403,7 +405,7 @@ dejagnu_version=${dejagnu_version}
 # GDB
 gdb_branch=${gdb_version}
 gdb_revision=${gdb_revision}
-gdb_version=gdb.git@${gdb_revision}
+gdb_version=binutils-gdb.git@${gdb_revision}
 
 # GCC
 gcc_branch=${gcc_branch}
