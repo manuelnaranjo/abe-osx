@@ -1550,7 +1550,7 @@ else
   if test $? -eq 0; then
     pass "${testing}"
   else
-    fail "${testing}"
+    xfail "${testing}"
   fi
 fi
 cmp_makeflags=
