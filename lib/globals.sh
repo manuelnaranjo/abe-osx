@@ -59,10 +59,10 @@ svn_id=
 
 # config values for the build machine
 libc_version=
-kernel=
+kernel=${kernel:+${kernel}}
 build_arch=${build_arch:+${build_arch}}
-hostname=
-distribution=
+hostname=${hostname:+${hostname}}
+distribution=${distribution:+${distribution}}
 
 # These are options flags to pass to make, usually just -j N as set by --parallel
 make_flags=
