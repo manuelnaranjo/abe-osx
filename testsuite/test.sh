@@ -129,7 +129,7 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
-. "${topdir}/testsuite/report-tests.sh"
+#. "${topdir}/testsuite/report-tests.sh"
 
 # ----------------------------------------------------------------------------------
 
@@ -251,15 +251,16 @@ else
 fi
 
 # ----------------------------------------------------------------------------------
-testing="get_toolname: bzr <repo> -linaro/<branch>"
-in="lp:gdb-linaro/7.5"
-out="`get_toolname ${in}`"
-if test ${out} = "gdb"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
+# Bzr branches are no longer actively maintained in abe.
+#testing="get_toolname: bzr <repo> -linaro/<branch>"
+#in="lp:gdb-linaro/7.5"
+#out="`get_toolname ${in}`"
+#if test ${out} = "gdb"; then
+#    pass "${testing}"
+#else
+#    fail "${testing}"
+#    fixme "${in} returned ${out}"
+#fi
 
 testing="get_toolname: git://<repo>[no .git suffix]"
 in="git://git.linaro.org/toolchain/binutils"

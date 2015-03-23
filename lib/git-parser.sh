@@ -128,7 +128,7 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo "${in}" | sed -n ' s#\(^git\)://.*#\1#p; s#\(^ssh\)://.*#\1#p; s#\(^http\)://.*#\1#p; s#\(^svn\)://.*#\1#p; s#\(^lp\):[/]*.*#\1#p'`"
+    local service="`echo "${in}" | sed -n ' s#\(^git\)://.*#\1#p; s#\(^ssh\)://.*#\1#p; s#\(^http\)://.*#\1#p;  s#\(^https\)://.*#\1#p; s#\(^svn\)://.*#\1#p; s#\(^lp\):[/]*.*#\1#p'`"
 
     # An http service with /svn in the url is actually an svn service.
     if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\/svn"`" -gt 0; then
@@ -139,7 +139,7 @@ git_parser()
     # other parsing in this case.
     if test x"${part}" = x"service"; then
 	# An http service with .git in the url is actually a git service.
-	if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\.git"`" -gt 0; then
+	if test "`echo ${service} | grep -c http`" -gt 0 -a "`echo ${in} | egrep -c "\.git"`" -gt 0; then
 	    service="git"
         # An ssh service is actually a git service.
         elif test x"${service}" = x"ssh"; then

@@ -76,7 +76,7 @@ test_parser repo "${in}" "${match}" "${errmatch}"
 
 # No expected errors.
 errmatch=0
-for transport in git ssh http; do
+for transport in git ssh http https; do
   in="${transport}://address.com/directory/repo.git"
   match=''
   test_parser user "${in}" "${match}" "${errmatch}"
@@ -176,7 +176,7 @@ test_parser revision "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
 
-for transport in git ssh http; do
+for transport in git ssh http https; do
   errmatch=0
   in="${transport}://address.com/directory/repo.git/branch"
   match='branch'
