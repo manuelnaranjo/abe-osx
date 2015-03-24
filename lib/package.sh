@@ -211,7 +211,9 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest ${local_builds}/${host}/${target}/manifest.txt
+    manifest
+    local txt="`find ${local_builds}/${host} -name \*manifest.txt`"
+    dryrun "cp ${txt} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -314,12 +316,6 @@ manifest()
 {
     trace "$*"
 
-    if test x"$1" = x; then
-	local outfile=${local_builds}/${host}/${target}/manifest.txt
-    else
-	local outfile=$1
-    fi
-
     if test x"${gmp_version}" = x; then
 	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
@@ -371,6 +367,17 @@ manifest()
     fi
     local libc_version="`srcdir_revision ${abe_path}`"
     
+    local mtag=
+    if test x"$1" = x; then
+	mtag="`create_release_tag ${gcc_version}`"
+	if test x"${release}" != x;then
+	    mtag="`echo ${mtag} | sed -e 's:~linaro-::'`"
+	fi
+	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
+    else
+	local outfile=$1
+    fi
+
     rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
@@ -380,7 +387,7 @@ target=${target}
 kernel=${kernel}
 hostname=${hostname}
 distribution=${distribution}
-host_gcc="${host_gcc_version}"
+host_gcc=${host_gcc_version}
 
 Component versions
 gmp_versionnum=${gmp_version}
@@ -390,23 +397,21 @@ mpfr_versionnum=${mpfr_version}
 # Binutils
 binutils_branch=${binutils_version}
 binutils_revision=${binutils_revision}
-binutils_version="binutils.git@${binutils_revision}"
+binutils_version=binutils-gdb.git@${binutils_revision}
 
 # DejaGnu
-dejagnu_versionnum=${dejagnu_version}
-dejagnu_revision=${dejagnu_revision}
-dejagnu_version="dejagnu.git@${dejagnu_revision}"
+dejagnu_version=${dejagnu_version}
 
 # GDB
 gdb_branch=${gdb_version}
 gdb_revision=${gdb_revision}
-gdb_version="gdb.git@${gdb_revision}"
+gdb_version=binutils-gdb.git@${gdb_revision}
 
 # GCC
 gcc_branch=${gcc_branch}
 gcc_versionnum=${gcc_versionnum}
 gcc_revision=${gcc_revision}
-gcc_version="gcc.git@${gcc_revision}"
+gcc_version=gcc.git@${gcc_revision}
 
 # C Library
 clibrary=${clibrary}
