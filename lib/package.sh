@@ -211,8 +211,7 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest
-    local txt="`find ${local_builds}/${host} -name \*manifest.txt`"
+    local txt="`manifest`"
     dryrun "cp ${txt} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
@@ -221,7 +220,7 @@ binary_toolchain()
 
     if test x"${build}" != x"${target}"; then
 	# FIXME: link the sysroot into the toolchain tarball
-	ln -sfnT ${sysroots} ${destdir}/libc
+	dryrun "ln -sfnT ${sysroots} ${destdir}/libc"
     fi
 
     # make the tarball from the tree we just created.
@@ -471,6 +470,9 @@ EOF
     local srcdir="`get_srcdir ${gcc_version}`"
     echo "---------------------------------------------" >> ${outfile}
     cd ${srcdir} && git log -n 1 >> ${outfile}
+
+    echo ${outfile}
+    return 0
 }
 
 # Build a source tarball
