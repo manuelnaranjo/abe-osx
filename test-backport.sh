@@ -199,7 +199,7 @@ while test $i -lt ${#revisions[@]}; do
     logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
     logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
 
-    manifest="`find ${local_builds}/${build}/${targetname} -name manifest.txt`"
+    manifest="`find ${local_builds}/${build}/${targetname} -name \*${revisions[$i]}\*manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
@@ -243,9 +243,9 @@ if test x"${fileserver}" != x; then
     rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
-    ssh ${fileserver} cat ${dir2}/manifest.txt
+    ssh ${fileserver} cat ${dir2}/\*manifest.txt
     echo "### with NEW COMMIT:"
-    ssh ${fileserver} cat ${dir1}/manifest.txt
+    ssh ${fileserver} cat ${dir1}/\*manifest.txt
 
     wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
     echo "Full build logs: http://abe.tcwglab.linaro.org${wwwpath}/"
