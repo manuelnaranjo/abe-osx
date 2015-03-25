@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
 Format-Version: 0.5
