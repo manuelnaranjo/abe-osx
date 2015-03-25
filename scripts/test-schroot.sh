@@ -5,6 +5,7 @@ PRGNAME=`basename $0`
 PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
 
 set -e
+set -o pipefail
 
 arch="native"
 begin_session=false
@@ -196,6 +197,7 @@ if ! [ -z "$shared_dir" ]; then
     # white spaces between options or ends with a space; filter ssh_command.
     ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
     try="0"
+    set +o pipefail
     while [ "$try" -lt "3" ]; do
 	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
 	if [ x"${PIPESTATUS[0]}" != x"0" ]; then
@@ -205,6 +207,7 @@ if ! [ -z "$shared_dir" ]; then
 	fi
 	break
     done
+    set -o pipefail
 
     # Remove temporary key and delete extra empty lines at the end of file.
     sed -i -e "/.*test-schroot\.$$\$/d" -e '/^$/N;/\n$/D' ~/.ssh/authorized_keys
@@ -284,6 +287,7 @@ fi
 
 if $finish_session; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT >/dev/null 2>&1 || true
+    set +o pipefail
     ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be
@@ -292,6 +296,7 @@ if $finish_session; then
 	$schroot umount -l /
 	ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port
     fi
+    set -o pipefail
     echo $target:$port finished session
 fi
 

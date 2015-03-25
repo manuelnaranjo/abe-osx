@@ -16,6 +16,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+set -e
+set -o pipefail
+
 # To run, this script takes arguments in the same format as abe.sh. The two
 # arguments it needs are the target architecture to build, and the gcc backport
 # branch name. Example:
