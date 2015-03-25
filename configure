@@ -5446,7 +5446,8 @@ fi
 
 
 if test x"${missing}" != x; then
-    as_fn_error $? "You need to install these packages: ${missing}" "$LINENO" 5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need to install these packages: ${missing}" >&5
+$as_echo "$as_me: WARNING: You need to install these packages: ${missing}" >&2;}
 fi
 
 rm -f Makefile

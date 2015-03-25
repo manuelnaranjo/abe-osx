@@ -463,7 +463,7 @@ AC_SUBST(NEWWORKDIR)
 AC_OUTPUT(host.conf)
 
 if test x"${missing}" != x; then
-    AC_MSG_ERROR([You need to install these packages: ${missing}])
+    AC_MSG_WARN([You need to install these packages: ${missing}])
 fi
 
 rm -f Makefile
