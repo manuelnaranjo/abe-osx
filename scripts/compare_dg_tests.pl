@@ -276,6 +276,8 @@ sub compare_results($$)
    }
 
    #### ACTIONS FOR EACH CASES
+   my %unstable_found;
+
    foreach my $key (sort (keys %{$ref->{testcases}}))
    {
        foreach my $diag_diag (@handler_list)
@@ -289,7 +291,7 @@ sub compare_results($$)
 		   if (grep { (index $key,$_)!=-1} @unstablelist)
 		   {
 		       print "[unstable] $key\n" if ($debug);
-		       push @{$res->{$UNSTABLE_CASES}}, $key if ($nounstable == 0);
+		       $unstable_found{$key}=1;
 		   }
 		   else {
 		       print "[$diag_diag->{was} => $diag_diag->{is}] $key\n" if ($debug);
@@ -306,6 +308,8 @@ sub compare_results($$)
 	   }
        }
    }
+   push @{$res->{$UNSTABLE_CASES}}, (sort (keys (%unstable_found)))  if ($nounstable == 0);
+
 }
 
 ######################################################
