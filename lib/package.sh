@@ -220,7 +220,7 @@ binary_toolchain()
 
     if test x"${build}" != x"${target}"; then
 	# FIXME: link the sysroot into the toolchain tarball
-	dryrun "ln -sfnT ${sysroots} ${destdir}/libc"
+	dryrun "ln -sfnT ${sysroots} ${destdir}/${target}/libc"
     fi
 
     # make the tarball from the tree we just created.
