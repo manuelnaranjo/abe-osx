@@ -143,7 +143,9 @@ if test x"${tarbin}" = xyes; then
     manifest="`find ${user_workspace} -name manifest.txt`"
     ssh ${fileserver} "if test ! -d ${binaries}; then mkdir -p ${binaries}; fi"
     scp ${manifest} ${fileserver}:${binaries}/
-    scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
+    tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
+    scp $ ${tarballs} ${fileserver}:${binaries}/
+#    rm -f ${user_snapshots}/*.xz ${user_snapshots}/*.asc
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
 	logs="`find ${user_workspace} -name \*.log`"
