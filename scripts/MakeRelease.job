@@ -123,7 +123,7 @@ if test x"${tarsrc}" = x"yes"; then
 	    echo "ERROR: No test results were found!"
 	fi
     fi
-    tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
+    tarballs="`find ${user_snapshots} -name \*${release}\*.xz -o -name \*${release}\*.asc`"
     if test x"${tarballs}" != x; then
 	scp ${tarballs} ${fileserver}:${snaps}/
 	if test $? -gt 0; then
