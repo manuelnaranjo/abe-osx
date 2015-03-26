@@ -111,10 +111,13 @@ done
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
     targetname=${target}
+    check="--check all"
 else
     # For native builds, we need to know the effective target name to
     # be able to find the results
     targetname=${build}
+    # For native builds, we don't check gdb because it is too slow
+    check="--check all --excludecheck gdb"
 fi
 
 if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
@@ -177,7 +180,7 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} --disable update ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs --check
+    bash -x ${topdir}/abe.sh ${gerrit} --disable update ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check}
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
