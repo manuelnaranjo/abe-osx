@@ -108,7 +108,7 @@ fi
 bases="/work/abe/baselines/${release}/${target}"
 snaps="/home/abe/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
-    manifest="`find ${user_workspace} -name manifest.txt`"
+    manifest="`find ${user_workspace} -name \*manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
