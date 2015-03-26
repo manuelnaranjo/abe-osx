@@ -140,7 +140,7 @@ fi
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
-    check=--check
+    check="--check all"
 fi
 
 if test x"${target}" != x"native"; then
@@ -149,6 +149,11 @@ fi
 
 if test x"${target}" != x""; then
     platform="--target ${target}"
+else
+    # For native builds, we don't check gdb because it is too slow
+    if test x"${runtests}" = xtrue; then
+	check="${check} --excludecheck gdb"
+    fi
 fi
 
 if test x"${libc}" != x; then

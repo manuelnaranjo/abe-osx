@@ -67,7 +67,7 @@ gcc_source="gcc-linaro-${version}-${release}.tar.xz"
 
 if test x"${runtests}" = xtrue; then
     chroot="--enable-schroot-test"
-    check="--check"
+    check="--check all"
 else
     check=""
 fi
