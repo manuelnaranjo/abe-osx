@@ -92,7 +92,10 @@ repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch=""
 
-OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options -- "$@"`"
+# Whether to exclude some component from 'make check'
+excludecheck=
+
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) local_snapshots=$2; shift ;;
@@ -102,6 +105,7 @@ while test $# -gt 0; do
         -o|--options) user_options=$2; shift ;;
 	-t|--target) target=$2; shift ;;
         -h|--help) usage ;;
+	--excludecheck) excludecheck=$2; shift ;;
 	*) branch=$1;;
 	--) break ;;
     esac
@@ -111,13 +115,15 @@ done
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
     targetname=${target}
-    check="--check all"
 else
     # For native builds, we need to know the effective target name to
     # be able to find the results
     targetname=${build}
-    # For native builds, we don't check gdb because it is too slow
-    check="--check all --excludecheck gdb"
+fi
+
+check="--check all"
+if test x"${excludecheck}" != x; then
+    check="${check} --excludecheck ${excludecheck}"
 fi
 
 if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
