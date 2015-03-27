@@ -140,7 +140,7 @@ fi
 # Copy the binary test results to the fileserver
 binaries="/work/space/binaries/${release}/${target}"
 if test x"${tarbin}" = xyes; then
-    manifest="`find ${user_workspace} -name manifest.txt`"
+    manifest="`find ${user_workspace} -name \*manifest.txt`"
     ssh ${fileserver} "if test ! -d ${binaries}; then mkdir -p ${binaries}; fi"
     scp ${manifest} ${fileserver}:${binaries}/
     tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
