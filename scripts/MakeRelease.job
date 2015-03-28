@@ -88,6 +88,7 @@ if test x"${tarbin}" = x"yes"; then
     if test x"${canadian}" = x"true"; then
 	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
 	host="--host i686-w64-mingw32"
+	rm -fr ${local_builds}/${host}/${target}/
     else
 	host=""
     fi
