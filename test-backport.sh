@@ -47,10 +47,6 @@ user_snapshots="${WORKSPACE}/snapshots"
 shared="/home/buildslave/workspace/shared/"
 snapshots_ref="${shared}/snapshots"
 
-if test ! -d ${snapshots_ref}/gcc.git; then
-    git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
-fi
-
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
@@ -131,27 +127,35 @@ else
     srcdir="${local_snapshots}/gcc.git~${branch}"
 fi
 
-# Due to update cycles, sometimes the branch isn't in the repository yet.
-exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
-if test "${exists}" -eq 0; then
-    pushd ${git_reference_dir}/${repo} && git fetch
+# If Gerrit is specify the two git revisions, don't try to extract them.
+if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
+    if test ! -d ${snapshots_ref}/gcc.git; then
+	git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
+    fi
+    
+    # Due to update cycles, sometimes the branch isn't in the repository yet.
+    exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
+    if test "${exists}" -eq 0; then
+	pushd ${git_reference_dir}/${repo} && git fetch
+	popd
+    fi
+    
+    rm -fr ${srcdir}
+    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
+    # Make sure we are at the top of ${branch}
+    pushd ${srcdir}
+    # If in 'detached HEAD' state, don't try to update to the top of the branch
+    detached=`git branch | grep detached`
+    if test x"${detached}" = x; then
+	git checkout -B ${branch} origin/${branch} || exit 1
+    fi
     popd
+
+    # Get the last two revisions
+    declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
+else
+    declare -a revisions=(${GIT_COMMIT} ${GIT_PREVIOUS_COMMIT})
 fi
-
-rm -fr ${srcdir}
-git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
-# Make sure we are at the top of ${branch}
-pushd ${srcdir}
-# If in 'detached HEAD' state, don't try to update to the top of the branch
-detached=`git branch | grep detached`
-if test x"${detached}" = x; then
-    git checkout -B ${branch} origin/${branch} || exit 1
-fi
-popd
-
-# Get the last two revisions
-declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
-
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
