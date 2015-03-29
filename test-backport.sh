@@ -43,9 +43,6 @@ fi
 which_dir="`which $0`"
 topdir="`dirname ${which_dir}`"
 
-user_snapshots="${user_workspace}/snapshots"
-snapshots_ref="${user_snapshots}"
-
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
@@ -59,8 +56,6 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
-
 # load variables set by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -85,14 +80,19 @@ fi
 basedir="/work/logs"
 repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
-branch=""
+branch="linaro-4.9-branch"
+user_workspace=${WORKSPACE:+${HOME}/workspace}
+user_snapshots="${user_workspace}/snapshots"
+snapshots_ref="${user_snapshots}"
 
-OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:b:g:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,options -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
 	-r|--repo) repo=$2 ;;
+        -g|--gitref) git_reference_dir=$2 ;;
+	-b|--branch) branch=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
 	-t|--target) target=$2 ;;
@@ -121,11 +121,14 @@ fi
 
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/${branch}"
+    snapshots_ref="${git_reference_dir}"
 else
     git_reference_dir="${user_snapshots}"
     snapshots_ref="${user_snapshots}"
     srcdir="${user_snapshots}/gcc.git~${branch}"
 fi
+
+$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If Gerrit is specify the two git revisions, don't try to extract them.
 if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
