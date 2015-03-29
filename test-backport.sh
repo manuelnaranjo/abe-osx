@@ -24,7 +24,19 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  test-backport.sh [--help] [f|--fileserver remote file server] --target triplet branch
+  test-backport.sh [--help]
+        [-f| --fileserver     [remote file server]
+        [-t] --target triplet [config triplet]
+        [-s] --snapshots      [path to snapshots directory]
+	[-r] --revisions      [revision1,revision2]
+        [-g] --gitref         [git reference directory]
+	[-b] --branch         [GCC git branch]
+        [-w] --workspace [alternate workspace]
+
+For example:
+
+test-backport.sh --fileserver fileserver.linaro.org --target arm-none-eabi --gitref /linaro/shared/snapshots --snapshots ~/workspace/snapshots --branch gcc.git~linaro-4.9-branch
+
 EOF
     exit 0
 }
@@ -81,16 +93,17 @@ basedir="/work/logs"
 repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch="linaro-4.9-branch"
-user_workspace=${WORKSPACE:+${HOME}/workspace}
+user_workspace=${WORKSPACE:-${HOME}/workspace/TestBackport}
 user_snapshots="${user_workspace}/snapshots"
 snapshots_ref="${user_snapshots}"
+revision_str=""
 
-OPTS="`getopt -o s:r:f:w:o:t:b:g:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:b:g:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:r,evisions:,options -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
-	-r|--repo) repo=$2 ;;
+	-r|--revisions) revision_str=$2 ;;
         -g|--gitref) git_reference_dir=$2 ;;
 	-b|--branch) branch=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
@@ -102,6 +115,14 @@ while test $# -gt 0; do
     esac
     shift
 done
+
+# The two revisions are specified on the command line
+if test x"${revision_str}" != x; then
+    if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
+	GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
+	GIT_PREVIOUS_COMMIT="`echo ${revision_str} | cut -d ',' -f 2`"
+    fi
+fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
@@ -130,7 +151,7 @@ fi
 
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
-# If Gerrit is specify the two git revisions, don't try to extract them.
+# If Gerrit is specifing the two git revisions, don't try to extract them.
 if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
     if test ! -d ${snapshots_ref}/gcc.git; then
 	git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
