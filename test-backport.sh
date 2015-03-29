@@ -99,7 +99,7 @@ snapshots_ref="${user_snapshots}"
 revision_str=""
 user_options=""
 
-OPTS="`getopt -o s:r:f:w:o:t:b:g:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:r,evisions:,options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:r,evisions:,options,check" -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
@@ -110,6 +110,7 @@ while test $# -gt 0; do
         -w|--workspace) user_workspace=$2 ;;
         -o|--options) user_options=$2 ;;
 	-t|--target) target=$2 ;;
+	-c|--check) check=$2 ;;
         -h|--help) usage ;;
 	*) branch=$1;;
 	--) break ;;
@@ -128,7 +129,7 @@ fi
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
     targetname=${target}
-    check="--check all"
+    check="--check ${check:-'all'}"
 else
     # For native builds, we need to know the effective target name to
     # be able to find the results
