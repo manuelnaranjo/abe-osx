@@ -43,9 +43,8 @@ fi
 which_dir="`which $0`"
 topdir="`dirname ${which_dir}`"
 
-user_snapshots="${WORKSPACE}/snapshots"
-shared="/home/buildslave/workspace/shared/"
-snapshots_ref="${shared}/snapshots"
+user_snapshots="${user_workspace}/snapshots"
+snapshots_ref="${user_snapshots}"
 
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
@@ -62,7 +61,7 @@ if test x"${abe_dir}" = x; then
 fi
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
-# load commonly used functions
+# load variables set by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
@@ -91,7 +90,7 @@ branch=""
 OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options -- "$@"`"
 while test $# -gt 0; do
     case $1 in
-        -s|--snapshots) local_snapshots=$2 ;;
+        -s|--snapshots) user_snapshots=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
 	-r|--repo) repo=$2 ;;
         -w|--workspace) user_workspace=$2 ;;
@@ -123,8 +122,9 @@ fi
 if test x"${git_reference_dir}" != x; then
     srcdir="${git_reference_dir}/${branch}"
 else
-    git_reference_dir="${local_snapshots}"
-    srcdir="${local_snapshots}/gcc.git~${branch}"
+    git_reference_dir="${user_snapshots}"
+    snapshots_ref="${user_snapshots}"
+    srcdir="${user_snapshots}/gcc.git~${branch}"
 fi
 
 # If Gerrit is specify the two git revisions, don't try to extract them.
@@ -140,7 +140,7 @@ if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
 	popd
     fi
     
-    rm -fr ${srcdir}
+    # rm -fr ${srcdir}
     git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
     # Make sure we are at the top of ${branch}
     pushd ${srcdir}
@@ -153,7 +153,9 @@ if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
 
     # Get the last two revisions
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
+    update="--disable update"
 else
+    update=""
     declare -a revisions=(${GIT_COMMIT} ${GIT_PREVIOUS_COMMIT})
 fi
 # Force GCC to not build the docs
@@ -184,11 +186,16 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} --disable update ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check}
+    bash -x ${topdir}/abe.sh ${gerrit} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check}
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
-   fi
+    fi
+
+    # Don't update any sources for the other revision.
+    if test x"${update}" = x; then
+	update="--disable update"
+    fi
 
     # Compress .sum and .log files
     sums="`find ${local_builds}/${build}/${targetname}/ -name \*.sum`"
