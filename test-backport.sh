@@ -97,6 +97,7 @@ user_workspace=${WORKSPACE:-${HOME}/workspace/TestBackport}
 user_snapshots="${user_workspace}/snapshots"
 snapshots_ref="${user_snapshots}"
 revision_str=""
+user_options=""
 
 OPTS="`getopt -o s:r:f:w:o:t:b:g:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:r,evisions:,options -- "$@"`"
 while test $# -gt 0; do
@@ -210,7 +211,7 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check}
+    bash -x ${topdir}/abe.sh ${gerrit} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check} ${user_options}
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
