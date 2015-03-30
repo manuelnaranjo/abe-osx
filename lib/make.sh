@@ -502,7 +502,7 @@ make_all()
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
-    local logfile="${builddir}/make-${tool}.log"
+    local logfile="${builddir}/make-${tool}${2:+-$2}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
 
