@@ -129,7 +129,7 @@ fi
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
     targetname=${target}
-    check="--check ${check:-'all'}"
+    check="--check ${check:-all}"
 else
     # For native builds, we need to know the effective target name to
     # be able to find the results
