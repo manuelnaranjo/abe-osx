@@ -99,7 +99,7 @@ snapshots_ref="${user_snapshots}"
 revision_str=""
 user_options=""
 
-OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:r,evisions:,options,check" -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check" -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2 ;;
@@ -236,7 +236,7 @@ while test $i -lt ${#revisions[@]}; do
     logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
     logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
 
-    manifest="`find ${local_builds}/${build}/${targetname} -name manifest.txt`"
+    manifest="`find ${local_builds}/${build}/${targetname} -name gcc.git@${revisions[$i]}\*manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
@@ -280,12 +280,15 @@ if test x"${fileserver}" != x; then
     rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
-    ssh ${fileserver} cat ${dir2}/manifest.txt
+    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[0]}\*manifest.txt`"
+    cat ${man}
+
     echo "### with NEW COMMIT:"
-    ssh ${fileserver} cat ${dir1}/manifest.txt
+    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
+    cat ${man}
 
     wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
-    echo "Full build logs: http://abe.tcwglab.linaro.org${wwwpath}/"
+    echo "Full build logs: http://${fileserver}${wwwpath}/"
 fi
 
 exit ${ret}
