@@ -280,11 +280,11 @@ if test x"${fileserver}" != x; then
     rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[0]}\*manifest.txt`"
+    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
     cat ${man}
 
     echo "### with NEW COMMIT:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
+    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[0]}\*manifest.txt`"
     cat ${man}
 
     wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
