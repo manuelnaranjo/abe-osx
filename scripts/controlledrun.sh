@@ -22,6 +22,11 @@ declare -a bound_processes
 declare -a downed_interfaces
 old_policy=
 
+#Debian non-root users do not have the sbins on the path by default
+#We can invoke them with full path, but then we don't work with distributions that install them in funny places
+#So just make sure that the sbins are on the path.
+export PATH=/sbin:/usr/sbin:$PATH
+
 #The chroot part is often a nop, but will get us out of chroot if necessary
 if test "${USER}" = root; then
   sudo="chroot /proc/1/root"

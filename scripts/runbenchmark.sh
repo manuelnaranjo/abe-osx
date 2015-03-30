@@ -309,17 +309,24 @@ fi
    . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
-     "echo 'STARTED' | nc ${listener_addr} ${listener_port} && \
-      cd ${target_dir} && \
+     "cd ${target_dir} && \
       tar xjf `basename ${buildtar}` && \
       cd `tar tjf ${buildtar} | head -n1` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
+     listener_found=0; \
      for i in {1..10}; do \
-       echo \"\\\${USER}@\\\`ifconfig eth0 | grep 'inet addr' | sed 's/[^:]*://' | cut -d ' ' -f 1\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
+       if ping -c 1 ${listener_addr}; then \
+         listener_found=1; \
+       fi \
      done; \
-     if test \\\${ret} -eq 0; then \
-       true; \
+     if test \\\${listener_found} -eq 1; then \
+       echo \"\\\${USER}@\\\`/sbin/ifconfig eth0 | grep 'inet addr' | sed 's/[^:]*://' | cut -d ' ' -f 1\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
+       if test \\\${ret} -eq 0; then \
+         true; \
+       else \
+         false; \
+       fi \
      else \
        false; \
      fi" \
@@ -338,12 +345,6 @@ fi
 session_pid=$!
 
 #lava_pid will expand to empty if we're not using lava
-handshake="`bgread -T 300 ${listener_pid} ${lava_pid} <&${listener_handle}`"
-if test $? -ne 0 -o x"${handshake:-}" != 'xSTARTED'; then
-  echo "Did not get handshake from target, giving up" 1>&2
-  exit 1
-fi
-
 #lava_pid will expand to empty if we're not using lava
 #No sense in setting a deadline on this one, it's order of days for many cases
 ip="`bgread ${listener_pid} ${lava_pid} <&${listener_handle}`"

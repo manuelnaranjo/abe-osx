@@ -107,7 +107,15 @@ end_port="$3"
 for ((listener_port=${start_port}; listener_port < ${end_port}; listener_port++)); do
   #Try to listen on the port. nc will fail if something has snatched it.
   echo "Attempting to establish listener on ${listener_addr}:${listener_port}" 1>&2
-  nc -kl "${listener_addr}" "${listener_port}" >> "${listener_file}"&
+
+  if test -e /bin/nc.openbsd; then
+    /bin/nc.openbsd     -l    "${listener_addr}"    "${listener_port}" >> "${listener_file}"&
+  elif test -e /bin/nc.traditional; then
+    /bin/nc.traditional -l -s "${listener_addr}" -p "${listener_port}" >> "${listener_file}"&
+  else
+    echo "Unable to identify netcat" 1>&2
+    exit 1
+  fi
   listener_pid=$!
 
   #nc doesn't confirm that it's got the port, so we spin until either:
