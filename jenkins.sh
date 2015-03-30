@@ -143,11 +143,7 @@ if test x"${runtests}" = xtrue; then
     check="--check all"
 fi
 
-if test x"${target}" != x"native"; then
-    target=""
-fi
-
-if test x"${target}" != x""; then
+if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
 else
     # For native builds, we don't check gdb because it is too slow
