@@ -69,12 +69,12 @@ if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
 # load variables set by configure
-if test -e "${PWD}/host.conf"; then
-    . "${PWD}/host.conf"
-else
-    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
-    exit 1
-fi
+#if test -e "${PWD}/host.conf"; then
+#    . "${PWD}/host.conf"
+#else
+#    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
+#    exit 1
+#fi
 abe="`which $0`"
 abe_path="`dirname ${abe}`"
 topdir="${abe_path}"
@@ -98,6 +98,7 @@ user_snapshots="${user_workspace}/snapshots"
 snapshots_ref="${user_snapshots}"
 revision_str=""
 user_options=""
+local_builds="${PWD}"
 
 OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check" -- "$@"`"
 while test $# -gt 0; do
@@ -151,6 +152,15 @@ else
     srcdir="${user_snapshots}/gcc.git~${branch}"
 fi
 
+# Create a build directory
+if test -d ${user_workspace}/_build; then
+    rm -fr ${user_workspace}/_build
+fi
+mkdir -p ${user_workspace}/_build
+
+# Use the newly created build directory
+pushd ${user_workspace}/_build
+
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If Gerrit is specifing the two git revisions, don't try to extract them.
@@ -194,11 +204,7 @@ else
     gerrit=""
 fi
 
-# Checkout all the sources
-#bash -x ${topdir}/abe.sh --checkout all
-
 resultsdir="/tmp/${node}/abe$$/${target}@"
-files="`find ${local_builds}/${build}/${target}/ -maxdepth 1 -type d | egrep 'stage2|binutils'`"
 
 i=0
 while test $i -lt ${#revisions[@]}; do
