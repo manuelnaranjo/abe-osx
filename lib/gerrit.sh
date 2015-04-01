@@ -325,13 +325,30 @@ gerrit_apply_patch()
 # [url]=" https://review.linaro.org/5282" [number]=" 5282" [ref]=" refs/changes/82/5282/1" [branch]=" linaro-4.9-branch" [commitMessage]=" Backport r219656, r219657, r219659, r219661, and r219679 from trunk." [status]=" NEW" [Change-Id]=" I39b6f9298b792755db08cb609a1a446b5e83603b" [revision]=" 6a645e59867c728c4b3bb897488faa00505725c4" [username]=" christophe.lyon" [email]=" christophe.lyon@linaro.org" [subject]=" Backport r219656, r219657, r219659, r219661, and r219679 from trunk." [isDraft]=" false" ["change I39b6f9298b792755db08cb609a1a446b5e83603b"]="change I39b6f9298b792755db08cb609a1a446b5e83603b" [approvals]=" Code-Review" [author]=" Michael Collison" [runTimeMilliseconds]=" 8" [project]=" toolchain/gcc" [sortKey]=" 00341e22000014a2" [description]=" Code-Review" [uploader]=" Michael Collison" [id]=" I39b6f9298b792755db08cb609a1a446b5e83603b" [sizeDeletions]=" -6" [parents]="2c4f089828371d3f89c5c8505e4450c629f4ca5b" [createdOn]=" 2015-03-30 01:39:17 UTC" [lastUpdated]=" 2015-03-30 22:26:37 UTC" [topic]=" Michael-4.9-backport-219656-219657-219659-219661-219679" [grantedOn]=" 2015-03-30 09:04:37 UTC" [type]=" stats" [open]=" true" [rowCount]=" 1" [owner]=" Michael Collison" [by]=" Christophe Lyon" )'
 gerrit_cherry_pick()
 {
+    trace "$*"
+
+    eval "$1"
+
     # FIXME: These four variables are here only for debugging. They're supplied by Gerrit
 #    GERRIT_TOPIC=Michael-4.9-backport-219656-219657-219659-219661-219679
-    GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
+#    GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
 
+    GERRIT_PROJECT=${records['project']}
+    GERRIT_REFSPEC=${records['ref']}
+#    local srcdir="`get_srcdir gcc.git@${records['parents']`"
+    local srcdir="`get_srcdir gcc.git`"
+    checkout "`get_URL gcc.git@${records['parents']}`"
+
+    (cd ${srcdir} && git fetch ssh://robert.savoye@${gerrit_host}:29418/${GERRIT_PROJECT} ${GERRIT_REFSPEC} && git cherry-pick FETCH_HEAD)
+}
+
+gerrit_query_patchset()
+{
+    trace "$*"
+    local changeid=${GERRIT_CHANGE_ID:-$1}
 
     # The the data for this patchset from Gerrit
-    ssh -q -x -p ${gerrit_port} robert.savoye@${gerrit_host} gerrit query --format=text ${GERRIT_CHANGE_ID} --current-patch-set > /tmp/query$$.txt
+    ssh -q -x -p ${gerrit_port} robert.savoye@${gerrit_host} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
     declare -A records
     while read line
     do
@@ -348,14 +365,6 @@ gerrit_cherry_pick()
     done < /tmp/query$$.txt
     rm -f /tmp/query$$.txt
 
-#    declare -p  records
-
-    GERRIT_PROJECT=${records['project']}
-    GERRIT_REFSPEC=${records['ref']}
-#    local srcdir="`get_srcdir gcc.git@${records['parents']`"
-    local srcdir="`get_srcdir gcc.git`"
-    checkout "`get_URL gcc.git@${records['parents']}`"
-
-    (cd ${srcdir} && git fetch ssh://robert.savoye@${gerrit_host}:29418/${GERRIT_PROJECT} ${GERRIT_REFSPEC} && git cherry-pick FETCH_HEAD)
-
+    declare -ptu records
+    return 0
 }
