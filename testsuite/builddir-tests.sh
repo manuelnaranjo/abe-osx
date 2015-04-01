@@ -88,3 +88,38 @@ else
     fail "get_builddir: tarball in subdirectory"
     fixme "${in} returned ${out}"
 fi
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git"
+out="`get_builddir ${in}~linaro_binutils-2_24-branch`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils-gdb.git~linaro_binutils-2_24-branch"; then
+    pass "get_builddir: merged binutils-gdb.git repository without second parameter to get_builddir."
+else
+    fail "get_builddir: merged binutils-gdb.git repository without second parameter to get_builddir."
+    fixme "${in} returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git"
+out="`get_builddir ${in}~linaro_binutils-2_24-branch binutils`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils-gdb.git~linaro_binutils-2_24-branch-binutils"; then
+    pass "get_builddir: merged binutils-gdb.git repository with second parameter to get_builddir."
+else
+    fail "get_builddir: merged binutils-gdb.git repository with second parameter to get_builddir."
+    fixme "${in} returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git"
+out="`get_builddir ${in}~master binutils`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils-gdb.git~master-binutils"; then
+    pass "get_builddir: merged binutils-gdb.git repository with master branch and binutils as a second parameter."
+else
+    fail "get_builddir: merged binutils-gdb.git repository with master branch and binutils as a second parameter."
+    fixme "${in} returned ${out}"
+fi
+
+in="git://git.linaro.org/toolchain/binutils-gdb.git"
+out="`get_builddir ${in}~master gdb`"
+if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils-gdb.git~master-gdb"; then
+    pass "get_builddir: merged binutils-gdb.git repository with master branch and gdb as a second parameter."
+else
+    fail "get_builddir: merged binutils-gdb.git repository with master branch and gdb as a second parameter."
+    fixme "${in} returned ${out}"

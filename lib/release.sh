@@ -71,7 +71,7 @@ release_binutils_src()
     fi
 
     local srcdir="`get_srcdir ${binutils_version}`"
-    local builddir="`get_builddir ${binutils_version}`"
+    local builddir="`get_builddir ${binutils_version} binutils`"
     # The new combined repository for binutils has GDB too, so we strip that off.
     local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::' -e 's:-binutils::'`"
 

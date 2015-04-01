@@ -161,7 +161,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
-	    make_check ${binutils_version}
+	    make_check ${binutils_version} binutils
 	    check_ret=$?
 	    check_failed="${check_failed} binutils"
 	fi
@@ -175,7 +175,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
-	    make_check ${gdb_version}
+	    make_check ${gdb_version} gdb
 	    check_ret=$?
 	    check_failed="${check_failed} gdb"
 	fi
