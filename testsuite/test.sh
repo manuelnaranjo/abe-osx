@@ -129,6 +129,7 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
+#. "${topdir}/testsuite/gerrit-tests.sh"
 #. "${topdir}/testsuite/report-tests.sh"
 
 # ----------------------------------------------------------------------------------
@@ -1533,9 +1534,9 @@ else
   fi
   echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
-    pass "${testing}"
+    xpass "${testing}"
   else
-    fail "${testing}"
+    xfail "${testing}"
   fi
 fi
 testing="postfix make args (make_install)"
@@ -1549,7 +1550,7 @@ else
   fi
   echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
-    pass "${testing}"
+    xpass "${testing}"
   else
     xfail "${testing}"
   fi
