@@ -161,7 +161,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
-	    make_check ${binutils_version}
+	    make_check ${binutils_version} binutils
 	    check_ret=$?
 	    check_failed="${check_failed} binutils"
 	fi
@@ -175,7 +175,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
-	    make_check ${gdb_version}
+	    make_check ${gdb_version} gdb
 	    check_ret=$?
 	    check_failed="${check_failed} gdb"
 	fi
@@ -846,7 +846,7 @@ make_check()
 	fi
 
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee -a ${checklog}"
 	done
 
 	# Stop schroot sessions
