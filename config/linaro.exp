@@ -111,7 +111,7 @@ case "$target_triplet" in {
 			    set target_list [list $machine_prefix-tcwgex40]
 			}
 			default {
-			    set target_list [list $machine_prefix-build]
+			    set target_list [list $machine_prefix-tcwgex40]
 			}
 		    }
 		} else {
@@ -127,7 +127,7 @@ case "$target_triplet" in {
 		    set target_list [list $machine_prefix-tcwgex40qemu]
 		}
 		default {
-		    set target_list [list $machine_prefix-buildqemu]
+		    set target_list [list $machine_prefix-tcwgex40qemu]
 		}
 	    }
 	} else {
