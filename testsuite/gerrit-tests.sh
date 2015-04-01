@@ -1,5 +1,6 @@
 # tests for the gerrit REST API functions
 
+set -x
 echo "============= gerrit() tests ================"
 
 review="/tmp/.gitreview"
@@ -32,7 +33,7 @@ else
 fi
 
 out="`extract_gerrit_project ${srcdir}`"
-if test x"${out}" = x"toolchain/abe"; then
+if test x"${out}" = x"toolchain/gcc"; then
     pass extract_gerrit_project""
 else
     ${fail_state} "extract_gerrit_project"
@@ -135,15 +136,15 @@ else
 fi
 
 # These next tests require a working SSH auth
-if test x"${GERRIT_CHANGE_ID}" = x;then
-    return
-fi
-
 eval "`gerrit_query_status gcc`"
 if test ${#query[@]} -gt 0; then
     pass "gerrit_query_status"
 else
-    ${fail_state} "gerrit_query_status"
+    if test x"${GERRIT_CHANGE_ID}" = x;then
+	untested "gerrit_query_status"
+    else
+	fail "gerrit_query_status"
+    fi
     fixme "gerrit_query_status returned ${out}"
 fi
 
@@ -151,6 +152,10 @@ patch="`gerrit_fetch_patch ${gerrit['REVISION']}`"
 if test "`echo $patch | grep -c "/tmp/gerrit[0-9]*.patch"`" -gt 0; then
     pass "gerrit_fetch_patch"
 else
-    ${fail_state} "gerrit_fetch_patch"
+    if test x"${GERRIT_CHANGE_ID}" = x;then
+	untested "gerrit_fetch_patch"
+    else
+	fail "gerrit_fetch_patch"
+    fi
     fixme "gerrit_fetch_patch returned ${patch}"
 fi
