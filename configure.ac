@@ -30,6 +30,7 @@ dnl --------------------------------------------------------
 dnl Figure out development tool stuff
 dnl --------------------------------------------------------
 missing=
+optional=
 AC_PROG_CC
 AC_PROG_CXX
 if test x"${CC}" = x -a x"${CXX}" = x; then
@@ -74,8 +75,9 @@ fi
 
 AC_PATH_PROG(CCACHE, ccache)
 
-# Linux Foundation installs them in /opt/lsb.  Ubuntu will install them
-# in the default system library path.
+# Linux Foundation installs them in /opt/lsb. Older Ubuntus will install them
+# in the default system library path, but as of Trusty you have to get LSB from
+# the Linux Foundation.
 AC_PATH_PROG(LSBCC, lsbcc, ,/opt/lsb/bin:${PATH})
 AC_PATH_PROG(LSBCXX, lsbc++, ,/opt/lsb/bin:${PATH})
 if test x"${LSBCC}" = x; then
