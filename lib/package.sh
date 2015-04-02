@@ -608,13 +608,22 @@ test_binary_toolchain()
 	# test GCC using the build we just completed, since we need access to the test cases.
 	make_clean ${binutils_version} binutils
 	make_check ${binutils_version} binutils
+	if test $? -gt 0; then
+	    error "'make_check ${binutils_version} binutils'."
+	    return 1
+	fi
     fi
 
     # Only test gcc if the user has requested it.
     if test $testgcc -eq 0; then
 	make_clean ${gcc_version} stage2
 	make_check ${gcc_version} stage2
+	if test $? -gt 0; then
+	    error "'make_check ${gcc_version} stage2' failed."
+	    return 1
+	fi
     fi
 
     rm -fr ${install}
+    return 0
 }

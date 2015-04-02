@@ -267,6 +267,10 @@ build_all()
 	# test_binary_toolchain.
         if test x"${runtests}" != x; then
 	    test_binary_toolchain
+	    if test $? -gt 0; then
+		error "test_binary_toolchain failed with return code $?"
+		return 1
+            fi
             notice "Testing packaging took ${SECONDS} seconds"
 	fi
     fi
@@ -502,7 +506,7 @@ make_all()
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
-    local logfile="${builddir}/make-${tool}.log"
+    local logfile="${builddir}/make-${tool}${2:+-$2}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
 
@@ -694,7 +698,7 @@ make_check_installed()
     if test x"${builddir}" = x; then
         local builddir="`get_builddir $1 ${2:+$2}`"
     fi
-    notice "Making check in ${builddir}"
+    notice "Making check in ${builddir} on installed components"
 
     # TODO:
     # extract binary tarball
@@ -705,15 +709,27 @@ make_check_installed()
     local tests=""
     case $1 in
         binutils*)
-            # these 
             local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
             dryrun "make -C ${builddir}/gas check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
+	    if test $? -gt 0; then
+		error "make -C ${builddir}/gas failed."
+		return 1;
+	    fi
             dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
+	    if test $? -gt 0; then
+		error "make -C ${builddir}/ld failed."
+		return 1;
+	    fi
             ;;
         gcc*)
             local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
             for i in "c c++"; do
                 dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
+		if test $? -gt 0; then
+		    error "make -C ${builddir} check-gcc=$i failed."
+		    return 1;
+		fi
+
             done
             ;;
         *libc*)
@@ -751,7 +767,7 @@ make_check()
     notice "Making check in ${builddir}"
 
 #    if test x"$2" != x; then
-#       make_check_installed
+#       make_check_installed ${2}
 #       return 0
 #    fi
 
@@ -786,7 +802,11 @@ make_check()
     # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
-        dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	if test $? -gt 0; then
+	    error "make check -C ${builddir} failed."
+	    return 1
+	fi
     else
 	local exec_tests
 	exec_tests=false
@@ -846,7 +866,12 @@ make_check()
 	fi
 
 	for i in ${dirs}; do
+	    # Always append "tee -a" to the log when building components individually
             dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee -a ${checklog}"
+	    if test $? -gt 0; then
+		error "make ${check_targets} -C ${builddir}$i failed."
+		return 1
+	    fi
 	done
 
 	# Stop schroot sessions

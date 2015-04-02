@@ -123,3 +123,4 @@ if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/binutils-gdb.git~mas
 else
     fail "get_builddir: merged binutils-gdb.git repository with master branch and gdb as a second parameter."
     fixme "${in} returned ${out}"
+fi
