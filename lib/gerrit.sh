@@ -205,7 +205,7 @@ submit_gerrit()
     local message="`cat $1`"
     local code="${2:-0}"
     local revision="${3:-}"
-    notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
+    notice "ssh -p ${gerrit['PORT']} ${gerrit['REVIEW_HOST']} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
 
     return 0
 }
@@ -225,7 +225,7 @@ gerrit_build_status()
     local code="0"
 
     # Initialize setting for gerrit if not done so already
-    if test x"${gerrit_username}" = x; then
+    if test x"${gerrit['USERNAME']}" = x; then
 	gerrit_info ${srcdir}
     fi
 
@@ -287,7 +287,7 @@ gerrit_query_status()
     local tool=$1
     local status=${2:-status:open}
 
-    gerrit_username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
+    local username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
     ssh -q -x -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a query=()
@@ -313,7 +313,7 @@ gerrit_fetch_patch()
     local srcdir="`get_srcdir gcc.git~${gerrit['BRANCH']}`"
 
     rm -f /tmp/gerrit$$.patch
-    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
+    (cd ${srcdir} && git fetch ssh://gerrit['USERNAME']@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
 
 #    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit_host}:29418/${GERRIT_PROJECT} ${GERRIT_REFSPEC} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
 
@@ -358,13 +358,13 @@ gerrit_cherry_pick()
 #    GERRIT_TOPIC=Michael-4.9-backport-219656-219657-219659-219661-219679
 #    GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
 
-    GERRIT_PROJECT=${records['project']}
-    GERRIT_REFSPEC=${records['ref']}
+#    GERRIT_PROJECT=${records['project']}
+#    GERRIT_REFSPEC=${records['ref']}
     local srcdir="`get_srcdir gcc.git@${records['parents']}`"
 #    local srcdir="`get_srcdir gcc.git`"
     checkout "`get_URL gcc.git@${records['parents']}`"
 
-    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit_host}:29418/${GERRIT_PROJECT} ${GERRIT_REFSPEC} && git cherry-pick FETCH_HEAD)
+    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git cherry-pick FETCH_HEAD)
 }
 
 # Example query message result:
@@ -388,7 +388,7 @@ gerrit_query_patchset()
 
     # get the data for this patchset from Gerrit using the REST API
     rm -f /tmp/query$$.txt
-    ssh -q -x -p ${gerrit_port} -i ~/.ssh/${gerrit_username}_rsa ${gerrit_username}@${gerrit_host} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
+    ssh -q -x -p ${gerrit['PORT']} -i ~/.ssh/${gerrit['USERNAME']}_rsa ${gerrit['USERNAME']}@${gerrit['HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
     declare -A records
     while read line
     do
@@ -408,3 +408,4 @@ gerrit_query_patchset()
     declare -ptu records
     return 0
 }
+
