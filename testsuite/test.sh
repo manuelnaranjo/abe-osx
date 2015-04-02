@@ -1599,14 +1599,16 @@ if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
   pass "${testing}"
 else
   fail "${testing}"
+  fixme "${testing} ${out}"
 fi
 dryrun="yes"
 testing="dryrun quote preservation (dryrun=yes)"
 out=`dryrun 'echo "enquoted"' 2>&1`
-if test x"${out}" = 'xDRYRUN: echo "enquoted"'; then
+if test `echo ${out} | grep -c "DRYRUN: echo \"enquoted\""` -gt 0; then
   pass "${testing}"
 else
   fail "${testing}"
+  fixme "${testing} ${out}"
 fi
 dryrun="no"
 
