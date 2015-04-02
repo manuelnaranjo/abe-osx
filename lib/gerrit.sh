@@ -48,7 +48,7 @@
 # the requireed information.
 gerrit_info()
 {
-    declare -A gerrit=()
+    export declare -A gerrit=()
 
     # Some commonly used Gerrit data we can extract from the gitreview file, if it exists.
     local srcdir=$1
@@ -67,10 +67,10 @@ gerrit_info()
     gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER}"
     gerrit['EVENT_TYPE']="${GERRIT_EVENT_TYPE}"
     gerrit['REFSPEC']="${GERRIT_REFSPEC}"
-    jenkins['JOB_NAME']="${JOB_NAME}"
-    jenkins['JOB_URL']="${JOB_URL}"
+#    jenkins['JOB_NAME']="${JOB_NAME}"
+#    jenkins['JOB_URL']="${JOB_URL}"
 
-    declare -ptu gerrit
+    declare -px gerrit
     return 0
 }
 
@@ -285,9 +285,10 @@ gerrit_get_record()
 gerrit_query_status()
 {
     local tool=$1
-    local status=${2:-status:open}
+    eval "$2"
+    local status=${3:-status:open}
 
-    local username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
+#    local username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
     ssh -q -x -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a query=()
@@ -299,7 +300,7 @@ gerrit_query_status()
     done < /tmp/query$$.txt
     rm -f /tmp/query$$.txt
 
-    declare -ptu query
+    declare -p query
     return 0;
 }
 
@@ -352,19 +353,14 @@ gerrit_cherry_pick()
 	warning "Gerrit support not specified, will try anyway"
     fi
 
-    eval "$1"
+    local changeid=${gerrit['CHANGE_ID']:+$1}
 
-    # FIXME: These four variables are here only for debugging. They're supplied by Gerrit
-#    GERRIT_TOPIC=Michael-4.9-backport-219656-219657-219659-219661-219679
-#    GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
-
-#    GERRIT_PROJECT=${records['project']}
-#    GERRIT_REFSPEC=${records['ref']}
-    local srcdir="`get_srcdir gcc.git@${records['parents']}`"
-#    local srcdir="`get_srcdir gcc.git`"
     checkout "`get_URL gcc.git@${records['parents']}`"
+    local srcdir="`get_srcdir gcc.git@${records['parents']}`"
 
-    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git cherry-pick FETCH_HEAD)
+    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${changeid} && git cherry-pick FETCH_HEAD)
+
+    return $?
 }
 
 # Example query message result:
@@ -380,16 +376,16 @@ gerrit_query_patchset()
     trace "$*"
 
     # Without being triggered by Gerrit, environment varibles we use wont exist.
-    if test x"${GERRIT_CHANGE_ID}" = x; then 
-	warning "Gerrit support not specified, will try anyway, but won't return correct results"
+    if test x"${gerrit['CHANGE_ID']}" = x; then 
+	warning "Gerrit support not specified, will try anyway, but wont return correct results"
     fi
 
-    local changeid="${GERRIT_CHANGE_ID:-$1}"
+    local changeid="$1"
 
     # get the data for this patchset from Gerrit using the REST API
     rm -f /tmp/query$$.txt
-    ssh -q -x -p ${gerrit['PORT']} -i ~/.ssh/${gerrit['USERNAME']}_rsa ${gerrit['USERNAME']}@${gerrit['HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
-    declare -A records
+    ssh -q -x -p ${gerrit['PORT']} -i ~/.ssh/${gerrit['USERNAME']}_rsa ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
+    declare -A records=()
     while read line
     do
 	local key="`echo ${line} | tr -d '}{' | cut -d ':' -f 1`"
@@ -405,7 +401,7 @@ gerrit_query_patchset()
     done < /tmp/query$$.txt
     rm -f /tmp/query$$.txt
 
-    declare -ptu records
+    declare -px records
     return 0
 }
 
