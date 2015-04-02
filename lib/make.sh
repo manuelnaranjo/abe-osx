@@ -211,7 +211,7 @@ build_all()
 
     # If any unit-tests have been run, then we should send a message to gerrit.
     # TODO: Authentication from abe to jenkins does not yet work.
-    if test x"${gerrit}" = xyes -a x"${runtests}" != x; then
+    if test x"${gerrit_trigger}" = xyes -a x"${runtests}" != x; then
 	local sumsfile="/tmp/sums$$.txt"
 	local sums="`find ${local_builds}/${host}/${target} -name \*.sum`"
 	for i in ${sums}; do
