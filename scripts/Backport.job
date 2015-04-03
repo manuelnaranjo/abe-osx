@@ -55,6 +55,9 @@ esac
 if test x"${GERRIT_TOPIC}" != x; then
     gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
+
+# FIXME: Just a temp debug hack to make sure test-backpor creates the two branches
+export GERRIT_CHANGEID=I45eec437dbee1c7612b3d313c409d942b7379b3f
 $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
 # force a failure of abe has build problems.
