@@ -54,6 +54,7 @@ fi
 # load commonly used functions
 which_dir="`which $0`"
 topdir="`dirname ${which_dir}`"
+. "${topdir}/lib/common.sh" || exit 1
 
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
@@ -68,16 +69,9 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-# load variables set by configure
-#if test -e "${PWD}/host.conf"; then
-#    . "${PWD}/host.conf"
-#else
-#    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
-#    exit 1
-#fi
+
 abe="`which $0`"
 abe_path="`dirname ${abe}`"
-topdir="${abe_path}"
 abe="`basename $0`"
 
 # Non matrix builds use node_selector, but matrix builds use NODE_NAME
@@ -98,33 +92,65 @@ user_snapshots="${user_workspace}/snapshots"
 snapshots_ref="${user_snapshots}"
 revision_str=""
 user_options=""
-local_builds="${PWD}"
 
-OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check" -- "$@"`"
+# These are needed by the functions in the ABE library.
+local_builds="${PWD}"
+local_snapshots=${user_snapshots}
+sources_conf=${topdir}/config/sources.conf
+NEWWORKDIR=/usr/local/bin/git-new-workdir
+
+OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check -- "$@"`"
 while test $# -gt 0; do
     case $1 in
-        -s|--snapshots) user_snapshots=$2 ;;
-        -f|--fileserver) fileserver=$2 ;;
-	-r|--revisions) revision_str=$2 ;;
-        -g|--gitref) git_reference_dir=$2 ;;
-	-b|--branch) branch=$2 ;;
-        -w|--workspace) user_workspace=$2 ;;
-        -o|--options) user_options=$2 ;;
-	-t|--target) target=$2 ;;
-	-c|--check) check=$2 ;;
+        -s|--snapshots) user_snapshots=$2; shift ;;
+        -f|--fileserver) fileserver=$2; shift ;;
+	-r|--revisions) revision_str=$2; shift ;;
+        -g|--gitref) git_reference_dir=$2; shift ;;
+	-b|--branch) branch=$2; shift ;;
+        -w|--workspace) user_workspace=$2; shift ;;
+        -o|--options) user_options=$2; shift ;;
+	-t|--target) target=$2; shift ;;
+	-c|--check) check=$2; shift ;;
         -h|--help) usage ;;
-	*) branch=$1;;
+	*) ;;
 	--) break ;;
     esac
     shift
 done
 
+# If triggered by Gerrit, use the REST API. This assumes the lava-bot account
+# is supported by Gerrit, and the public SSH key is available. 
+if test x"${GERRIT_CHANGE_ID}" != x; then
+    eval `gerrit_info $HOME`
+    gerrit_trigger=yes
+    #gerrit_query_status gcc
+    
+    eval "`gerrit_query_patchset I45eec437dbee1c7612b3d313c409d942b7379b3f`"
+    echo "FIXME: ${records['parents']}"
+    echo "FIXME: ${records['revision']}"
+    #gerrit_cherry_pick ${gerrit['REFSPEC']}
+#    revision_str="${records['parents']},${records['revision']}"
+
+    # Check out the revision made before this patch gets merged in
+    checkout "`get_URL gcc.git@${records['parents']}`"
+
+    # Since a patch from Gerrit doesm't have a revision, mimic the behaviour 
+#    srcdir="`get_srcdir gcc.git@${records['parents']}`"
+#    destdir="`get_srcdir gcc.git@${records['revision']}`"
+#    mkdir -p ${destdir}
+#    cp -rdnp ${srcdir}/* ${destdir}/
+    gerrit_cherry_pick ${gerrit['REFSPEC']}
+else
+    gerrit_trigger=no
+fi
+
+echo "NOTE: No builds currently done in this branch, its for testing only!"
+exit				# HACK ALERT!!!
+
 # The two revisions are specified on the command line
 if test x"${revision_str}" != x; then
-    if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
-	GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
-	GIT_PREVIOUS_COMMIT="`echo ${revision_str} | cut -d ',' -f 2`"
-    fi
+    GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
+    GIT_PREVIOUS_COMMIT="`echo ${revision_str} | cut -d ',' -f 2`"
 fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
@@ -164,7 +190,7 @@ pushd ${user_workspace}/_build
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If Gerrit is specifing the two git revisions, don't try to extract them.
-if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
+if test x"${gerrit_trigger}" != xyes; then
     if test ! -d ${snapshots_ref}/gcc.git; then
 	git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
     fi
@@ -198,7 +224,7 @@ fi
 export BUILD_INFO=""
 
 # Don't try to add comments to Gerrit if run manually
-if test x"${GERRIT_PATCHSET_REVISION}" != x; then
+if test x"${gerrit_trigger}" != x; then
     gerrit="--enable gerrit"
 else
     gerrit=""
@@ -248,7 +274,7 @@ while test $i -lt ${#revisions[@]}; do
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
     ssh ${fileserver} mkdir -p ${dir}
     scp -C ${manifest} ${sums} ${logs} ${fileserver}:${dir}/
-    #	rm -fr ${resultsdir}${revisions[$i]}
+    # rm -fr ${resultsdir}${revisions[$i]}
 
     i="`expr $i + 1`"
 done
