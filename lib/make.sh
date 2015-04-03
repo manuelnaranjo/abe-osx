@@ -710,6 +710,8 @@ make_check_installed()
     case $1 in
         binutils*)
             local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
+	    # Overwrite check-binutils.log in order to provide a clean log file
+	    # if make check has been run more than once on a build tree.
             dryrun "make -C ${builddir}/gas check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
 	    if test $? -gt 0; then
 		error "make -C ${builddir}/gas failed."
@@ -724,12 +726,20 @@ make_check_installed()
         gcc*)
             local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
             for i in "c c++"; do
-                dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
+		# Remove pre-existing logs so that rerunning make check
+		# results in a clean log.
+		if test -e ${builddir}/check-${i}.log; then
+		    # This might or might not be called, depending on whether
+		    # make_clean is called before make_check_installed.
+		    # None-the-less it's better to be safe.
+		    notice "Removing existing check-${i}.log file: ${builddir}/check-${i}.log"
+		    rm ${builddir}/check-${i}.log
+		fi
+                dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-${i}.log"
 		if test $? -gt 0; then
 		    error "make -C ${builddir} check-gcc=$i failed."
 		    return 1;
 		fi
-
             done
             ;;
         *libc*)
@@ -802,6 +812,8 @@ make_check()
     # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
+	# Overwrite ${checklog} in order to provide a clean log file
+	# if make check has been run more than once on a build tree.
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	if test $? -gt 0; then
 	    error "make check -C ${builddir} failed."
@@ -863,6 +875,15 @@ make_check()
 	if test x"${tool}" = x"gcc"; then
             touch ${sysroots}/etc/ld.so.cache
             chmod 700 ${sysroots}/etc/ld.so.cache
+	fi
+
+	# Remove existing logs so that rerunning make check results
+	# in a clean log.
+	if test -e ${checklog}; then
+	    # This might or might not be called, depending on whether make_clean
+	    # is called before make_check.  None-the-less it's better to be safe.
+	    notice "Removing existing check-${tool}.log: ${checklog}"
+	    rm ${checklog}
 	fi
 
 	for i in ${dirs}; do
