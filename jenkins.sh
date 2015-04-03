@@ -75,14 +75,14 @@ status=0
 OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
 while test $# -gt 0; do
     case $1 in
-        -s|--snapshots) user_snapshots=$2 ;;
-        -g|--gitrepo) user_git_repo=$2 ;;
-        -c|--abe) abe_dir=$2 ;;
-	-t|--target) target=$2 ;;
-        -w|--workspace) user_workspace=$2 ;;
-        -o|--options) user_options=$2 ;;
-        -f|--fileserver) fileserver=$2 ;;
-        -l|--languages) languages=$2 ;;
+        -s|--snapshots) user_snapshots=$2; shift ;;
+        -g|--gitrepo) user_git_repo=$2; shift ;;
+        -c|--abe) abe_dir=$2; shift ;;
+	-t|--target) target=$2; shift ;;
+        -w|--workspace) user_workspace=$2; shift ;;
+        -o|--options) user_options=$2; shift ;;
+        -f|--fileserver) fileserver=$2; shift ;;
+        -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
 	-h|--help) usage ;;

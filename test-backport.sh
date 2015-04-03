@@ -103,15 +103,15 @@ local_builds="${PWD}"
 OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check" -- "$@"`"
 while test $# -gt 0; do
     case $1 in
-        -s|--snapshots) user_snapshots=$2 ;;
-        -f|--fileserver) fileserver=$2 ;;
-	-r|--revisions) revision_str=$2 ;;
-        -g|--gitref) git_reference_dir=$2 ;;
-	-b|--branch) branch=$2 ;;
-        -w|--workspace) user_workspace=$2 ;;
-        -o|--options) user_options=$2 ;;
-	-t|--target) target=$2 ;;
-	-c|--check) check=$2 ;;
+        -s|--snapshots) user_snapshots=$2; shift ;;
+        -f|--fileserver) fileserver=$2; shift ;;
+	-r|--revisions) revision_str=$2; shift ;;
+        -g|--gitref) git_reference_dir=$2; shift ;;
+	-b|--branch) branch=$2; shift ;;
+        -w|--workspace) user_workspace=$2; shift ;;
+        -o|--options) user_options=$2; shift ;;
+	-t|--target) target=$2; shift ;;
+	-c|--check) check=$2; shift ;;
         -h|--help) usage ;;
 	*) branch=$1;;
 	--) break ;;
