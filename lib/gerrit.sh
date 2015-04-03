@@ -59,7 +59,8 @@ gerrit_info()
     gerrit['PROJECT']="`extract_gerrit_project ${srcdir}`"
     gerrit['PROJECT']="${gerrit['PROJECT']:-toolchain/gcc}"
     gerrit['USERNAME']="`extract_gerrit_username ${srcdir}`"
-    gerrit['SSHKEY']="~/.ssh/lava-bot_rsa"
+    gerrit['USERNAME']="${gerrit['USERNAME']:-lava-bot"
+    gerrit['SSHKEY']="~/.ssh/${gerrit['USERNAME']}_rsa"
 
     # These only come from a Gerrit trigger
     gerrit['TOPIC']="${GERRIT_TOPIC:-~linaro-4.9-branch}"
@@ -90,7 +91,7 @@ extract_gerrit_host()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		Error "No ${srcdir}/.gitreview file!"
+		error "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
