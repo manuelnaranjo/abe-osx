@@ -129,6 +129,7 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
+. "${topdir}/testsuite/dryrun-tests.sh"
 
 # ----------------------------------------------------------------------------------
 
@@ -1589,6 +1590,7 @@ elif test x"${configure}" = xno; then
     fail "${testing}"
   fi
 fi
+<<<<<<< HEAD
 dryrun="no"
 
 testing="dryrun quote preservation (dryrun=no)"
@@ -1608,6 +1610,8 @@ else
 fi
 dryrun="no"
 
+=======
+>>>>>>> bf9a347... lib/common.sh: dryrun() should propogate the non-tee return value of 'eval $1'
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 

@@ -71,7 +71,20 @@ dryrun()
 	    return $?
 	fi
         echo "RUN: $1"
-	eval $1
+
+	# This block restricts the set -o pipefail to ONLY the command being
+	# evaluated.  The set -o pipefail command will cause the right-most
+	# non-zero return value of the expression ($1) being evaluated, to be
+	# propogated through to the finally returned value in $?.  This means
+	# that `foo | tee` will return the return value of 'foo' in $? if
+	# it is non-zero and not always return the right-most success '0' from
+	# tee.  Otherwise the tee command will always return '0'.  NOTE: the
+	# behavior of eval $1 w/rt return value is different for external
+	# programs than it is for internal functions.
+	(
+	    set -o pipefail
+	    eval $1
+	)
 	return $?
     fi
 
