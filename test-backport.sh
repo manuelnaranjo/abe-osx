@@ -118,6 +118,8 @@ while test $# -gt 0; do
     shift
 done
 
+# FIXME: Just a temp debug hack to make sure test-backpor creates the two branches
+export GERRIT_CHANGEID=I45eec437dbee1c7612b3d313c409d942b7379b3f
 # If triggered by Gerrit, use the REST API. This assumes the lava-bot account
 # is supported by Gerrit, and the public SSH key is available. 
 if test x"${GERRIT_CHANGE_ID}" != x; then
@@ -125,7 +127,7 @@ if test x"${GERRIT_CHANGE_ID}" != x; then
     gerrit_trigger=yes
     #gerrit_query_status gcc
     
-    eval "`gerrit_query_patchset I45eec437dbee1c7612b3d313c409d942b7379b3f`"
+    eval "`gerrit_query_patchset ${GERRIT_CHANGE_ID}`"
     echo "FIXME: ${records['parents']}"
     echo "FIXME: ${records['revision']}"
     #gerrit_cherry_pick ${gerrit['REFSPEC']}
