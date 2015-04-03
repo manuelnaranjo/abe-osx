@@ -986,12 +986,8 @@ while test $# -gt 0; do
 		    bootstrap="${value}"
 		    ;;
 		gerrit)
-		    gerrit="${value}"
+		    gerrit_trigger="${value}"
 		    # Initialize settings for gerrit
-		    gerrit_info $HOME
-		    if test x"${gerrit_branch}" != x; then
-			gcc_version="gcc.git~${gerrit_branch}@${gerrit_revision}"
-		    fi
 		    ;;
 		alltests)
 		    alltests="${value}"
@@ -1135,6 +1131,12 @@ done
 #     warning "No testsuite will be run when building tarballs!"
 #     runtests=no
 # fi
+
+# If triggered by Gerrit, use the REST API. This assumes the lava-bot account
+# is supported by Gerrit, and the public SSH key is available. 
+if test x"${GERRIT_CHANGE_ID}" != x -o x"${gerrit_trigger}" = xyes; then
+    eval `gerrit_info $HOME`
+fi
 
 timeout_save=${wget_timeout}
 wget_timeout=10
