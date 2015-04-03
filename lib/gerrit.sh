@@ -59,7 +59,7 @@ gerrit_info()
     gerrit['PROJECT']="`extract_gerrit_project ${srcdir}`"
     gerrit['PROJECT']="${gerrit['PROJECT']:-toolchain/gcc}"
     gerrit['USERNAME']="`extract_gerrit_username ${srcdir}`"
-    gerrit['USERNAME']="${gerrit['USERNAME']:-lava-bot"
+    gerrit['USERNAME']="${gerrit['USERNAME']:-lava-bot}"
     gerrit['SSHKEY']="~/.ssh/${gerrit['USERNAME']}_rsa"
 
     # These only come from a Gerrit trigger
