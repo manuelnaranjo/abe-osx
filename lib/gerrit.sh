@@ -48,13 +48,16 @@
 # the requireed information.
 gerrit_info()
 {
-    export declare -A gerrit=()
+    declare -A gerrit=()
 
     # Some commonly used Gerrit data we can extract from the gitreview file, if it exists.
-    local srcdir=$1
+    local srcdir=$1 
     gerrit['REVIEW_HOST']="`extract_gerrit_host ${srcdir}`"
+    gerrit['REVIEW_HOST']="${REVIEW_HOST:-review.linaro.org}"
     gerrit['PORT']="`extract_gerrit_port ${srcdir}`"
+    gerrit['PORT']="${gerrit['PORT']:-29418}"
     gerrit['PROJECT']="`extract_gerrit_project ${srcdir}`"
+    gerrit['PROJECT']="${gerrit['PROJECT']:-toolchain/gcc}"
     gerrit['USERNAME']="`extract_gerrit_username ${srcdir}`"
     gerrit['SSHKEY']="~/.ssh/lava-bot_rsa"
 
@@ -344,6 +347,7 @@ gerrit_apply_patch()
 
 # This function cherry picks a patch from Gerrit, and applies it to the current branch.
 # it requires the array from returned from gerrit_query_patchset().
+# $1 - The Change_ID from Gerrit for this patch
 gerrit_cherry_pick()
 {
     trace "$*"
@@ -353,12 +357,16 @@ gerrit_cherry_pick()
 	warning "Gerrit support not specified, will try anyway"
     fi
 
-    local changeid=${gerrit['CHANGE_ID']:+$1}
+    local refspec=${gerrit['REFSPEC']:+$1}
 
     checkout "`get_URL gcc.git@${records['parents']}`"
-    local srcdir="`get_srcdir gcc.git@${records['parents']}`"
 
-    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${changeid} && git cherry-pick FETCH_HEAD)
+    local srcdir="${local_snapshots}/gcc.git@${records['parents']}"
+    local destdir=${local_snapshots}/gcc.git@${records['revision']}
+    mkdir -p ${destdir}
+    cp -rdnp ${srcdir}/* ${srcdir}/.git ${destdir}/
+
+    (cd ${destdir} && git fetch ssh://${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${refspec} && git cherry-pick FETCH_HEAD)
 
     return $?
 }
