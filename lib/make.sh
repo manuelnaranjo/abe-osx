@@ -766,9 +766,12 @@ make_check()
 		*"-elf"*) schroot_sysroot="$(mktemp -d)" ;;
 		*) schroot_sysroot="$(make_target_sysroot)" ;;
 	    esac
+	    local ret=
 	    start_schroot_sessions "${target}" "${schroot_sysroot}" "${builddir}"
+	    ret=$?
+
 	    rm -rf "$schroot_sysroot"
-	    if test "$?" != "0"; then
+	    if test $ret -ne 0; then
 		return 1
 	    fi
 	fi
