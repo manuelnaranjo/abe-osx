@@ -119,7 +119,7 @@ while test $# -gt 0; do
 done
 
 # FIXME: Just a temp debug hack to make sure test-backpor creates the two branches
-export GERRIT_CHANGE_ID="I45eec437dbee1c7612b3d313c409d942b7379b3f"
+export GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
 # If triggered by Gerrit, use the REST API. This assumes the lava-bot account
 # is supported by Gerrit, and the public SSH key is available. 
 if test x"${GERRIT_CHANGE_ID}" != x; then
