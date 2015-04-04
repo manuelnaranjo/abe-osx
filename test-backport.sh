@@ -119,7 +119,7 @@ while test $# -gt 0; do
 done
 
 # FIXME: Just a temp debug hack to make sure test-backpor creates the two branches
-export GERRIT_CHANGE_ID=I45eec437dbee1c7612b3d313c409d942b7379b3f
+export GERRIT_CHANGE_ID="I45eec437dbee1c7612b3d313c409d942b7379b3f"
 # If triggered by Gerrit, use the REST API. This assumes the lava-bot account
 # is supported by Gerrit, and the public SSH key is available. 
 if test x"${GERRIT_CHANGE_ID}" != x; then
@@ -147,7 +147,6 @@ else
 fi
 
 echo "NOTE: No builds currently done in this branch, its for testing only!"
-exit				# HACK ALERT!!!
 
 # The two revisions are specified on the command line
 if test x"${revision_str}" != x; then
@@ -220,7 +219,9 @@ if test x"${gerrit_trigger}" != xyes; then
     update="--disable update"
 else
     update=""
-    declare -a revisions=(${GIT_COMMIT} ${GIT_PREVIOUS_COMMIT})
+    declare -a revisions=("`get_srcdir gcc.git@${records['parents']}`" "`get_srcdir gcc.git@${records['revision']}`")
+
+
 fi
 # Force GCC to not build the docs
 export BUILD_INFO=""
