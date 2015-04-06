@@ -40,7 +40,7 @@ done
 shift $((OPTIND-1))
 
 target="${1%:*}"
-port="${1#*:}"
+port="$(echo $1 | grep ":" | sed -e "s/.*://")"
 
 triplet_to_deb_arch()
 {
@@ -72,7 +72,8 @@ if [ -z "$target" ]; then
 fi
 
 if [ -z "$port" ]; then
-    port="22"
+    echo "ERROR: no custom [ssh] port specified"
+    exit 1
 fi
 
 use_qemu=false
