@@ -761,17 +761,8 @@ make_check()
 
 	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
 	    # Start schroot sessions on target boards that support it
-	    local schroot_sysroot
-	    case "${target}" in
-		*"-elf"*) schroot_sysroot="$(mktemp -d)" ;;
-		*) schroot_sysroot="$(make_target_sysroot)" ;;
-	    esac
-	    local ret=
-	    start_schroot_sessions "${target}" "${schroot_sysroot}" "${builddir}"
-	    ret=$?
-
-	    rm -rf "$schroot_sysroot"
-	    if test $ret -ne 0; then
+	    start_schroot_sessions "${target}" "${sysroots}" "${builddir}"
+	    if test $? -ne 0; then
 		return 1
 	    fi
 	fi
@@ -924,25 +915,6 @@ EOF
     fi
 
     return 0
-}
-
-# Make a single-use target sysroot with all shared libraries for testing.
-# NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
-# $1 - compiler (and any compiler flags) to query multilib information
-make_target_sysroot()
-{
-    trace "$*"
-
-    local sysroot
-    sysroot=/tmp/sysroot.$$
-    rsync -a $sysroots/ $sysroot/
-
-    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
-	# Remove symlink lib64 -> lib to make sysroot debian-compatible.
-	rm $sysroot/lib
-    fi
-
-    echo $sysroot
 }
 
 # TODO: Should copy_gcc_libs_to_sysroot() use the input parameter in $1?

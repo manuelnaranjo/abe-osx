@@ -220,6 +220,19 @@ fi
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
 
+    if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
+	# Our aarch64 sysroot has everything in /lib64, but executables
+	# still expect to find dynamic linker under /lib/ld-linux-aarch64.so.1
+	if [ -h $sysroot/lib ]; then
+	    $rsh root@$target "rm /sysroot/lib"
+	fi
+	if [ -h $sysroot/lib ] \
+	    || ! [ -e $sysroot/lib/ld-linux-aarch64.so.1 ]; then
+	    $rsh root@$target "mkdir -p /sysroot/lib/"
+	    $rsh root@$target "cd /sysroot/lib; ln -s ../lib64/ld-linux-aarch64.so.1 ."
+	fi
+    fi
+
     if ! $use_qemu; then
 	# Make sure that sysroot libraries are searched before any other.
 	$rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
@@ -232,12 +245,6 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
-	if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
-	    # Our aarch64 sysroot has everything in /lib64, but executables
-	    # still expect to find dynamic linker under
-	    # /lib/ld-linux-aarch64.so.1
-	    $rsh root@$target "ln -s /sysroot/lib64 /sysroot/lib"
-	fi
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
 	# Note the "-S none" option -- ssh does not always detach from process
 	# when multiplexing is used.  I think this is a bug in ssh.
