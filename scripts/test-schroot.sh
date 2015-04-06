@@ -17,8 +17,9 @@ target_ssh_opts=""
 host_ssh_opts=""
 profile="tcwg-test"
 multilib_path="lib"
+uname=""
 
-while getopts "a:bd:e:fh:l:mo:p:P:qv" OPTION; do
+while getopts "a:bd:e:fh:l:mo:p:P:qu:v" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
@@ -32,6 +33,7 @@ while getopts "a:bd:e:fh:l:mo:p:P:qv" OPTION; do
 	p) host_ssh_opts="$OPTARG" ;;
 	P) profile="$OPTARG" ;;
 	q) exec > /dev/null ;;
+	u) uname="$OPTARG" ;;
 	v) set -x ;;
     esac
 done
@@ -244,6 +246,18 @@ EOF
 	$rsh -f -S none $target bash -c "\"while sleep $delay; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
+fi
+
+if [ x"$uname" != x"" ]; then
+    old_uname="$($rsh root@$target "uname -m")"
+    $rsh root@$target "mv /bin/uname /bin/uname.real"
+    $rsh root@$target "cat > /bin/uname" <<EOF
+#!/bin/bash
+
+/bin/uname.real "\$@" | sed -e "s/$old_uname/$uname/g"
+exit \${PIPESTATUS[0]}
+EOF
+    $rsh root@$target "chmod a+x /bin/uname"
 fi
 
 if $ssh_master; then
