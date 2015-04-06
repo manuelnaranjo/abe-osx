@@ -273,7 +273,16 @@ if $ssh_master; then
 fi
 
 # Keep the session alive when file /dont_kill_me is present
-if $finish_session && [ x`$schroot cat /dont_keep_session` = x"1" ]; then
+if $finish_session; then
+    # Perform all operations from outside of schroot session since the inside
+    # may be completely broken (e.g., bash doesn't start).
+    schroot_location="$(ssh $target_ssh_opts $target schroot --location -c session:$profile-$port)"
+    if [ x"$(ssh $target_ssh_opts $target cat $schroot_location/dont_keep_session)" != x"1" ]; then
+	finish_session=false
+    fi
+fi
+
+if $finish_session; then
     $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
     ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
