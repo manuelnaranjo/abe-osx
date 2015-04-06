@@ -158,7 +158,7 @@ if $begin_session; then
     $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.
-    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT || true
+    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >dev/null 2>&1 || true
     # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
     $schroot chmod +x /bin/fusermount || true
 
@@ -283,7 +283,7 @@ if $finish_session; then
 fi
 
 if $finish_session; then
-    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
+    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT >/dev/null 2>&1 || true
     ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be
