@@ -50,7 +50,8 @@ gerrit_info()
 {
     trace "$*"
 
-    env | grep GERRIT
+    set
+    env
 
     declare -A gerrit=()
 
