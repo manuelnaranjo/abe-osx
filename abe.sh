@@ -31,6 +31,7 @@ usage()
              [--list] [--march <march>] [--manifest <manifest_file>]
              [--parallel] [--release <release_version_string>]
              [--set {libc}={glibc|eglibc|newlib}]
+             [--set {linker}={ld|gold}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
@@ -240,6 +241,12 @@ OPTIONS
 
                     gcc-linaro-4.9-2014.10-1.tar.xz
 
+  --set		{liinker}={ld|gold}
+
+                The default is to build the older GNU linker. This option
+                changes the linker to Gold, which is required for some C++
+                projects, including Andriod and Chromium.
+ 
   --set		{libc}={glibc|eglibc|newlib}
 
 		The default value is stored in lib/global.sh.  This
@@ -479,6 +486,11 @@ set_package()
 	ldflags|ld*)
 	    override_ldflags="${setting}"
 	    notice "Overriding ${setting} to LDFLAGS"
+	    return 0
+	    ;;
+	linker|li*)
+	    override_linker="${setting}"
+	    notice "Overriding the default linker to ${setting} "
 	    return 0
 	    ;;
 	cflags|cf*)

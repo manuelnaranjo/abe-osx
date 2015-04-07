@@ -238,6 +238,9 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	binutils)
+	    if test x"${override_linker}" = x"gold"; then
+		local opts="${opts} --enable-gold=default"
+	    fi
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gdb*)

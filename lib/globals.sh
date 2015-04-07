@@ -102,6 +102,7 @@ release=""
 with_packages="toolchain,sysroot,gdb"
 building=yes
 
+override_linker=
 override_cflags=
 override_ldflags=
 override_runtestflags=
