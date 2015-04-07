@@ -1,4 +1,3 @@
 load_generic_config tcwgcommon
 
-set_board_info hostname juno-01
-
+set_board_info hostname juno-02.tcwglab

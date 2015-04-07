@@ -179,7 +179,8 @@ add_gerrit_comment ()
     local revision="$2"
     local code="${3:-0}"
 
-    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+#    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    ssh -p 29418 lava-bot@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
     if test $? -gt 0; then
 	return 1
     fi
@@ -278,7 +279,8 @@ gerrit_query()
 
     # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
     gerrit_username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
-    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
+    ssh -q -x -p ${gerrit_port} lava-bot@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
+#    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
     declare -a records
     while read line

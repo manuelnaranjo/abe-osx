@@ -10,7 +10,7 @@ nocheck="no"
 fileserver="abe.tcwglab.linaro.org"
 user_workspace="${WORKSPACE:-/home/buildslave/workspace}"
 
-OPTS="`getopt -o t:f:bs:w:nh -l target::fileserver:tarbin:tarsrc:workspace:help`"
+OPTS="`getopt -o t:f:d:bs:w:nh -l target:,date:,fileserver:,tarbin:,tarsrc:,workspace:,help`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -18,6 +18,7 @@ while test $# -gt 0; do
 	-s|--tarsrc) tarsrc=yes ;;
 	-b|--tarbin) tarbin=yes ;;
 	-t|--target) target=$2 ;;
+	-d|--date) date=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
 	-n|--nocheck) nocheck=yes ;;
         -h|--help) usage ;;
@@ -50,20 +51,29 @@ else
     rm -fr ${user_workspace}/_build/* ${user_workspace}/_build/sysroots/*
 fi
 
+if test x"${runtests}" = xtrue; then
+    chroot="--enable-schroot-test"
+fi
+
 # Use the newly created build directory
 cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
-  $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} \
+  $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
       --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
 fi
 
 gcc_source="gcc-linaro-${version}-${release}.tar.xz"
 
 if test x"${runtests}" = xtrue; then
-    check=--check
+    chroot="--enable-schroot-test"
+    check="--check"
 else
     check=""
+fi
+
+if test x"${date}" != x; then
+    release="${date}"    
 fi
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
@@ -116,8 +126,12 @@ if test x"${tarsrc}" = x"yes"; then
     tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
     if test x"${tarballs}" != x; then
 	scp ${tarballs} ${fileserver}:${snaps}/
-	# make a local copy that other jobs can access
-	cp ${tarballs} ${shared}/snapshots/
+	if test $? -gt 0; then
+	    echo "ERROR: Couldn't copy files to ${fileserver}!"
+	    exit 1
+	else
+	    rm -f ${tarballs}
+	fi
     else
 	echo "ERROR: No source tarballs were found!"
     fi
@@ -138,7 +152,7 @@ if test x"${tarbin}" = xyes; then
 	    sums="`echo ${sums} | sed -e 's/\.sum/\.sum.xz/g'`"
 	    logs="`echo ${logs} | sed -e 's/\.log/\.log.xz/g'`"
 	    ssh ${fileserver} "mkdir -p ${binaries}/"
-	    scp ${sums} ${fileserver}:${binaries}/
+	    scp ${sums} ${logs} ${fileserver}:${binaries}/
 	else
 	    echo "ERROR: No test results were found!"
 	fi
@@ -147,7 +161,7 @@ if test x"${tarbin}" = xyes; then
 	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 	out="`ssh ${fileserver} "if test -e ${bases}; then echo YES; else echo NO; fi"`"
 	if test x"${out}" = x"YES"; then 
-	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}; fi`"
+	    out="`ssh ${fileserver} /tmp/tcwgweb$$.sh --email --tdir ${bases} ${binaries}`"
 	    if test "`echo ${out} | grep -c REGRESSIONS`"; then
 		exit 1
 	    fi

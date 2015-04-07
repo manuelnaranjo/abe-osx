@@ -23,11 +23,14 @@ usage()
   ${abe} [''| [--timeout <value>]
              [[--build [<package> --stage {1|2}]|all]
               |[--checkout <package>|all]]
-             [--ccache] [--check] [--enable {bootstrap|gerrit}]
+             [--check [{all|glibc|gcc|gdb|binutils}]]
+             [--ccache] [--enable {bootstrap|gerrit}]
              [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
+             [--excludecheck {all|glibc|gcc|gdb|binutils}]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
              [--list] [--march <march>] [--manifest <manifest_file>]
-             [--parallel] [--release] [--set {libc}={glibc|eglibc|newlib}]
+             [--parallel] [--release <release_version_string>]
+             [--set {libc}={glibc|eglibc|newlib}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
@@ -55,13 +58,14 @@ EOF
     cat << EOF
 KEY
 
-  [--foo]	  Optional switch
-  [<foo>]	  Optional user specified field 
-  <foo>		  Non-optional user specified field.
-  {foo|bar|bat}   Non-optional choice field.
-  [{foo|bar|bat}] Optional choice field.
-  [foo]		  Optional field 
-  ['']		  Optional Empty field 
+  [--foo]         Optional switch
+  [<foo>]         Optional user specified field
+  <foo>           Non-optional user specified field
+  {foo|bar|bat}   Non-optional choice field
+  [{foo|bar|bat}] Optional choice field
+  [foo]           Optional field
+  ['']            Optional Empty field
+  <>              Indicates when no directive is specified
 
 DESCRIPTION
 
@@ -99,9 +103,18 @@ OPTIONS
 
   --ccache	Use ccache when building packages.
 
-  --check
-		Run make check on packages.  For cross builds this will run
-		the tests on native hardware.
+  --check [{all|glibc|gcc|gdb|binutils}]
+
+                For cross builds this will run package unit-tests on native
+                hardware
+
+                glibc|gcc|gdb|binutils
+                        Run make check on the specified package only.
+                all
+                        Run make check on all supported packages.
+                <>
+                        If there is no directive it's the same as 'all' and
+                        make check will be run on all supported packages.
 
   --checkout <package>[~branch][@revision]|all
 
@@ -148,6 +161,35 @@ OPTIONS
                         Enable posting comments to Gerrit on the build
                         progress.
 
+  --excludecheck {all|glibc|gcc|gdb|binutils}
+
+                {glibc|gcc|gdb|binutils}
+                        When used with --check this will remove the
+                        specified package from having its unit-tests
+                        executed during make check.  When used without
+                        --check this will do nothing.
+
+                all
+                        When 'all' is specified no unit tests will be run
+                        regardless of what was specified with --check.
+
+                <>
+                        --excludecheck requires an input directive.
+                        Calling --excludecheck without a directive is an
+                        error that will cause ${abe} to abort.
+
+                Note: This may be called several times and all valid
+                packages will be removed from the list of packages to have
+                unit-test executed against, e.g., the following will only
+                leave glibc and gcc to have unit-tests executed:
+
+                --check all --excludecheck gdb --excludecheck binutils
+
+                Note: All --excludecheck packages are processed after all
+                --check packages, e.g., the following will NOT check gdb:
+
+                --check gdb --excludecheck gdb --check gdb
+
   --fetch <url>
 
   		Fetch the specified URL into the snapshots directory.
@@ -189,9 +231,14 @@ OPTIONS
 
   --prefix	Set an alternate value for the prefix used to configure.
 
-  --release <name>
-		The build system will package the resulting toolchain as a
-		release with the 'name' prefix.
+  --release <release_version_string>
+
+                The build system will package the resulting toolchain as a
+                release with the <release_version_string> embedded, e.g., if
+                <release_version_string> is "2014.10-1" the GCC 4.9 tarball
+                that is released will be named:
+
+                    gcc-linaro-4.9-2014.10-1.tar.xz
 
   --set		{libc}={glibc|eglibc|newlib}
 
@@ -209,7 +256,7 @@ OPTIONS
                 command lines options, and are primarily to be only used by
                 developers.
 
-  --set		{labguages}={c|c++|fortran|go|lto|objc|java|ada}
+  --set		{languages}={c|c++|fortran|go|lto|objc|java|ada}
                 This changes the default set of GCC front ends that get built.
                 The default set for most platforms is c, c++, go, fortran,
                 and lto.
@@ -362,8 +409,8 @@ command_line_arguments=$*
 # designated target.
 crosscheck_clibrary_target()
 {
-    local test_clibrary=$1
-    local test_target=$2
+    local test_clibrary="$1"
+    local test_target="$2"
     case ${test_target} in
 	arm*-eabi|aarch64*-*elf|*-mingw32)
 	    # Bare metal targets only support newlib.
@@ -377,6 +424,29 @@ crosscheck_clibrary_target()
 	    ;;
     esac
     return 0
+}
+
+
+# Returns '0' if $package ($1) is in the list of all_unit_tests.  Returns '1'
+# if not found.
+crosscheck_unit_test()
+{
+    local package="$1"
+
+    # 'all' is an acceptable equivalent to the full string of packages.
+    if test x"${package}" = x"all"; then
+	return 0
+    fi
+
+    # We have to search for exact matches.  We don't want to match on 'gd' or
+    # 'g', but rather 'gdb' and 'gcc' or the results will be unpredictable.
+    for i in ${all_unit_tests}; do
+        if test x"$i" = x"${package}"; then
+            return 0
+	fi
+    done
+
+    return 1
 }
 
 set_package()
@@ -484,22 +554,58 @@ test_success()
 # parse the -- of the following switch.
 check_directive()
 {
-    switch="$1"
-    long="$2"
-    short="$3"
-    directive="$4"
+    local switch="$1"
+    local long="$2"
+    local short="$3"
+    local directive="$4"
 
     if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
 	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
     elif test x"$directive" = x; then
 	error "--${long} requires a directive.  See --usage for details.' "
-	build_failure
     elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
 	error "--${long} requires a directive.  ${abe} found the next -- switch.  See --usage for details.' "
     else
 	return 0
     fi
     build_failure
+}
+
+# Some switches allow an optional following directive. We need to make sure
+# they don't parse the -- of the following switch.  If there isnt a following
+# directive this function will echo the default ($5).  This function can't
+# distinguish whether --foo--bar is valid, so it will return 1 in this case
+# and consume the --bar as part of --foo.
+#
+# Return Value(s):
+#	stdout - caller provided directive or default
+#	0 - if $directive is provided by caller
+#	1 - if $directive is not provided by caller
+#	exit - Execution will abort if the input is invalid.
+check_optional_directive()
+{
+    local switch="$1"
+    local long="$2"
+    local short="$3"
+    local directive="$4"
+    local default="$5"
+
+    if test `echo ${switch} | grep -c "\-${short}.*=" ` -gt 0; then
+	error "A '=' is invalid after --${long}.  A space is expected between the switch and the directive."
+	build_failure
+    elif test x"$directive" = x; then
+	notice "There is no directive accompanying this switch.  Using --$long $default."
+	directive="$default"
+	echo "$directive"
+	return 1
+    elif test `echo ${directive} | egrep -c "^\-+"` -gt 0; then
+	notice "There is no directive accompanying this switch.  Using --$long $default."
+	directive="$default"
+	echo "$directive"
+	return 1
+    fi
+    echo "$directive"
+    return 0
 }
 
 # This gets a list from a remote server of the available tarballs. We use HTTP
@@ -585,7 +691,34 @@ dump()
     if test x"${default_march}" != x; then
 	echo "Default march      ${default_march}"
     fi
+
+    if test x"${release}" != x; then
+        echo "Release Name       ${release}"
+    fi
+
+    if test x"${do_makecheck}" = x"all"; then
+        echo "check              ${do_makecheck} {$all_unit_tests}"
+    elif test ! -z "${do_makecheck}"; then
+        echo "check              ${do_makecheck}"
+    fi
+
+    if test x"${do_excludecheck}" != x; then
+        echo "excludecheck       ${do_excludecheck}"
+    fi
+
+    if test x"${runtests}" != x; then
+        echo "checking           ${runtests}"
+    else
+        echo "checking           {none}"
+    fi
 }
+
+# Check disk space. Each builds needs about 3.8G free
+df="`df / | tail -1 | tr -s ' ' | cut -d ' ' -f 4`"
+if test ${df} -lt 4194304; then
+    error "Not enough disk space!"
+    exit 1
+fi
 
 export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 
@@ -593,6 +726,8 @@ export PATH="${local_builds}/destdir/${build}/bin:$PATH"
 # other switches.
 do_dump=
 do_checkout=
+do_makecheck=
+do_excludecheck=
 do_build=
 do_build_stage=stage2
 
@@ -611,15 +746,56 @@ while test $# -gt 0; do
 	    # Shift off the 'all' or the package identifier.
 	    shift
 	    ;;
-	--check|-check)
-	    runtests=yes
-	    ;;
 	--checkout*|-checkout*)
 	    check_directive $1 checkout "checkout" $2
 	    # Save and process this after all other elements have been processed.
 	    do_checkout="$2"
 
 	    # Shift off the 'all' or the package identifier.
+	    shift
+	    ;;
+	# This is after --checkout because we want to catch every other usage
+	# of check* but NOT 'checkout'.
+	--check*|-check*)
+	    tmp_do_makecheck=
+	    tmp_do_makecheck="`check_optional_directive $1 check "check" "$2" "all"`"
+	    ret=$?
+
+	    # do_makecheck already contains the directive or 'all'.  This
+	    # test determines whether we need to strip off an additional
+	    # parameter from the command line argument if directive was
+	    # provided.
+	    if test $ret -eq 0; then
+	      shift;
+            fi
+
+	    crosscheck_unit_test ${tmp_do_makecheck}
+	    ret=$?
+	    if test $ret -eq 1; then
+		error "${tmp_do_makecheck} is an invalid package name to pass to --check. The choices are {all $all_unit_tests}."
+		build_failure
+	    fi
+
+	    # Accumulate --check packages from consecutive --check calls.  Yes
+	    # there might be potential duplicates but we'll prune those later.
+	    # parse later.
+	    do_makecheck=${do_makecheck:+${do_makecheck} }${tmp_do_makecheck}
+	    ;;
+	# This will exclude an individual package from the list of packages
+	# to run make check (unit-test) against.
+        --excludecheck*|-excludecheck*)
+	    check_directive $1 excludecheck "excludecheck" $2
+
+	    # Verify that $2 is a valid option to exclude.
+	    crosscheck_unit_test $2
+	    if test $? -eq 1; then
+		error "${2} is an invalid package name to pass to --excludecheck. The choices are {all $all_unit_tests}."
+		build_failure
+	    fi
+
+	    # Concatenate this onto the list of packages to exclude from make check.
+            do_excludecheck="${do_excludecheck:+${do_excludecheck} }$2"
+
 	    shift
 	    ;;
 	--march*|-march*)
@@ -635,8 +811,14 @@ while test $# -gt 0; do
 	    check_directive $1 manifest "m" $2
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
-		. $2
+		egrep "_revision=|_version=|_branch=" $2 > /tmp/rev$$.txt
+		source /tmp/rev$$.txt
+		rm  /tmp/rev$$.txt
+	    else
+		error "Manifest file '$2' not found"
+		build_failure
 	    fi
+	    shift
 	    echo $gcc_version
 	    ;;
        # download and install the infrastructure libraries GCC depends on
@@ -864,6 +1046,13 @@ while test $# -gt 0; do
 	    exit 0
 	    ;;
 	*)
+	    # Look for unsupported -<foo> or --<foo> directives.
+	    if test `echo $1 | grep -Ec "^-+"` -gt 0; then
+		error "${1}: Directive not supported.  See ${abe} --help for supported options."
+		build_failure
+	    fi
+
+	    # Test for <foo>= specifiers
 	    if test `echo $1 | grep -c =` -gt 0; then
 		name="`echo $1 | cut -d '=' -f 1`"
 		value="`echo $1 | cut -d '=' -f 2`"
@@ -918,14 +1107,21 @@ while test $# -gt 0; do
 				newlib_version="${value}"
 				;;
 			    *)
+				error "FIXME: Execution should never reach this point."
+				build_failure
 				;;
 			esac
 			;;
 		    *)
+			# This will catch unsupported component specifiers like <foo>=
+			error "${name}: Component specified not supported.  See ${abe} --help for supported components."
+			build_failure
 			;;
 		esac
 	    else
-		error "$1: Command not recognized."
+		# This will catch dangling words like <foo> that don't contain
+		# --<foo> and don't contain <foo>=
+		error "$1: Command not recognized.  See ${abe} --help for supported options."
 		build_failure
 	    fi
             ;;
@@ -946,6 +1142,49 @@ wget_timeout=10
 fetch md5sums
 wget_timeout=${timeout_save}
 
+if test ! -z "${do_makecheck}"; then
+    # If we encounter 'all' in ${do_makecheck} anywhere we just overwrite
+    # runtests with ${all_unit_tests} and ignore the rest.
+    test_all="${do_makecheck//all/}"
+
+    if test x"${test_all}" != x"${do_makecheck}"; then
+	runtests="${all_unit_tests}"
+    else
+	# Don't accumulate any duplicates.
+        for i in ${do_makecheck}; do
+	    # Remove it if it's already there
+	    runtests=${runtests//${i}/}
+	    # Remove any redundant whitespace
+	    runtests=${runtests//  /}
+	    # Reinsert it if it was already in the list.
+            runtests="${runtests:+${runtests} }${i}"
+        done
+    fi
+fi
+
+if test ! -z "${do_excludecheck}"; then
+
+    # If we encounter 'all' in ${do_excludecheck} anywhere we just
+    # empty out runtests because 'all' trumps everything.
+    exclude_all="${do_excludecheck//all/}"
+    if test x"${exclude_all}" != x"${do_excludecheck}"; then
+        runtests=
+    else
+	#Remove excluded packages (stored in do_excludecheck) from ${runtests}
+	for i in ${do_excludecheck}; do
+	    runtests="${runtests//$i/}"
+	    # Strip redundant white spaces
+	    runtests="${runtests//  / }"
+	done
+	# Strip white space from the beginning of the string
+	runtests=${runtests# }
+	# Strip white space from the end of the string
+	runtests=${runtests% }
+    fi
+fi
+
+# Process 'dump' after we process 'check' and 'excludecheck' so that the list
+# of tests to be evaluated is resolved before the dump.
 if test ! -z ${do_dump}; then
     dump
 fi

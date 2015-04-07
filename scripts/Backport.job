@@ -1,9 +1,35 @@
 #!/bin/bash
+#
+#   Copyright (C) 2015 Linaro, Inc
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# 
+
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
+usage()
+{
+    # Format this section with 75 columns.
+    cat << EOF
+  Backport.job [--help] [f|--fileserver 'remote file server'] --target triplet branch
+EOF
+    return 0
+}
 
 abe_dir="${WORKSPACE}/abe"
-user_snapshots="${WORKSPACE}/snapshots"
-shared="/home/buildslave/workspace/shared/"
-snapshots_ref="${shared}/snapshots"
 export CONFIG_SHELL="/bin/bash"
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -17,11 +43,17 @@ rm -fr ${WORKSPACE}/_build/builds/* ${WORKSPACE}/_build/sysroots/*
 mkdir -p ${WORKSPACE}/_build
 cd ${WORKSPACE}/_build
 
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
+case ${target} in
+    schroot-*)
+	schroot_arch=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\1/")
+	target=$(echo ${target} | sed -e "s/^schroot-\([^-]*\)-\(.*\)/\2/")
+	CONFIG_SHELL="schroot -c tcwg-build-${schroot_arch}-trusty --preserve-environment -- ${CONFIG_SHELL}"
+	;;
+esac
 
 # If started by a Gerrit Trigger, use that for the branch.
-if test x"${GERRIT_BRANCH}" != x; then
-    gcc_branch="gcc.git~${GERRIT_BRANCH}"
+if test x"${GERRIT_TOPIC}" != x; then
+    gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
 $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 
@@ -29,3 +61,4 @@ $CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
 if test $? -gt 0; then
   exit 1
 fi
+

@@ -148,13 +148,15 @@ checkout_all()
 	esac
 
     	local gitinfo="`get_source ${package}`"
-	local checkout_ret=
-	checkout ${gitinfo}
-	checkout_ret=$?
+	if test x"${gitinfo}" = x; then
+	    local checkout_ret=
+	    checkout ${gitinfo}
+	    checkout_ret=$?
 
-	if test ${checkout_ret} -gt 0; then
-	    error "Failed checkout out of $i."
-	    return 1
+	    if test ${checkout_ret} -gt 0; then
+		error "Failed checkout out of $i."
+		return 1
+	    fi
 	fi
     done
     

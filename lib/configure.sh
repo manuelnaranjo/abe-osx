@@ -65,6 +65,14 @@ configure_build()
 #	fi
     fi
 
+    # Since Binutils and GDB have a shared git repository, this confuses the logic
+    # of loading the right config file. If Binutils is already configured, then 
+    # assume GDB.
+    echo "FOO"
+    if test x"${2}" = x"gdb" -o x"${2}" = x"binutils"; then
+	local tool="${2}"
+    fi
+    
     local configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
     if test x"${configure}" = x; then
       configure="yes"

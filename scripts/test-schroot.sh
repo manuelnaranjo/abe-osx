@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 set -e
 
 arch="native"
@@ -135,7 +139,7 @@ target_ssh_opts="$target_ssh_opts -o ControlMaster=auto -o ControlPersist=1m -o 
 schroot_id=$profile-$deb_arch-$deb_dist
 
 schroot="ssh $target_ssh_opts $target schroot -r -c session:$profile-$port -d / -u root --"
-rsh_opts="$target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no"
+rsh_opts="$target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 rsh="ssh $rsh_opts"
 user="$(ssh $target_ssh_opts $target echo \$USER)"
 home="$(ssh $target_ssh_opts $target pwd)"
@@ -312,7 +316,7 @@ if ! [ -z "$shared_dir" ]; then
     $rsh -fN -S none -R $tmp_ssh_port:127.0.0.1:$host_ssh_port $target
     # Recent versions of sshfs fail if ssh_command has more than a single
     # white spaces between options or ends with a space; filter ssh_command.
-    ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
+    ssh_command="$(echo "ssh -o Port=$tmp_ssh_port -o IdentityFile=$home/.ssh/id_rsa-test-schroot.$$ -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $host_ssh_opts" | sed -e "s/ \+/ /g" -e "s/ \$//")"
     try="0"
     while [ "$try" -lt "3" ]; do
 	$rsh $target sshfs -C -o ssh_command="\"$ssh_command\"" "$USER@127.0.0.1:$shared_dir" "$shared_dir" | true
@@ -368,7 +372,7 @@ EOF
 fi
 
 if $ssh_master; then
-    ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -fMN $target
+    ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -fMN $target
 fi
 
 # Keep the session alive when file /dont_kill_me is present

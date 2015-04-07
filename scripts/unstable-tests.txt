@@ -1,0 +1,97 @@
+# List of unstable tests.
+# Syntax:
+# target:test name
+#
+# gcc
+aarch64-linux-gnu:gcc.c-torture/execute/20000801-2.c execution, -O2 -flto -fno-use-linker-plugin -flto-partition=none
+aarch64-linux-gnu:gcc.c-torture/execute/20000819-1.c execution,  -Og -g
+aarch64-linux-gnu:gcc.c-torture/execute/20010711-1.c execution,  -O3 -fomit-frame-pointer
+aarch64-linux-gnu:gcc.c-torture/execute/20051215-1.c execution,  -Og -g
+aarch64-linux-gnu:gcc.c-torture/execute/920604-1.c execution,  -O0
+aarch64-linux-gnu:gcc.c-torture/execute/920625-1.c execution,  -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects
+aarch64-linux-gnu:gcc.c-torture/execute/921124-1.c execution,  -O2 -flto -fno-use-linker-plugin -flto-partition=none
+aarch64-linux-gnu:gcc.c-torture/execute/930111-1.c execution,  -O0
+aarch64-linux-gnu:gcc.c-torture/execute/941101-1.c execution,  -O3 -g
+aarch64-linux-gnu:gcc.c-torture/execute/990525-1.c execution,  -O2
+aarch64-linux-gnu:gcc.c-torture/execute/anon-1.c execution,  -O2
+aarch64-linux-gnu:gcc.c-torture/execute/anon-1.c execution,  -O3 -fomit-frame-pointer
+aarch64-linux-gnu:gcc.c-torture/execute/builtins/pr22237.c execution,  -O1
+aarch64-linux-gnu:gcc.c-torture/execute/memset-1.c execution,  -Os
+aarch64-linux-gnu:gcc.c-torture/execute/pr28865.c execution,  -O1
+aarch64-linux-gnu:gcc.c-torture/execute/pr33779-1.c execution,  -Os
+aarch64-linux-gnu:gcc.c-torture/execute/pr40668.c execution,  -O2
+aarch64-linux-gnu:gcc.c-torture/execute/pr40668.c execution,  -O3 -fomit-frame-pointer
+aarch64-linux-gnu:gcc.dg/atomic/stdatomic-vm.c  -O3 -fomit-frame-pointer  execution test
+gcc.dg/atomic/c11-atomic-exec-5.c
+aarch64-linux-gnu:gcc.dg/torture/vec-cvt-1.c  -O3 -fomit-frame-pointer -funroll-loops  execution test
+aarch64-linux-gnu:gcc.target/aarch64/aapcs64/test_19.c execution,  -O2
+
+# g++
+aarch64-linux-gnu:g++.dg/opt/temp2.C -std=c++1y execution test
+aarch64-linux-gnu:g++.old-deja/g++.eh/new2.C -std=gnu++11 execution test
+aarch64-linux-gnu:g++.old-deja/g++.jason/temporary.C -std=c++1y execution test
+aarch64-linux-gnu:g++.old-deja/g++.law/refs4.C -std=c++11 execution test
+aarch64-linux-gnu:g++.old-deja/g++.mike/p3708a.C -std=c++1y execution test
+
+# gfortran
+aarch64-linux-gnu:gfortran.dg/backslash_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gnu:gfortran.dg/convert_implied_open.f90
+aarch64-linux-gnu:gfortran.dg/finalize_15.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.dg/minlocval_3.f90
+arm-linux-gnueabihf:gfortran.dg/streamio_1.f90  -O3 -g  execution test
+aarch64-linux-gnu:gfortran.dg/tiny_2.f90  -Os  execution test
+aarch64-linux-gnu:gfortran.dg/unf_io_convert_3.f90  -O3 -g  execution test
+gfortran.dg/tl_editing.f90
+gfortran.dg/streamio_14.f90
+
+#libgomp
+aarch64-linux-gnu:libgomp.fortran/allocatable10.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+aarch64-linux-gnu:libgomp.fortran/allocatable7.f90  -O2  execution test
+aarch64-linux-gnu:libgomp.fortran/omp_atomic1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+aarch64-linux-gnu:libgomp.fortran/reference1.f90  -O2  execution test
+aarch64-linux-gnu:libgomp.fortran/simd7.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+aarch64-linux-gnu:libgomp.fortran/task3.f90  -O2  execution test
+
+# libstdc++
+aarch64-linux-gnu:21_strings/basic_string/operations/find/wchar_t/3.cc execution test
+aarch64-linux-gnu:22_locale/num_get/get/wchar_t/2.cc execution test
+aarch64-linux-gnu:22_locale/numpunct/members/pod/1.cc execution test
+23_containers/deque/cons/2.cc execution test
+aarch64-linux-gnu:26_numerics/random/lognormal_distribution/operators/serialize.cc execution test
+26_numerics/complex/inserters_extractors/char/1.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/seekoff/char/1-io.cc execution test
+aarch64-linux-gnu:27_io/basic_filebuf/sgetc/char/1-out.cc execution test
+27_io/basic_filebuf/open/char/2.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/1-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/1-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/2-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/2-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/seekpos/char/2-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/1-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/2-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/2-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/1-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/1-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/2-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/2-io.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sputbackc/char/1-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sputbackc/char/2-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sungetc/char/1-in.cc execution test
+armeb-linux-gnueabihf:27_io/basic_filebuf/sungetc/char/2-in.cc execution test
+27_io/basic_istream/seekg/char/fstream.cc execution test
+27_io/basic_istream/tellg/char/fstream.cc execution test
+armeb-linux-gnueabihf:27_io/basic_ofstream/pthread2.cc execution test
+arm-linux-gnueabi:27_io/basic_ostream/inserters_other/wchar_t/1.cc execution test
+armeb-linux-gnueabihf:30_threads/condition_variable/54185.cc execution test
+aarch64-linux-gnu:experimental/string_view/operations/find/wchar_t/2.cc execution test
+aarch64-linux-gnu:ext/slist/check_construct_destroy.cc execution test
+aarch64-linux-gnu:ext/random/simd_fast_mersenne_twister_engine/cons/default.cc execution test
+aarch64-linux-gnu:tmpdir-g++.dg-struct-layout-1/t011 cp_compat_x_tst.o-cp_compat_y_tst.o execute
+aarch64-linux-gnu:tr1/4_metaprogramming/is_enum/24808.cc execution test
+aarch64-linux-gnu:tr1/5_numerical_facilities/special_functions/07_conf_hyperg/check_value.cc execution test
+aarch64-linux-gnu:tr1/5_numerical_facilities/special_functions/14_ellint_3/check_value.cc execution test
+aarch64-linux-gnu:tr1/5_numerical_facilities/special_functions/17_hyperg/check_nan.cc execution test
+
+# asan
+arm-linux-gnueabi:c-c++-common/asan/swapcontext-test-1.c
+arm-linux-gnueabihf:c-c++-common/asan/swapcontext-test-1.c

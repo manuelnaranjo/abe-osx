@@ -211,7 +211,8 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    manifest ${local_builds}/${host}/${target}/manifest.txt
+    local txt="`manifest`"
+    dryrun "cp ${txt} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -219,7 +220,7 @@ binary_toolchain()
 
     if test x"${build}" != x"${target}"; then
 	# FIXME: link the sysroot into the toolchain tarball
-	ln -sfnT ${sysroots} ${destdir}/libc
+	dryrun "ln -sfnT ${sysroots} ${destdir}/${target}/libc"
     fi
 
     # make the tarball from the tree we just created.
@@ -314,12 +315,6 @@ manifest()
 {
     trace "$*"
 
-    if test x"$1" = x; then
-	local outfile=${local_builds}/${host}/${target}/manifest.txt
-    else
-	local outfile=$1
-    fi
-
     if test x"${gmp_version}" = x; then
 	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
@@ -339,16 +334,16 @@ manifest()
 
     local srcdir="`get_srcdir ${gcc_version}`"
     local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-    local gcc_revision="`get_git_revision ${srcdir}`"
+    local gcc_revision="`srcdir_revision ${srcdir}`"
 
     local srcdir="`get_srcdir ${gdb_version}`"
-    local gdb_revision="`get_git_revision ${srcdir}`"
+    local gdb_revision="`srcdir_revision ${srcdir}`"
     
     if test x"${dejagnu_version}" = x; then
 	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${dejagnu_version}`"
-    local dejagnu_revision="`get_git_revision ${srcdir}`"
+    local dejagnu_revision="`srcdir_revision ${srcdir}`"
     
     if test x"${linux_version}" = x; then
 	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
@@ -358,11 +353,31 @@ manifest()
 	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
     local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision=="`get_git_revision ${srcdir}`"
+    local binutils_revision="`srcdir_revision ${srcdir}`"
 
-    local abe_revision="`get_git_revision ${abe_path}`"
+    local abe_revision="`srcdir_revision ${abe_path}`"
 
-     rm -f ${outfile}
+    if test x"${clibrary}" = x"eglibc"; then
+	local srcdir="`get_srcdir ${eglibc_version}`"
+    elif  test x"${clibrary}" = x"glibc"; then
+	local srcdir="`get_srcdir ${glibc_version}`"
+    elif test x"${clibrary}" = x"newlib"; then
+	local srcdir="`get_srcdir ${newlib_version}`"
+    fi
+    local libc_version="`srcdir_revision ${abe_path}`"
+    
+    local mtag=
+    if test x"$1" = x; then
+	mtag="`create_release_tag ${gcc_version}`"
+	if test x"${release}" != x;then
+	    mtag="`echo ${mtag} | sed -e 's:~linaro-::'`"
+	fi
+	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
+    else
+	local outfile=$1
+    fi
+
+    rm -f ${outfile}
     cat >> ${outfile} <<EOF 
 # Build machine data
 build=${build}
@@ -371,25 +386,42 @@ target=${target}
 kernel=${kernel}
 hostname=${hostname}
 distribution=${distribution}
-host_gcc="${host_gcc_version}"
+host_gcc=${host_gcc_version}
 
-# Component versions
-gmp_version=${gmp_version}
-mpc_version=${mpc_version}
-mpfr_version=${mpfr_version}
-gcc_branch=${gcc_branch}
-gcc_version=${gcc_versionnum}
-gcc_revision=${gcc_revision}
-binutils_version=${binutils_version}
+Component versions
+gmp_versionnum=${gmp_version}
+mpc_versionnum=${mpc_version}
+mpfr_versionnum=${mpfr_version}
+
+# Binutils
+binutils_branch=${binutils_version}
 binutils_revision=${binutils_revision}
+binutils_version=binutils-gdb.git@${binutils_revision}
+
+# DejaGnu
 dejagnu_version=${dejagnu_version}
-dejagnu_revsion=${dejagnu_revision}
-gdb_version=${gdb_version}
-gdb_revsion=${gdb_revision}
+
+# GDB
+gdb_branch=${gdb_version}
+gdb_revision=${gdb_revision}
+gdb_version=binutils-gdb.git@${gdb_revision}
+
+# GCC
+gcc_branch=${gcc_branch}
+gcc_versionnum=${gcc_versionnum}
+gcc_revision=${gcc_revision}
+gcc_version=gcc.git@${gcc_revision}
+
+# C Library
+clibrary=${clibrary}
+libc_version=${libc_version}
+
+# Kernel
 linux_version=${linux_version}
 
 # Abe revision used
 abe_revision=${abe_revision}
+abe_version="abe.git@${abe_revision}"
 
 EOF
 
@@ -438,6 +470,9 @@ EOF
     local srcdir="`get_srcdir ${gcc_version}`"
     echo "---------------------------------------------" >> ${outfile}
     cd ${srcdir} && git log -n 1 >> ${outfile}
+
+    echo ${outfile}
+    return 0
 }
 
 # Build a source tarball
@@ -531,6 +566,29 @@ test_binary_toolchain()
 {
     local install="/tmp/install.$$"
 
+    local testgcc=
+    local testbin=
+    is_package_in_runtests "${runtests}" gcc
+    testgcc=$?
+
+    is_package_in_runtests "${runtests}" binutils
+    testbin=$?
+
+    # Check early and bail if binutils or gcc aren't to be tested.  In reality
+    # binary toolchains will probably be built with --check, or --check all
+    # (which is the same thing).
+    if test $testgcc -ne 0 -a $testbin -ne 0; then
+	notice "Nothing to test in ${runtests} for test_binary_toolchain()."
+	return 0
+    fi
+
+    # ${runtests} might contain something other than just gcc and binutils but
+    # we only test those for binary toolchains.
+    local testing="`if test ${testgcc} -eq 0; then echo -n ' gcc'; fi;`"
+    testing="${testing}`if test ${testbin} -eq 0; then echo -n ' binutils'; fi`"
+
+    notice "Testing the following binary toolchain packages:${testing}"
+
     if test ! -d ${install}; then
 	dryrun "mkdir -p ${install}"
     fi
@@ -545,12 +603,18 @@ test_binary_toolchain()
     local compiler="`dirname ${compiler}`"
     export PATH="${compiler}:$PATH"
 
-    # test GCC using the build we just completed, since we need access to the test cases.
-    make_clean ${binutils_version}
-    make_check ${binutils_version}
+    # Only test binutils if the user has requested it.
+    if test $testbin -eq 0; then
+	# test GCC using the build we just completed, since we need access to the test cases.
+	make_clean ${binutils_version}
+	make_check ${binutils_version}
+    fi
 
-    make_clean ${gcc_version} stage2
-    make_check ${gcc_version} stage2
+    # Only test gcc if the user has requested it.
+    if test $testgcc -eq 0; then
+	make_clean ${gcc_version} stage2
+	make_check ${gcc_version} stage2
+    fi
 
     rm -fr ${install}
 }
