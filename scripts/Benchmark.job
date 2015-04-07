@@ -6,7 +6,7 @@ set -o pipefail
 
 benchgccpath=
 targets=(${targets})
-maindir="`mktemp --tmpdir=/tmp -d bench-XXX`"
+maindir="`mktemp --tmpdir=${HOME} -d bench-XXX`"
 error=1
 results_dir="/work/benchmarking/${results_dir:-${JOB_NAME}/${BUILD_NUMBER}}"
 
