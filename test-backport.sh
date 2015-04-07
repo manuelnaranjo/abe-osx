@@ -92,7 +92,7 @@ repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch=""
 
-OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:g:h -l target:,fileserver:,help,snapshots:,repo:,workspace:,options,check: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) local_snapshots=$2; shift ;;
@@ -101,6 +101,7 @@ while test $# -gt 0; do
         -w|--workspace) user_workspace=$2; shift ;;
         -o|--options) user_options=$2; shift ;;
 	-t|--target) target=$2; shift ;;
+	-c|--check) check=$2; shift ;;
         -h|--help) usage ;;
 	*) branch=$1;;
 	--) break ;;
@@ -111,13 +112,13 @@ done
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
     targetname=${target}
-    check="--check all"
+    check="--check ${check:-all}"
 else
     # For native builds, we need to know the effective target name to
     # be able to find the results
     targetname=${build}
     # For native builds, we don't check gdb because it is too slow
-    check="--check all --excludecheck gdb"
+    check="--check ${check:-all} --excludecheck gdb"
 fi
 
 if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
