@@ -207,6 +207,9 @@ check_md5sum()
 
     if test x"${oldsum}" = x"${newsum}"; then
 	notice "md5sums matched"
+	# We don't need to pass $2 to get_builddir() in this case because the
+	# builddir is always based on a tarball and therefore we don't have a
+	# special builddir for a combined binutils and gdb.
 	local builddir="`get_builddir $1`"
 	rm -f ${builddir}/md5sum
 	echo "${newsum} > ${builddir}/md5sum"

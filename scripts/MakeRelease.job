@@ -67,7 +67,7 @@ gcc_source="gcc-linaro-${version}-${release}.tar.xz"
 
 if test x"${runtests}" = xtrue; then
     chroot="--enable-schroot-test"
-    check="--check"
+    check="--check all"
 else
     check=""
 fi
@@ -88,6 +88,7 @@ if test x"${tarbin}" = x"yes"; then
     if test x"${canadian}" = x"true"; then
 	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
 	host="--host i686-w64-mingw32"
+	rm -fr ${local_builds}/${host}/${target}/
     else
 	host=""
     fi
@@ -108,7 +109,7 @@ fi
 bases="/work/abe/baselines/${release}/${target}"
 snaps="/home/abe/var/snapshots/"
 if test x"${tarsrc}" = x"yes"; then
-    manifest="`find ${user_workspace} -name manifest.txt`"
+    manifest="`find ${user_workspace} -name \*manifest.txt`"
     scp ${manifest} ${fileserver}:${bases}/
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
@@ -123,7 +124,7 @@ if test x"${tarsrc}" = x"yes"; then
 	    echo "ERROR: No test results were found!"
 	fi
     fi
-    tarballs="`find ${user_snapshots} -name \*${release}\*.{xz,asc}`"
+    tarballs="`find ${user_snapshots} -name \*${release}\*.xz -o -name \*${release}\*.asc`"
     if test x"${tarballs}" != x; then
 	scp ${tarballs} ${fileserver}:${snaps}/
 	if test $? -gt 0; then
@@ -140,10 +141,12 @@ fi
 # Copy the binary test results to the fileserver
 binaries="/work/space/binaries/${release}/${target}"
 if test x"${tarbin}" = xyes; then
-    manifest="`find ${user_workspace} -name manifest.txt`"
+    manifest="`find ${user_workspace} -name \*manifest.txt`"
     ssh ${fileserver} "if test ! -d ${binaries}; then mkdir -p ${binaries}; fi"
     scp ${manifest} ${fileserver}:${binaries}/
-    scp ${user_snapshots}/*.xz ${user_snapshots}/*.asc ${fileserver}:${binaries}/
+    tarballs="`find ${user_snapshots} -name \*${release}\*.xz -o -name \*${release}\*.asc`"
+    scp ${tarballs} ${fileserver}:${binaries}/
+#    rm -f ${user_snapshots}/*.xz ${user_snapshots}/*.asc
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
 	logs="`find ${user_workspace} -name \*.log`"

@@ -161,7 +161,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
-	    make_check ${binutils_version}
+	    make_check ${binutils_version} binutils
 	    check_ret=$?
 	    check_failed="${check_failed} binutils"
 	fi
@@ -175,7 +175,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
-	    make_check ${gdb_version}
+	    make_check ${gdb_version} gdb
 	    check_ret=$?
 	    check_failed="${check_failed} gdb"
 	fi
@@ -211,7 +211,7 @@ build_all()
 
     # If any unit-tests have been run, then we should send a message to gerrit.
     # TODO: Authentication from abe to jenkins does not yet work.
-    if test x"${gerrit}" = xyes -a x"${runtests}" != x; then
+    if test x"${gerrit_trigger}" = xyes -a x"${runtests}" != x; then
 	local sumsfile="/tmp/sums$$.txt"
 	local sums="`find ${local_builds}/${host}/${target} -name \*.sum`"
 	for i in ${sums}; do
@@ -267,6 +267,10 @@ build_all()
 	# test_binary_toolchain.
         if test x"${runtests}" != x; then
 	    test_binary_toolchain
+	    if test $? -gt 0; then
+		error "test_binary_toolchain failed with return code $?"
+		return 1
+            fi
             notice "Testing packaging took ${SECONDS} seconds"
 	fi
     fi
@@ -502,7 +506,7 @@ make_all()
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
-    local logfile="${builddir}/make-${tool}.log"
+    local logfile="${builddir}/make-${tool}${2:+-$2}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
 
@@ -677,60 +681,6 @@ make_install()
     return 0
 }
 
-# Run the testsuite for the component. By default, this runs the testsuite
-# using the freshly built executables in the build tree. It' also possible
-# to run the testsuite on installed tools, so we can test out binary releases.
-# For binutils, use check-DEJAGNU. 
-# For GCC, use check-gcc-c, check-gcc-c++, or check-gcc-fortran
-# GMP uses check-mini-gmp, MPC and MPFR appear to only test with the freshly built
-# components.
-#
-# $1 - The component to test
-make_check_installed()
-{
-    trace "$*"
-
-    local tool="`get_toolname $1`"
-    if test x"${builddir}" = x; then
-        local builddir="`get_builddir $1 ${2:+$2}`"
-    fi
-    notice "Making check in ${builddir}"
-
-    # TODO:
-    # extract binary tarball
-    # If build tree exists, then 'make check' there.
-    # if no build tree, untar the matching source release, configure it, and
-    # then run 'make check'.
-
-    local tests=""
-    case $1 in
-        binutils*)
-            # these 
-            local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
-            dryrun "make -C ${builddir}/gas check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
-            dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
-            ;;
-        gcc*)
-            local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
-            for i in "c c++"; do
-                dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-$i.log"
-            done
-            ;;
-        *libc*)
-            ;;
-        newlib*)
-            ;;
-        gdb*)
-            ;;
-        *)
-            ;;
-    esac
-
-    return 0
-}
-
-# Run the testsuite for the component. By default, this runs the testsuite
-# using the freshly built executables in the build tree. It' also possible
 # $1 - The component to test
 # $2 - If set to anything, installed tools are used'
 make_check()
@@ -749,11 +699,6 @@ make_check()
         fi
     done
     notice "Making check in ${builddir}"
-
-#    if test x"$2" != x; then
-#       make_check_installed
-#       return 0
-#    fi
 
     # Use pipes instead of /tmp for temporary files.
     if test x"${override_cflags}" != x -a x"$2" != x"stage2"; then
@@ -786,7 +731,13 @@ make_check()
     # Run tests
     local checklog="${builddir}/check-${tool}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
-        dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	# Overwrite ${checklog} in order to provide a clean log file
+	# if make check has been run more than once on a build tree.
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	if test $? -gt 0; then
+	    error "make check -C ${builddir} failed."
+	    return 1
+	fi
     else
 	local exec_tests
 	exec_tests=false
@@ -815,9 +766,12 @@ make_check()
 		*"-elf"*) schroot_sysroot="$(mktemp -d)" ;;
 		*) schroot_sysroot="$(make_target_sysroot)" ;;
 	    esac
+	    local ret=
 	    start_schroot_sessions "${target}" "${schroot_sysroot}" "${builddir}"
+	    ret=$?
+
 	    rm -rf "$schroot_sysroot"
-	    if test "$?" != "0"; then
+	    if test $ret -ne 0; then
 		return 1
 	    fi
 	fi
@@ -845,8 +799,22 @@ make_check()
             chmod 700 ${sysroots}/etc/ld.so.cache
 	fi
 
+	# Remove existing logs so that rerunning make check results
+	# in a clean log.
+	if test -e ${checklog}; then
+	    # This might or might not be called, depending on whether make_clean
+	    # is called before make_check.  None-the-less it's better to be safe.
+	    notice "Removing existing check-${tool}.log: ${checklog}"
+	    rm ${checklog}
+	fi
+
 	for i in ${dirs}; do
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee ${checklog}"
+	    # Always append "tee -a" to the log when building components individually
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee -a ${checklog}"
+	    if test $? -gt 0; then
+		error "make ${check_targets} -C ${builddir}$i failed."
+		return 1
+	    fi
 	done
 
 	# Stop schroot sessions

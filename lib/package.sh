@@ -127,7 +127,7 @@ binary_gdb()
 
     local version="`${target}-gdb --version | head -1 | grep -o " [0-9\.][0-9].*\." | tr -d ')'`"
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
-    local builddir="`get_builddir ${gdb_version}`"
+    local builddir="`get_builddir ${gdb_version} gdb`"
     local destdir="/tmp/linaro.$$/${tag}-tmp"
     local prefix="${local_builds}/destdir/${host}"
 
@@ -426,7 +426,7 @@ abe_version="abe.git@${abe_revision}"
 EOF
 
     # Gerrit info, if triggered
-    if test x"${gerrit}" = xyes; then
+    if test x"${gerrit_trigger}" = xyes; then
 	cat >> ${outfile} <<EOF 
 gerrit_branch=${gerrit_branch}
 gerrit_revision=${gerrit_revision}
@@ -490,7 +490,7 @@ binutils_src_tarball()
 
     local dir="`normalize_path ${binutils_version}`"
     local srcdir="`get_srcdir ${binutils_version}`"
-    local builddir="`get_builddir ${binutils_version}`"
+    local builddir="`get_builddir ${binutils_version} binutils`"
     local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
 
     # clean up files that don't go into a release, often left over from development
@@ -606,15 +606,24 @@ test_binary_toolchain()
     # Only test binutils if the user has requested it.
     if test $testbin -eq 0; then
 	# test GCC using the build we just completed, since we need access to the test cases.
-	make_clean ${binutils_version}
-	make_check ${binutils_version}
+	make_clean ${binutils_version} binutils
+	make_check ${binutils_version} binutils
+	if test $? -gt 0; then
+	    error "'make_check ${binutils_version} binutils'."
+	    return 1
+	fi
     fi
 
     # Only test gcc if the user has requested it.
     if test $testgcc -eq 0; then
 	make_clean ${gcc_version} stage2
 	make_check ${gcc_version} stage2
+	if test $? -gt 0; then
+	    error "'make_check ${gcc_version} stage2' failed."
+	    return 1
+	fi
     fi
 
     rm -fr ${install}
+    return 0
 }

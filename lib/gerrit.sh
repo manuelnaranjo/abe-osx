@@ -48,32 +48,36 @@
 # the requireed information.
 gerrit_info()
 {
-    trace "$*"
+    declare -A gerrit=()
 
+    # Some commonly used Gerrit data we can extract from the gitreview file, if it exists.
     local srcdir=$1
-    extract_gerrit_host ${srcdir}
-    extract_gerrit_port ${srcdir}
-    extract_gerrit_project ${srcdir}
-    extract_gerrit_username ${srcdir}
+    gerrit['REVIEW_HOST']="`extract_gerrit_host ${srcdir}`"
+    gerrit['PORT']="`extract_gerrit_port ${srcdir}`"
+    gerrit['PROJECT']="`extract_gerrit_project ${srcdir}`"
+    gerrit['USERNAME']="`extract_gerrit_username ${srcdir}`"
+    gerrit['SSHKEY']="~/.ssh/lava-bot_rsa"
 
-    # These only come from Gerrit triggers
-    gerrit_branch="${GERRIT_TOPIC}"
-    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
-    gerrit_change_subject="${GERRIT_CHANGE_SUBJECT}"
-    gerrit_change_id="${GERRIT_CHANGE_ID}"
-    gerrit_change_number="${GERRIT_CHANGE_NUMBER}"
-    gerrit_event_type="${GERRIT_EVENT_TYPE}"
-    jenkins_job_name="${JOB_NAME}"
-    jenkins_job_url="${JOB_URL}"
+    # These only come from a Gerrit trigger
+    gerrit['TOPIC']="${GERRIT_TOPIC:-~linaro-4.9-branch}"
+    gerrit['BRANCH']="${GERRIT_BRANCH:-~linaro-4.9-branch}"
+    gerrit['REVISION']="${GERRIT_PATCHSET_REVISION}"
+    gerrit['CHANGE_SUBJECT']="${GERRIT_CHANGE_SUBJECT}"
+    gerrit['CHANGE_ID']="${GERRIT_CHANGE_ID}"
+    gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER}"
+    gerrit['EVENT_TYPE']="${GERRIT_EVENT_TYPE}"
+    gerrit['REFSPEC']="${GERRIT_REFSPEC}"
+    jenkins['JOB_NAME']="${JOB_NAME}"
+    jenkins['JOB_URL']="${JOB_URL}"
 
-    # Query the Gerrit server
-    gerrit_query gcc
+    declare -ptu gerrit
+    return 0
 }
 
 extract_gerrit_host()
 {
     if test x"${GERRIT_HOST}" != x; then
-	gerrit_host="${GERRIT_HOST}"
+	local gerrit_host="${GERRIT_HOST}"
     else
 	local srcdir=$1
 	
@@ -88,16 +92,17 @@ extract_gerrit_host()
 	    fi
 	fi
 	
-	gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
+	local gerrit_host="`grep host= ${review} | cut -d '=' -f 2`"
     fi
     
+    echo "${gerrit_host}"
     return 0
 }
 
 extract_gerrit_project()
 {
     if test x"${GERRIT_PROJECT}" != x; then
-	gerrit_project="${GERRIT_PROJECT}"
+	local gerrit_project="${GERRIT_PROJECT}"
     else
 	local srcdir=$1
 	
@@ -112,16 +117,17 @@ extract_gerrit_project()
 	    fi
 	fi
 	
-	gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
+	local gerrit_project="`grep "project=" ${review} | cut -d '=' -f 2`"
     fi
 
+    echo "${gerrit_project}"
     return 0
 }
 
 extract_gerrit_port()
 {
     if test x"${GERRIT_PORT}" != x; then
-	gerrit_port="${GERRIT_PORT}"
+	local gerrit_port="${GERRIT_PORT}"
     else
 	local srcdir=$1
 	
@@ -136,9 +142,10 @@ extract_gerrit_port()
 	    fi
 	fi
 	
-	gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
+	local gerrit_port="`grep "port=" ${review} | cut -d '=' -f 2`"
     fi
 
+    echo "${gerrit_port}"
     return 0
 }
 
@@ -162,13 +169,17 @@ extract_gerrit_username()
 #    else
 #	gerrit_username="${BUILD_USER_ID}"
     fi
-    if test x"${gerrit_username}" != x; then
-	gerrit_username="${GERRIT_CHANGE_OWNER_EMAIL}"
+    if test x"${gerrit_username}" = x; then
+#	gerrit_username="${GERRIT_CHANGE_OWNER_EMAIL}"
+	gerrit_username="lava-bot"
     fi
 
-    gerrit_branch="${GERRIT_TOPIC}"
-    gerrit_revision="${GERRIT_PATCHSET_REVISION}"
+    if test x"${BUILD_CAUSE}" = x"SCMTRIGGER"; then
+	gerrit_username=lava-bot
+    fi
 
+    echo ${gerrit_username}
+    return 0
 }
 
 add_gerrit_comment ()
@@ -179,8 +190,7 @@ add_gerrit_comment ()
     local revision="$2"
     local code="${3:-0}"
 
-#    ssh -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
-    ssh -p 29418 lava-bot@${gerrit_host} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    ssh -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit review --code-review ${code} --message \"${message}\" ${revision}
     if test $? -gt 0; then
 	return 1
     fi
@@ -195,7 +205,7 @@ submit_gerrit()
     local message="`cat $1`"
     local code="${2:-0}"
     local revision="${3:-}"
-    notice "ssh -p ${gerrit_port} ${gerrit_host} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
+    notice "ssh -p ${gerrit['PORT']} ${gerrit['REVIEW_HOST']} gerrit review --code-review ${code}  --message \"${message}\" --submit ${revision}"
 
     return 0
 }
@@ -215,7 +225,7 @@ gerrit_build_status()
     local code="0"
 
     # Initialize setting for gerrit if not done so already
-    if test x"${gerrit_username}" = x; then
+    if test x"${gerrit['USERNAME']}" = x; then
 	gerrit_info ${srcdir}
     fi
 
@@ -272,28 +282,130 @@ gerrit_get_record()
 
 # $1 - the toolchain component to query
 # $2 - the status to query, default to all open patches
-gerrit_query()
+gerrit_query_status()
 {
     local tool=$1
     local status=${2:-status:open}
 
-    # ssh -p 29418 robert.savoye@git.linaro.org gerrit query --current-patch-set ${tool} status:open limit:1 --format JSON
-    gerrit_username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
-    ssh -q -x -p ${gerrit_port} lava-bot@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
-#    ssh -q -x -p ${gerrit_port} ${gerrit_username}@${gerrit_host} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
+    local username="`echo ${GERRIT_CHANGE_OWNER_EMAIL} | cut -d '@' -f 1`"
+    ssh -q -x -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --current-patch-set ${tool} ${status} --format JSON > /tmp/query$$.txt
     local i=0
-    declare -a records
+    declare -a query=()
     while read line
     do
-	records[$i]="echo ${line} | tr -d '\n'"
-	local i=`expr $i + 1`
+	local value="${line}"
+	query[$i]="${value}"
+	i="`expr $i + 1`"
     done < /tmp/query$$.txt
     rm -f /tmp/query$$.txt
 
-    local record="`gerrit_get_record 73e60b77b497f699d8a2a818e2ecaa7ca57e5d1d "${records}"`"
-
-    local revision="`gerrit_extract_keyword "revision" "${records[33]}"`"
-
+    declare -ptu query
     return 0;
+}
+
+gerrit_fetch_patch()
+{
+    # Without being triggered by Gerrit, environment varibles we use won't exist.
+    if test x"${gerrit_trigger}" != xyes; then
+	warning "Gerrit support not specified, will try anyway"
+    fi
+
+    local srcdir="`get_srcdir gcc.git~${gerrit['BRANCH']}`"
+
+    rm -f /tmp/gerrit$$.patch
+    (cd ${srcdir} && git fetch ssh://gerrit['USERNAME']@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
+
+#    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit_host}:29418/${GERRIT_PROJECT} ${GERRIT_REFSPEC} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
+
+    echo "/tmp/gerrit$$.patch"
+    return 0
+}
+
+gerrit_apply_patch()
+{
+    trace "$*"
+
+    # Without being triggered by Gerrit, environment varibles we use won't exist.
+    if test x"${gerrit_trigger}" != xyes; then
+	warning "Gerrit support not specified, will try anyway"
+    fi
+
+    local patch=$1
+    local topdir=$2
+    if test -f ${patch} -a -d ${topdir}; then
+	patch --directory=${topdir} --strip 2--forward --input=${patch} --reverse
+    else
+	return 1
+    fi
+
+    return 0
+}
+
+# This function cherry picks a patch from Gerrit, and applies it to the current branch.
+# it requires the array from returned from gerrit_query_patchset().
+gerrit_cherry_pick()
+{
+    trace "$*"
+
+    # Without being triggered by Gerrit, environment varibles we use won't exist.
+    if test x"${gerrit_trigger}" != xyes; then
+	warning "Gerrit support not specified, will try anyway"
+    fi
+
+    eval "$1"
+
+    # FIXME: These four variables are here only for debugging. They're supplied by Gerrit
+#    GERRIT_TOPIC=Michael-4.9-backport-219656-219657-219659-219661-219679
+#    GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
+
+#    GERRIT_PROJECT=${records['project']}
+#    GERRIT_REFSPEC=${records['ref']}
+    local srcdir="`get_srcdir gcc.git@${records['parents']}`"
+#    local srcdir="`get_srcdir gcc.git`"
+    checkout "`get_URL gcc.git@${records['parents']}`"
+
+    (cd ${srcdir} && git fetch ssh://lava-bot@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git cherry-pick FETCH_HEAD)
+}
+
+# Example query message result:
+#
+# declare -A records='([currentPatchSet]=" 1" [sizeInsertions]=" 779" [value]=" 2"
+# [url]=" https://review.linaro.org/5282" [number]=" 5282" [ref]=" refs/changes/82/5282/1" [branch]=" linaro-4.9-branch" [commitMessage]=" Backport r219656, r219657, r219659, r219661, and r219679 from trunk." [status]=" NEW" [Change-Id]=" I39b6f9298b792755db08cb609a1a446b5e83603b" [revision]=" 6a645e59867c728c4b3bb897488faa00505725c4" [username]=" christophe.lyon" [email]=" christophe.lyon@linaro.org" [subject]=" Backport r219656, r219657, r219659, r219661, and r219679 from trunk." [isDraft]=" false" ["change I39b6f9298b792755db08cb609a1a446b5e83603b"]="change I39b6f9298b792755db08cb609a1a446b5e83603b" [approvals]=" Code-Review" [author]=" Michael Collison" [runTimeMilliseconds]=" 8" [project]=" toolchain/gcc" [sortKey]=" 00341e22000014a2" [description]=" Code-Review" [uploader]=" Michael Collison" [id]=" I39b6f9298b792755db08cb609a1a446b5e83603b" [sizeDeletions]=" -6" [parents]="2c4f089828371d3f89c5c8505e4450c629f4ca5b" [createdOn]=" 2015-03-30 01:39:17 UTC" [lastUpdated]=" 2015-03-30 22:26:37 UTC" [topic]=" Michael-4.9-backport-219656-219657-219659-219661-219679" [grantedOn]=" 2015-03-30 09:04:37 UTC" [type]=" stats" [open]=" true" [rowCount]=" 1" [owner]=" Michael Collison" [by]=" Christophe Lyon" )'
+
+# GERRIT_BRANCH	linaro-4.9-branch
+# GERRIT_CHANGE_ID	I39b6f9298b792755db08cb609a1a446b5e83603b
+# GERRIT_TOPIC	Michael-4.9-backport-219656-219657-219659-219661-219679
+gerrit_query_patchset()
+{
+    trace "$*"
+
+    # Without being triggered by Gerrit, environment varibles we use wont exist.
+    if test x"${GERRIT_CHANGE_ID}" = x; then 
+	warning "Gerrit support not specified, will try anyway, but won't return correct results"
+    fi
+
+    local changeid="${GERRIT_CHANGE_ID:-$1}"
+
+    # get the data for this patchset from Gerrit using the REST API
+    rm -f /tmp/query$$.txt
+    ssh -q -x -p ${gerrit['PORT']} -i ~/.ssh/${gerrit['USERNAME']}_rsa ${gerrit['USERNAME']}@${gerrit['HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
+    declare -A records
+    while read line
+    do
+	local key="`echo ${line} | tr -d '}{' | cut -d ':' -f 1`"
+	if test x"${key}" = x; then
+	    continue
+	fi
+	local value="`echo ${line} | tr -d '][ ' | cut -d ':' -f 2-10`"
+	if test x"${value}" = x; then
+	    read line
+	    local value="`echo ${line} | tr -d '][ ' | cut -d ':' -f 2-10`"
+	fi
+	records[${key}]="${value}"
+    done < /tmp/query$$.txt
+    rm -f /tmp/query$$.txt
+
+    declare -ptu records
+    return 0
 }
 

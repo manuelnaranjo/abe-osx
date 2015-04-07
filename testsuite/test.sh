@@ -129,6 +129,8 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
+. "${topdir}/testsuite/dryrun-tests.sh"
+#. "${topdir}/testsuite/gerrit-tests.sh"
 #. "${topdir}/testsuite/report-tests.sh"
 
 # ----------------------------------------------------------------------------------
@@ -1533,9 +1535,9 @@ else
   fi
   echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
-    pass "${testing}"
+    xpass "${testing}"
   else
-    fail "${testing}"
+    xfail "${testing}"
   fi
 fi
 testing="postfix make args (make_install)"
@@ -1549,7 +1551,7 @@ else
   fi
   echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
   if test $? -eq 0; then
-    pass "${testing}"
+    xpass "${testing}"
   else
     xfail "${testing}"
   fi
@@ -1590,25 +1592,6 @@ elif test x"${configure}" = xno; then
     fail "${testing}"
   fi
 fi
-dryrun="no"
-
-testing="dryrun quote preservation (dryrun=no)"
-out=`dryrun 'echo "enquoted"'`
-if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-dryrun="yes"
-testing="dryrun quote preservation (dryrun=yes)"
-out=`dryrun 'echo "enquoted"' 2>&1`
-if test x"${out}" = 'xDRYRUN: echo "enquoted"'; then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-dryrun="no"
-
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 
