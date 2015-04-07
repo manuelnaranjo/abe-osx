@@ -50,9 +50,6 @@ if { [lindex $ret 0] == 0 } {
 }
 set specdir "$sysroot/usr/lib"
 
-# set library path environment variable for qemu
-set env(QEMU_LD_PREFIX) $sysroot
-
 # The basic set of flags needed to build "hello world" for this
 # board. This board uses libgloss and newlib.
 
