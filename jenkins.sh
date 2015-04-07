@@ -72,7 +72,10 @@ user_options=""
 # Return status
 status=0
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
+# Whether to exclude some component from 'make check'
+excludecheck=
+
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2; shift ;;
@@ -85,6 +88,7 @@ while test $# -gt 0; do
         -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
+	--excludecheck) excludecheck=$2; shift ;;
 	-h|--help) usage ;;
     esac
     shift
@@ -141,15 +145,11 @@ fi
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
     check="--check all"
+    check="${check}${excludecheck:+ --excludecheck ${excludecheck}}"
 fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
-else
-    # For native builds, we don't check gdb because it is too slow
-    if test x"${runtests}" = xtrue; then
-	check="${check} --excludecheck gdb"
-    fi
 fi
 
 if test x"${libc}" != x; then
