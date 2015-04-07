@@ -129,6 +129,7 @@ totals()
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/builddir-tests.sh"
+. "${topdir}/testsuite/dryrun-tests.sh"
 #. "${topdir}/testsuite/gerrit-tests.sh"
 #. "${topdir}/testsuite/report-tests.sh"
 
@@ -1591,27 +1592,6 @@ elif test x"${configure}" = xno; then
     fail "${testing}"
   fi
 fi
-dryrun="no"
-
-testing="dryrun quote preservation (dryrun=no)"
-out=`dryrun 'echo "enquoted"'`
-if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
-  pass "${testing}"
-else
-  fail "${testing}"
-  fixme "${testing} ${out}"
-fi
-dryrun="yes"
-testing="dryrun quote preservation (dryrun=yes)"
-out=`dryrun 'echo "enquoted"' 2>&1`
-if test `echo ${out} | grep -c "DRYRUN: echo \"enquoted\""` -gt 0; then
-  pass "${testing}"
-else
-  fail "${testing}"
-  fixme "${testing} ${out}"
-fi
-dryrun="no"
-
 # TODO: Test checkout directly with a non URL.
 # TODO: Test checkout with a multi-/ branch
 

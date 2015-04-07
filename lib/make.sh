@@ -681,82 +681,6 @@ make_install()
     return 0
 }
 
-# Run the testsuite for the component. By default, this runs the testsuite
-# using the freshly built executables in the build tree. It' also possible
-# to run the testsuite on installed tools, so we can test out binary releases.
-# For binutils, use check-DEJAGNU. 
-# For GCC, use check-gcc-c, check-gcc-c++, or check-gcc-fortran
-# GMP uses check-mini-gmp, MPC and MPFR appear to only test with the freshly built
-# components.
-#
-# $1 - The component to test
-make_check_installed()
-{
-    trace "$*"
-
-    local tool="`get_toolname $1`"
-    if test x"${builddir}" = x; then
-        local builddir="`get_builddir $1 ${2:+$2}`"
-    fi
-    notice "Making check in ${builddir} on installed components"
-
-    # TODO:
-    # extract binary tarball
-    # If build tree exists, then 'make check' there.
-    # if no build tree, untar the matching source release, configure it, and
-    # then run 'make check'.
-
-    local tests=""
-    case $1 in
-        binutils*)
-            local builddir="`get_builddir ${binutils_version} ${2:+$2}`"
-	    # Overwrite check-binutils.log in order to provide a clean log file
-	    # if make check has been run more than once on a build tree.
-            dryrun "make -C ${builddir}/gas check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee ${builddir}/check-binutils.log"
-	    if test $? -gt 0; then
-		error "make -C ${builddir}/gas failed."
-		return 1;
-	    fi
-            dryrun "make -C ${builddir}/ld check-DEJAGNU RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-binutils.log"
-	    if test $? -gt 0; then
-		error "make -C ${builddir}/ld failed."
-		return 1;
-	    fi
-            ;;
-        gcc*)
-            local builddir="`get_builddir ${gcc_version} ${2:+$2}`"
-            for i in "c c++"; do
-		# Remove pre-existing logs so that rerunning make check
-		# results in a clean log.
-		if test -e ${builddir}/check-${i}.log; then
-		    # This might or might not be called, depending on whether
-		    # make_clean is called before make_check_installed.
-		    # None-the-less it's better to be safe.
-		    notice "Removing existing check-${i}.log file: ${builddir}/check-${i}.log"
-		    rm ${builddir}/check-${i}.log
-		fi
-                dryrun "make -C ${builddir} check-gcc=$i RUNTESTFLAGS=${runtest_flags} ${make_flags} -w -i -k 2>&1 | tee -a ${builddir}/check-${i}.log"
-		if test $? -gt 0; then
-		    error "make -C ${builddir} check-gcc=$i failed."
-		    return 1;
-		fi
-            done
-            ;;
-        *libc*)
-            ;;
-        newlib*)
-            ;;
-        gdb*)
-            ;;
-        *)
-            ;;
-    esac
-
-    return 0
-}
-
-# Run the testsuite for the component. By default, this runs the testsuite
-# using the freshly built executables in the build tree. It' also possible
 # $1 - The component to test
 # $2 - If set to anything, installed tools are used'
 make_check()
@@ -775,11 +699,6 @@ make_check()
         fi
     done
     notice "Making check in ${builddir}"
-
-#    if test x"$2" != x; then
-#       make_check_installed ${2}
-#       return 0
-#    fi
 
     # Use pipes instead of /tmp for temporary files.
     if test x"${override_cflags}" != x -a x"$2" != x"stage2"; then
@@ -847,9 +766,12 @@ make_check()
 		*"-elf"*) schroot_sysroot="$(mktemp -d)" ;;
 		*) schroot_sysroot="$(make_target_sysroot)" ;;
 	    esac
+	    local ret=
 	    start_schroot_sessions "${target}" "${schroot_sysroot}" "${builddir}"
+	    ret=$?
+
 	    rm -rf "$schroot_sysroot"
-	    if test "$?" != "0"; then
+	    if test $ret -ne 0; then
 		return 1
 	    fi
 	fi

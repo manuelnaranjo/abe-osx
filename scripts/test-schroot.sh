@@ -8,27 +8,24 @@ set -e
 
 arch="native"
 begin_session=false
-schroot_master=""
 shared_dir=""
 board_exp=""
 finish_session=false
-gen_schroot=false
 sysroot=""
 ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
 profile="tcwg-test"
 multilib_path="lib"
+uname=""
 
-while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
+while getopts "a:bd:e:fh:l:mo:p:P:qu:v" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
-	c) schroot_master="$OPTARG" ;;
 	d) shared_dir=$OPTARG ;;
 	e) board_exp="$OPTARG" ;;
 	f) finish_session=true ;;
-	g) gen_schroot=true ;;
 	h) multilib_path="$OPTARG" ;;
 	l) sysroot=$OPTARG ;;
 	m) ssh_master=true ;;
@@ -36,6 +33,7 @@ while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
 	p) host_ssh_opts="$OPTARG" ;;
 	P) profile="$OPTARG" ;;
 	q) exec > /dev/null ;;
+	u) uname="$OPTARG" ;;
 	v) set -x ;;
     esac
 done
@@ -144,127 +142,6 @@ rsh="ssh $rsh_opts"
 user="$(ssh $target_ssh_opts $target echo \$USER)"
 home="$(ssh $target_ssh_opts $target pwd)"
 
-if $gen_schroot; then
-    chroot=/tmp/$schroot_id.$$
-
-    # Make sure machine in the lab agree on what time it is.
-    ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
-
-    ssh $target_ssh_opts $target \
-	sudo rm -rf $chroot
-    ssh $target_ssh_opts $target \
-	sudo debootstrap \
-	--arch=$deb_arch \
-	--variant=minbase \
-	--include=iptables,openssh-server,rsync,sshfs \
-	--foreign \
-	$deb_dist $chroot
-    # Copy qemu binaries to handle foreign schroots.
-    ssh $target_ssh_opts $target \
-	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/ || true
-    ssh $target_ssh_opts $target \
-	sudo chroot $chroot ./debootstrap/debootstrap --second-stage &
-    pid=$!
-    while sleep 10; do
-	if ! ssh $target_ssh_opts $target ps -e -o cmd= | grep -v "grep\|ssh" | grep "./debootstrap/debootstrap --second-stage" >/dev/null; then
-	    kill $pid || true
-	    break
-	fi
-    done
-
-    # Configure APT sources.
-    case "$deb_arch" in
-	amd64|i386) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
-	*) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
-    esac
-    ssh $target_ssh_opts $target \
-	sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
-
-    case "$deb_arch" in
-	amd64) extra_packages="qemu-user-static gdb gdbserver" ;;
-	*) extra_packages="gdb gdbserver" ;;
-    esac
-
-    case "$profile" in
-	"tcwg-build") extra_packages="autoconf autogen automake bash bison build-essential ccrypt dejagnu flex gawk git g++ gcc libncurses5-dev libtool make texinfo wget xz-utils" ;;
-    esac
-
-    if ! [ -z "$extra_packages" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot apt-get update
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot apt-get install -y "$extra_packages"
-    fi
-
-    if [ "$(echo "$extra_packages" | grep -c qemu-user-static)" = "0" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo rm -f $chroot/usr/bin/qemu-\*-static
-    fi
-
-    # Install foundation model in x86_64 chroots for bare-metal testing
-    if [ x"$deb_arch" = x"amd64" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo mkdir -p $chroot/linaro/foundation-model/Foundation_v8pkg
-	ssh $target_ssh_opts $target \
-	    sudo rsync -a /linaro/foundation-model/Foundation_v8pkg/ $chroot/linaro/foundation-model/Foundation_v8pkg/
-    fi
-
-    if echo "$extra_packages" | grep -q "git"; then
-	ssh $target_ssh_opts $target \
-	    sudo ln -s /usr/share/doc/git/contrib/workdir/git-new-workdir $chroot/usr/local/bin/
-	ssh $target_ssh_opts $target \
-	    sudo chmod a+x $chroot/usr/share/doc/git/contrib/workdir/git-new-workdir
-    fi
-
-    ssh $target_ssh_opts $target \
-	sudo mkdir -p /var/chroots/
-    ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd $chroot && tar --one-file-system -czf /var/chroots/$schroot_id.tgz .\""
-
-    ssh $target_ssh_opts $target \
-	sudo rm -rf $chroot
-
-    case "$deb_arch" in
-	armhf|i386) personality="personality=linux32" ;;
-	*) personality="" ;;
-    esac
-
-    ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\"" <<EOF
-[$schroot_id]
-type=file
-file=/var/chroots/$schroot_id.tgz
-groups=users
-root-groups=users
-profile=$profile
-$personality
-EOF
-
-    if ! [ -z "$schroot_master" ]; then
-	scp $target_ssh_opts $target:/var/chroots/$schroot_id.tgz $schroot_master/
-	mkdir -p $schroot_master/chroot.d/
-	scp $target_ssh_opts $target:/etc/schroot/chroot.d/$schroot_id $schroot_master/chroot.d/
-    fi
-fi
-
-if ! [ -z "$schroot_master" ]; then
-    # Make sure machine in the lab agree on what time it is.
-    ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
-
-    ssh $target_ssh_opts $target \
-	sudo mkdir -p /var/chroots/
-
-    cat $schroot_master/$schroot_id.tgz | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /var/chroots/$schroot_id.tgz\""
-    cat $schroot_master/chroot.d/$schroot_id | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\""
-
-    (cd $schroot_master && tar -c $profile/ | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd /etc/schroot && rm -rf $profile && tar -x && chown -R root:root $profile/\"")
-fi
-
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n $profile-$port -d /
     $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
@@ -369,6 +246,18 @@ EOF
 	$rsh -f -S none $target bash -c "\"while sleep $delay; do ps uxf | sed -e \\\"s/ \+/ /g\\\" | cut -d\\\" \\\" -f 2,10- | grep \\\"^[0-9]\+ [0-9]*2:[0-9]\+ ._ qemu-\\\" | cut -d\\\" \\\" -f 1 | xargs -r kill -9; done\""
     fi
     echo $target:$port installed sysroot $sysroot
+fi
+
+if [ x"$uname" != x"" ]; then
+    old_uname="$($rsh root@$target "uname -m")"
+    $rsh root@$target "mv /bin/uname /bin/uname.real"
+    $rsh root@$target "cat > /bin/uname" <<EOF
+#!/bin/bash
+
+/bin/uname.real "\$@" | sed -e "s/$old_uname/$uname/g"
+exit \${PIPESTATUS[0]}
+EOF
+    $rsh root@$target "chmod a+x /bin/uname"
 fi
 
 if $ssh_master; then

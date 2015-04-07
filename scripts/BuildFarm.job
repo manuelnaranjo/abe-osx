@@ -42,7 +42,7 @@ rm -fr ${WORKSPACE}/_build
 mkdir -p ${WORKSPACE}/_build
 
 cd ${WORKSPACE}/_build
-$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release} ${bootstrap}
+$CONFIG_SHELL -x ${abe_dir}/jenkins.sh --runtests -l ${languages} -f ${fileserver} ${release} ${bootstrap}${excludecheck:+ --excludecheck ${excludecheck}}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
