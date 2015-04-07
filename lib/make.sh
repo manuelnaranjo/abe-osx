@@ -121,7 +121,7 @@ build_all()
                 build_all_ret=$?
                 ;;
             gdb)
-                build ${gdb_version}
+                build ${gdb_version} gdb
                 build_all_ret=$?
                 ;;
             gdbserver)
@@ -130,7 +130,7 @@ build_all()
                 ;;
             # Build anything not GCC or infrastructure
             *)
-                build ${binutils_version}
+                build ${binutils_version} binutils
                 build_all_ret=$?
                 ;;
         esac
@@ -963,8 +963,11 @@ copy_gcc_libs_to_sysroot()
 
     gcc_exe="`find -name ${target}-gcc`"
     libgcc="`${gcc_exe} -print-file-name=${libgcc}`"
+    if test x"${libgcc}" = xlibgcc.so; then
+	error "GCC doesn't exist!"
+	return 1
+    fi
     gcc_lib_path="$(dirname "${libgcc}")"
-
     if ! test -z "${ldso}"; then
 	sysroot_lib_dir="$(dirname ${ldso})"
     else
