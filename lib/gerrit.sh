@@ -48,6 +48,10 @@
 # the requireed information.
 gerrit_info()
 {
+    trace "$*"
+
+    env | grep GERRIT
+
     declare -A gerrit=()
 
     # Some commonly used Gerrit data we can extract from the gitreview file, if it exists.
@@ -70,7 +74,7 @@ gerrit_info()
     gerrit['CHANGE_ID']="${GERRIT_CHANGE_ID}"
     gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER}"
     gerrit['EVENT_TYPE']="${GERRIT_EVENT_TYPE}"
-    gerrit['REFSPEC']="${GERRIT_REFSPEC}"
+    gerrit['REFSPEC']="${GERRIT_REFSPEC:-refs/changes/82/5282/1}"
 #    jenkins['JOB_NAME']="${JOB_NAME}"
 #    jenkins['JOB_URL']="${JOB_URL}"
 
@@ -91,7 +95,7 @@ extract_gerrit_host()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		warning "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
@@ -116,7 +120,7 @@ extract_gerrit_project()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		warning "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
@@ -141,7 +145,7 @@ extract_gerrit_port()
 	    if test -e ${HOME}/.gitreview; then
 		local review=${HOME}/.gitreview
 	    else
-		error "No ${srcdir}/.gitreview file!"
+		warning "No ${srcdir}/.gitreview file!"
 		return 1
 	    fi
 	fi
@@ -393,7 +397,8 @@ gerrit_query_patchset()
 
     # get the data for this patchset from Gerrit using the REST API
     rm -f /tmp/query$$.txt
-    ssh -q -x -p ${gerrit['PORT']} -i ~/.ssh/${gerrit['USERNAME']}_rsa ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
+    # sudo ssh -i ~buildslave/.ssh/lava-bot_rsa -x -p 29418 lava-bot@review.linaro.org gerrit query --current-patch-set gcc status:open --format JSON
+    ssh -i ~/.ssh/${gerrit['USERNAME']}_rsa -q -x -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit query --format=text ${changeid} --current-patch-set > /tmp/query$$.txt
     declare -A records=()
     while read line
     do
