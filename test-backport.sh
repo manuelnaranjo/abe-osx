@@ -94,7 +94,7 @@ revision_str=""
 user_options=""
 
 # These are needed by the functions in the ABE library.
-local_builds="${PWD}"
+local_builds="${user_workspace}"
 local_snapshots=${user_snapshots}
 sources_conf=${topdir}/config/sources.conf
 NEWWORKDIR=/usr/local/bin/git-new-workdir
@@ -118,8 +118,6 @@ while test $# -gt 0; do
     shift
 done
 
-# FIXME: Just a temp debug hack to make sure test-backpor creates the two branches
-export GERRIT_CHANGE_ID="I39b6f9298b792755db08cb609a1a446b5e83603b"
 # If triggered by Gerrit, use the REST API. This assumes the lava-bot account
 # is supported by Gerrit, and the public SSH key is available. 
 if test x"${GERRIT_CHANGE_ID}" != x; then
@@ -136,11 +134,6 @@ if test x"${GERRIT_CHANGE_ID}" != x; then
     # Check out the revision made before this patch gets merged in
     checkout "`get_URL gcc.git@${records['parents']}`"
 
-    # Since a patch from Gerrit doesm't have a revision, mimic the behaviour 
-#    srcdir="`get_srcdir gcc.git@${records['parents']}`"
-#    destdir="`get_srcdir gcc.git@${records['revision']}`"
-#    mkdir -p ${destdir}
-#    cp -rdnp ${srcdir}/* ${destdir}/
     gerrit_cherry_pick ${gerrit['REFSPEC']}
 else
     gerrit_trigger=no
