@@ -50,9 +50,6 @@ gerrit_info()
 {
     trace "$*"
 
-    set
-    env
-
     declare -A gerrit=()
 
     # Some commonly used Gerrit data we can extract from the gitreview file, if it exists.
@@ -73,9 +70,9 @@ gerrit_info()
     gerrit['REVISION']="${GERRIT_PATCHSET_REVISION}"
     gerrit['CHANGE_SUBJECT']="${GERRIT_CHANGE_SUBJECT}"
     gerrit['CHANGE_ID']="${GERRIT_CHANGE_ID}"
-    gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER}"
+    gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER:-1}"
     gerrit['EVENT_TYPE']="${GERRIT_EVENT_TYPE}"
-    gerrit['REFSPEC']="${GERRIT_REFSPEC:-refs/changes/82/5282/1}"
+    gerrit['REFSPEC']="${GERRIT_REFSPEC}"
 #    jenkins['JOB_NAME']="${JOB_NAME}"
 #    jenkins['JOB_URL']="${JOB_URL}"
 
