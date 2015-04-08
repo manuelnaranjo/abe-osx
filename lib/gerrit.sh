@@ -196,7 +196,7 @@ add_gerrit_comment ()
     local revision="$2"
     local code="${3:-0}"
 
-    ssh -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit review --code-review ${code} --message \"${message}\" ${revision}
+    ssh -i ~/.ssh/${gerrit['USERNAME']}_rsa -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit review --code-review ${code} --message \"${message}\" ${revision}
     if test $? -gt 0; then
 	return 1
     fi
