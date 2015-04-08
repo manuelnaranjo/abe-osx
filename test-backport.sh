@@ -56,6 +56,9 @@ which_dir="`which $0`"
 topdir="`dirname ${which_dir}`"
 . "${topdir}/lib/common.sh" || exit 1
 
+# since host.conf isn't loaded, get the build architecture
+build="`${topdir}/config.guess`"
+
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
 # dash. Not good...
@@ -69,10 +72,6 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-
-abe="`which $0`"
-abe_path="`dirname ${abe}`"
-abe="`basename $0`"
 
 # Non matrix builds use node_selector, but matrix builds use NODE_NAME
 if test x"${node_selector}" != x; then
@@ -94,7 +93,7 @@ revision_str=""
 user_options=""
 
 # These are needed by the functions in the ABE library.
-local_builds="${user_workspace}"
+local_builds="${user_workspace}/_build/build/{${build}/${target}"
 local_snapshots=${user_snapshots}
 sources_conf=${topdir}/config/sources.conf
 NEWWORKDIR=/usr/local/bin/git-new-workdir
@@ -221,18 +220,17 @@ export BUILD_INFO=""
 
 # Don't try to add comments to Gerrit if run manually
 if test x"${gerrit_trigger}" != x; then
-    gerrit="--enable gerrit"
+    gerritopt="--enable gerrit"
 else
-    gerrit=""
+    gerritopt=""
 fi
 
 resultsdir="/tmp/${node}/abe$$/${target}@"
 
 i=0
 while test $i -lt ${#revisions[@]}; do
-    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
-
     # Don't build if a previous build of this revision exists
+    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
     exists="`ssh ${fileserver} "if test -d ${dir}; then echo YES; else echo NO; fi"`"
     if test x"${exists}" = x"YES"; then
 	echo "${dir} already exists"
@@ -240,7 +238,7 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check} ${user_options}
+    bash -x ${topdir}/abe.sh ${gerrit_opt} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check} ${user_options}
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
@@ -252,19 +250,19 @@ while test $i -lt ${#revisions[@]}; do
     fi
 
     # Compress .sum and .log files
-    sums="`find ${local_builds}/${build}/${targetname}/ -name \*.sum`"
-    logs="`find ${local_builds}/${build}/${targetname}/ -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
+    sums="`find ${local_builds} -name \*.sum`"
+    logs="`find ${local_builds} -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
     xz ${sums} ${logs}
 
     # FIXME: The way this is currently implemented only handles GCC backports. If binutils
     # backports are desired, this will have to be implented here.
-    sums="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.sum.xz`"
-    sums="${sums} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
+    sums="`find ${local_builds}/binutils-* -name \*.sum.xz`"
+    sums="${sums} `find ${local_builds}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
     # Copy only the log files we want
-    logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
-    logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="`find ${local_builds}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="${logs} `find ${local_builds}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
 
-    manifest="`find ${local_builds}/${build}/${targetname} -name gcc.git@${revisions[$i]}\*manifest.txt`"
+    manifest="`find ${local_builds} -name gcc.git@${revisions[$i]}\*manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
@@ -308,11 +306,11 @@ if test x"${fileserver}" != x; then
     rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
+    man="`find ${local_builds} -name gcc.git@${revisions[1]}\*manifest.txt`"
     cat ${man}
 
     echo "### with NEW COMMIT:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[0]}\*manifest.txt`"
+    man="`find ${local_builds} -name gcc.git@${revisions[0]}\*manifest.txt`"
     cat ${man}
 
     wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
