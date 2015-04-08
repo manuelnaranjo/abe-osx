@@ -156,28 +156,34 @@ build_all()
     if test x"${runtests}" != x -a x"${tarbin}" != x"yes"; then
 	notice "Testing components ${runtests}..."
 	buildingall=no
-	local check_ret=
+	local check_ret=0
 	local check_failed=
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
 	    make_check ${binutils_version} binutils
-	    check_ret=$?
-	    check_failed="${check_failed} binutils"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} binutils"
+	    fi
 	fi
 
 	is_package_in_runtests "${runtests}" gcc
 	if test $? -eq 0; then
 	    make_check ${gcc_version} stage2
-	    check_ret=$?
-	    check_failed="${check_failed} gcc-stage2"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} gcc-stage2"
+	    fi
 	fi
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
 	    make_check ${gdb_version} gdb
-	    check_ret=$?
-	    check_failed="${check_failed} gdb"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} gdb"
+	    fi
 	fi
 
 	# Only perform unit tests on [e]glibc when we're building native.
@@ -186,16 +192,20 @@ build_all()
 	    is_package_in_runtests "${runtests}" glibc
 	    if test $? -eq 0; then
 		#make_check ${glibc_version}
-	        #check_ret=$?
+		#if test $? -ne 0; then
+		#check_ret=1
 	        #check_failed="${check_failed} glibc"
+		#fi
 		notice "make check on native glibc is not yet implemented."
 	    fi
 
 	    is_package_in_runtests "${runtests}" eglibc
 	    if test $? -eq 0; then
 		#make_check ${eglibc_version}
-	        #check_ret=$?
+		#if test $? -ne 0; then
+		#check_ret=1
 	        #check_failed="${check_failed} eglibc"
+		#fi
 		notice "make check on native eglibc is not yet implemented."
 	    fi
 	fi
