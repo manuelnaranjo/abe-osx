@@ -38,8 +38,7 @@ EOUSAGE
 
 export LC_ALL=C
 
-me="`which $0`"
-my_path="`dirname ${me}`"
+my_path="$(dirname $0)"
 
 tool=gxx
 

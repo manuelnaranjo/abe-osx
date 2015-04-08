@@ -375,6 +375,25 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	xz ${logs_dir}/* || status=1
 	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/ || status=1
 	rm -rf ${logs_dir} || status=1
+
+	# If the user supplied a reference build number, use it
+	if test x"${reference_build}" != x ; then
+	    ref_dir="*/*/${arch}.${target}-${job}${reference_build}"
+	    scp ${abe_dir}/scripts/compare_tests \
+		${abe_dir}/scripts/compare_dg_tests.pl \
+		${abe_dir}/scripts/unstable-tests.txt ${fileserver}:${basedir}/${dir}/ || status=1
+	    ssh ${fileserver} bash ${basedir}/${dir}/compare_tests -target ${target} \
+		${basedir}/${ref_dir} ${basedir}/${dir} || status=1
+	    ssh ${fileserver} rm ${basedir}/${dir}/compare_tests \
+		${basedir}/${dir}/compare_dg_tests.pl \
+		${basedir}/${dir}/unstable-tests.txt
+
+	    echo "### Compared REFERENCE:"
+	    ssh ${fileserver} cat ${basedir}/${ref_dir}/manifest.txt
+	    echo "### with THIS REVISION:"
+	    ssh ${fileserver} cat ${basedir}/${dir}/manifest.txt
+	fi
+
 #	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
 #	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
 #	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
@@ -396,5 +415,8 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
     fi
 
 fi
+
+wwwpath="`echo ${basedir}/${dir} | sed -e 's:/work::' -e 's:/space::'`"
+echo "Full build logs: http://abe.tcwglab.linaro.org${wwwpath}/"
 
 exit $status
