@@ -93,7 +93,6 @@ revision_str=""
 user_options=""
 
 # These are needed by the functions in the ABE library.
-local_builds="${user_workspace}/_build/builds/${build}/${target}"
 local_snapshots=${user_snapshots}
 sources_conf=${topdir}/config/sources.conf
 NEWWORKDIR=/usr/local/bin/git-new-workdir
@@ -176,6 +175,7 @@ if test -d ${user_workspace}/_build; then
     rm -fr ${user_workspace}/_build
 fi
 mkdir -p ${user_workspace}/_build
+local_builds="${user_workspace}/_build/builds/${build}/${targetname}"
 
 # Use the newly created build directory
 pushd ${user_workspace}/_build
