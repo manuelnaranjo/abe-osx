@@ -35,7 +35,9 @@ dbuser="default"
 dbpasswd="default"
 
 # Don't set this unless you need to modify it.
-default_march=
+override_arch=
+override_cpu=
+override_tune=
 
 manifest=
 
