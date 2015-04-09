@@ -743,10 +743,18 @@ make_check()
 	exec_tests=false
 	case "$tool" in
 	    gcc) exec_tests=true ;;
+	    # Support testing remote gdb for the merged binutils-gdb.git
+	    # repository where the branch doesn't indicate the tool.
+	    # Fixme: This doesn't seem to be working.
 	    binutils)
 		if [ x"$2" = x"gdb" ]; then
 		    exec_tests=true
 		fi
+		;;
+	    # Support testing remote gdb for the merged binutils-gdb.git
+	    # where the branch name DOES indicate the tool.
+	    gdb)
+		exec_tests=true
 		;;
 	esac
 
@@ -773,12 +781,8 @@ make_check()
 		local check_targets="check-DEJAGNU"
 		;;
 	    gdb)
-	        # Stop schroot sessions
-	        stop_schroot_sessions
-	        unset SCHROOT_TEST
-		#local dirs="/gdb"
-		#local check_targets="check-gdb"
-		return 0
+		local dirs="/"
+		local check_targets="check-gdb"
 		;;
 	    *)
 		local dirs="/"
