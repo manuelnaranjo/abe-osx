@@ -206,10 +206,10 @@ if test x"${gerrit_trigger}" != xyes; then
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
     update="--disable update"
 else
-    update=""
+    update="--disable update"
     echo "FIXME: ${records['parents']}"
     echo "FIXME: ${records['revision']}"
-    declare -a revisions=("gcc.git@${records['parents']} gcc.git@${records['revision']}")
+    declare -a revisions=(gcc.git@${records['parents']} gcc.git@${records['revision']})
 fi
 # Force GCC to not build the docs
 export BUILD_INFO=""
