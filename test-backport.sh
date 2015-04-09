@@ -209,7 +209,7 @@ else
     update="--disable update"
     echo "FIXME: ${records['parents']}"
     echo "FIXME: ${records['revision']}"
-    declare -a revisions=(gcc.git@${records['parents']} gcc.git@${records['revision']})
+    declare -a revisions=(${records['parents']} ${records['revision']})
 fi
 # Force GCC to not build the docs
 export BUILD_INFO=""
