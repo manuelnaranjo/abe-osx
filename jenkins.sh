@@ -48,8 +48,8 @@ user_workspace="${WORKSPACE}"
 # The files in this directory are shared across all platforms 
 shared="${HOME}/workspace/shared"
 
-# This is an optional directory for the master copy of the git repositories.
-user_git_repo="${shared}/snapshots"
+# This is an optional directory for the reference copy of the git repositories.
+git_reference="${HOME}/snapshots-ref"
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
@@ -189,7 +189,7 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
@@ -221,9 +221,16 @@ else
     try_bootstrap=""
 fi
 
+rm -rf ${user_snapshots}
+mkdir -p ${user_snapshots}
+(
+    flock -s 9
+    $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} ${change} --checkout all
+) 9>${git_reference}.lock
+
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If abe returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
@@ -340,13 +347,13 @@ sums="`find ${user_workspace} -name \*.sum`"
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${platform} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends --parallel ${change} ${platform} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
@@ -382,14 +389,14 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/ || status=1
 	rm -f ${srcfiles} || status=1
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} ${fileserver}:/work/space/binaries/ || status=1
 	rm -f ${binfiles} || status=1

@@ -45,11 +45,8 @@ topdir="`dirname ${which_dir}`"
 
 user_snapshots="${WORKSPACE}/snapshots"
 shared="/home/buildslave/workspace/shared/"
-snapshots_ref="${shared}/snapshots"
-
-if test ! -d ${snapshots_ref}/gcc.git; then
-    git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
-fi
+snapshots_ref="${HOME}/snapshots-ref"
+snapshots_ref_lock=${snapshots_ref}.lock
 
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
@@ -129,33 +126,21 @@ if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
     branch="`echo ${branch} | sed -e 's:gcc.git~::'`"
 fi
 
-if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/${branch}"
-else
-    git_reference_dir="${local_snapshots}"
-    srcdir="${local_snapshots}/gcc.git~${branch}"
-fi
+rm -rf ${user_snapshots}
+mkdir -p ${user_snapshots}
+(
+    flock -s 9
+    bash -x ${topdir}/abe.sh ${platform} --checkout all ${user_options}
 
-# Due to update cycles, sometimes the branch isn't in the repository yet.
-exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
-if test "${exists}" -eq 0; then
-    pushd ${git_reference_dir}/${repo} && git fetch
-    popd
-fi
+    # Workaround broken --checkout all
+    # See https://bugs.linaro.org/show_bug.cgi?id=1338
+    if ! [ -d ${user_snapshots}/gcc.git ]; then
+	git clone --reference=${snapshots_ref}/gcc.git http://git.linaro.org/toolchain/gcc.git ${user_snapshots}/gcc.git
+    fi
+) 9>${snapshots_ref_lock}
 
-rm -fr ${srcdir}
-git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
-# Make sure we are at the top of ${branch}
-pushd ${srcdir}
-# If in 'detached HEAD' state, don't try to update to the top of the branch
-detached=`git branch | grep detached`
-if test x"${detached}" = x; then
-    git checkout -B ${branch} origin/${branch} || exit 1
-fi
-popd
-
-# Get the last two revisions
-declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
+# Get the last two revisions of ${branch}
+declare -a revisions=(`cd ${user_snapshots}/gcc.git && git rev-parse origin/${branch} origin/${branch}^`)
 
 # Force GCC to not build the docs
 export BUILD_INFO=""
@@ -189,7 +174,7 @@ while test $i -lt ${#revisions[@]}; do
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
-   fi
+    fi
 
     # Compress .sum and .log files
     sums="`find ${local_builds}/${build}/${targetname}/ -name \*.sum`"

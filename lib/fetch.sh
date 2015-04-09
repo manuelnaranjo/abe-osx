@@ -136,8 +136,11 @@ fetch_http()
     fi
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
-	notice "Downloading ${getfile} to ${local_snapshots}"
-	if test x"${wget_bin}" != x; then
+	if test -e "${git_reference_dir}/${getfile}"; then
+	    notice "Copying ${getfile} from reference dir to ${local_snapshots}"
+	    dryrun "cp ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+	elif test x"${wget_bin}" != x; then
+	    notice "Downloading ${getfile} to ${local_snapshots}"
 	    # --continue --progress=bar
 	    # NOTE: the timeout is short, and we only try twice to access the
 	    # remote host. This is to improve performance when offline, or
@@ -147,6 +150,8 @@ fetch_http()
 		warning "downloaded file ${getfile} has zero data!"
 		return 1
 	    fi
+	else
+	    error "Can't find wget to download ${getfile}"
 	fi
     else
 	# We don't want this message for md5sums, since it's so often

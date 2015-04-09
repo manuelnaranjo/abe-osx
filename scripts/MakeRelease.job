@@ -60,7 +60,7 @@ cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
   $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
-      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
+      --with-git-reference-dir=${HOME}/snapshots-ref --with-fileserver=${fileserver}
 fi
 
 gcc_source="gcc-linaro-${version}-${release}.tar.xz"
@@ -76,10 +76,17 @@ if test x"${date}" != x; then
     release="${date}"    
 fi
 
+rm -rf ${user_snapshots}
+mkdir -p ${user_snapshots}
+(
+    flock -s 9
+    $CONFIG_SHELL ${abe_dir}/abe.sh gcc=${gcc_source} ${platform} --checkout all
+) 9>${HOME}/snapshots-ref.lock
+
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --release ${release} \
-	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} \
+	--tarsrc ${check} gcc=${gcc_source} ${platform} --build all
 fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
