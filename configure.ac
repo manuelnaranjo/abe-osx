@@ -116,6 +116,19 @@ if test x"${AUTOGEN}" = x; then
    missing="${missing} autogen"
 fi
 
+AC_PATH_PROG(QEMU_ARM, qemu-arm)
+if test x"${QEMU_ARM}" = x; then
+   AC_MSG_WARN([You need 'qemu-arm' to run test the toolchain properly!])
+# Ubuntu uses qemu-user-static, Fedora just qemu
+#   missing="${missing} qemu"
+fi
+AC_PATH_PROG(QEMU_AARCH64, qemu-aarch64)
+if test x"${QEMU_AARCH64}" = x; then
+   AC_MSG_WARN([You need 'qemu-aaarch64' to run test the toolchain properly!])
+# Ubuntu uses qemu-user-static, Fedora just qemu
+#   missing="${missing} qemu"
+fi
+
 dnl Building GDB requires ncurses and termcap
 #AC_CHECK_LIB(ncurses, doupdate)
 #if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
