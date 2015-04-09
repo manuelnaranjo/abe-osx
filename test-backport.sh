@@ -103,7 +103,7 @@ local_builds="${PWD}"
 # Whether to exclude some component from 'make check'
 excludecheck=
 
-OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check,excludecheck:" -- "$@"`"
+OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2; shift ;;

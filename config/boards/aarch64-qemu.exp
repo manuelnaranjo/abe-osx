@@ -23,7 +23,7 @@ load_generic_config "sim"
 process_multilib_options ""
 
 if { [board_info $board obj_format] == "pe" } {
-    set additional_options "-Wl,-oformat,pe-arm-little,--image-base,0"
+    set additional_options "-Wl,-oformat,pe-aarch64-little,--image-base,0"
     #    set_board_info uses_underscores 1
 } else {
     set additional_options ""
@@ -33,7 +33,7 @@ if { [board_info $board obj_format] == "pe" } {
 load_base_board_description "basic-sim"
 
 # The name of the directory in the build tree where the simulator lives.
-setup_sim arm
+setup_sim aarch64
 
 # When testing GCC in tree, the libgloss spec files aren't in a known location,
 # so we have to find them in the sysroot. FIXME: this may change in the near 
@@ -54,7 +54,7 @@ set env(QEMU_LD_PREFIX) $sysroot
 # board. This board uses libgloss and newlib.
 
 # For bare metal we use libgloss, but for linux hosts this is wrong.
-if { [ istarget "arm*-none-*"] } {
+if { [ istarget "aarch64*-none-*"] } {
     set_board_info cflags  "-specs=$specdir/rdimon.specs"
     set_board_info ldflags 	"[libgloss_link_flags] [newlib_link_flags] $additional_options"
 } else {

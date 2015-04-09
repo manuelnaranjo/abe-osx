@@ -40,7 +40,7 @@ done
 shift $((OPTIND-1))
 
 target="${1%:*}"
-port="${1#*:}"
+port="$(echo $1 | grep ":" | sed -e "s/.*://")"
 
 triplet_to_deb_arch()
 {
@@ -72,7 +72,8 @@ if [ -z "$target" ]; then
 fi
 
 if [ -z "$port" ]; then
-    port="22"
+    echo "ERROR: no custom [ssh] port specified"
+    exit 1
 fi
 
 use_qemu=false
@@ -157,7 +158,7 @@ if $begin_session; then
     $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.
-    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT || true
+    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >dev/null 2>&1 || true
     # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
     $schroot chmod +x /bin/fusermount || true
 
@@ -219,6 +220,19 @@ fi
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
 
+    if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
+	# Our aarch64 sysroot has everything in /lib64, but executables
+	# still expect to find dynamic linker under /lib/ld-linux-aarch64.so.1
+	if [ -h $sysroot/lib ]; then
+	    $rsh root@$target "rm /sysroot/lib"
+	fi
+	if [ -h $sysroot/lib ] \
+	    || ! [ -e $sysroot/lib/ld-linux-aarch64.so.1 ]; then
+	    $rsh root@$target "mkdir -p /sysroot/lib/"
+	    $rsh root@$target "cd /sysroot/lib; ln -s ../lib64/ld-linux-aarch64.so.1 ."
+	fi
+    fi
+
     if ! $use_qemu; then
 	# Make sure that sysroot libraries are searched before any other.
 	$rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
@@ -231,12 +245,6 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
-	if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
-	    # Our aarch64 sysroot has everything in /lib64, but executables
-	    # still expect to find dynamic linker under
-	    # /lib/ld-linux-aarch64.so.1
-	    $rsh root@$target "ln -s /sysroot/lib64 /sysroot/lib"
-	fi
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
 	# Note the "-S none" option -- ssh does not always detach from process
 	# when multiplexing is used.  I think this is a bug in ssh.
@@ -265,8 +273,17 @@ if $ssh_master; then
 fi
 
 # Keep the session alive when file /dont_kill_me is present
-if $finish_session && [ x`$schroot cat /dont_keep_session` = x"1" ]; then
-    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
+if $finish_session; then
+    # Perform all operations from outside of schroot session since the inside
+    # may be completely broken (e.g., bash doesn't start).
+    schroot_location="$(ssh $target_ssh_opts $target schroot --location -c session:$profile-$port)"
+    if [ x"$(ssh $target_ssh_opts $target cat $schroot_location/dont_keep_session)" != x"1" ]; then
+	finish_session=false
+    fi
+fi
+
+if $finish_session; then
+    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT >/dev/null 2>&1 || true
     ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be

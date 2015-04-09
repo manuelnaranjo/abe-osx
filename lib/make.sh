@@ -156,28 +156,34 @@ build_all()
     if test x"${runtests}" != x -a x"${tarbin}" != x"yes"; then
 	notice "Testing components ${runtests}..."
 	buildingall=no
-	local check_ret=
+	local check_ret=0
 	local check_failed=
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
 	    make_check ${binutils_version} binutils
-	    check_ret=$?
-	    check_failed="${check_failed} binutils"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} binutils"
+	    fi
 	fi
 
 	is_package_in_runtests "${runtests}" gcc
 	if test $? -eq 0; then
 	    make_check ${gcc_version} stage2
-	    check_ret=$?
-	    check_failed="${check_failed} gcc-stage2"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} gcc-stage2"
+	    fi
 	fi
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
 	    make_check ${gdb_version} gdb
-	    check_ret=$?
-	    check_failed="${check_failed} gdb"
+	    if test $? -ne 0; then
+		check_ret=1
+		check_failed="${check_failed} gdb"
+	    fi
 	fi
 
 	# Only perform unit tests on [e]glibc when we're building native.
@@ -186,16 +192,20 @@ build_all()
 	    is_package_in_runtests "${runtests}" glibc
 	    if test $? -eq 0; then
 		#make_check ${glibc_version}
-	        #check_ret=$?
+		#if test $? -ne 0; then
+		#check_ret=1
 	        #check_failed="${check_failed} glibc"
+		#fi
 		notice "make check on native glibc is not yet implemented."
 	    fi
 
 	    is_package_in_runtests "${runtests}" eglibc
 	    if test $? -eq 0; then
 		#make_check ${eglibc_version}
-	        #check_ret=$?
+		#if test $? -ne 0; then
+		#check_ret=1
 	        #check_failed="${check_failed} eglibc"
+		#fi
 		notice "make check on native eglibc is not yet implemented."
 	    fi
 	fi
@@ -743,10 +753,18 @@ make_check()
 	exec_tests=false
 	case "$tool" in
 	    gcc) exec_tests=true ;;
+	    # Support testing remote gdb for the merged binutils-gdb.git
+	    # repository where the branch doesn't indicate the tool.
+	    # Fixme: This doesn't seem to be working.
 	    binutils)
 		if [ x"$2" = x"gdb" ]; then
 		    exec_tests=true
 		fi
+		;;
+	    # Support testing remote gdb for the merged binutils-gdb.git
+	    # where the branch name DOES indicate the tool.
+	    gdb)
+		exec_tests=true
 		;;
 	esac
 
@@ -761,17 +779,8 @@ make_check()
 
 	if $exec_tests && [ x"$schroot_test" = x"yes" ]; then
 	    # Start schroot sessions on target boards that support it
-	    local schroot_sysroot
-	    case "${target}" in
-		*"-elf"*) schroot_sysroot="$(mktemp -d)" ;;
-		*) schroot_sysroot="$(make_target_sysroot)" ;;
-	    esac
-	    local ret=
-	    start_schroot_sessions "${target}" "${schroot_sysroot}" "${builddir}"
-	    ret=$?
-
-	    rm -rf "$schroot_sysroot"
-	    if test $ret -ne 0; then
+	    start_schroot_sessions "${target}" "${sysroots}" "${builddir}"
+	    if test $? -ne 0; then
 		return 1
 	    fi
 	fi
@@ -782,12 +791,8 @@ make_check()
 		local check_targets="check-DEJAGNU"
 		;;
 	    gdb)
-	        # Stop schroot sessions
-	        stop_schroot_sessions
-	        unset SCHROOT_TEST
-		#local dirs="/gdb"
-		#local check_targets="check-gdb"
-		return 0
+		local dirs="/"
+		local check_targets="check-gdb"
 		;;
 	    *)
 		local dirs="/"
@@ -924,25 +929,6 @@ EOF
     fi
 
     return 0
-}
-
-# Make a single-use target sysroot with all shared libraries for testing.
-# NOTE: It is responsibility of the caller to "rm -rf" the sysroot.
-# $1 - compiler (and any compiler flags) to query multilib information
-make_target_sysroot()
-{
-    trace "$*"
-
-    local sysroot
-    sysroot=/tmp/sysroot.$$
-    rsync -a $sysroots/ $sysroot/
-
-    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
-	# Remove symlink lib64 -> lib to make sysroot debian-compatible.
-	rm $sysroot/lib
-    fi
-
-    echo $sysroot
 }
 
 # TODO: Should copy_gcc_libs_to_sysroot() use the input parameter in $1?
