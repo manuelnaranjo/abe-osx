@@ -124,10 +124,6 @@ if test x"${GERRIT_CHANGE_ID}" != x; then
     #gerrit_query_status gcc
     
     eval "`gerrit_query_patchset ${GERRIT_CHANGE_ID}`"
-    echo "FIXME: ${records['parents']}"
-    echo "FIXME: ${records['revision']}"
-    #gerrit_cherry_pick ${gerrit['REFSPEC']}
-#    revision_str="${records['parents']},${records['revision']}"
 
     # Check out the revision made before this patch gets merged in
     checkout "`get_URL gcc.git@${records['parents']}`"
@@ -211,9 +207,9 @@ if test x"${gerrit_trigger}" != xyes; then
     update="--disable update"
 else
     update=""
-    declare -a revisions=("`get_srcdir gcc.git@${records['parents']}`" "`get_srcdir gcc.git@${records['revision']}`")
-
-
+    echo "FIXME: ${records['parents']}"
+    echo "FIXME: ${records['revision']}"
+    declare -a revisions=("gcc.git@${records['parents']} gcc.git@${records['revision']}")
 fi
 # Force GCC to not build the docs
 export BUILD_INFO=""
