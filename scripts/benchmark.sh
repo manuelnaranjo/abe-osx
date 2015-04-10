@@ -93,9 +93,11 @@ run_benchargs=""
 skip_build=
 benchmark_gcc_path=
 cautious='-c'
-keep= #if set, don't clean up benchmark output on target, don't kill lava targets
+keep= #'-p' (polite)  - clean up and release target even if there is an error
+      #''   (default) - clean up and release target unless there is an error
+      #'-k' (keep)    - unconditionally keep target-side data and target
 target=
-while getopts g:f:a:i:b:kchs flag; do
+while getopts g:f:a:i:b:kpchs flag; do
   case "${flag}" in
     g) tag="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
@@ -104,13 +106,23 @@ while getopts g:f:a:i:b:kchs flag; do
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     k)
+       if test x"${keep}" = 'x-p'; then
+         echo '-k overriding earlier -p'
+       fi
        keep='-k'
-       echo 'Keep (-k) set: possibly sensitive benchmark data will be left on target'
+       echo 'Unconditional keep (-k) set: possibly sensitive benchmark data will be left on target, even if run succeeds'
        echo 'Continue? (y/N)'
        read answer
        if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
          exit 0
        fi
+    ;;
+    p)
+       if test x"${keep}" = 'x-k'; then
+         echo '-p overriding earlier -k'
+       fi
+       keep='-p'
+       echo 'Unconditional release (-p) set: data will be scrubbed and target released, even if run fails'
     ;;
     f) compiler_flags="${OPTARG}";;
     h)

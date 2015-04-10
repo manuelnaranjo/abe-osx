@@ -20,10 +20,11 @@ cautious=''
 build_dir=
 lava_target=
 run_benchargs=
-while getopts g:b:d:t:a:kc flag; do
+while getopts g:b:d:t:a:kpc flag; do
   case "${flag}" in
     g) tag="${OPTARG}";;
     k) keep='-k';;
+    p) keep='-p';;
     c) cautious='-c';;
     b) benchmark="${OPTARG}";;
     d) device="${OPTARG}";;
@@ -102,7 +103,7 @@ clean_benchmark()
       echo "No directory to remove from ${ip}"
     elif test x"${keep}" = 'x-k'; then
       echo "Not removing ${target_dir} from ${ip} as -k was given. You might want to go in and clean up."
-    elif test ${error} -ne 0; then
+    elif test x"${keep}" != 'x-p' -a ${error} -ne 0; then
       echo "Not removing ${target_dir} from ${ip} as there was an error. You might want to go in and clean up."
     elif ! expr "${target_dir}" : '\(/tmp\)' > /dev/null; then
       echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
@@ -131,7 +132,7 @@ clean_benchmark()
   fi
 
   if test x"${lava_pid:-}" != x; then
-    if test ${error} -ne 0 || test x"${keep}" = 'x-k'; then
+    if (test x"${keep}" = x && test ${error} -ne 0) || test x"${keep}" = 'x-k'; then
       echo "Not killing lava session, to ensure session remains open for investigation/cleanup."
       kill "${lava_pid}" 2>/dev/null
       wait "${lava_pid}"
