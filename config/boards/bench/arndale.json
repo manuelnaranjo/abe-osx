@@ -1,7 +1,7 @@
 {
   "job_name": "bench-arndale",
   "device_type": "arndale",
-  "timeout": 1800,
+  "timeout": 691200,
   "actions": [
     {
       "command": "deploy_linaro_image",

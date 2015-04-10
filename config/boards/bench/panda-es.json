@@ -1,7 +1,7 @@
 {
   "job_name": "bench-panda-es",
   "device_type": "panda-es",
-  "timeout": 1800,
+  "timeout": 691200,
   "actions": [
     {
       "command": "deploy_linaro_image",
