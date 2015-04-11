@@ -225,6 +225,12 @@ binary_toolchain()
 	dryrun "ln -sfnT ${sysroots} ${destdir}/${target}/libc"
     fi
 
+    # Some mingw packages have a runtime dependency on libwinpthread-1.dll, so a copy
+    # is put in bin so all executables will work.
+    if test "`echo ${host} | grep -c mingw`" -gt 0; then
+	cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ${local_builds}/destdir/${host}/bin/
+    fi
+
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
