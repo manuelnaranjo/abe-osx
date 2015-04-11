@@ -296,11 +296,11 @@ binary_sysroot()
 #    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="${local_builds}/tmp.$$/${tag}"
     dryrun "mkdir -p ${local_builds}/tmp.$$"
-#    if test x"${build}" != x"${target}"; then
-#	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
-#    else
-#	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
-#    fi
+    if test x"${build}" != x"${target}"; then
+	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
+    else
+	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
+    fi
 
     # Generate the install script
 #    sysroot_install_script ${destdir}
