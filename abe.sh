@@ -726,7 +726,7 @@ dump()
 }
 
 # Check disk space. Each builds needs about 3.8G free
-df="`df /home | tail -1 | tr -s ' ' | cut -d ' ' -f 4`"
+df="`df ${abe_top} | tail -1 | tr -s ' ' | cut -d ' ' -f 4`"
 if test ${df} -lt 4194304; then
     error "Not enough disk space!"
     exit 1
