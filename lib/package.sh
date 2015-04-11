@@ -97,7 +97,7 @@ binary_runtime()
 	local tag="`echo runtime-linaro-gcc${version}-${release}-${target}`"
     fi
 
-    local destdir="/tmp/linaro.$$/${tag}"
+    local destdir="${local_builds}/tmp.$$/${tag}"
 
     dryrun "mkdir -p ${destdir}/lib/${target} ${destdir}/usr/lib/${target}"
 
@@ -118,6 +118,8 @@ binary_runtime()
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 
+    rm -fr ${local_builds}/tmp.$$
+
     return 0
 }
 
@@ -128,7 +130,7 @@ binary_gdb()
     local version="`${target}-gdb --version | head -1 | grep -o " [0-9\.][0-9].*\." | tr -d ')'`"
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
     local builddir="`get_builddir ${gdb_version} gdb`"
-    local destdir="/tmp/linaro.$$/${tag}-tmp"
+    local destdir="${local_builds}/tmp.$$/${tag}-tmp"
     local prefix="${local_builds}/destdir/${host}"
 
     local gdb_static="`grep ^static_link= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
@@ -148,13 +150,13 @@ binary_gdb()
     dryrun "make all ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
     dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}"
     dryrun "make install ${make_flags} DESTDIR=${destdir} -w -C ${builddir}/gdb/gdbserver"
-    dryrun "ln -sfnT ${destdir}/${prefix} /tmp/linaro.$$/${tag}"
+    dryrun "ln -sfnT ${destdir}/${prefix} /${local_builds}/tmp.$$/${tag}"
 
     local abbrev="`echo ${host}_${target} | sed -e 's:none-::' -e 's:unknown-::'`"
  
    # make the tarball from the tree we just created.
     notice "Making binary tarball for GDB, please wait..."
-    dryrun "tar Jcfh ${local_snapshots}/${tag}-${abbrev}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}-${abbrev}.tar.xz --directory=${local_builds}/tmp.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}-${abbrev}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}-${abbrev}.tar.xz.asc"
@@ -206,8 +208,8 @@ binary_toolchain()
 
     fi
 
-    local destdir="/tmp/linaro.$$/${tag}"
-    dryrun "mkdir -p /tmp/linaro.$$"
+    local destdir="${local_builds}/tmp.$$/${tag}"
+    dryrun "mkdir -p ${local_builds}/tmp.$$"
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
@@ -225,11 +227,13 @@ binary_toolchain()
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for toolchain, please wait..."
-    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${exclude} ${tag}"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
     
+    rm -fr ${local_builds}/tmp.$$
+
     return 0
 }
 
@@ -290,22 +294,23 @@ binary_sysroot()
     fi
 
 #    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
-    local destdir="/tmp/linaro.$$/${tag}"
-    dryrun "mkdir -p /tmp/linaro.$$"
-    if test x"${build}" != x"${target}"; then
-	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
-    else
-	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
-    fi
+    local destdir="${local_builds}/tmp.$$/${tag}"
+    dryrun "mkdir -p ${local_builds}/tmp.$$"
+#    if test x"${build}" != x"${target}"; then
+#	dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${destdir}"
+#    else
+#	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
+#    fi
 
     # Generate the install script
 #    sysroot_install_script ${destdir}
 
     notice "Making binary tarball for sysroot, please wait..."
-    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=/tmp/linaro.$$ ${tag}"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${tag}"
 
-    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+    rm -fr ${local_snapshots}/${tag}.tar.xz.asc ${local_builds}/tmp.$$
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
+
     return 0
 }
 
@@ -528,7 +533,7 @@ binutils_src_tarball()
 	local tag="binutils-linaro-${version}-${release}"
     fi
 
-    dryrun "ln -s ${srcdir} /tmp/${tag}"
+    dryrun "ln -s ${srcdir} ${local_builds}/${tag}"
 
 # from /linaro/snapshots/binutils-2.23.2/src-release
 #
@@ -551,12 +556,12 @@ binutils_src_tarball()
     #find ${srcdir} -name \*~ -o -name .\#\* -exec rm {} \;
 
     notice "Making source tarball for GCC, please wait..."
-    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=/tmp ${tag}/)"
+    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz ${exclude} --directory=${local_builds}/tmp.$$ ${tag}/)"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz > ${local_snapshots}/${tag}.tar.xz.asc"
     # We don't need the symbolic link anymore.
-    dryrun "rm -f /tmp/${tag}"
+    dryrun "rm -f ${local_builds}/tmp.$$"
 
     return 0
 }
@@ -564,7 +569,7 @@ binutils_src_tarball()
 # This installs a binary tarball produced by abe, and runs make check
 test_binary_toolchain()
 {
-    local install="/tmp/install.$$"
+    local install="${local_builds}/install.$$"
 
     local testgcc=
     local testbin=
