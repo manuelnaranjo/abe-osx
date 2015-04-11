@@ -241,7 +241,7 @@ OPTIONS
 
                     gcc-linaro-4.9-2014.10-1.tar.xz
 
-  --set		{liinker}={ld|gold}
+  --set		{linker}={ld|gold}
 
                 The default is to build the older GNU linker. This option
                 changes the linker to Gold, which is required for some C++
