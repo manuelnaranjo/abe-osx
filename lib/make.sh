@@ -29,7 +29,7 @@ build_all()
 	if test "`echo ${host} | grep -c mingw`" -gt 0; then
 	    # As Mingw32 requires a cross compiler to be already built, so we don't need
 	    # to rebuilt the sysroot.
-            local builds="infrastructure binutils stage2 gdb"
+            local builds="infrastructure binutils libc stage2 gdb"
 	else
             local builds="infrastructure binutils stage1 libc stage2 gdb"
 	fi
