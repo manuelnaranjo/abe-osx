@@ -26,7 +26,13 @@ build_all()
     
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-        local builds="infrastructure binutils stage1 libc stage2 gdb"
+	if test "`echo ${host} | grep -c mingw`" -gt 0; then
+	    # As Mingw32 requires a cross compiler to be already built, so we don't need
+	    # to rebuilt the sysroot.
+            local builds="infrastructure binutils stage2 gdb"
+	else
+            local builds="infrastructure binutils stage1 libc stage2 gdb"
+	fi
 	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
@@ -117,8 +123,22 @@ build_all()
                 ;; 
             # Build stage 2 of GCC, which is the actual and fully functional compiler
             stage2)
+		# FIXME: this is a seriously ugly hack required for building Canadian Crosses.
+		# Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
+		# conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
+		# up, and then tries to redefine caddr_t yet again. We modify the installed
+		# types.h instead of the one in the source tree to be a tiny bit less ugly.
+		# After libgcc is built with the modified file, it needs to be changed back.
+		if test  `echo ${host} | grep -c mingw` -eq 1; then
+		    sed -i -e 's/typedef __caddr_t caddr_t/\/\/ FIXME: typedef __caddr_t caddr_t/' ${sysroots}/usr/include/sys/types.h
+		fi
+
                 build ${gcc_version} stage2
                 build_all_ret=$?
+		# Reverse the ugly hack
+		if test `echo ${host} | grep -c mingw` -eq 1; then
+		    sed -i -e 's/.*FIXME: //' ${sysroots}/usr/include/sys/types.h
+		fi
                 ;;
             gdb)
                 build ${gdb_version} gdb
@@ -519,7 +539,7 @@ make_all()
     local logfile="${builddir}/make-${tool}${2:+-$2}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
-
+    
 #    local errors="`dryrun \"egrep '[Ff]atal error:|configure: error:|Error' ${logfile}\"`"
 #    if test x"${errors}" != x -a ${makeret} -gt 0; then
 #       if test "`echo ${errors} | egrep -c "ignored"`" -eq 0; then
@@ -677,15 +697,6 @@ make_install()
 #        dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
         dryrun "rm -f ${sysroots}/lib/ld-linux-aarch64.so.1"
         dryrun "ln -sfnT ${dynamic_linker_name} ${sysroots}/lib64/ld-linux-aarch64.so.1"
-    fi
-
-    # FIXME: this is a seriously ugly hack required for building Canadian Crosses.
-    # Basically the gcc/auto-host.h produced when configuring GCC stage2 has a
-    # conflict as sys/types.h defines a typedef for caddr_t, and autoheader screws
-    # up, and then tries to redefine caddr_t yet again. We modify the installed
-    # types.h instead of the one in the source tree to be a tiny bit less ugly.
-    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${host} | grep -c mingw` -eq 1; then
-        sed -i -e '/typedef __caddr_t caddr_t/d' ${sysroots}/usr/include/sys/types.h
     fi
 
     return 0
