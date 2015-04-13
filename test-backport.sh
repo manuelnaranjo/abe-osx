@@ -194,15 +194,15 @@ if test x"${gerrit_trigger}" != xyes; then
     # rm -fr ${srcdir}
     if test ! -e  ${srcdir}; then
 	git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
+	# Make sure we are at the top of ${branch}
+	pushd ${srcdir}
+	# If in 'detached HEAD' state, don't try to update to the top of the branch
+	detached=`git branch | grep detached`
+	if test x"${detached}" = x; then
+	    git checkout -B ${branch} origin/${branch} || exit 1
+	fi
+	popd
     fi
-    # Make sure we are at the top of ${branch}
-    pushd ${srcdir}
-    # If in 'detached HEAD' state, don't try to update to the top of the branch
-    detached=`git branch | grep detached`
-    if test x"${detached}" = x; then
-	git checkout -B ${branch} origin/${branch} || exit 1
-    fi
-    popd
 
     # Get the last two revisions
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
@@ -320,6 +320,6 @@ rm -fr ${local_snapshots}/gcc.git@${records['revision']}
 cd "`get_srcdir gcc.git@${records['parents']}`"
 git reset HEAD^
 git co master
-git branch -d local_gcc.git@${records['parents']
+git branch -d local_gcc.git@${records['parents']}
 
 exit ${ret}
