@@ -488,7 +488,7 @@ set_package()
 	    notice "Overriding ${setting} to LDFLAGS"
 	    return 0
 	    ;;
-	linker|li*)
+	linker|lin*)
 	    override_linker="${setting}"
 	    notice "Overriding the default linker to ${setting} "
 	    return 0
@@ -498,7 +498,7 @@ set_package()
 	    notice "Overriding ${setting} to CFLAGS"
 	    return 0
 	    ;;
-	libc)
+	libc|lib*)
 	    # Range check user input against supported C libraries.
 	    case ${setting} in
 		glibc|eglibc|newlib)    
