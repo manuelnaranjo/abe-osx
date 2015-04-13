@@ -1,0 +1,52 @@
+#!/bin/bash
+set -e
+
+cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
+
+abe_dir="${WORKSPACE}/abe"
+fileserver="abe.tcwglab.linaro.org"
+status=0
+
+# Expected input parameters (from Jenkins):
+# reference_job_name
+# reference_number
+# this_job_name
+# this_number
+
+if test x"${reference_job_name}" = x ; then
+    echo "ERROR: No reference_job_name provided."
+    exit 1
+fi
+
+if test x"${reference_number}" = x ; then
+    echo "ERROR: No reference_number provided."
+    exit 1
+fi
+
+if test x"${this_job_name}" = x ; then
+    echo "ERROR: No this_job_name provided."
+    exit 1
+fi
+
+if test x"${this_number}" = x ; then
+    echo "ERROR: No this_number provided."
+    exit 1
+fi
+
+dest=/tmp/CompareResults.$$
+ssh ${fileserver} mkdir -p ${dest}
+scp ${abe_dir}/scripts/compare_jobs.sh \
+    ${abe_dir}/scripts/compare_tests \
+    ${abe_dir}/scripts/compare_dg_tests.pl \
+    ${abe_dir}/scripts/unstable-tests.txt ${fileserver}:${dest} || status=1
+ssh ${fileserver} bash ${dest}/compare_jobs.sh \
+    ${reference_job_name} ${reference_number} \
+    ${this_job_name} ${this_number} || status=1
+ssh ${fileserver} rm -rf ${dest}
+
+exit $status
