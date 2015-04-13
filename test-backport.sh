@@ -287,7 +287,7 @@ if test x"${fileserver}" != x; then
     fi
     ssh ${fileserver} cat ${toplevel}/diff.txt
 
-    rm -fr ${tmp}
+    ssh ${fileserver} rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
     man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
