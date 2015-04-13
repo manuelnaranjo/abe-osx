@@ -21,10 +21,47 @@ trap "rm -f ${tmptargets}" 0 1 2 3 5 9 13 15
 
 rm -f ${tmptargets}
 
+function xml_report_print_row
+{
+    local target=${1?}
+    local failed=${2?}
+    local log_url=BUILD_URL/artifact/artifacts/logs/diff-${target}.txt
+    local color='#00FF00'
+    $failed && color='#FF0000'
+    local message=PASSED
+    $failed && message=FAILED
+    cat <<EOF
+<tr>
+  <td>${target}</td>
+  <td fontattribute="bold" bgcolor="${color}">${message}</td>
+  <td><![CDATA[<a href="$log_url">log for ${target}</a>]]></td>
+</tr>
+EOF
+}
+
+function xml_report_print_header
+{
+    cat <<EOF
+<section name="Results comparison ${refnum} vs ${buildnum}"><table>
+  <tr>
+  <td fontattribute="bold" width="120" align="center">Target</td>
+  <td fontattribute="bold" width="120" align="center">Status</td>
+  <td fontattribute="bold" width="120" align="center">Log</td>
+</tr>
+EOF
+}
+
+function xml_report_print_footer
+{
+    cat <<EOF
+</table></section>
+EOF
+}
+
 # For the time being, we expect different jobs to store their results
 # in similar directories.
 
-# Build list of all targets validated for ${refnum}                                                               
+# Build list of all build-targets validated for ${refnum}                                                               
 # Use grep -v '*' to skip the case where the first regexp does not                                                
 # match any directory.                                                                                            
 for dir in `echo ${logdir}/*/*/*-${refnum} | grep -v '*'`
@@ -32,27 +69,42 @@ do
     basename ${dir} | sed "s/-${refnum}//" >> ${tmptargets}
 done
 
-# Build list of all targets validated for ${buildnum}                                                             
+# Build list of all build-targets validated for ${buildnum}                                                             
 for dir in `echo ${logdir}/*/*/*-${buildnum} | grep -v '*'`
 do
     basename ${dir} | sed "s/-${buildnum}//" >> ${tmptargets}
 done
 
 if [ -s ${tmptargets} ]; then
-    targets=`sort -u ${tmptargets}`
+    buildtargets=`sort -u ${tmptargets}`
 fi
 rm -f ${tmptargets}
 
-for target in ${targets}
+XML_REPORT=${mydir}/report.xml
+rm -f ${XML_REPORT} ${XML_REPORT}.part
+
+xml_report_print_header > ${XML_REPORT}.part
+
+for buildtarget in ${buildtargets}
 do
-    ref=`echo ${logdir}/*/*/${target}-${refnum} | grep -v '*'`
-    build=`echo ${logdir}/*/*/${target}-${buildnum} | grep -v '*'`
+    ref=`echo ${logdir}/*/*/${buildtarget}-${refnum} | grep -v '*'`
+    build=`echo ${logdir}/*/*/${buildtarget}-${buildnum} | grep -v '*'`
     echo "REF = "${ref}
     echo "BUILD = "${build}
-    printf "\t# ============================================================== #\n"
-    printf "\t#\t\t*** ${target} ***\n"
-    printf "\t# ============================================================== #\n\n"
-    [ ! -z "${build}" -a ! -z "${ref}" ] && ${mydir}/compare_tests ${ref} ${build} || status=1
+    failed=false
+    mylog=${mydir}/diff-${buildtarget}.txt
+    target=`echo ${buildtarget} | cut -d. -f2`
+    printf "\t# ============================================================== #\n" > ${mylog}
+    printf "\t#\t\t*** ${buildtarget} ***\n" >> ${mylog}
+    printf "\t# ============================================================== #\n\n" >> ${mylog}
+    [ ! -z "${build}" -a ! -z "${ref}" ] && ${mydir}/compare_tests -target ${target} \
+	${ref} ${build} >> ${mylog} || failed=true
+
+    ${failed} && status=1
+    xml_report_print_row "${buildtarget}" "${failed}" >> $XML_REPORT.part
 done
+
+xml_report_print_footer >> ${XML_REPORT}.part
+mv ${XML_REPORT}.part ${XML_REPORT}
 
 exit ${status}
