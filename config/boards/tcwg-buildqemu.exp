@@ -1,4 +1,4 @@
 load_generic_config tcwg-common
 
 set_board_info hostname build-01.tcwglab
-set_board_info remote_sim "qemu-[lindex [split $target_triplet -] 0]-static -cpu any -L /sysroot"
+set_board_info remote_sim "qemu-[lindex [split $target_triplet -] 0] -cpu any -L /sysroot"
