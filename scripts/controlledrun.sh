@@ -597,7 +597,16 @@ if test ${tee_cmd} -ne 0; then
 else
   ${cmd}
 fi
-if test $? -eq 0; then
+err=$?
+
+#Re-report IP, in case it changed
+echo "** Live Network Interfaces:" | tee -a "${log}"
+${sudo} ifconfig | tee -a "${log}"
+if test $? -ne 0; then
+  echo "*** Unable to get network info" | tee -a "${log}"
+fi
+
+if test ${err} -eq 0; then
   echo "Run of ${cmd} complete" | tee -a "${log}"
   exit 0
 else
