@@ -333,6 +333,7 @@ fi
      for i in {1..10}; do \
        if ping -c 1 ${listener_addr}; then \
          listener_found=1; \
+         break; \
        fi \
      done; \
      if test \\\${listener_found} -eq 1; then \
