@@ -73,8 +73,8 @@ gerrit_info()
     gerrit['CHANGE_NUMBER']="${GERRIT_CHANGE_NUMBER:-1}"
     gerrit['EVENT_TYPE']="${GERRIT_EVENT_TYPE}"
     gerrit['REFSPEC']="${GERRIT_REFSPEC}"
-#    jenkins['JOB_NAME']="${JOB_NAME}"
-#    jenkins['JOB_URL']="${JOB_URL}"
+    gerrit['JOB_NAME']="${JOB_NAME}"
+    gerrit['JOB_URL']="${JOB_URL}"
 
     declare -px gerrit
     return 0
@@ -195,7 +195,9 @@ add_gerrit_comment ()
     local message="`cat $1`"
     local revision="$2"
     local code="${3:-0}"
-
+    
+    # Doc on this command at:
+    # https://gerrit-documentation.storage.googleapis.com/Documentation/2.11/cmd-review.html
     ssh -i ~/.ssh/${gerrit['USERNAME']}_rsa -p ${gerrit['PORT']} ${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']} gerrit review --code-review ${code} --message \"${message}\" ${revision}
     if test $? -gt 0; then
 	return 1
@@ -369,7 +371,13 @@ gerrit_cherry_pick()
     mkdir -p ${destdir}
     cp -rdnp ${srcdir}/* ${srcdir}/.git ${destdir}/
 
+    # This cherry picks the commit into the copy of the parent branch. In the parent branch
+    # we're already in a local branch.
     (cd ${destdir} && git fetch ssh://${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${refspec} && git cherry-pick FETCH_HEAD)
+
+    (cd ${srcdir} && git reset HEAD^)
+    (cd ${srcdir} && git co master)
+    (cd ${srcdir} && git branch -d local_@${records['parents']})
 
     return $?
 }
@@ -416,4 +424,3 @@ gerrit_query_patchset()
     declare -px records
     return 0
 }
-

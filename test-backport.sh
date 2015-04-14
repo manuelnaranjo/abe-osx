@@ -315,11 +315,4 @@ if test x"${fileserver}" != x; then
     echo "Full build logs: http://${fileserver}${wwwpath}/"
 fi
 
-# Check out the revision made before this patch gets merged in
-rm -fr ${local_snapshots}/gcc.git@${records['revision']}
-cd "`get_srcdir gcc.git@${records['parents']}`"
-git reset HEAD^
-git co master
-git branch -d local_gcc.git@${records['parents']}
-
 exit ${ret}
