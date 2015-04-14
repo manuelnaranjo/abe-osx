@@ -58,6 +58,34 @@ function xml_report_print_footer
 EOF
 }
 
+function xml_log_print_field
+{
+    local target=${1?}
+    local log=${2?}
+    cat <<EOF
+  <field name="${target}">
+    <![CDATA[
+EOF
+cat $log
+cat <<EOF
+    ]]></field>
+EOF
+}
+
+function xml_log_print_header
+{
+    cat <<EOF
+<section name="Logs">
+EOF
+}
+
+function xml_log_print_footer
+{
+    cat <<EOF
+</section>
+EOF
+}
+
 # For the time being, we expect different jobs to store their results
 # in similar directories.
 
@@ -80,10 +108,13 @@ if [ -s ${tmptargets} ]; then
 fi
 rm -f ${tmptargets}
 
-XML_REPORT=${mydir}/report.xml
+XML_REPORT=${mydir}/report0.xml
 rm -f ${XML_REPORT} ${XML_REPORT}.part
+XML_LOG=${mydir}/report1.xml
+rm -f ${XML_LOG} ${XML_LOG}.part
 
 xml_report_print_header > ${XML_REPORT}.part
+xml_log_print_header > ${XML_LOG}.part
 
 for buildtarget in ${buildtargets}
 do
@@ -102,9 +133,12 @@ do
 
     ${failed} && status=1
     xml_report_print_row "${buildtarget}" "${failed}" >> $XML_REPORT.part
+    xml_log_print_field "${buildtarget}" ${mylog} >> $XML_LOG.part
 done
 
 xml_report_print_footer >> ${XML_REPORT}.part
+xml_log_print_footer >> ${XML_LOG}.part
 mv ${XML_REPORT}.part ${XML_REPORT}
+mv ${XML_LOG}.part ${XML_LOG}
 
 exit ${status}
