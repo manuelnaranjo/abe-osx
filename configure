@@ -3533,9 +3533,11 @@ fi
 if test x"${QEMU_ARM}" = x; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'qemu-arm' to run test the toolchain properly!" >&5
 $as_echo "$as_me: WARNING: You need 'qemu-arm' to run test the toolchain properly!" >&2;}
-# Ubuntu uses qemu-user-static, Fedora just qemu
+# Ubuntu uses qemu-user-static, Newer Fedora uses qemu-system-arm and qemu-system-aarch64,
+# and older Fedora's use just qemu as the package name.
 #   missing="${missing} qemu"
 fi
+# Older qemu packages don't contain the AARCH64 simulator
 # Extract the first word of "qemu-aarch64", so it can be a program name with args.
 set dummy qemu-aarch64; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3579,7 +3581,6 @@ fi
 if test x"${QEMU_AARCH64}" = x; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'qemu-aaarch64' to run test the toolchain properly!" >&5
 $as_echo "$as_me: WARNING: You need 'qemu-aaarch64' to run test the toolchain properly!" >&2;}
-# Ubuntu uses qemu-user-static, Fedora just qemu
 #   missing="${missing} qemu"
 fi
 
@@ -4219,13 +4220,12 @@ fi
 
 # Texinfo 5 can't process the gcc texinfo files until they are fixed,
 # so we have to disable it for Ubuntu 14.04 "trusty".
-if test `lsb_release -i -s` = "Ubuntu"; then
-   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
-   if test "${texversion}" -gt 4; then
-         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo" >&5
-$as_echo "$as_me: WARNING: On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo" >&2;}
-   fi
-fi
+#if test "`uname -v | grep -c  Ubuntu`" -gt 0; then
+#   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
+#   if test "${texversion}" -gt 4; then
+#         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
+#   fi
+#fi
 
 
 # Extract the first word of "git-new-workdir", so it can be a program name with args.
