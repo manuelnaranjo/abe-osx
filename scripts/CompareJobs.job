@@ -25,6 +25,7 @@ BUILD_URL=${BUILD_URL:-}
 WORKSPACE=${WORKSPACE:-$PWD/workspace}
 LOGSDIR=${WORKSPACE}/artifacts/logs
 
+rm -rf ${LOGSDIR}
 mkdir -p ${LOGSDIR}
 
 # Expected input parameters (from Jenkins):
@@ -64,8 +65,8 @@ ssh ${fileserver} bash ${dest}/compare_jobs.sh \
 
 # Copy the generated reports
 scp ${fileserver}:${dest}/diff-*.txt ${LOGSDIR}
-scp ${fileserver}:${dest}/report.xml ${LOGSDIR}
-sed -i ${LOGSDIR}/report.xml -e "s|BUILD_URL|${BUILD_URL}|"
+scp ${fileserver}:${dest}/*.xml ${LOGSDIR}
+sed -i ${LOGSDIR}/report0.xml -e "s|BUILD_URL|${BUILD_URL}|"
 
 ssh ${fileserver} rm -rf ${dest}
 
