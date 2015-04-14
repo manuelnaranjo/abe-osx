@@ -224,13 +224,13 @@ test_config_default()
   # Let's make sure the stage is actually skipped.
   # --force makes sure we run through to the stage even
   # if the builddir builds stamps are new.
-  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable ${feature} --build all"
+  cb_commands="--dryrun --force --target arm-linux-gnueabihf --disable ${feature} --build all"
   test_pass "${cb_commands}" "${skip_match}"
 
   # Let's make sure the stage is actually NOT skipped.
   # --force makes sure we run through to the stage even
   # if the builddir builds stamps are new.
-  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable ${feature} --build all"
+  cb_commands="--dryrun --force --target arm-linux-gnueabihf --enable ${feature} --build all"
   test_pass "${cb_commands}" "${perform_match}"
 }
 
@@ -351,15 +351,15 @@ cb_commands="--dryrun --checkout gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout glibc.git"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout glibc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout=glibc.git"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout=glibc.git"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
@@ -409,7 +409,7 @@ cb_commands="--target ${target} --dump"
 match='newlib'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabihf"
+target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
 match='eglibc'
@@ -421,7 +421,7 @@ cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabi"
+target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
@@ -431,7 +431,7 @@ cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabi"
+target="armeb-linux-gnueabi"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
 match='eglibc'
@@ -508,13 +508,13 @@ match="Couldn't find the source for"
 test_failure "${cb_commands}" "${match}"
 
 # This tests that --build can go before --target and --target is still processed correctly.
-cb_commands="--dryrun --build all --target arm-none-linux-gnueabihf --dump"
-match='arm-none-linux-gnueabihf'
+cb_commands="--dryrun --build all --target arm-linux-gnueabihf --dump"
+match='arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout can go before --target and --target is still processed correctly.
-cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
-match='arm-none-linux-gnueabihf'
+cb_commands="--dryrun --checkout all --target arm-linux-gnueabihf --dump"
+match='arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 test_config_default make_docs 'Make Documentation' 'Skipping make docs'    'Making docs in'
@@ -556,7 +556,7 @@ match='Target is\:         arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout and --build can be run together.
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout all --build all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
@@ -626,7 +626,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 # The same as previous but with other commands mixed in.
-target="arm-none-linux-gnueabihf"
+target="arm-linux-gnueabihf"
 cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
 match=''
 test_pass "${cb_commands}" "${match}"
@@ -643,50 +643,50 @@ else
 fi
 
 cb_commands="--dry-run --target arm-linux-gnueabihf --set arch=armv8-a"
-march='Overriding default --with-arch to armv8-a'
+match='Overriding default --with-arch to armv8-a'
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dry-run --target arm-linux-gnueabihf --set cpu=cortex-a57"
-march='Overriding default --with-cpu to cortex-a57'
+match='Overriding default --with-cpu to cortex-a57'
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dry-run --target arm-linux-gnueabihf --set tune=cortex-a53"
-march='Overriding default --with-cpu to cortex-a53'
+match='Overriding default --with-tune to cortex-a53'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check=foo"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check=foo"
 match='is invalid after'
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
 # Yes this won't work because we match on 'exact' package name only.
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check gdb--dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check gdb--dump"
 match='dump is an invalid package'
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check gdb --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check gdb --dump"
 match='check              gdb'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check all --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check all --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
 # Verify that --check without a directive doesn't strip the next switch from
 # the command line.
-cb_commands="--dry-run --check --target arm-none-linux-gnueabihf --dump"
-match='         arm-none-linux-gnueabihf'
+cb_commands="--dry-run --check --target arm-linux-gnueabihf --dump"
+match='         arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # test various combinations of --check and --excludecheck
