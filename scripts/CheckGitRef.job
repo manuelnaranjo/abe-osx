@@ -1,0 +1,51 @@
+#!/bin/bash
+#set -e
+
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
+abe_dir="${WORKSPACE}/abe"
+fileserver="abe.tcwglab.linaro.org"
+status=0
+
+builders="build-01 build-02 build-03 build-04 build-05 build-06 build-07 build-08 \
+          ex40-02 ex40-03 ex40-04 ex40-05 ex40-06 ex40-07 ex40-08"
+#builders="ex40-02 ex40-03 ex40-04 ex40-05 ex40-06 ex40-07 ex40-08"
+shared=/home/buildslave/workspace/shared
+
+ssh_opts="-o StrictHostKeyChecking=no"
+ssh="ssh ${ssh_opts}"
+
+for builder in ${builders}
+do
+    echo ==========================================
+    echo CHECKING ${builder}
+    ssh-keygen -f "/var/lib/jenkins/.ssh/known_hosts" -R ${builder}
+cat > /tmp/myfile.$$ <<EOF
+#!/bin/bash
+ls -la /home/buildslave/workspace/shared/snapshots/infrastructure/linux-linaro-3.17-2014.10/arch/arm/boot/dts/include/dt-bindings
+#ls -la ${shared}
+#ls -la ${shared}/snapshots
+#ls -la ${shared}/snapshots/gcc.git
+#cd ${shared}/snapshots/gcc.git && pwd && git branch -a
+#ls -la /home/buildslave/workspace/*/label/x86_64/target/*/snapshots/
+#ls -la /home/buildslave/workspace/*/label/x86_64/target/*/snapshots/gcc.git@e15f79d13f84b5c93fe5b590edf825dded553646
+#ls -la /home/buildslave/workspace/*/label/x86_64/target/*/snapshots/gcc.git@*
+#for i in /home/buildslave/workspace/*/label/x86_64/target/*/snapshots/gcc.git@*
+#do
+#  if [ -f \$i/configure ]
+#  then
+#    echo OK: \$i
+#  else
+#    echo FAIL: \$i
+##    rm -rf \$i
+#  fi
+#done
+EOF
+    cat /tmp/myfile.$$
+    scp ${ssh_opts} /tmp/myfile.$$ buildslave@${builder}:/tmp/
+    ${ssh} buildslave@${builder} bash -x /tmp/myfile.$$
+    ${ssh} buildslave@${builder} rm -f /tmp/myfile.$$
+    rm -f /tmp/myfile.$$
+done
