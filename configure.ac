@@ -119,13 +119,14 @@ fi
 AC_PATH_PROG(QEMU_ARM, qemu-arm)
 if test x"${QEMU_ARM}" = x; then
    AC_MSG_WARN([You need 'qemu-arm' to run test the toolchain properly!])
-# Ubuntu uses qemu-user-static, Fedora just qemu
+# Ubuntu uses qemu-user-static, Newer Fedora uses qemu-system-arm and qemu-system-aarch64,
+# and older Fedora's use just qemu as the package name.
 #   missing="${missing} qemu"
 fi
+# Older qemu packages don't contain the AARCH64 simulator
 AC_PATH_PROG(QEMU_AARCH64, qemu-aarch64)
 if test x"${QEMU_AARCH64}" = x; then
    AC_MSG_WARN([You need 'qemu-aaarch64' to run test the toolchain properly!])
-# Ubuntu uses qemu-user-static, Fedora just qemu
 #   missing="${missing} qemu"
 fi
 
@@ -433,15 +434,15 @@ if test x"${DEJAGNU}" = x; then
 fi
 
 AC_PATH_PROG(MAKEINFO,makeinfo)
-# Texinfo 5 can't process the gcc texinfo files until they are fixed, 
+# Texinfo 5.0 can't process the gcc texinfo files until they are fixed, 
 # so we have to disable it for Ubuntu 14.04 "trusty".
-if test `lsb_release -i -s` = "Ubuntu"; then
-   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
-   if test "${texversion}" -gt 4; then
+#if test "`uname -v | grep -c  Ubuntu`" -gt 0; then
+#   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
+#   if test "${texversion}" -gt 4; then
 dnl      MAKEINFO="echo"
-         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
-   fi
-fi
+#         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
+#   fi
+#fi
 AC_SUBST(MAKEINFO)
 
 AC_PATH_PROG(NEWWORKDIR,git-new-workdir)
