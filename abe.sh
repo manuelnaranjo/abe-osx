@@ -28,8 +28,9 @@ usage()
              [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
              [--excludecheck {all|glibc|gcc|gdb|binutils}]
              [--fetch <url>] [--force] [--host <host_triple>] [--help]
-             [--list] [--march <march>] [--manifest <manifest_file>]
+             [--list] [--manifest <manifest_file>]
              [--parallel] [--release <release_version_string>]
+             [--set {arch|cpu|tune}=XXX]
              [--set {libc}={glibc|eglibc|newlib}]
              [--set {linker}={ld|gold}]
              [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
@@ -211,16 +212,6 @@ OPTIONS
 
   --list	List the available snapshots or configured repositories.
 
-  --march <march>
-
-                Specify <march> to be the default target architecture for a
-                specific toolchain, overriding the default.  Example:
-
-                    --target arm-linux-gnueabihf --march armv8-a
-
-		Note: There is no cross-checking to make sure that the passed
-		--target value is compatible with the passed --march value.
-
   --manifest <manifest_file>
 
   		Source the <manifest_file> to override the default
@@ -240,6 +231,19 @@ OPTIONS
                 that is released will be named:
 
                     gcc-linaro-4.9-2014.10-1.tar.xz
+
+  --set		{arch|cpu|tune}=XXX
+
+		This overrides the default values used for the configure
+		options --with-arch, --with-cpu, and --with-tune.
+
+		For most targets, specifying --set cpu is equivalent to
+		specifying both --set arch and --set tune, and hence those
+		options should not be used with --set cpu.
+
+		Note: There is no cross-checking to make sure that the passed
+		--target value is compatible with the passed arch, cpu, or
+		tune value.
 
   --set		{linker}={ld|gold}
 
@@ -490,7 +494,7 @@ set_package()
 	    ;;
 	linker|lin*)
 	    override_linker="${setting}"
-	    notice "Overriding the default linker to ${setting} "
+	    notice "Overriding the default linker to ${setting}"
 	    return 0
 	    ;;
 	cflags|cf*)
@@ -518,6 +522,21 @@ set_package()
 		    error "'${setting}' is an unsupported libc option."
 		    ;;
 	    esac
+	    ;;
+	arch)
+	    override_arch="${setting}"
+	    notice "Overriding default --with-arch to ${setting}"
+	    return 0
+	    ;;
+	cpu)
+	    override_cpu="${setting}"
+	    notice "Overriding default --with-cpu to ${setting}"
+	    return 0
+	    ;;
+	tune)
+	    override_tune="${setting}"
+	    notice "Overriding default --with-tune to ${setting}"
+	    return 0
 	    ;;
 	*)
 	    error "'${package}' is not a supported package for --set."
@@ -700,10 +719,6 @@ dump()
     echo "Source Update      ${supdate}"
     echo "Make Documentation ${make_docs}"
 
-    if test x"${default_march}" != x; then
-	echo "Default march      ${default_march}"
-    fi
-
     if test x"${release}" != x; then
         echo "Release Name       ${release}"
     fi
@@ -808,11 +823,6 @@ while test $# -gt 0; do
 	    # Concatenate this onto the list of packages to exclude from make check.
             do_excludecheck="${do_excludecheck:+${do_excludecheck} }$2"
 
-	    shift
-	    ;;
-	--march*|-march*)
-	    check_directive $1 march "march" $2
-	    default_march=$2
 	    shift
 	    ;;
 	--host|-h*)
