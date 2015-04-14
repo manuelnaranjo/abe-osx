@@ -158,7 +158,7 @@ if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
 fi
 
 if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/${branch}"
+    srcdir="${git_reference_dir}/gcc.git~${branch}"
     snapshots_ref="${git_reference_dir}"
 else
     git_reference_dir="${user_snapshots}"
@@ -301,7 +301,7 @@ if test x"${fileserver}" != x; then
     fi
     ssh ${fileserver} cat ${toplevel}/diff.txt
 
-    rm -fr ${tmp}
+     ssh ${fileserver} rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
     man="`find ${local_builds} -name gcc.git@${revisions[1]}\*manifest.txt`"
