@@ -19,6 +19,7 @@ else
 
     remote_snapshots=http://abe.validation.linaro.org/snapshots
     wget_bin=/usr/bin/wget
+    NEWWORKDIR=/usr/local/bin/git-new-workdir
     sources_conf=${topdir}/testsuite/test_sources.conf
 fi
 echo "Testsuite using ${sources_conf}"
