@@ -1387,8 +1387,10 @@ test_checkout ()
 	branch_test=0
     elif test x"${branch}" = x -a x"${revision}" = x; then
 	branch_test=`(cd ${srcdir} && git branch | grep -c "^\* master$")`
+    elif test x"${revision}" = x; then
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch}$")`
     else
-	branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch:+${branch}${revision:+_}}${revision:+${revision}}$")`
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* local_${revision}$")`
     fi
 
     if test x"${branch_test}" = x1 -a x"${should}" = xpass; then
