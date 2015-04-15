@@ -1359,6 +1359,7 @@ test_checkout ()
     local package="$3"
     local branch="$4"
     local revision="$5"
+    local expected="$6"
 
     #in="${package}${branch:+/${branch}}${revision:+@${revision}}"
     in="${package}${branch:+~${branch}}${revision:+@${revision}}"
@@ -1374,9 +1375,17 @@ test_checkout ()
     #tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
 
     if test x"${debug}" = x"yes"; then
-	out="`(cd ${local_snapshots} && checkout ${tag})`"
+        if test x"${expected}" = x; then
+	    out="`(cd ${local_snapshots} && checkout ${tag})`"
+        else
+            out="`(cd ${local_snapshots} && checkout ${tag} 2> >(tee /dev/stderr))`"
+        fi
     else
-	out="`(cd ${local_snapshots} && checkout ${tag} 2>/dev/null)`"
+        if test x"${expected}" = x; then
+	    out="`(cd ${local_snapshots} && checkout ${tag} 2>/dev/null)`"
+        else
+	    out="`(cd ${local_snapshots} && checkout ${tag} 2>&1)`"
+        fi
     fi
 
     local srcdir=
@@ -1394,14 +1403,32 @@ test_checkout ()
     fi
 
     if test x"${branch_test}" = x1 -a x"${should}" = xpass; then
-	pass "${testing}"
-	return 0
+        if test x"${expected}" = x; then
+            pass "${testing}"
+        else
+            if echo "${out}" | grep -q "${expected}"; then
+	        pass "${testing}"
+	        return 0
+            else
+                fail "${testing}"
+                return 1
+            fi
+        fi
     elif test x"${branch_test}" = x1 -a x"${should}" = xfail; then
 	fail "${testing}"
 	return 1
     elif test x"${branch_test}" = x0 -a x"${should}" = xfail; then
-	pass "${testing}"
-	return 0
+        if test x"${expected}" = x; then
+            pass "${testing}"
+        else
+            if echo "${out}" | grep -q "${expected}"; then
+	        pass "${testing}"
+	        return 0
+            else
+                fail "${testing}"
+                return 1
+            fi
+        fi
     else
 	fail "${testing}"
 	return 1
@@ -1414,7 +1441,8 @@ if test ! -e "${PWD}/host.conf"; then
    branch=''
    revision=''
    should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected=''
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
@@ -1425,7 +1453,8 @@ if test ! -e "${PWD}/host.conf"; then
    branch="gerrit"
    revision=''
    should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected=''
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
@@ -1436,7 +1465,8 @@ if test ! -e "${PWD}/host.conf"; then
    branch=''
    revision="9bcced554dfc"
    should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected=''
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
@@ -1447,29 +1477,32 @@ if test ! -e "${PWD}/host.conf"; then
    branch="unusedbranchname"
    revision="9bcced554dfc"
    should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected=''
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
 
-testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail."
+testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail with 'branch does not exist' message."
 if test ! -e "${PWD}/host.conf"; then
    package="abe.git"
    branch="nonexistentbranch"
    revision=''
    should="fail"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected="^ERROR.*: checkout (Branch ${branch} likely doesn't exist in git repo ${package}\\!)$"
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
 
-testing="checkout: http://git@<url>/<repo>.git@<nonexistentrevision> should fail."
+testing="checkout: http://git@<url>/<repo>.git@<nonexistentrevision> should fail with 'revision does not exist' message."
 if test ! -e "${PWD}/host.conf"; then
    package="abe.git"
    branch=''
    revision="123456bogusbranch"
    should="fail"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
+   expected="^ERROR.*: checkout (Revision ${revision} likely doesn't exist in git repo ${package}\\!)$"
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 else
     untested "${testing}"
 fi
