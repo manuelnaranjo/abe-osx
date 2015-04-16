@@ -1483,6 +1483,18 @@ else
     untested "${testing}"
 fi
 
+testing="checkout: svn://testingrepository/foo should fail with 'checkout failed' message."
+if test ! -e "${PWD}/host.conf"; then
+   package="foo-svn"
+   branch=''
+   revision=''
+   should="fail"
+   expected="^ERROR.*: checkout (Failed to check out svn://testingrepository/foo to ${local_snapshots}/foo)$"
+   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+else
+    untested "${testing}"
+fi
+
 testing="checkout: git://testingrepository/foo should fail with 'clone failed' message."
 if test ! -e "${PWD}/host.conf"; then
    package="foo.git"

@@ -233,6 +233,10 @@ checkout()
 		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
 		else
 		    svn checkout $1 ${srcdir}
+                    if test $? -gt 0; then
+                        error "Failed to check out $1 to ${srcdir}"
+                        return 1
+                    fi
 		fi
 	    fi
 	    ;;
