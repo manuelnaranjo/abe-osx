@@ -265,7 +265,7 @@ checkout()
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
 		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
-		    dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
+		    flock ${local_builds}/git$$.lock --command "${cmd}"
 		    if test $? -gt 0; then
 			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
 		    	return 1
@@ -277,7 +277,7 @@ checkout()
 	        else
 		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
 		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
-		    dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
+		    flock ${local_builds}/git$$.lock --command "${cmd}"
 		    if test $? -gt 0; then
 			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		   	return 1
