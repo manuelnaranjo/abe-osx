@@ -642,13 +642,17 @@ else
     fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 fi
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --march armv8-a --dump"
-match='Default march      armv8-a'
+cb_commands="--dry-run --target arm-linux-gnueabihf --set arch=armv8-a"
+march='Overriding default --with-arch to armv8-a'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --march=armv8-a --dump"
-match="A space is expected"
-test_failure "${cb_commands}" "${match}"
+cb_commands="--dry-run --target arm-linux-gnueabihf --set cpu=cortex-a57"
+march='Overriding default --with-cpu to cortex-a57'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dry-run --target arm-linux-gnueabihf --set tune=cortex-a53"
+march='Overriding default --with-cpu to cortex-a53'
+test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dry-run --target arm-none-linux-gnueabihf --check=foo"
 match='is invalid after'
