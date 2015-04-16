@@ -133,8 +133,6 @@ else
     gerrit_trigger=no
 fi
 
-echo "NOTE: No builds currently done in this branch, its for testing only!"
-
 # The two revisions are specified on the command line
 if test x"${revision_str}" != x; then
     GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
@@ -167,14 +165,15 @@ else
 fi
 
 # Create a build directory
-if test -d ${user_workspace}/_build; then
-    rm -fr ${user_workspace}/_build
+topbuild="${user_workspace}/_build${BUILD_NUMBER:-$$}"
+if test -d ${topbuild}; then
+    rm -fr ${topbuild}
 fi
-mkdir -p ${user_workspace}/_build
-local_builds="${user_workspace}/_build/builds/${build}/${targetname}"
+mkdir -p ${topbuild}
+local_builds="${topbuild}/builds/${build}/${targetname}"
 
 # Use the newly created build directory
-pushd ${user_workspace}/_build
+pushd ${topbuild}
 
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
