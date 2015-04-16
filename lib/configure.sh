@@ -23,6 +23,11 @@ configure_build()
 {
     trace "$*"
 
+    flock --wait 100 ${local_builds}/git$$.lock --command echo
+    if test $? -gt 0; then
+	error "Timed out waiting for a git checkout to complete."
+	return 1
+    fi
     local gitinfo="`get_source $1`"
 
     local tool="`get_toolname ${gitinfo}`"
