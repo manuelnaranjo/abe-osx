@@ -174,6 +174,7 @@ git_robust()
 {
     local try=1
     local cmd="git $@"
+
     while [ "$try" -lt "10" ]; do
 	try="$(($try+1))"
 	flock ${local_builds}/git$$.lock --command "${cmd}" && break
@@ -264,7 +265,7 @@ checkout()
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
 		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
-		    flock ${local_builds}/git$$.lock --command "${cmd}
+		    dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
 		    if test $? -gt 0; then
 			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
 		    	return 1
@@ -272,10 +273,11 @@ checkout()
 		    # git checkout of a commit leaves the head in detached state so we need to
 		    # give the current checkout a name.  Use -B so that it's only created if
 		    # it doesn't exist already.
-		    dryrun "(cd ${srcdir} && flock --wait 100 ${local_builds}/git$$.lock --command 'git checkout -B local_${revision})'"
+		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
 		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
-		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
+		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
+		    dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
 		    if test $? -gt 0; then
 			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 		   	return 1
@@ -297,12 +299,12 @@ checkout()
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
-		    dryrun "(cd ${srcdir} && flock --wait 100 ${local_builds}/git$$.lock --command 'git checkout -B local_${revision})'"
+		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${revision})"
 		else
 		    # Make sure we are on the correct branch.
 		    # This is a no-op if $branch is empty and it
 		    # just gets master.
-		    dryrun "(cd ${srcdir} && flock --wait 100 ${local_builds}/git$$.lock 'git checkout -B ${branch} origin/${branch})'"
+		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
@@ -515,7 +517,8 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "flock --wait 100 ${local_builds}/git$$.lock '${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}'"
+	local cmd="${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
