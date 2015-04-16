@@ -82,13 +82,15 @@ else
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 
+node=${node:`uname -n`}
+job=${job:-TestBackport}
 basedir="/work/logs"
 repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch="linaro-4.9-branch"
-user_workspace=${WORKSPACE:-${HOME}/workspace/TestBackport}
+user_workspace=${WORKSPACE:-${HOME}/workspace/${job}}
 user_snapshots="${user_workspace}/snapshots"
-snapshots_ref="${user_snapshots}"
+snapshots_ref="/linaro/shared/snapshots"
 revision_str=""
 user_options=""
 
@@ -165,11 +167,12 @@ else
 fi
 
 # Create a build directory
-topbuild="${user_workspace}/_build${BUILD_NUMBER:-$$}"
+topbuild="${user_workspace}/_build"
 if test -d ${topbuild}; then
     rm -fr ${topbuild}
+    mkdir -p ${topbuild}
 fi
-mkdir -p ${topbuild}
+
 local_builds="${topbuild}/builds/${build}/${targetname}"
 
 # Use the newly created build directory
@@ -179,39 +182,30 @@ $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=
 
 # If Gerrit is specifing the two git revisions, don't try to extract them.
 if test x"${gerrit_trigger}" != xyes; then
-    if test ! -d ${snapshots_ref}/gcc.git; then
-	git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
-    fi
+    checkout "`get_URL gcc.git`"
+    srcdir="`get_srcdir gcc.git`"
     
     # Due to update cycles, sometimes the branch isn't in the repository yet.
-    exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
+    exists="`cd ${srcdir} && git branch -a | grep -c "${branch}"`"
     if test "${exists}" -eq 0; then
-	pushd ${git_reference_dir}/${repo} && git fetch
+	warning "Branch isn't in GCC repository yet!"
+	pushd ${srcdir} && git pull
 	popd
     fi
     
-    # rm -fr ${srcdir}
-    if test ! -e  ${srcdir}; then
-	git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
-	# Make sure we are at the top of ${branch}
-	pushd ${srcdir}
-	# If in 'detached HEAD' state, don't try to update to the top of the branch
-	detached=`git branch | grep detached`
-	if test x"${detached}" = x; then
-	    git checkout -B ${branch} origin/${branch} || exit 1
-	fi
-	popd
-    fi
+    checkout "`get_URL gcc.git~${branch}`"
+    srcdir="`get_srcdir gcc.git~${branch}`"
 
     # Get the last two revisions
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
-    update="--disable update"
+    notice "Validating: ${revisions[0]} and ${revisions[1]}"
 else
-    update="--disable update"
-    echo "FIXME: ${records['parents']}"
-    echo "FIXME: ${records['revision']}"
     declare -a revisions=(${records['parents']} ${records['revision']})
 fi
+
+# Don't update any sources, we should be in sync already from the above.
+update="--disable update"
+
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
@@ -222,12 +216,12 @@ else
     gerritopt=""
 fi
 
-resultsdir="/tmp/${node}/abe$$/${target}@"
+resultsdir="${local_builds}/${node}/abe$$/${target}@"
 
 i=0
 while test $i -lt ${#revisions[@]}; do
     # Don't build if a previous build of this revision exists
-    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
+    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/gcc.git@${revisions[$i]}"
     exists="`ssh ${fileserver} "if test -d ${dir}; then echo YES; else echo NO; fi"`"
     if test x"${exists}" = x"YES"; then
 	echo "${dir} already exists"
