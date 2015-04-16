@@ -173,10 +173,10 @@ checkout_all()
 git_robust()
 {
     local try=1
-
+    local cmd="git $@"
     while [ "$try" -lt "10" ]; do
 	try="$(($try+1))"
-	flock ${local_builds}/git$$.lock --command "git "$@"" && break
+	flock ${local_builds}/git$$.lock --command "${cmd}" && break
     done
 }
 
@@ -263,7 +263,8 @@ checkout()
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
-		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
+		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
+		    flock ${local_builds}/git$$.lock --command "${cmd}
 		    if test $? -gt 0; then
 			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
 		    	return 1
