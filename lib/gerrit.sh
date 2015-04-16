@@ -373,7 +373,7 @@ gerrit_cherry_pick()
 
     # This cherry picks the commit into the copy of the parent branch. In the parent branch
     # we're already in a local branch.
-    (cd ${destdir} && git fetch ssh://${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']}:29418/${gerrit['PROJECT']} ${refspec} && git cherry-pick FETCH_HEAD)
+    (cd ${destdir} && git fetch ssh://${gerrit['USERNAME']}@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${refspec} && git cherry-pick FETCH_HEAD)
 
     (cd ${srcdir} && git reset HEAD^)
     (cd ${srcdir} && git co master)
