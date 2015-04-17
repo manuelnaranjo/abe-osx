@@ -1438,7 +1438,7 @@ else
     untested "${testing}"
 fi
 
-testing="checkout: http://git@<url>/<repo>.git/unusedbranchnanme@<revision>"
+testing="checkout: http://git@<url>/<repo>.git/unusedbranchname@<revision>"
 if test ! -e "${PWD}/host.conf"; then
    package="abe.git"
    branch="unusedbranchname"
