@@ -380,6 +380,12 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 #	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
+
+	echo "### BUILD INFORMATION:"
+	cat ${manifest}
+
+	wwwpath="`echo ${basedir}/${dir} | sed -e 's:/work::' -e 's:/space::'`"
+	echo "Full build logs: http://${fileserver}${wwwpath}/"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
