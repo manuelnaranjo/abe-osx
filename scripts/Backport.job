@@ -56,7 +56,7 @@ if test x"${GERRIT_TOPIC}" != x; then
     gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
 
-$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
+$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} --branch ${gcc_branch}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then
