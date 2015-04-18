@@ -205,7 +205,7 @@ configure_build()
 			    # Only add the Linaro bug and version strings for
 			    # Linaro branches.
 			    if test "`echo ${gcc_version} | grep -ic linaro`" -gt 0; then
-				local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\" --with-pkgversion=\"Linaro GCC ${date}\""
+				local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\""
 			    fi
 			    ;;
 			gdbserver)
