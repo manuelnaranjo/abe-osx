@@ -113,7 +113,7 @@ binary_runtime()
 
     # make the tarball from the tree we just created.
     notice "Making binary tarball for runtime libraries, please wait..."
-    dryrun "tar Jcf ${local_snapshots}/${tag}.tar.xz --directory /tmp/linaro.$$ ${tag}"
+    dryrun "tar Jcf ${local_snapshots}/${tag}.tar.xz --directory ${local_builds}/tmp.$$ ${tag}"
 
     rm -f ${local_snapshots}/${tag}.tar.xz.asc
     dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
