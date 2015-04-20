@@ -201,18 +201,21 @@ checkout()
     fi
 
     local repo=
-    repo="`get_git_repo $1`"
+    repo="`get_git_repo $1`" || return 1
 
+    #None of the following should be able to fail with the code as it is
+    #written today (and failures are therefore untestable) but propagate
+    #errors anyway, in case that situation changes.
     local tool=
-    tool="`get_toolname $1`"
+    tool="`get_toolname $1`" || return 1
     local url=
-    url="`get_git_url $1`"
+    url="`get_git_url $1`" || return 1
     local branch=
-    branch="`get_git_branch $1`"
+    branch="`get_git_branch $1`" || return 1
     local revision=
-    revision="`get_git_revision $1`"
+    revision="`get_git_revision $1`" || return 1
     local srcdir=
-    srcdir="`get_srcdir $1`"
+    srcdir="`get_srcdir $1`" || return 1
 
     case $1 in
 	svn*)

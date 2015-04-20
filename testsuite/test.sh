@@ -1386,6 +1386,24 @@ for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
   fi
 done
 
+#confirm that checkout fails with bad repo - abe is so forgiving that I can only find one suitable input
+in="http://"
+testing="checkout: ${in} should fail with 'cannot parse repo' message."
+if test x"${debug}" = xyes; then
+  out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
+else
+  out="`cd ${local_snapshots} && checkout ${in} 2>&1`"
+fi
+if test $? -eq 0; then
+  fail "${testing}"
+else
+  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: git_parser (Malformed input\\. No repo found\\.)$"; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+
 test_checkout ()
 {
     local should="$1"
