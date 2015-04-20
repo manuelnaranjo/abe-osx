@@ -1352,6 +1352,40 @@ echo "================================================"
 
 # These can be painfully slow so test small repos.
 
+#confirm that checkout works with raw URLs
+testing="http://abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+in="${testing}"
+if test x"${debug}" = xyes; then
+  out="`cd ${local_snapshots} && checkout ${testing}`"
+else
+  out="`cd ${local_snapshots} && checkout ${testing} 2>/dev/null`"
+fi
+if test $? -eq 0; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+#confirm that checkout fails approriately with a range of bad services in raw URLs
+for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
+  in="${service}abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+  testing="checkout: ${in} should fail with 'proper URL required' message."
+  if test x"${debug}" = xyes; then
+    out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
+  else
+    out="`cd ${local_snapshots} && checkout ${in} 2>&1`"
+  fi
+  if test $? -eq 0; then
+    fail "${testing}"
+  else
+    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_URL\\.)$"; then
+      pass "${testing}"
+    else
+      fail "${testing}"
+    fi
+  fi
+done
+
 test_checkout ()
 {
     local should="$1"
