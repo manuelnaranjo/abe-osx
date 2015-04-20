@@ -196,7 +196,7 @@ checkout()
     local service=
     service="`get_git_service $1`"
     if test x"${service}" = x ; then
-	error "A proper url is required. Call get_URL first."
+	error "Unable to parse service from '$1'. You have either a bad URL, or an identifier that should be passed to get_URL."
 	return 1
     fi
 
