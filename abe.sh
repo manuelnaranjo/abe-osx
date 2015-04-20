@@ -301,14 +301,16 @@ OPTIONS
                  
 		<target_triple>
 
-			x86_64-none-linux-gnu
-			arm-none-linux-gnueabi
-			arm-none-linux-gnueabihf
-			armeb-none-linux-gnueabihf
-			aarch64-none-linux-gnu
+			x86_64-linux-gnu
+			arm-linux-gnueabi
+			arm-linux-gnueabihf
+			arm-none-eabi
+			armeb-none-eabi
+			armeb-linux-gnueabihf
+			aarch64-linux-gnu
 			aarch64-none-elf
 			aarch64_be-none-elf
-			aarch64_be-none-linux-gnu
+			aarch64_be-linux-gnu
 
 			If <target_triple> is not the same as the hardware
 			that ${abe} is running on then build the
@@ -346,11 +348,11 @@ EXAMPLES
 
   Build a Linux cross toolchain:
 
-    ${abe} --target arm-none-linux-gnueabihf --build all
+    ${abe} --target arm-linux-gnueabihf --build all
 
   Build a Linux cross toolchain with glibc as the clibrary:
 
-    ${abe} --target arm-none-linux-gnueabihf --set libc=glibc --build all
+    ${abe} --target arm-linux-gnueabihf --set libc=glibc --build all
 
   Build a bare metal toolchain:
 

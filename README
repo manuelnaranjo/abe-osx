@@ -104,32 +104,32 @@ string. To build a specific component, use the --build option to
 abe. the --target option is also used for cross builds. For
 example:
 
-"abe.sh --target arm-none-linux-gnueabihf gcc-linaro-4.8.2013.07-1"
+"abe.sh --target arm-linux-gnueabihf gcc-linaro-4.8.2013.07-1"
 
 This would fetch the source tarball for this release, build anything
 it needs to compile, the binutils for example, and then build these
 sources. You can also specify a URL to a source repository
 instead. For example:
 
-"abe.sh --target arm-none-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
+"abe.sh --target arm-linux-gnueabihf git://git.linaro.org/toolchain/eglibc.git"
 
 To build an entire cross toolchain, the simplest way is to let
 abe control all the steps. Although it is also possible to do each
 step separately. To build the full toolchain, do this:
 
-"abe.sh --target arm-none-linux-gnueabihf --build all"
+"abe.sh --target arm-linux-gnueabihf --build all"
 
 ---------------------------------------------------------------------
 Older NOTES
 
-x86_64-none-linux-gnu
-arm-none-linux-gnueabi
-arm-none-linux-gnueabihf
-armeb-none-linux-gnueabihf
-aarch64-none-linux-gnu
+x86_64-linux-gnu
+arm-linux-gnueabi
+arm-linux-gnueabihf
+armeb-linux-gnueabihf
+aarch64-linux-gnu
 aarch64-none-elf
 aarch64_be-none-elf
-aarch64_be-none-linux-gnu
+aarch64_be-linux-gnu
 
 Toolchain Components
  * gcc (gcc, g++, objc, fortran)
