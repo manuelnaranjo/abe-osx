@@ -20,25 +20,26 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  ${abe} [''| [--timeout <value>]
-             [[--build [<package> --stage {1|2}]|all]
-              |[--checkout <package>|all]]
-             [--check [{all|glibc|gcc|gdb|binutils}]]
-             [--ccache] [--enable {bootstrap|gerrit}]
-             [--disable {install|update|make_docs|building}] [--dryrun] [--dump]
+  ${abe} [''| [--build {<package> [--stage {1|2}]|all}]
+             [--ccache] [--check [{all|glibc|gcc|gdb|binutils}]]
+             [--checkout {<package>[~branch][@revision]|all}]
+             [--disable {install|update|make_docs|building}] [--dryrun]
+             [--dump] [--enable {bootstrap|gerrit}]
              [--excludecheck {all|glibc|gcc|gdb|binutils}]
-             [--fetch <url>] [--force] [--host <host_triple>] [--help]
+             [--fetch <url>] [--force] [--help] [--host <host_triple>]
+             [--infrastructure] [--interactive]
              [--list] [--manifest <manifest_file>]
-             [--parallel] [--release <release_version_string>]
+             [--parallel] [--prefix] [--release <release_version_string>]
              [--set {arch|cpu|tune}=XXX]
+             [--set {cflags|ldflags|runtestflags|makeflags}=XXX]
+             [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
              [--set {libc}={glibc|eglibc|newlib}]
              [--set {linker}={ld|gold}]
-             [--set {languages}={c|c++|fortran|go|lto|objc|java|ada}]
-             [--set {cflags|ldflags|runtestflgs|makeflags}=XXX]
              [--set {package}={toolchain|gdb|sysroot}]
-             [--snapshots <url>] [--target <target_triple>] [--usage]
-             [--interactive]
-             [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}
+             [--snapshots <path>] [--tarball] [--tarbin] [--tarsrc]
+             [--target {<target_triple>|''}] [--timeout <timeout_value>]
+             [--usage]
+             [{binutils|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}
                =<id|snapshot|url>]]
 
 EOF
@@ -118,7 +119,7 @@ OPTIONS
                         If there is no directive it's the same as 'all' and
                         make check will be run on all supported packages.
 
-  --checkout <package>[~branch][@revision]|all
+  --checkout {<package>[~branch][@revision]|all}
 
                <package>[~branch][@revision]
                        This will checkout the package designated by the
@@ -130,7 +131,7 @@ OPTIONS
                        complete build as specified by the config/ .conf
                        files.
 
-  --disable {install}
+  --disable {install|update|make_docs|building}
 
 		install
                         Disable the make install stage of packages, which
@@ -144,7 +145,7 @@ OPTIONS
 
                 building
                         Don't build anything. This is only useful when
-                        using --tarbin, --tarsrc, --tarballs.
+                        using --tarbin, --tarsrc, or --tarball.
                         This is a debugging aid for developers, as it
                         assumes everything built correctly...
                         
@@ -153,7 +154,7 @@ OPTIONS
 
   --dump	Dump configuration file information for this build.
 
-  --enable {bootstrap}
+  --enable {bootstrap|gerrit}
 
                 bootstrap
                         Enable gcc bootstrapping, which is disabled by
@@ -245,34 +246,34 @@ OPTIONS
 		--target value is compatible with the passed arch, cpu, or
 		tune value.
 
-  --set		{linker}={ld|gold}
-
-                The default is to build the older GNU linker. This option
-                changes the linker to Gold, which is required for some C++
-                projects, including Andriod and Chromium.
- 
-  --set		{libc}={glibc|eglibc|newlib}
-
-		The default value is stored in lib/global.sh.  This
-		setting overrides the default.  Specifying a libc
-		other than newlib on baremetal targets is an error.
-
   --set		{cflags|ldflags|runtestflags|makeflags}=XXX
                 This overrides the default values used for CFLAGS,
                 LDFLAGS, RUNTESTFLAGS, and MAKEFLAGS.
-
-  --set		{package}={toolchain|gdb|sysroot}
-                This limits the default set of packages to the specified set.
-                This only applies to the --tarbin, --tarsrc, and --tarballs
-                command lines options, and are primarily to be only used by
-                developers.
 
   --set		{languages}={c|c++|fortran|go|lto|objc|java|ada}
                 This changes the default set of GCC front ends that get built.
                 The default set for most platforms is c, c++, go, fortran,
                 and lto.
 
-  --snapshots	/path/to/alternative/local_snapshots/directory
+  --set		{libc}={glibc|eglibc|newlib}
+
+		The default value is stored in lib/global.sh.  This
+		setting overrides the default.  Specifying a libc
+		other than newlib on baremetal targets is an error.
+
+  --set		{linker}={ld|gold}
+
+                The default is to build the older GNU linker. This option
+                changes the linker to Gold, which is required for some C++
+                projects, including Andriod and Chromium.
+ 
+  --set		{package}={toolchain|gdb|sysroot}
+                This limits the default set of packages to the specified set.
+                This only applies to the --tarbin, --tarsrc, and --tarballs
+                command lines options, and are primarily to be only used by
+                developers.
+
+  --snapshots <path>
   		Use an alternative path to a local snapshots directory. 
 
   --stage {1|2}
@@ -283,13 +284,13 @@ OPTIONS
   --tarball
   		Build source and binary tarballs after a successful build.
 
-  --tarsrc
-  		Build source tarballs after a successful build.
-
   --tarbin
   		Build binary tarballs after a successful build.
 
-  --target	[<target_triple>|'']
+  --tarsrc
+  		Build source tarballs after a successful build.
+
+  --target	{<target_triple>|''}
 
 		This sets the target triple.  The GNU target triple
 		represents where the binaries built by the toolchain will
@@ -301,14 +302,16 @@ OPTIONS
                  
 		<target_triple>
 
-			x86_64-none-linux-gnu
-			arm-none-linux-gnueabi
-			arm-none-linux-gnueabihf
-			armeb-none-linux-gnueabihf
-			aarch64-none-linux-gnu
+			x86_64-linux-gnu
+			arm-linux-gnueabi
+			arm-linux-gnueabihf
+			arm-none-eabi
+			armeb-none-eabi
+			armeb-linux-gnueabihf
+			aarch64-linux-gnu
 			aarch64-none-elf
 			aarch64_be-none-elf
-			aarch64_be-none-linux-gnu
+			aarch64_be-linux-gnu
 
 			If <target_triple> is not the same as the hardware
 			that ${abe} is running on then build the
@@ -321,7 +324,7 @@ OPTIONS
 
   --usage	Display synopsis information.
 
-   [{binutils|gcc|gmp|mpft|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
+   [{binutils|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
 
 		This option specifies a particular version of a package
 		that might differ from the default version in the
@@ -346,11 +349,11 @@ EXAMPLES
 
   Build a Linux cross toolchain:
 
-    ${abe} --target arm-none-linux-gnueabihf --build all
+    ${abe} --target arm-linux-gnueabihf --build all
 
   Build a Linux cross toolchain with glibc as the clibrary:
 
-    ${abe} --target arm-none-linux-gnueabihf --set libc=glibc --build all
+    ${abe} --target arm-linux-gnueabihf --set libc=glibc --build all
 
   Build a bare metal toolchain:
 
