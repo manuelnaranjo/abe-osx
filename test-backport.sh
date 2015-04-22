@@ -54,6 +54,10 @@ fi
 # load commonly used functions
 which_dir="`which $0`"
 topdir="`dirname ${which_dir}`"
+. "${topdir}/lib/common.sh" || exit 1
+
+# since host.conf isn't loaded, get the build architecture
+build="`${topdir}/config.guess`"
 
 # Configure Abe itself. Force the use of bash instead of the Ubuntu
 # default of dash as some configure scripts go into an infinite loop with
@@ -68,17 +72,6 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-# load variables set by configure
-#if test -e "${PWD}/host.conf"; then
-#    . "${PWD}/host.conf"
-#else
-#    echo "Error: this script needs to be run from a configured Abe tree!" 1>&2
-#    exit 1
-#fi
-abe="`which $0`"
-abe_path="`dirname ${abe}`"
-topdir="${abe_path}"
-abe="`basename $0`"
 
 # Non matrix builds use node_selector, but matrix builds use NODE_NAME
 if test x"${node_selector}" != x; then
@@ -89,21 +82,28 @@ else
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 
+node=${node:-`uname -n`}
+job=${job:-TestBackport}
 basedir="/work/logs"
 repo="gcc.git"
 fileserver="abe.tcwglab.linaro.org"
 branch="linaro-4.9-branch"
-user_workspace=${WORKSPACE:-${HOME}/workspace/TestBackport}
+user_workspace=${WORKSPACE:-${HOME}/workspace/${job}}
 user_snapshots="${user_workspace}/snapshots"
-snapshots_ref="${user_snapshots}"
+snapshots_ref="/linaro/shared/snapshots"
 revision_str=""
 user_options=""
-local_builds="${PWD}"
+
+# These are needed by the functions in the ABE library.
+local_snapshots=${user_snapshots}
+sources_conf=${topdir}/config/sources.conf
+NEWWORKDIR=/usr/local/bin/git-new-workdir
 
 # Whether to exclude some component from 'make check'
 excludecheck=
 
 OPTS="`getopt -o s:r:f:w:o:t:b:g:c:h -l target:,fileserver:,help,snapshots:,branch:,gitref:,repo:,workspace:,revisions:,options,check,excludecheck: -- "$@"`"
+
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2; shift ;;
@@ -123,12 +123,27 @@ while test $# -gt 0; do
     shift
 done
 
+# If triggered by Gerrit, use the REST API. This assumes the lava-bot account
+# is supported by Gerrit, and the public SSH key is available. 
+if test x"${GERRIT_CHANGE_ID}" != x; then
+    eval `gerrit_info $HOME`
+    gerrit_trigger=yes
+    #gerrit_query_status gcc
+    
+    eval "`gerrit_query_patchset ${GERRIT_CHANGE_ID}`"
+
+    # Check out the revision made before this patch gets merged in
+    checkout "`get_URL gcc.git@${records['parents']}`"
+
+    gerrit_cherry_pick ${gerrit['REFSPEC']}
+else
+    gerrit_trigger=no
+fi
+
 # The two revisions are specified on the command line
 if test x"${revision_str}" != x; then
-    if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
-	GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
-	GIT_PREVIOUS_COMMIT="`echo ${revision_str} | cut -d ',' -f 2`"
-    fi
+    GIT_COMMIT="`echo ${revision_str} | cut -d ',' -f 1`"
+    GIT_PREVIOUS_COMMIT="`echo ${revision_str} | cut -d ',' -f 2`"
 fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
@@ -148,7 +163,7 @@ if test "`echo ${branch} | grep -c gcc.git`" -gt 0; then
 fi
 
 if test x"${git_reference_dir}" != x; then
-    srcdir="${git_reference_dir}/${branch}"
+    srcdir="${git_reference_dir}/gcc.git~${branch}"
     snapshots_ref="${git_reference_dir}"
 else
     git_reference_dir="${user_snapshots}"
@@ -157,64 +172,61 @@ else
 fi
 
 # Create a build directory
-if test -d ${user_workspace}/_build; then
-    rm -fr ${user_workspace}/_build
+topbuild="${user_workspace}/_build"
+if test -d ${topbuild}; then
+    rm -fr ${topbuild}
 fi
-mkdir -p ${user_workspace}/_build
+mkdir -p ${topbuild}
+
+local_builds="${topbuild}/builds/${build}/${targetname}"
 
 # Use the newly created build directory
-pushd ${user_workspace}/_build
+pushd ${topbuild}
 
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref}
 
 # If Gerrit is specifing the two git revisions, don't try to extract them.
-if test x"${GIT_COMMIT}" = x -a x"${GIT_PREVIOUS_COMMIT}" = x; then
-    if test ! -d ${snapshots_ref}/gcc.git; then
-	git clone http://git.linaro.org/git/toolchain/gcc.git ${snapshots_ref}/gcc.git
-    fi
+if test x"${gerrit_trigger}" != xyes; then
+    checkout "`get_URL gcc.git`"
+    srcdir="`get_srcdir gcc.git`"
     
     # Due to update cycles, sometimes the branch isn't in the repository yet.
-    exists="`cd ${git_reference_dir}/${repo} && git branch -a | grep -c "${branch}"`"
+    exists="`cd ${srcdir} && git branch -a | grep -c "${branch}"`"
     if test "${exists}" -eq 0; then
-	pushd ${git_reference_dir}/${repo} && git fetch
+	warning "Branch isn't in GCC repository yet!"
+	pushd ${srcdir} && git pull
 	popd
     fi
     
-    # rm -fr ${srcdir}
-    git-new-workdir ${git_reference_dir}/${repo} ${srcdir} ${branch} || exit 1
-    # Make sure we are at the top of ${branch}
-    pushd ${srcdir}
-    # If in 'detached HEAD' state, don't try to update to the top of the branch
-    detached=`git branch | grep detached`
-    if test x"${detached}" = x; then
-	git checkout -B ${branch} origin/${branch} || exit 1
-    fi
-    popd
+    checkout "`get_URL gcc.git~${branch}`"
+    srcdir="`get_srcdir gcc.git~${branch}`"
 
     # Get the last two revisions
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
-    update="--disable update"
+    notice "Validating: ${revisions[0]} and ${revisions[1]}"
 else
-    update=""
-    declare -a revisions=(${GIT_COMMIT} ${GIT_PREVIOUS_COMMIT})
+    declare -a revisions=(${records['parents']} ${records['revision']})
 fi
+
+# Don't update any sources, we should be in sync already from the above.
+update="--disable update"
+
 # Force GCC to not build the docs
 export BUILD_INFO=""
 
 # Don't try to add comments to Gerrit if run manually
-if test x"${GERRIT_PATCHSET_REVISION}" != x; then
-    gerrit="--enable gerrit"
+if test x"${gerrit_trigger}" != x; then
+    gerritopt="--enable gerrit"
 else
-    gerrit=""
+    gerritopt=""
 fi
 
-resultsdir="/tmp/${node}/abe$$/${target}@"
+resultsdir="${local_builds}/${node}/abe$$/${target}@"
 
 i=0
 while test $i -lt ${#revisions[@]}; do
-    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/${revisions[$i]}"
-
     # Don't build if a previous build of this revision exists
+    dir="${basedir}/gcc-linaro/${branch}/${job}${BUILD_NUMBER}/${build}.${target}/gcc.git@${revisions[$i]}"
     exists="`ssh ${fileserver} "if test -d ${dir}; then echo YES; else echo NO; fi"`"
     if test x"${exists}" = x"YES"; then
 	echo "${dir} already exists"
@@ -222,7 +234,7 @@ while test $i -lt ${#revisions[@]}; do
 	continue
     fi
 
-    bash -x ${topdir}/abe.sh ${gerrit} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check} ${user_options}
+    bash -x ${topdir}/abe.sh ${gerrit_opt} ${update} ${platform} gcc=gcc.git@${revisions[$i]} --build all --disable make_docs ${check} ${user_options}
     if test $? -gt 0; then
 	echo "ERROR: Abe failed!"
 	exit 1
@@ -234,25 +246,25 @@ while test $i -lt ${#revisions[@]}; do
     fi
 
     # Compress .sum and .log files
-    sums="`find ${local_builds}/${build}/${targetname}/ -name \*.sum`"
-    logs="`find ${local_builds}/${build}/${targetname}/ -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
+    sums="`find ${local_builds} -name \*.sum`"
+    logs="`find ${local_builds} -name \*.log | egrep -v 'config.log|check-.*.log|install.log'`"
     xz ${sums} ${logs}
 
     # FIXME: The way this is currently implemented only handles GCC backports. If binutils
     # backports are desired, this will have to be implented here.
-    sums="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.sum.xz`"
-    sums="${sums} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
+    sums="`find ${local_builds}/binutils-* -name \*.sum.xz`"
+    sums="${sums} `find ${local_builds}/gcc.git@${revisions[$i]}-stage2 -name \*.sum.xz`"
     # Copy only the log files we want
-    logs="`find ${local_builds}/${build}/${targetname}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
-    logs="${logs} `find ${local_builds}/${build}/${targetname}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="`find ${local_builds}/binutils-* -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
+    logs="${logs} `find ${local_builds}/gcc.git@${revisions[$i]}-stage2 -name \*.log.xz | egrep -v 'config.log|check-.*.log|install.log'`"
 
-    manifest="`find ${local_builds}/${build}/${targetname} -name gcc.git@${revisions[$i]}\*manifest.txt`"
+    manifest="`find ${local_builds} -name gcc.git@${revisions[$i]}\*manifest.txt`"
 
     #	xz ${resultsdir}${revisions[$i]}/*.sum ${resultsdir}${revisions[$i]}/*.log
     echo "Copying test results files to ${fileserver}:${dir}/ which will take some time..."
     ssh ${fileserver} mkdir -p ${dir}
     scp -C ${manifest} ${sums} ${logs} ${fileserver}:${dir}/
-    #	rm -fr ${resultsdir}${revisions[$i]}
+    # rm -fr ${resultsdir}${revisions[$i]}
 
     i="`expr $i + 1`"
 done
@@ -290,11 +302,11 @@ if test x"${fileserver}" != x; then
     ssh ${fileserver} rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[1]}\*manifest.txt`"
+    man="`find ${local_builds} -name gcc.git@${revisions[1]}\*manifest.txt`"
     cat ${man}
 
     echo "### with NEW COMMIT:"
-    man="`find ${local_builds}/${build}/${target} -name gcc.git@${revisions[0]}\*manifest.txt`"
+    man="`find ${local_builds} -name gcc.git@${revisions[0]}\*manifest.txt`"
     cat ${man}
 
     wwwpath="`echo ${toplevel} | sed -e 's:/work::' -e 's:/space::'`"
