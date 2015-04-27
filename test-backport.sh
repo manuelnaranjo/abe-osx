@@ -86,7 +86,7 @@ node=${node:-`uname -n`}
 job=${job:-TestBackport}
 basedir="/work/logs"
 repo="gcc.git"
-fileserver="${fileserver:-abe.tcwglab.linaro.org}"
+fileserver="${fileserver:-148.251.136.42}"
 branch="linaro-4.9-branch"
 user_workspace=${WORKSPACE:-${HOME}/workspace/${job}}
 user_snapshots="${user_workspace}/snapshots"
@@ -183,7 +183,7 @@ local_builds="${topbuild}/builds/${build}/${targetname}"
 # Use the newly created build directory
 pushd ${topbuild}
 
-$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+$CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=${fileserver} --with-remote-snapshots=/snapshots-ref
 
 # If Gerrit is specifing the two git revisions, don't try to extract them.
 if test x"${gerrit_trigger}" != xyes; then
