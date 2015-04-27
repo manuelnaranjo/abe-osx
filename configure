@@ -3783,9 +3783,7 @@ fi
 
 # Check whether --with-sources-conf was given.
 if test "${with_sources_conf+set}" = set; then :
-  withval=$with_sources_conf; SOURCES_CONF=${withval}
-else
-  SOURCES_CONF="${srcdir}/config/sources.conf"
+  withval=$with_sources_conf; SOURCES_CONF="${srcdir}/config/sources.conf"
   dir="`dirname ${SOURCES_CONF}`"
   base="`cd ${dir} && pwd`"
   conf="`basename  ${SOURCES_CONF}`"
@@ -3860,9 +3858,7 @@ fi
 
 # Check whether --with-remote-snapshots was given.
 if test "${with_remote_snapshots+set}" = set; then :
-  withval=$with_remote_snapshots; REMOTE_SNAPSHOTS=${withval}
-else
-  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots"
+  withval=$with_remote_snapshots; REMOTE_SNAPSHOTS="${withval}"
 fi
 
 
@@ -4218,7 +4214,7 @@ $as_echo "no" >&6; }
 fi
 
 
-# Texinfo 5 can't process the gcc texinfo files until they are fixed,
+# Texinfo 5.0 can't process the gcc texinfo files until they are fixed,
 # so we have to disable it for Ubuntu 14.04 "trusty".
 #if test "`uname -v | grep -c  Ubuntu`" -gt 0; then
 #   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
