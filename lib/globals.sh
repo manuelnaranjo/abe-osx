@@ -125,6 +125,8 @@ gerrit_change_number=""
 gerrit_event_type=""
 jenkins_job_name=""
 jenkins_job_url=""
+fileserver="${fileserver:-abe.tcwglab.linaro.org}"
+sources_conf="${sources_conf:-${abe_path}/config/sources.conf}"
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.
