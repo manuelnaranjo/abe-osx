@@ -256,7 +256,7 @@ fi
 AC_ARG_WITH(fileserver,
   AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
     FILESERVER=${withval},
-    FILESERVER='abe.tcwglab.linaro.org')
+    FILESERVER='148.251.136.42')
 AC_SUBST(FILESERVER)
 
 AC_ARG_WITH(sources-conf,

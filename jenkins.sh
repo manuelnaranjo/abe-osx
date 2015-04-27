@@ -55,7 +55,7 @@ user_git_repo="${shared}/snapshots"
 user_snapshots="${user_workspace}/snapshots"
 
 # Server to store results on.
-fileserver="abe.tcwglab.linaro.org"
+fileserver="148.251.136.42"
 
 # Compiler languages to build
 languages=default
