@@ -13,7 +13,7 @@ shared="/home/buildslave/workspace/shared"
 abe_dir="${WORKSPACE}/abe"
 user_snapshots="${WORKSPACE}/snapshots"
 snapshots_ref="${shared}/snapshots"
-fileserver="abe.tcwglab.linaro.org"
+fileserver="${fileserver:-148.251.136.42}"
 
 mkdir -p ${snapshots_ref}/
 rsync -az --update ${fileserver}:snapshots/ ${snapshots_ref}/
