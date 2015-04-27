@@ -1353,6 +1353,7 @@ echo "================================================"
 # These can be painfully slow so test small repos.
 
 #confirm that checkout works with raw URLs
+rm -rf "${local_snapshots}"/*.git*
 testing="http://abe.git@staging.git.linaro.org/git/toolchain/abe.git"
 in="${testing}"
 if test x"${debug}" = xyes; then
@@ -1368,6 +1369,7 @@ fi
 
 #confirm that checkout fails approriately with a range of bad services in raw URLs
 for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
+  rm -rf "${local_snapshots}"/*.git*
   in="${service}abe.git@staging.git.linaro.org/git/toolchain/abe.git"
   testing="checkout: ${in} should fail with 'proper URL required' message."
   if test x"${debug}" = xyes; then
@@ -1387,6 +1389,7 @@ for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
 done
 
 #confirm that checkout fails with bad repo - abe is so forgiving that I can only find one suitable input
+rm -rf "${local_snapshots}"/*.git*
 in="http://"
 testing="checkout: ${in} should fail with 'cannot parse repo' message."
 if test x"${debug}" = xyes; then
@@ -1426,6 +1429,11 @@ test_checkout ()
     # We also support / designated branches, but want to move to ~ mostly.
     #tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
 
+    #Make sure there's no hanging state relating to this test before it runs
+    if ls "${local_snapshots}/${package}"* > /dev/null 2>&1; then
+      rm -rf "${local_snapshots}/${package}"*
+    fi
+
     if test x"${debug}" = x"yes"; then
         if test x"${expected}" = x; then
 	    out="`(cd ${local_snapshots} && checkout ${tag})`"
@@ -1452,6 +1460,11 @@ test_checkout ()
         branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch}$")`
     else
         branch_test=`(cd ${srcdir} && git branch | grep -c "^\* local_${revision}$")`
+    fi
+
+    #Make sure we leave no hanging state
+    if ls "${local_snapshots}/${package}"* > /dev/null 2>&1; then
+      rm -rf "${local_snapshots}/${package}"*
     fi
 
     if test x"${branch_test}" = x1 -a x"${should}" = xpass; then
@@ -1594,6 +1607,8 @@ if test ! -e "${PWD}/host.conf"; then
 else
    untested "${testing}"
 fi
+
+rm -rf "${local_snapshots}"/*.git*
 
 echo "============= misc tests ================"
 testing="pipefail"
