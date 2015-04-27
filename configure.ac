@@ -255,13 +255,12 @@ fi
 # server for storage and comparison. For the TCWG, this has been 'toolchain64'.
 AC_ARG_WITH(fileserver,
   AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
-  FILESERVER=${withval},
-  FILESERVER='abe.tcwglab.linaro.org')
+    FILESERVER=${withval},
+    FILESERVER='abe.tcwglab.linaro.org')
 AC_SUBST(FILESERVER)
 
 AC_ARG_WITH(sources-conf,
   AC_HELP_STRING([--with-sources-conf], []),
-  SOURCES_CONF=${withval},
   SOURCES_CONF="${srcdir}/config/sources.conf"
   dir="`dirname ${SOURCES_CONF}`"
   base="`cd ${dir} && pwd`"
@@ -309,6 +308,7 @@ dnl The top directory for make install, also where all the components we build l
 AC_ARG_WITH(local-builds,
   AC_HELP_STRING([--with-local-builds], []),
   LOCAL_BUILDS=${withval},
+  LOCAL_BUILDS="${ABE_TOP}/builds",
   LOCAL_BUILDS="${ABE_TOP}/builds")
 AC_SUBST(LOCAL_BUILDS)
 
@@ -320,8 +320,7 @@ fi
 dnl A URL to the remote directory where snapshots are stored
 AC_ARG_WITH(remote-snapshots,
   AC_HELP_STRING([--with-remote-snapshots], []),
-  REMOTE_SNAPSHOTS=${withval},
-  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots")
+  REMOTE_SNAPSHOTS="${withval}")
 AC_SUBST(REMOTE_SNAPSHOTS)
 
 dnl Display the default paths so the user does not need to look in the host.conf file.
