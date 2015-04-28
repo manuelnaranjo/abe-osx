@@ -1152,13 +1152,11 @@ fi
 testing="get_source: <repo>.git@<revision> identifier with no matching source.conf entry should fail."
 if test ! -e "${PWD}/host.conf"; then
     in="nomatch.git@12345"
-
     if test x"${debug}" = x"yes"; then
 	out="`get_source ${in}`"
     else
 	out="`get_source ${in} 2>/dev/null`"
     fi
-
     if test x"${out}" = x""; then
 	pass "${testing}"
     else
