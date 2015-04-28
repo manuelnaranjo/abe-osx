@@ -75,11 +75,12 @@ if test x"${date}" != x; then
     release="${date}"    
 fi
 
-libc=
 if test x"${clibrary}" != x; then
-    # ELF based targets are bare metal only
     if test "`echo ${target} | grep -c linux`"; then
 	libc="--set libc=${clibrary}"
+    else
+	# ELF and EABI based targets are bare metal only
+	libc="--set libc=newlib"
     fi
 fi
 
