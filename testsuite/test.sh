@@ -1112,7 +1112,7 @@ for transport in ssh git http; do
 done
 
 # The regular sources.conf won't have this entry
-testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
+testing="get_source: full url with <repo>.git with matching source.conf entry should succeed."
 if test ! -e "${PWD}/host.conf"; then
     in="http://git.linaro.org/git/toolchain/foo.git"
     if test x"${debug}" = x"yes"; then
