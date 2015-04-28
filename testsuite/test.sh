@@ -1657,11 +1657,11 @@ else
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
   if test $? -eq 0; then
-    xpass "${testing}"
+    pass "${testing}"
   else
-    xfail "${testing}"
+    fail "${testing}"
   fi
 fi
 testing="postfix make args (make_install)"
@@ -1673,11 +1673,11 @@ else
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
   if test $? -eq 0; then
-    xpass "${testing}"
+    pass "${testing}"
   else
-    xfail "${testing}"
+    fail "${testing}"
   fi
 fi
 cmp_makeflags=
