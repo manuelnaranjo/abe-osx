@@ -86,7 +86,7 @@ fi
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
     $CONFIG_SHELL ${abe_dir}/abe.sh --release ${release} \
-	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all ${libc}
+	--tarsrc ${check} gcc=${gcc_src} binutils=${binutil s_src} ${platform} -build all ${libc}
 fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
@@ -99,7 +99,7 @@ if test x"${tarbin}" = x"yes"; then
     else
 	host=""
     fi
-    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all ${libc}
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_src}  binutils=${binutils_src} ${platform} ${host} --build all ${libc}
 fi
 
 # force a failure if abe has build problems.
