@@ -60,7 +60,8 @@ cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
   $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
-      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver}
+      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-remote-snapshots=/snapshots-ref
+
 fi
 
 gcc_source="gcc-linaro-${version}-${release}.tar.xz"
