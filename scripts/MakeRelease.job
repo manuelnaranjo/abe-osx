@@ -64,8 +64,6 @@ if ! test -e host.conf; then
 
 fi
 
-gcc_source="gcc-linaro-${version}-${release}.tar.xz"
-
 if test x"${runtests}" = xtrue; then
     chroot="--enable-schroot-test"
     check="--check all"
@@ -87,7 +85,7 @@ fi
 if test x"${tarbin}" = x"yes"; then
     # Canadian cross builds require a Linux hosted cross compiler first
     if test x"${canadian}" = x"true"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_source} ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_src} binutils=${binutils_src} ${platform} --build all
 	host="--host i686-w64-mingw32"
 	rm -fr ${local_builds}/${host}/${target}/
     else
