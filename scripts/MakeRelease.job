@@ -76,7 +76,7 @@ if test x"${date}" != x; then
 fi
 
 if test x"${clibrary}" != x; then
-    if test "`echo ${target} | grep -c linux`"; then
+    if test "`echo ${target} | grep -c linux`" -gt 0; then
 	libc="--set libc=${clibrary}"
     else
 	# ELF and EABI based targets are bare metal only
