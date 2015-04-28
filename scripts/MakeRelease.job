@@ -75,23 +75,31 @@ if test x"${date}" != x; then
     release="${date}"    
 fi
 
+libc=
+if test x"${clibrary}" != x; then
+    # ELF based targets are bare metal only
+    if test "`echo ${target} | grep -c linux`"; then
+	libc="--set libc=${clibrary}"
+    fi
+fi
+
 # Build a toolchain, run the tests, and the create a source release as a tarball
 if test x"${tarsrc}" = x"yes"; then
     $CONFIG_SHELL ${abe_dir}/abe.sh --release ${release} \
-	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all
+	--tarsrc ${check} gcc=${gcc_source} ${platform} -build all ${libc}
 fi
 
 # Build a binary release tarball, then run the tests on the installed binaries
 if test x"${tarbin}" = x"yes"; then
     # Canadian cross builds require a Linux hosted cross compiler first
     if test x"${canadian}" = x"true"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_src} binutils=${binutils_src} ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_src} binutils=${binutils_src} ${platform} --build all ${libc}
 	host="--host i686-w64-mingw32"
 	rm -fr ${local_builds}/${host}/${target}/
     else
 	host=""
     fi
-    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_source} ${platform} ${host} --build all ${libc}
 fi
 
 # force a failure if abe has build problems.
