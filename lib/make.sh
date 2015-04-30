@@ -495,6 +495,15 @@ make_all()
 	local make_flags="${make_flags} -j ${cpus}"
     fi
 
+    # Enable an errata fix for aarch64 that effects the linker
+    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${target} | grep -c aarch64` -gt 0; then
+	local make_flags="${make_flags} LDFLAGS=\"-Wl,--fix-cortex-a53-843419\" "
+    fi
+
+    if test "`echo ${target} | grep -c aarch64`" -gt 0; then
+	local make_flags="${make_flags} LDFLAGS_FOR_TARGET=\"-Wl,-fix-cortex-a53-843419\" "
+    fi
+
     # Use pipes instead of /tmp for temporary files.
     if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
 	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
