@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mydir="`dirname $0`"
-logdir=/work/logs
+logdir=$HOME/logs
 status=0
 
 if [ $# -lt 4 ]
