@@ -13,7 +13,7 @@ License-Type: open
 EOF
 
 abe_dir="${WORKSPACE}/abe"
-fileserver="148.251.136.42"
+fileserver="tcwg-ex40-01"
 status=0
 
 dest=/tmp/CompareResults.$$
