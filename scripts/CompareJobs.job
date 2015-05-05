@@ -70,7 +70,7 @@ sed -i ${LOGSDIR}/report0.xml -e "s|BUILD_URL|${BUILD_URL}|"
 
 # Print results in console, in case Jenkins doesn't have the XML
 # report plugin.
-cat ${LOGDIRS}/*.txt
+cat ${LOGSDIR}/*.txt
 
 ssh ${fileserver} rm -rf ${dest}
 
