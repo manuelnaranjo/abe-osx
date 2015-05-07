@@ -129,9 +129,9 @@ release_gcc_src()
     local srcdir="`get_srcdir ${gcc_version}`"
     local builddir="`get_builddir ${gcc_version} stage2`"
     local tag="`create_release_tag ${gcc_version} | sed -e 's:[-~]linaro-::' | tr '~' '-'`"
-    local destdir="/tmp/linaro.$$/${tag}"
+    local destdir="${local_builds}/linaro.$$/${tag}"
 
-    dryrun "mkdir -p /tmp/linaro.$$"
+    dryrun "mkdir -p ${local_builds}/linaro.$$"
     dryrun "ln -sfnT ${srcdir} ${destdir}"
 
     if test -d ${destdir}; then
@@ -159,6 +159,7 @@ release_gcc_src()
     # Clean up doc files created during the build
     rm -fr ${destdir}/INSTALL ${destdir}/MD5SUMS ${destdir}/gcc/doc/*.1  ${destdir}/gcc/doc/*.7
 
+    rm -fr ${local_builds}/linaro.$$
     return 0
 }
 
