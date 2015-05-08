@@ -29,6 +29,10 @@ checkout_infrastructure()
 {
     trace "$*"
 
+    if test x"${supdate}" = xno; then
+	return 0
+    fi
+
     source_config infrastructure
 
     if test x"${depends}" = x; then

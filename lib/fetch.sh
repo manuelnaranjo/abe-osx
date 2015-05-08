@@ -20,7 +20,6 @@
 fetch()
 {
 #    trace "$*"
-
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
@@ -124,6 +123,9 @@ fetch()
 fetch_http()
 {
 #    trace "$*"
+    if test x"${supdate}" = xno; then
+	return 0
+    fi
 
     local getfile=$1
     local dir="`dirname $1`/"
@@ -133,6 +135,14 @@ fetch_http()
 	if test ! -d ${local_snapshots}/${dir}; then
 	    mkdir -p ${local_snapshots}/${dir}
 	fi
+    fi
+
+    if test x"${supdate}" = xno -a -e ${local_snapshots}/${getfile}; then
+	notice "${getfile} already exists."
+	return 0
+    else
+	error "${getfile} doesn't exist and you disabled updating."
+	return 0
     fi
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
