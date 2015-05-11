@@ -1407,6 +1407,33 @@ else
   fi
 fi
 
+rm -rf "${local_snapshots}"/*
+in="`get_URL abe.git`"
+testing="checkout: abe.git should produce ${local_snapshots}/abe.git"
+if (cd "${local_snapshots}" && \
+    if test x"${debug}" = xyes; then checkout "${in}" > /dev/null; else checkout "${in}" > /dev/null 2>&1; fi && \
+    test `ls | wc -l` -eq 1 && \
+    ls abe.git > /dev/null); then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+rm -rf "${local_snapshots}"/*
+in="`get_URL abe.git`"
+in="`get_git_url ${in}`"
+testing="checkout: abe.git~staging should produce ${local_snapshots}/abe.git and ${local_snapshots}/abe.git~staging"
+if (cd "${local_snapshots}" && \
+    if test x"${debug}" = xyes; then checkout "${in}~staging" > /dev/null; else
+      checkout "${in}~staging" >/dev/null 2>&1; fi && \
+    test `ls | wc -l` -eq 2 && \
+    ls abe.git > /dev/null && \
+    ls abe.git~staging > /dev/null); then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
 test_checkout ()
 {
     local should="$1"
