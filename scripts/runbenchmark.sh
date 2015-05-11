@@ -161,6 +161,8 @@ clean_benchmark()
   exit "${error}"
 }
 
+establish_listener_opts=
+
 #Handle LAVA case
 echo "${ip}" | grep '\.json$' > /dev/null
 if test $? -eq 0; then
@@ -169,21 +171,22 @@ if test $? -eq 0; then
     echo "Unable to find username from ${lava_url}" 1>&2
     exit 1
   fi
-  lava_network "${lava_user}"
-  case $? in
-    2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
-    1)
-      gateway=lab.validation.linaro.org
-      ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
-      establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
+  if test -z "${LAVA_IN_LAB}"; then
+    lava_network "${lava_user}"
+    case $? in
+      2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
+      1)
+        gateway=lab.validation.linaro.org
+        ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
+        establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
 
-      #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast
-      if ! check_private_route "${gateway}"; then
-        echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
-        exit 1
-      fi
-  esac
-
+        #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast
+        if ! check_private_route "${gateway}"; then
+          echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
+          exit 1
+        fi
+    esac
+  fi
   lava_target="${ip}"
   ip=''
   tee_output=/dev/console
@@ -218,7 +221,6 @@ if test $? -eq 0; then
 else
   gateway="${ip/*@}"
   ssh_opts=
-  establish_listener_opts=
 fi
 #LAVA-agnostic from here, apart from a section in the exit handler, and bgread
 #monitoring of the LAVA process while we're waiting for the benchmark to end

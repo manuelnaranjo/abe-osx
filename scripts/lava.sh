@@ -221,8 +221,12 @@ sed -i "s+^\(.*\"job_name\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"${lava
 sed -i "s+^\(.*\"server\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"https://${lava_user}@${lava_server}\"\2+" "${json_copy}"
 sed -i "s+^\(.*\"stream\":\)[^\"]*\".*\"[^,]*\(,\?\)[[:blank:]]*\$+\1 \"/private/personal/${lava_user}/\"\2+" "${json_copy}"
 
-lava_network "${lava_user}"
-in_lab=$?
+if test -z "${LAVA_IN_LAB}"; then
+  lava_network "${lava_user}"
+  in_lab=$?
+else
+  in_lab=0
+fi
 if test ${in_lab} -eq 2; then
   echo "Unable to determine whether I am inside the LAVA lab, assuming that I am not" 1>&2
 fi
