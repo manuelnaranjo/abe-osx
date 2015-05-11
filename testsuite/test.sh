@@ -605,6 +605,7 @@ else
     fixme "get_URL returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_URL: git URL where sources.conf has a tab"
 if test ! -e "${PWD}/host.conf"; then
     out="`get_URL gcc_tab.git`"
@@ -977,9 +978,6 @@ fi
 
 echo "============= get_source() tests ================"
 # TODO Test ${sources_conf} for ${in} for relevant tests.
-#      Mark tests as untested if the expected match isn't in sources_conf.
-#      This might be due to running testsuite in a builddir rather than a
-#      source dir.
 
 # get_sources might, at times peak at latest for a hint if it can't find
 # things.  Keep it unset unless you want to test a specific code leg.
@@ -1113,7 +1111,7 @@ for transport in ssh git http; do
   fi
 done
 
-# These aren't valid if testing from a build directory.
+# The regular sources.conf won't have this entry
 testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
 if test ! -e "${PWD}/host.conf"; then
     in="http://git.linaro.org/git/toolchain/foo.git"
@@ -1132,7 +1130,7 @@ else
     untested "${testing}"
 fi
 
-# These aren't valid if testing from a build directory.
+# No sources.conf should have this entry, but use the one under test control
 testing="get_source: <repo>.git identifier with no matching source.conf entry should fail."
 if test ! -e "${PWD}/host.conf"; then
     in="nomatch.git"
@@ -1151,7 +1149,7 @@ else
     untested "${testing}"
 fi
 
-# These aren't valid if testing from a build directory.
+# No sources.conf should have this entry, but use the one under test control
 testing="get_source: <repo>.git@<revision> identifier with no matching source.conf entry should fail."
 if test ! -e "${PWD}/host.conf"; then
     in="nomatch.git@12345"
@@ -1184,6 +1182,7 @@ else
     fixme "get_source returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git matches non .git suffixed url."
 in="foo.git"
 if test ! -e "${PWD}/host.conf"; then
@@ -1198,6 +1197,7 @@ else
     untested "${testing}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git/<branch> matches non .git suffixed url."
 in="foo.git/bar"
 if test ! -e "${PWD}/host.conf"; then
@@ -1212,6 +1212,7 @@ else
     untested "${testing}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git/<branch>@<revision> matches non .git suffixed url."
 in="foo.git/bar@12345"
 if test ! -e "${PWD}/host.conf"; then
