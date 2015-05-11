@@ -17,7 +17,7 @@ else
     . "${topdir}/lib/common.sh" || exit 1
     warning "no host.conf file!  Synthesizing a framework for testing."
 
-    remote_snapshots=http://abe.validation.linaro.org/snapshots
+    remote_snapshots="${remote_snapshots:-/snapshots}"
     wget_bin=/usr/bin/wget
     NEWWORKDIR=/usr/local/bin/git-new-workdir
     sources_conf=${topdir}/testsuite/test_sources.conf
