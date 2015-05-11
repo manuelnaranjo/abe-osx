@@ -249,8 +249,10 @@ checkout()
 	    fi
 	    ;;
 	git*|http*|ssh*)
-	    #FIXME: This is an unreliable way to parse the repo directory.
-            local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
+            #FIXME: We deliberately ignored error returns from get_git_url,
+            #       because any path with an '@' in will result in errors.
+            #       Jenkins is wont to create such paths.
+            local repodir="`get_git_url ssh://${srcdir} | sed 's#^ssh://##'`"
 
 	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
 		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
