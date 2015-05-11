@@ -1319,17 +1319,13 @@ fi
 branch=
 revision=
 testing="create_release_tag: repository branch empty"
-if test -d ${srcdir}; then
-    in="gcc.git"
-    out="`create_release_tag ${in} | grep -v TRACE`"
-    if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "create_release_tag returned ${out}"
-    fi
+in="gcc.git"
+out="`create_release_tag ${in} | grep -v TRACE`"
+if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
 fi
 
 testing="create_release_tag: tarball"
