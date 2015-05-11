@@ -114,6 +114,9 @@ totals()
     echo "Total test results:"
     echo "	Passes: ${passes}"
     echo "	Failures: ${failures}"
+    if test ${xpasses} -gt 0; then
+	echo "	Unexpected Passes: ${xpasses}"
+    fi
     if test ${xfailures} -gt 0; then
 	echo "	Expected Failures: ${xfailures}"
     fi
