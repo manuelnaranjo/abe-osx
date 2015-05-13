@@ -13,10 +13,10 @@ print_schroot_board_files()
     fi
 
     # Run dummy runtest to figure out which target boards load schroot-ssh.exp
-    runtest $target --tool none 2>&1 \
-	| grep -B5 "^Using .*/schroot-ssh.exp as generic interface file for target\.\$" \
-	| grep "^Using .* as board description file for target\.\$" \
-	| sed -e "s/^Using \(.*\) as board description file for target\.\$/\1/"
+    runtest $target --tool none 2>&1 | awk '
+/^Using .* as board description file for target\.$/ { board=$2 }
+/^Using .*\/schroot-ssh.exp as generic interface file for target\.$/ { print board }
+'
     rm -f none.log none.sum
 }
 
