@@ -693,21 +693,6 @@ make_install()
 	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
     fi
 
-    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a "`echo ${target} | grep -c aarch64`" -gt 0; then
-        local dynamic_linker
-        dynamic_linker="$(find_dynamic_linker "$sysroots" true)"
-        local dynamic_linker_name="`basename ${dynamic_linker}`"
-
-        # 64 bit architectures don't populate sysroot/lib, which unfortunately other
-        # things look in for shared libraries.
-        dryrun "rsync -a ${sysroots}/lib/ ${sysroots}/lib64/"
-        dryrun "rm -rf ${sysroots}/lib"
-        dryrun "(cd ${sysroots} && ln -sfnT lib64 lib)"
-#        dryrun "(mv ${sysroots}/lib/ld-linux-aarch64.so.1 ${sysroots}/lib/ld-linux-aarch64.so.1.symlink)"
-        dryrun "rm -f ${sysroots}/lib/ld-linux-aarch64.so.1"
-        dryrun "ln -sfnT ${dynamic_linker_name} ${sysroots}/lib64/ld-linux-aarch64.so.1"
-    fi
-
     return 0
 }
 

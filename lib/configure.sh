@@ -181,7 +181,13 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr CC=${target}-gcc"
 	    ;;
 	*libc)
-	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    # [e]glibc uses slibdir and rtlddir for some of the libraries and
+	    # defaults to lib64/ for aarch64.  We need to override this.
+	    # There's no need to install anything into lib64/ since we don't
+	    # have biarch systems.
+	    echo slibdir=/usr/lib > ${builddir}/configparms
+	    echo rtlddir=/usr/lib >> ${builddir}/configparms
+	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr --libdir=/usr/lib"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
