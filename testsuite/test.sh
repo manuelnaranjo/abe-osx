@@ -555,13 +555,31 @@ sleep 1s
 out="`supdate=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
 ret=$?
 
-# Compare the second timestamp to make sure they're equal.
+# Compare the second timestamp to make sure they're equal (i.e., that a new
+# one wasn't downloaded).
 gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
 
 if test $ret -eq 0 -a ${gmp_stamp1} -eq ${gmp_stamp2}; then
     pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
 else
     fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
+fi
+
+# Sleep so that the timestamps differ (if they will)
+sleep 1s
+
+# Try to download it again with supdate=yes and force=yes explicit it
+# should download it again and return 0 (and the timestamp should differ)
+out="`force=yes supdate=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+ret=$?
+
+# Compare to the second timestamp to make sure they're not equal.
+gmp_stamp3=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+if test $ret -eq 0 -a ${gmp_stamp2} -ne ${gmp_stamp3}; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes and \${force}=yes"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes and \${force}=yes"
 fi
 
 out="`fetch_http md5sums 2>/dev/null`"

@@ -135,7 +135,9 @@ fetch_http()
 	fi
     fi
 
-    if test -e ${local_snapshots}/${getfile}; then
+    # If it exists and the caller didn't ask for downloading to be forced then
+    # we don't need to download it again.
+    if test -e ${local_snapshots}/${getfile} -a x"${force}" != xyes; then
 	notice "${getfile} already exists."
 	return 0
     elif test x"${supdate}" = xno; then
@@ -150,29 +152,26 @@ fetch_http()
 	return 1
     fi
 
-    if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
-	# We don't want this message for md5sums, since it's so often
-	# downloaded.
-	if test x"${getfile}" != x"md5sums"; then
-	    notice "Downloading ${getfile} to ${local_snapshots}"
-	fi
-
-	# NOTE: the timeout is short, and we only try twice to access the
-	# remote host. This is to improve performance when offline, or
-	# the remote host is offline.
-	dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile}"
-	ret=$?
-	if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
-	    warning "downloaded file ${getfile} has zero data!"
-	    return 1
-	fi
-    else
-	# We don't want this message for md5sums, since it's so often
-	# downloaded.
-	if test x"${getfile}" != x"md5sums"; then
-	    notice "${getfile} already exists in ${local_snapshots}"
-	fi
+    # We don't want this message for md5sums, since it's so often
+    # downloaded.
+    if test x"${getfile}" != x"md5sums"; then
+        notice "Downloading ${getfile} to ${local_snapshots}"
     fi
+
+    local overwrite=
+    if test x${force} = xyes; then
+	overwrite="-O ${local_snapshots}/${getfile}"
+    fi
+
+    # NOTE: the timeout is short, and we only try twice to access the
+    # remote host. This is to improve performance when offline, or
+    # the remote host is offline.
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile}${overwrite:+ ${overwrite}}"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
+       warning "downloaded file ${getfile} has zero data!"
+       return 1
+    fi
+
     return 0
 }
 
