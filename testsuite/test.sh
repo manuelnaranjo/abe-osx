@@ -576,6 +576,24 @@ if test ! -e "${local_snapshots}/md5sums"; then
     rm ${local_snapshots}/md5sums
 fi
 
+# Test the case where wget_bin isn't set.
+rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
+out="`unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    pass "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes) should fail."
+else
+    fail "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes) should fail."
+fi
+
+# Verify that '1' is returned when a non-existent file is requested.
+out="`fetch_http no_such_file 2>/dev/null`"
+if test $? -gt 0; then
+    pass "fetch_http no_such_file (implicit \${supdate}=yes) should fail."
+else
+    fail "fetch_http no_such_file (implicit \${supdate}=yes) should fail."
+fi
+
 echo "============= fetch() tests ================"
 out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then

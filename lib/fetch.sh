@@ -143,6 +143,13 @@ fetch_http()
 	return 1
     fi
 
+    # You MUST have " " around ${wget_bin} or test ! -x will
+    # 'succeed' if ${wget_bin} is an empty string.
+    if test ! -x "${wget_bin}"; then
+	error "wget executable not available (or not executable)."
+	return 1
+    fi
+
     if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
 	# We don't want this message for md5sums, since it's so often
 	# downloaded.
@@ -150,16 +157,14 @@ fetch_http()
 	    notice "Downloading ${getfile} to ${local_snapshots}"
 	fi
 
-	if test x"${wget_bin}" != x; then
-	    # --continue --progress=bar
-	    # NOTE: the timeout is short, and we only try twice to access the
-	    # remote host. This is to improve performance when offline, or
-	    # the remote host is offline.
-	    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile}"
-	    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
-		warning "downloaded file ${getfile} has zero data!"
-		return 1
-	    fi
+	# NOTE: the timeout is short, and we only try twice to access the
+	# remote host. This is to improve performance when offline, or
+	# the remote host is offline.
+	dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile}"
+	ret=$?
+	if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
+	    warning "downloaded file ${getfile} has zero data!"
+	    return 1
 	fi
     else
 	# We don't want this message for md5sums, since it's so often
