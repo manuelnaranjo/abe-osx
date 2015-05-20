@@ -35,9 +35,10 @@ fetch()
     # The md5sums file is a special case as it's used to find all
     # the other names of the tarballs for remote downloading.
     if test x"$1" = x"md5sums"; then
-	# Move the existing file to force a fresh copy to be downloaded.
-	# Otherwise this file can get stale, and new tarballs not found.
-	if test -f ${local_snapshots}/md5sums; then
+	# Move the existing file to force a fresh copy to be downloaded
+	# every time ABE is run.  Otherwise this file can get stale, and new
+	# tarballs will not be found.
+	if test -f ${local_snapshots}/md5sums -a x"${supdate}" = x"yes"; then
 	    mv -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
 	fi
 	fetch_http md5sums
@@ -123,9 +124,6 @@ fetch()
 fetch_http()
 {
 #    trace "$*"
-    if test x"${supdate}" = xno; then
-	return 0
-    fi
 
     local getfile=$1
     local dir="`dirname $1`/"
@@ -137,16 +135,21 @@ fetch_http()
 	fi
     fi
 
-    if test x"${supdate}" = xno -a -e ${local_snapshots}/${getfile}; then
+    if test -e ${local_snapshots}/${getfile}; then
 	notice "${getfile} already exists."
 	return 0
-    else
+    elif test x"${supdate}" = xno; then
 	error "${getfile} doesn't exist and you disabled updating."
-	return 0
+	return 1
     fi
 
     if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
-	notice "Downloading ${getfile} to ${local_snapshots}"
+	# We don't want this message for md5sums, since it's so often
+	# downloaded.
+	if test x"${getfile}" != x"md5sums"; then
+	    notice "Downloading ${getfile} to ${local_snapshots}"
+	fi
+
 	if test x"${wget_bin}" != x; then
 	    # --continue --progress=bar
 	    # NOTE: the timeout is short, and we only try twice to access the

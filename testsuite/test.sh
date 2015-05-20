@@ -525,6 +525,57 @@ else
 fi
 
 # ----------------------------------------------------------------------------------
+echo "============= fetch_http() tests ================"
+
+# It doesn't exist yet, so it should error out if we try to fetch with supdate=no.
+out="`supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0 -a ! -e ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no"
+fi
+
+# Now try to download it with supdate=yes (default) unspecified and it should
+# work and return 0 and show the file has been downloaded.
+out="`fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes)"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes)"
+fi
+
+# Get a timestamp of the first downloaded version.
+gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+# Sleep so that the timestamps differ (if they will)
+sleep 1s
+
+# Try to download it again with supdate=yes explicit and it
+# should return 0 (that we've already downloaded it) but not download again.
+out="`supdate=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+ret=$?
+
+# Compare the second timestamp to make sure they're equal.
+gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+if test $ret -eq 0 -a ${gmp_stamp1} -eq ${gmp_stamp2}; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
+fi
+
+out="`fetch_http md5sums 2>/dev/null`"
+if test $? -eq 0; then
+    pass "fetch_http md5sums"
+else
+    fail "fetch_http md5sums"
+fi
+
+# remove md5sums so we can test fetch().
+if test ! -e "${local_snapshots}/md5sums"; then
+    rm ${local_snapshots}/md5sums
+fi
+
 echo "============= fetch() tests ================"
 out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
