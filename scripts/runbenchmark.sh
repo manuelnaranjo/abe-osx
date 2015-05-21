@@ -219,7 +219,9 @@ if test $? -eq 0; then
     echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
     exit 1
   fi
-else
+fi
+
+if test -z "${gateway:-}"; then
   gateway="${ip/*@}"
 fi
 #LAVA-agnostic from here, apart from a section in the exit handler, and bgread
