@@ -161,6 +161,7 @@ clean_benchmark()
   exit "${error}"
 }
 
+ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}}"
 establish_listener_opts=
 
 #Handle LAVA case
@@ -177,7 +178,7 @@ if test $? -eq 0; then
       2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
       1)
         gateway=lab.validation.linaro.org
-        ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}} -o ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
+        ssh_opts="${ssh_opts} ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
         establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
 
         #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast
@@ -220,7 +221,6 @@ if test $? -eq 0; then
   fi
 else
   gateway="${ip/*@}"
-  ssh_opts=
 fi
 #LAVA-agnostic from here, apart from a section in the exit handler, and bgread
 #monitoring of the LAVA process while we're waiting for the benchmark to end
