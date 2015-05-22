@@ -34,7 +34,8 @@ if {[info exists env(SYSROOT_UNDER_TEST)]} {
 
 set myname [get_local_hostname]
 
-if { "$tcl_platform(user)" == "buildslave" } {
+if { "$tcl_platform(user)" == "buildslave"
+     || "$tcl_platform(user)" == "tcwg-buildslave" } {
     set machine_prefix "infra"
 } else {
     set machine_prefix "tcwg"
