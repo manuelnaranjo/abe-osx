@@ -54,8 +54,11 @@ user_git_repo="${shared}/snapshots"
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
+# Server to wget snapshots from.
+fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
+
 # Server to store results on.
-fileserver="148.251.136.42"
+logserver="ex40-01.tcwglab.linaro.org:logs"
 
 # Compiler languages to build
 languages=default
@@ -75,7 +78,7 @@ status=0
 # Whether to exclude some component from 'make check'
 excludecheck=
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
         -s|--snapshots) user_snapshots=$2; shift ;;
@@ -85,6 +88,7 @@ while test $# -gt 0; do
         -w|--workspace) user_workspace=$2; shift ;;
         -o|--options) user_options=$2; shift ;;
         -f|--fileserver) fileserver=$2; shift ;;
+        --logserver) logserver=$2; shift ;;
         -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
@@ -164,11 +168,6 @@ if test x"${libc}" != x; then
     esac
 fi
 
-# Path to remote snapshots on $fileserver.
-# Split $fileserver into "server:path".
-remote_snapshots="${fileserver#*:}"
-fileserver="${fileserver%:*}"
-
 # This is the top level directory where builds go.
 if test x"${user_workspace}" = x; then
     user_workspace="${WORKSPACE}"
@@ -194,7 +193,7 @@ fi
 if test x"${abe_dir}" = x; then
     abe_dir=${topdir}
 fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver} --with-remote-snapshots=${remote_snapshots}
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
@@ -312,11 +311,13 @@ fi
 
 # This becomes the path on the remote file server    
 if test x"${runtests}" = xtrue; then
-    basedir="/work/logs"
+    # Split $logserver into "server:path".
+    basedir="${logserver#*:}"
+    logserver="${logserver%:*}"
     dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh ${fileserver} mkdir -p ${basedir}/${dir}
+    ssh ${logserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
-	scp ${manifest} ${fileserver}:${basedir}/${dir}/
+	scp ${manifest} ${logserver}:${basedir}/${dir}/
     fi
 
 # If 'make check' works, we get .sum files with the results. These we
@@ -378,25 +379,25 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	cp build.out build.err ${logs_dir}/ || status=1
 
 	xz ${logs_dir}/* || status=1
-	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/ || status=1
+	scp ${logs_dir}/* ${logserver}:${basedir}/${dir}/ || status=1
 	rm -rf ${logs_dir} || status=1
-#	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-#	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-#	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
+#	scp ${abe_dir}/tcwgweb.sh ${logserver}:/tmp/tcwgweb$$.sh
+#	ssh ${logserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
+#	ssh ${logserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/ || status=1
+	scp ${srcfiles} ${logserver}:/home/abe/var/snapshots/ || status=1
 	rm -f ${srcfiles} || status=1
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} ${fileserver}:/work/space/binaries/ || status=1
+	scp ${binfiles} ${logserver}:/work/space/binaries/ || status=1
 	rm -f ${binfiles} || status=1
     fi
 
