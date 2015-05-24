@@ -952,8 +952,12 @@ copy_gcc_libs_to_sysroot()
 	libgcc="libgcc.a"
     fi
 
-    gcc_exe="`find -name ${target}-gcc`"
-    libgcc="`${gcc_exe} -print-file-name=${libgcc}`"
+    # Make sure the compiler built before trying to use it
+    if test ! -e ${local_builds}/destdir/${host}/bin/${target}-gcc; then
+	error "${target}-gcc doesn't exist!"
+	return 1
+    fi
+    libgcc="`${local_builds}/destdir/${host}/bin/${target}-gcc -print-file-name=${libgcc}`"
     if test x"${libgcc}" = xlibgcc.so; then
 	error "GCC doesn't exist!"
 	return 1
