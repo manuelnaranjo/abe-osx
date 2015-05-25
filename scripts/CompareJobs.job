@@ -12,7 +12,7 @@ Files-Pattern: *
 License-Type: open
 EOF
 
-abe_dir="${WORKSPACE}/abe"
+abe_dir="$(dirname $0)/.."
 fileserver="148.251.136.42"
 status=0
 

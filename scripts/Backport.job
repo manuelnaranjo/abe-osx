@@ -29,7 +29,7 @@ EOF
     return 0
 }
 
-abe_dir="${WORKSPACE}/abe"
+abe_dir="$(dirname $0)/.."
 export CONFIG_SHELL="/bin/bash"
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt

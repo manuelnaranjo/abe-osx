@@ -32,7 +32,7 @@ if test x"${target}" != x"native" -a x"${target}" != x; then
 fi
 
 shared="/home/buildslave/workspace/shared/"
-abe_dir="${user_workspace}/abe"
+abe_dir="$(dirname $0)/.."
 user_snapshots="${user_workspace}/snapshots"
 
 if test -e ${user_workspace}; then
