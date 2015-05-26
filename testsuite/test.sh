@@ -1748,3 +1748,8 @@ fi
 # print the total of test results
 totals
 
+# We can't just return ${failures} or it could overflow to 0 (success)
+if test ${failures} -gt 0; then
+    exit 1
+fi
+exit 0
