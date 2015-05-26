@@ -76,6 +76,8 @@ build_all()
         return 1;
     fi
 
+    manifest
+
     # build each component
     for i in ${builds}; do
         notice "Building all, current component $i"
@@ -160,8 +162,6 @@ build_all()
             return 1
         fi
     done
-
-    manifest
 
     # Notify that the build completed successfully
     build_success
