@@ -271,7 +271,13 @@ normalize_path()
 	    ;;
     esac
 
-    echo ${node}${branch:+~${branch}}${revision:+@${revision}}
+    if test "`echo $1 | grep -c glibc`" -gt 0; then
+	local delim='_'
+    else
+	local delim='@'
+    fi
+
+    echo ${node}${branch:+~${branch}}${revision:+${delim}${revision}}
 
     return 0
 }
