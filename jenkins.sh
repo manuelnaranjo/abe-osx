@@ -51,6 +51,9 @@ shared="${HOME}/workspace/shared"
 # This is an optional directory for the master copy of the git repositories.
 user_git_repo="${shared}/snapshots"
 
+# GCC branch to build
+gcc_branch="latest"
+
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
@@ -78,9 +81,10 @@ status=0
 # Whether to exclude some component from 'make check'
 excludecheck=
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
+	--gcc-branch) gcc_branch=$2; shift ;;
         -s|--snapshots) user_snapshots=$2; shift ;;
         -g|--gitrepo) user_git_repo=$2; shift ;;
         -c|--abe) abe_dir=$2; shift ;;
