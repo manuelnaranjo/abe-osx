@@ -143,6 +143,10 @@ fetch_http()
     elif test x"${supdate}" = xno; then
 	error "${getfile} doesn't exist and you disabled updating."
 	return 1
+    elif test -e "${git_reference_dir}/${getfile}" -a x"${force}" != xyes; then
+	notice "Copying ${getfile} from reference dir to ${local_snapshots}"
+	dryrun "cp ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+	return 0
     fi
 
     # You MUST have " " around ${wget_bin} or test ! -x will
