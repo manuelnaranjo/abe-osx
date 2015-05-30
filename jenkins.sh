@@ -35,9 +35,8 @@ if test $# -lt 1; then
 #    exit
 fi
 
-# load commonly used functions
-which_dir="`which $0`"
-topdir="`dirname ${which_dir}`"
+# Directory of ABE source files
+abe_dir="$(cd $(dirname $0); pwd)"
 
 # This is where all the builds go
 if test x"${WORKSPACE}" = x; then
@@ -194,9 +193,6 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-if test x"${abe_dir}" = x; then
-    abe_dir=${topdir}
-fi
 $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
