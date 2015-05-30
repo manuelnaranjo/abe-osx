@@ -47,8 +47,8 @@ user_workspace="${WORKSPACE}"
 # The files in this directory are shared across all platforms 
 shared="${HOME}/workspace/shared"
 
-# This is an optional directory for the master copy of the git repositories.
-user_git_repo="${shared}/snapshots"
+# This is an optional directory for the reference copy of the git repositories.
+git_reference="${HOME}/snapshots-ref"
 
 # GCC branch to build
 gcc_branch="latest"
@@ -85,7 +85,7 @@ while test $# -gt 0; do
     case $1 in
 	--gcc-branch) gcc_branch=$2; shift ;;
         -s|--snapshots) user_snapshots=$2; shift ;;
-        -g|--gitrepo) user_git_repo=$2; shift ;;
+        -g|--gitrepo) git_reference=$2; shift ;;
         -c|--abe) abe_dir=$2; shift ;;
 	-t|--target) target=$2; shift ;;
         -w|--workspace) user_workspace=$2; shift ;;
@@ -193,7 +193,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
@@ -225,9 +225,18 @@ else
     try_bootstrap=""
 fi
 
+# Checkout all sources now to avoid grabbing lock for 1-2h while building and
+# testing runs.  We configure ABE to use reference snapshots, which are shared
+# across all builds and are updated by an external process.  The lock protects
+# us from looking into an inconsistent state of reference snapshots.
+(
+    flock -s 9
+    $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} ${change} --checkout all
+) 9>${git_reference}.lock
+
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If abe returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
@@ -346,13 +355,13 @@ sums="`find ${user_workspace} -name \*.sum`"
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${platform} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${platform} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
@@ -388,14 +397,14 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
 	scp ${srcfiles} ${logserver}:/home/abe/var/snapshots/ || status=1
 	rm -f ${srcfiles} || status=1
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
 	scp ${binfiles} ${logserver}:/work/space/binaries/ || status=1
 	rm -f ${binfiles} || status=1
