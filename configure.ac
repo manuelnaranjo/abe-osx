@@ -467,6 +467,7 @@ rm -f Makefile
 cat<<EOF > Makefile
 check:
 	${srcdir}/testsuite/test.sh
+	${srcdir}/test.sh
 EOF
 
 # Local Variables:
