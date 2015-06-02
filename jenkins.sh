@@ -62,6 +62,9 @@ fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
 # Server to store results on.
 logserver=""
 
+# Template of logs' directory name
+logname='gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}'
+
 # Compiler languages to build
 languages=default
 
@@ -80,7 +83,7 @@ status=0
 # Whether to exclude some component from 'make check'
 excludecheck=
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) gcc_branch=$2; shift ;;
@@ -92,6 +95,7 @@ while test $# -gt 0; do
         -o|--options) user_options=$2; shift ;;
         -f|--fileserver) fileserver=$2; shift ;;
         --logserver) logserver=$2; shift ;;
+        --logname) logname=$2; shift ;;
         -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
@@ -323,7 +327,7 @@ if test x"${logserver}" != x"" -a x"${runtests}" = xtrue; then
     # Split $logserver into "server:path".
     basedir="${logserver#*:}"
     logserver="${logserver%:*}"
-    dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
+    eval dir="$logname"
     ssh ${logserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
 	scp ${manifest} ${logserver}:${basedir}/${dir}/
