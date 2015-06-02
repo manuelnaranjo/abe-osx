@@ -83,7 +83,14 @@ status=0
 # Whether to exclude some component from 'make check'
 excludecheck=
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck: -- "$@"`"
+# Whether to rebuild the toolchain even if logs are already present.
+# Note that the check is done on logserver/logname pair, so logname should not
+# be relying on variables that this script sets for match to succeed.
+# In practice, --norebuild option should be accompanied by something like
+# --logname gcc-<sha1>
+rebuild=true
+
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) gcc_branch=$2; shift ;;
@@ -100,10 +107,25 @@ while test $# -gt 0; do
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
 	--excludecheck) excludecheck=$2; shift ;;
+	--norebuild) rebuild=false ;;
 	-h|--help) usage ;;
     esac
     shift
 done
+
+# Split $logserver into "server:path".
+basedir="${logserver#*:}"
+logserver="${logserver%:*}"
+eval dir="$logname"
+
+# Check whether we should skip this build if artifacts are already in place
+if [ x"$logserver" != x"" ] && ssh $logserver test -d $basedir/$dir; then
+    echo "Logs are already present in $logserver:$basedir/$dir"
+    if ! $rebuild; then
+	echo "Nothing to be done"
+	exit 0
+    fi
+fi
 
 # Test the config parameters from the Jenkins Build Now page
 
@@ -324,9 +346,7 @@ fi
 
 # This becomes the path on the remote file server    
 if test x"${logserver}" != x"" -a x"${runtests}" = xtrue; then
-    # Split $logserver into "server:path".
-    basedir="${logserver#*:}"
-    logserver="${logserver%:*}"
+    # Re-eval $dir as we now have full range of variables available.
     eval dir="$logname"
     ssh ${logserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
