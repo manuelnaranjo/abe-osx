@@ -217,12 +217,15 @@ git_parser()
 		echo "${in}"
 		;;
 	    tool)
-		# Strip any trailing branch information.
-		local tool="`echo ${in} | sed -e 's:-[0-9].*::'`"
-		# Strip off any -linaro tags.
-		tool="`echo ${tool} | sed -e 's:-linaro::'`"
-		# Strip service information.
+		# Special case binutils-gdb
+		tool="`echo ${in} | sed -e 's:\(binutils-gdb\).*:\1:g'`"
+		if test x"${tool}" != "xbinutils-gdb"; then
+		    # Otherwise only grab up to the first -
+		    tool="`echo ${in} | sed -e 's:\([^-]*\)-.*:\1:g'`"
+	        fi
+		# Strip service or directory information.
 		tool="`basename ${tool}`"
+
 		echo ${tool}
 		;;
 	    tag)
