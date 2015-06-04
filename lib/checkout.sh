@@ -164,9 +164,6 @@ checkout_all()
 	fi
     done
     
-    # Since we just checked out all the sources, disable updating them again.
-    supdate=no
-
     notice "Checkout all took ${SECONDS} seconds"
 
     return 0
