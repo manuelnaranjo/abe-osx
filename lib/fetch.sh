@@ -135,19 +135,24 @@ fetch_http()
 	fi
     fi
 
-    # If it exists and the caller didn't ask for downloading to be forced then
-    # we don't need to download it again.
-    if test -e ${local_snapshots}/${getfile} -a x"${force}" != xyes; then
-	notice "${getfile} already exists."
-	return 0
-    elif test x"${supdate}" = xno; then
-	error "${getfile} doesn't exist and you disabled updating."
-	return 1
-    elif test -e "${git_reference_dir}/${getfile}" -a x"${force}" != xyes; then
-	notice "Copying ${getfile} from reference dir to ${local_snapshots}"
-	dryrun "cp ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
-	return 0
-    fi
+   # Forcing trumps ${supdate} and always results in sources being updated.
+   if test x"${force}" != xyes; then
+	if test x"${supdate}" = xno; then
+	    if test -e "${local_snapshots}/${getfile}"; then
+		notice "${getfile} already exists and updating has been disabled."
+		return 0
+	    fi
+	    error "${getfile} doesn't exist and updating has been disabled."
+	    return 1
+	fi
+	# else we'll update the file if the version in the reference dir or on
+	# the server is newer than the local copy (if it exists).
+	if test -e "${git_reference_dir}/${getfile}"; then
+	    notice "Copying ${getfile} from reference dir to ${local_snapshots}"
+	    dryrun "cp ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+	    return 0
+	fi
+   fi
 
     # You MUST have " " around ${wget_bin} or test ! -x will
     # 'succeed' if ${wget_bin} is an empty string.

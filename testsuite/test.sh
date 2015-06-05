@@ -544,7 +544,34 @@ else
     fail "fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes)"
 fi
 
-# Get a timestamp of the first downloaded version.
+# It exists again, so it should pass even if supdate=no
+out="`supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no when source exists"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no when source exists"
+fi
+
+# force should override supdate and this should re-download
+out="`force=yes supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes"
+fi
+
+# Test the case where wget_bin isn't set.
+rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
+# force should override supdate and this should download for the first time.
+out="`force=yes supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes and sources don't exist"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes and sources don't exist"
+fi
+
+# Get a timestamp of the most recently downloaded version.
 gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
 
 # Sleep so that the timestamps differ (if they will)
