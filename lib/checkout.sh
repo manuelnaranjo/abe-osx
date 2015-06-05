@@ -278,11 +278,13 @@ checkout()
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
-		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
-		    flock ${local_builds}/git$$.lock --command "${cmd}"
-		    if test $? -gt 0; then
-			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
-		    	return 1
+		    if test x${dryrun} != xyes; then
+			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
+			flock ${local_builds}/git$$.lock --command "${cmd}"
+			if test $? -gt 0; then
+			    error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
+				return 1
+			fi
 		    fi
 		    # git checkout of a commit leaves the head in detached state so we need to
 		    # give the current checkout a name.  Use -B so that it's only created if
@@ -290,11 +292,13 @@ checkout()
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
 		    notice "Checking out branch ${branch} for ${tool} in ${srcdir}"
-		    local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
-		    flock ${local_builds}/git$$.lock --command "${cmd}"
-		    if test $? -gt 0; then
-			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
-		   	return 1
+		    if test x${dryrun} != xyes; then
+			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
+			flock ${local_builds}/git$$.lock --command "${cmd}"
+			if test $? -gt 0; then
+			    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+			    return 1
+			fi
 		    fi
 		fi
 		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"

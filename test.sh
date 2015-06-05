@@ -33,7 +33,9 @@ runintmpdir=
 # existing build dir, otherwise we're in the srcdir so we need to run
 # configure in the tmpdir and run the tests from there.
 if test ! -e "${PWD}/host.conf"; then
-    (cd ${tmpdir} && ${abe_path}/configure --with-sources-conf=${abe_path}/testsuite/test_sources.conf)
+    (cd ${tmpdir} && ${abe_path}/configure --with-sources-conf=${abe_path}/testsuite/test_sources.conf --with-remote-snapshots=snapshots-ref)
+    # Run it once outside of dryrun mode so that we pull the md5sums file.
+    (cd ${tmpdir} && ${abe_path}/abe.sh --space 4096)
     runintmpdir=yes
 else
     # copy the md5sums file from the existing snapshots directory to the new local_snapshots directory.
@@ -161,7 +163,7 @@ test_failure()
     local match=$2
     local out=
 
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
 }
 
@@ -173,7 +175,7 @@ test_pass()
     local out=
 
     # Continue to search for error so we don't get false positives.
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
@@ -635,7 +637,7 @@ test_pass "${cb_commands}" "${match}"
 # be grepped in 'match'... yet.
 cb_commands="--dryrun --build gcc.git --stage 2"
 testlineno="`expr $LINENO + 1`"
-out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
+out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
 if test ${out} -gt 0; then
     pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 else
@@ -885,6 +887,23 @@ test_failure "${cb_commands}" "${match}"
 cb_commands="--check --excludecheck foo --dump"
 match='foo is an invalid package name'
 test_failure "${cb_commands}" "${match}"
+
+# Only perform this test if we're running in the tmpdir because we
+# don't want to damage the builds/ dir for a valid run.
+if test x"${runintmpdir}" = xyes; then
+    rm -rf ${tmpdir}/builds
+
+    # Test that builds/ is restored if it is removed.
+    cb_commands="--dry-run --target arm-linux-gnueabihf --dump --build all"
+    match=''
+    test_pass "${cb_commands}" "${match}"
+
+    if test ! -d "${tmpdir}/builds"; then
+	fail ${testlineno} "VALID: test that builds/ is restored if it is removed."
+    else
+	pass ${testlineno} "VALID: tests that builds/ is restored if it is removed."
+    fi
+fi
 
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.

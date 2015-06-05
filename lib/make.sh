@@ -115,12 +115,13 @@ build_all()
                 if test ${build_all_ret} -lt 1; then
                     # If we don't install the sysroot, link to the one we built so
                     # we can use the GCC we just built.
-                    # FIXME: if ${dryrun} ${target}-gcc doesn't exist so this will error.
-                    local sysroot="`${target}-gcc -print-sysroot`"
-                    if test ! -d ${sysroot}; then
-                        dryrun "mkdir -p /opt/linaro"
-                        dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
-                    fi
+		    if test x"${dryrun}" != xyes; then
+			local sysroot="`${target}-gcc -print-sysroot`"
+			if test ! -d ${sysroot}; then
+			    dryrun "mkdir -p /opt/linaro"
+			    dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
+			fi
+		    fi
                 fi
                 ;; 
             # Build stage 2 of GCC, which is the actual and fully functional compiler

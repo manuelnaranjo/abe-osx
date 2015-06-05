@@ -325,6 +325,12 @@ manifest()
 {
     trace "$*"
 
+    # This function relies too heavily on the built toolchain to do anything
+    # in dryrun mode.
+   if test x"${dryrun}" = xyes; then
+	return 0;
+   fi
+
     if test x"${gmp_version}" = x; then
 	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
     fi
