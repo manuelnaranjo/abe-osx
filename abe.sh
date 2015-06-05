@@ -1257,6 +1257,12 @@ if test ! -z ${do_checkout}; then
 fi
 
 if test ! -z ${do_build}; then
+    # Sometimes a user might remove ${local_builds} to restart the build.
+    if test ! -d "${local_builds}"; then
+	warning "${local_builds} does not exist. Recreating build directory!"
+	mkdir -p ${local_builds}
+    fi
+
     if test x"${do_build}" != x"all"; then
 	buildingall=no
 	gitinfo="`get_source ${do_build}`"
