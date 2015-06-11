@@ -2,16 +2,20 @@
 %global gcc_version 4.9
 %global tarbin gcc-linaro-4.9-2015.66-x86_64_aarch64-linux-gnu.tar.xz
 %global snapshots /linaro/shared/snapshots
-# Note, gcc_release must be integer, if you want to add suffixes to
+# Note, respin must be integer, if you want to add suffixes to
 # %{release}, append them after %{respin} on Release: line.
 %global respin 1
-# Turn off strip'ng of binaries
+# Disable stripping of binaries, it's already been done.
 #%global __strip /bin/true
+# Disable other commands that we don't need as this spec file doesn't compile anything.
 %global __os_install_post %{nil}
 %global __check_files %{nil}
+# Disable trying to run elfdefs.
 %global __elf_provides %{nil}
 %global __elf_requires %{nil}
-Prefix: /opt
+# Set the default install path for these files.
+%global installdir /opt/linaro
+Prefix: %{installdir}
 
 Summary: Various compilers (C, C++, Objective-C, Java, ...)
 Name: gcc
@@ -50,19 +54,22 @@ fi
 
 %install
 rm -rf %{buildroot}
-mkdir -p  %{buildroot}
-cp -a * %{buildroot}/
+mkdir -p  %{buildroot}%{installdir}
+cp -a * %{buildroot}%{installdir}/
+mkdir -p %{buildroot}/etc/profile.d/
+path=`echo %{tarbin} | sed -e 's:.tar.xz::'`
+echo "PATH=/opt/linaro/${path}/bin:$PATH" > %{buildroot}/etc/profile.d/linaro.sh
+echo "export PATH" >> %{buildroot}/etc/profile.d/linaro.sh
 
 %check
 
 %clean
 rm -rf %{buildroot}
 
-%postun
-
 %files tcwg
 %defattr(-,root,root,-)
-/*
+/etc/*
+%{installdir}/*
 
 %changelog
 * Thu Jun 12 2015 Rob Savoye <rob.savoye@linaro.org>
