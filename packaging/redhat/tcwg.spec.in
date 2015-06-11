@@ -11,6 +11,7 @@
 %global __check_files %{nil}
 %global __elf_provides %{nil}
 %global __elf_requires %{nil}
+Prefix: /opt
 
 Summary: Various compilers (C, C++, Objective-C, Java, ...)
 Name: gcc
@@ -38,35 +39,34 @@ This package contains the Linaro cross toolchain for ARMv7 or AARCH64
 
 %prep
 cp %{snapshots}/%{tarbin} %{_sourcedir}
-mkdir -p %{builddir}
-tar --directory %{builddir} -Jxf %{snapshots}/%{tarbin}
+mkdir -p %{_builddir}
+tar --directory %{_builddir} -Jxf %{snapshots}/%{tarbin}
 if [ $? -ne 0 ]; then
   exit $?
 fi
-#chmod -R a+rX,g-w,o-w %{builddir}
+#chmod -R a+rX,g-w,o-w %{_builddir}
 
 %build
 
 %install
 rm -rf %{buildroot}
 mkdir -p  %{buildroot}
-cp -a * %{buildroot}
+cp -a * %{buildroot}/
 
 %check
-%{dump}
 
 %clean
-echo "CLEAN"
 rm -rf %{buildroot}
 
 %postun
-echo "POSTUN"
 
 %files tcwg
 %defattr(-,root,root,-)
 /*
-#%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 
 %changelog
+* Thu Jun 12 2015 Rob Savoye <rob.savoye@linaro.org>
+- Now it sucessfully packages the binary tarball
+
 * Mon Jun 1 2015 Rob Savoye <rob.savoye@linaro.org>
 - Initial creation
