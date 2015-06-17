@@ -772,7 +772,11 @@ create_release_tag()
 
     fi
 
-    echo ${rtag}
+    if test x"${release}" != x;then
+	rtag="`echo ${rtag} | sed -e 's:~linaro/gcc-::' -e 's:~linaro-::'`"
+    fi
+
+    echo `echo ${rtag} | tr '/' '-'`
     
     return 0
 }
