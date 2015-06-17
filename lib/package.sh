@@ -224,7 +224,6 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    local txt="`manifest`"
     dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
@@ -368,7 +367,6 @@ manifest()
     local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
 
     local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_versionnum="`${target}-gcc --version | grep -o " [0-9]\.[0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
     local gcc_revision="`srcdir_revision ${srcdir}`"
 
     local srcdir="`get_srcdir ${gdb_version}`"
@@ -404,9 +402,6 @@ manifest()
     local mtag=
     if test x"$1" = x; then
 	mtag="`create_release_tag ${gcc_version}`"
-	if test x"${release}" != x;then
-	    mtag="`echo ${mtag} | sed -e 's:~linaro-::'`"
-	fi
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
     else
 	local outfile=$1
@@ -443,7 +438,6 @@ gdb_version=binutils-gdb.git@${gdb_revision}
 
 # GCC
 gcc_branch=${gcc_branch}
-gcc_versionnum=${gcc_versionnum}
 gcc_revision=${gcc_revision}
 gcc_version=gcc.git@${gcc_revision}
 

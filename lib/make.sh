@@ -162,7 +162,7 @@ build_all()
         fi
     done
 
-    manifest
+    manifest="`manifest`"
 
     # Notify that the build completed successfully
     build_success
