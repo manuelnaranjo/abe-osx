@@ -6,8 +6,7 @@
     {
       "command": "deploy_linaro_image",
       "parameters": {
-           "hwpack": "http://releases.linaro.org/14.04/ubuntu/arndale/hwpack_linaro-arndale_20140417-630_armhf_supported.tar.gz",
-           "rootfs": "http://releases.linaro.org/14.04/ubuntu/arndale/linaro-saucy-server-20140410-652.tar.gz"
+          "image": "http://people.linaro.org/~bernie.ogden/arndale/arndale.img"
         }
     },
     {
