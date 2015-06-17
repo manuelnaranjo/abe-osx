@@ -837,7 +837,7 @@ while test $# -gt 0; do
 	    check_directive $1 manifest "m" $2
 	    # source a manifest file if there is one
 	    if test -f $2 ; then
-		egrep "_revision=|_version=|_branch=" $2 > /tmp/rev$$.txt
+		egrep "_revision=|_version=|_branch=|clibrary=" $2 > /tmp/rev$$.txt
 		source /tmp/rev$$.txt
 		rm  /tmp/rev$$.txt
 	    else
