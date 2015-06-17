@@ -76,8 +76,6 @@ build_all()
         return 1;
     fi
 
-    manifest
-
     # build each component
     for i in ${builds}; do
         notice "Building all, current component $i"
@@ -163,6 +161,8 @@ build_all()
             return 1
         fi
     done
+
+    manifest
 
     # Notify that the build completed successfully
     build_success
@@ -958,7 +958,7 @@ copy_gcc_libs_to_sysroot()
 	return 1
     fi
     libgcc="`${local_builds}/destdir/${host}/bin/${target}-gcc -print-file-name=${libgcc}`"
-    if test x"${libgcc}" = xlibgcc.so; then
+    if test x"${libgcc}" = xlibgcc.so -o x"${libgcc}" = xlibgcc_s.so; then
 	error "GCC doesn't exist!"
 	return 1
     fi
