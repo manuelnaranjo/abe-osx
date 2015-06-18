@@ -1,0 +1,82 @@
+# These variables are set by ABE in lib/make.sh:build_rpm() at runtime.
+%global triplet
+%global gcc_version
+%global destdir
+%global snapshots
+# Note, respin must be integer. This defaults to 0, and can redefined
+# by uncommenting the global variable, or on the command line to rpmbuild
+# like this: --define "respin X".
+# %global respin 1
+# Disable stripping of binaries, it's already been done.
+# %global __strip /bin/true
+# Disable other commands that we don't need as this spec file doesn't compile anything.
+%global __os_install_post %{nil}
+%global __check_files %{nil}
+# Disable trying to run elfdefs.
+%global __elf_provides %{nil}
+%global __elf_requires %{nil}
+# Set the default install path for these files.
+%global installdir /opt/linaro
+Prefix: %{installdir}
+
+Summary: Various compilers (C, C++, Objective-C, Java, ...)
+Name: gcc
+Version: %{gcc_version}
+Release: %{?respin:0}%{?dist}
+# libgcc, libgfortran, libgomp, libstdc++ and crtstuff have
+# GCC Runtime Exception.
+License: GPLv3+ and GPLv3+ with exceptions and GPLv2+ with exceptions and LGPLv2+ and BSD
+Group: Development/Languages
+Source0: https://releases.linaro.org/latest/toolchain
+URL: http://www.linaro.org
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)/opt
+
+%description
+The gcc package contains the GNU Compiler Collection version %{gcc_version}.
+You need this package in order to compile C code.
+
+%package linaro
+Summary: Linaro Toolchain Working Group GCC release
+Group: System Environment/Libraries
+Autoreq: false
+
+%description linaro
+This package contains the Linaro cross toolchain for ARMv7 or AARCH64
+
+%prep
+if test %{tarbin:none} = "none"; then
+    cp %{snapshots}/%{tarbin} %{_sourcedir}
+    mkdir -p %{_builddir}
+    tar --directory %{_builddir} -Jxf %{snapshots}/%{tarbin}
+    if [ $? -ne 0 ]; then
+	exit $?
+    fi
+else
+    path="`basename %{destdir}`"
+    rsync --copy-links -avr %{destdir}/ %{_builddir}/${path}
+fi
+
+%build
+
+%install
+path="%{installdir}/`basename %{destdir}`"
+rm -rf %{buildroot}
+mkdir -p  %{buildroot}%{installdir}
+cp -a * %{buildroot}%{installdir}/
+mkdir -p %{buildroot}/etc/profile.d/
+echo "PATH=/opt/linaro/${path}/bin:$PATH" > %{buildroot}/etc/profile.d/linaro.sh
+echo "export PATH" >> %{buildroot}/etc/profile.d/linaro.sh
+
+%check
+
+%clean
+rm -rf %{buildroot}
+
+%files linaro
+%defattr(-,root,root,-)
+/etc/*
+%{installdir}/*
+
+%changelog
+* Mon Jun 1 2015 Rob Savoye <rob.savoye@linaro.org>
+- Initial creation
