@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,21 @@ build_rpm()
 {
     trace "$*"
 
-    warning "unimplemented"
+    local infile="${abe_path}/packaging/redhat/tcwg.spec.in"
+    local arch="`echo ${target} | tr '-' '_'`"
+    local version="`echo ${gcc_version} | cut -d '~' -f 2 | grep -o "[4-6][\._][0-9\.]*" | tr '_' '.'`"
+
+    rm -f /tmp/tcwg$$.spec
+    sed -e "s:%global triplet.*:%global triplet ${arch}:" \
+	-e "s:%global destdir.*:%global destdir $1:" \
+	-e "s:%global gcc_version.*:%global gcc_version ${version}_${arch}:" \
+	-e "s:%global snapshots.*:%global snapshots ${local_snapshots}:" \
+	 ${infile} >> /tmp/tcwg$$.spec
+
+    rpmbuild -bb -v /tmp/tcwg$$.spec
+    return $?
+
+#    rm -f /tmp/tcwg$$.spec
 }
 
 # This removes files that don't go into a release, primarily stuff left
@@ -212,8 +226,7 @@ binary_toolchain()
 
     # The manifest file records the versions of all of the components used to
     # build toolchain.
-    local txt="`manifest`"
-    dryrun "cp ${txt} ${local_builds}/destdir/${host}/"
+    dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
 
 #    local installdir="`find ${destdir} -name ${target}-nm`"
 #    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
@@ -230,12 +243,18 @@ binary_toolchain()
 	cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ${local_builds}/destdir/${host}/bin/
     fi
 
-    # make the tarball from the tree we just created.
-    notice "Making binary tarball for toolchain, please wait..."
-    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
-
-    rm -f ${local_snapshots}/${tag}.tar.xz.asc
-    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+    if test x"${rpmbin}" = x"yes"; then
+	notice "Making binary RPM for toolchain, please wait..."
+	build_rpm ${destdir}
+    fi
+    if test x"${tarbin}" = x"yes"; then
+	# make the tarball from the tree we just created.
+	notice "Making binary tarball for toolchain, please wait..."
+	dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
+	
+	rm -f ${local_snapshots}/${tag}.tar.xz.asc
+	dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+    fi
     
     rm -fr ${local_builds}/tmp.$$
 
@@ -325,11 +344,12 @@ manifest()
 {
     trace "$*"
 
+
     # This function relies too heavily on the built toolchain to do anything
     # in dryrun mode.
-   if test x"${dryrun}" = xyes; then
+    if test x"${dryrun}" = xyes; then
 	return 0;
-   fi
+    fi
 
     if test x"${gmp_version}" = x; then
 	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
