@@ -145,9 +145,7 @@ home="$(ssh $target_ssh_opts $target pwd)"
 
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n $profile-$port -d /
-    $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
-    $schroot sh -c "\"echo $user - nproc 1000 >> /etc/security/limits.conf\""
-    # Set ssh port
+    # Start ssh server on custom port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
     $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
@@ -155,12 +153,9 @@ if $begin_session; then
     $schroot sed -i -e "\"/.*MaxStartups.*/d\"" -e "\"/.*MaxSesssions.*/d\"" /etc/ssh/sshd_config
     $schroot bash -c "\"echo \\\"MaxStartups 256\\\" >> /etc/ssh/sshd_config\""
     $schroot bash -c "\"echo \\\"MaxSessions 256\\\" >> /etc/ssh/sshd_config\""
-    $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.
     $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >dev/null 2>&1 || true
-    # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
-    $schroot chmod +x /bin/fusermount || true
 
     $schroot mkdir -p /root/.ssh
     ssh $target_ssh_opts $target cat .ssh/authorized_keys | $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
