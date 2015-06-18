@@ -1,0 +1,3 @@
+load_generic_config tcwg-common
+
+set_board_info hostname test-x86_64-01.tcwglab

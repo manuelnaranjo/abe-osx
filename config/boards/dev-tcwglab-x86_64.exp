@@ -1,0 +1,3 @@
+load_generic_config tcwg-common
+
+set_board_info hostname x86_64-unknown.tcwglab
