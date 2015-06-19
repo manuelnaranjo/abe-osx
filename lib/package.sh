@@ -41,9 +41,11 @@ build_rpm()
 	 ${infile} >> /tmp/tcwg$$.spec
 
     rpmbuild -bb -v /tmp/tcwg$$.spec
-    return $?
+    if test $? -gt 0; then
+	return $?
+    fi
 
-#    rm -f /tmp/tcwg$$.spec
+    rm -f /tmp/tcwg$$.spec
 }
 
 # This removes files that don't go into a release, primarily stuff left
