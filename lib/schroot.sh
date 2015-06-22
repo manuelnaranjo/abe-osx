@@ -159,6 +159,9 @@ start_schroot_sessions()
 	return 1
     fi
 
+    # Cleanup schroot sessions if user kills testing
+    trap "stop_schroot_sessions" HUP INT KILL TERM
+
     schroot_make_opts="SCHROOT_PORT=$schroot_port"
     if $shared_dir_ok; then
 	schroot_make_opts="$schroot_make_opts SCHROOT_SHARED_DIR=$shared_dir"
