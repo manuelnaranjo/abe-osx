@@ -133,7 +133,8 @@ case "$target_triplet" in {
     }
     { "*linux-gnu*" } {
 	if { [info exists env(SCHROOT_TEST)] && $env(SCHROOT_TEST) == "yes" } {
-	    set target_list [linaro_lab qemu]
+	    set target_list [linaro_lab x86_64]
+	    set board_info([lindex $target_list 0],remote_sim) "qemu-[lindex [split $target_triplet -] 0] -cpu any -R 0 -L /sysroot"
 	} else {
 	    global SIM
 	    set target_list { "arm-sim" }
