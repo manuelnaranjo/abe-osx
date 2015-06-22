@@ -186,7 +186,7 @@ configure_build()
 	    # There's no need to install anything into lib64/ since we don't
 	    # have biarch systems.
 	    echo slibdir=/usr/lib > ${builddir}/configparms
-	    echo rtlddir=/usr/lib >> ${builddir}/configparms
+	    echo rtlddir=/lib >> ${builddir}/configparms
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr --libdir=/usr/lib"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
