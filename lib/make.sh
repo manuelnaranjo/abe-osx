@@ -272,23 +272,22 @@ build_all()
         fi
     fi
 
-    if test x"${tarbin}" = x"yes"; then
+    if test x"${tarbin}" = x"yes" -o x"${rpmbin}" = x"yes"; then
         # Delete any previous release files
         # First delete the symbolic links first, so we don't delete the
         # actual files
-        dryrun "rm -fr /tmp/linaro.*/*-tmp /tmp/linaro.*/runtime*"
-        dryrun "rm -f /tmp/linaro.*/*"
+        dryrun "rm -fr ${local_builds}/linaro.*/*-tmp ${local_builds}/linaro.*/runtime*"
+        dryrun "rm -f ${local_builds}/linaro.*/*"
         # delete temp files from making the release
-        dryrun "rm -fr /tmp/linaro.*"
+        dryrun "rm -fr ${local_builds}/linaro.*"
 
-        if test "`echo ${with_packages} | grep -c toolchain`" -gt 0; then
-            if test x"${clibrary}" != x"newlib"; then
-                binary_runtime
-            fi
-            binary_toolchain
+        if test x"${clibrary}" != x"newlib" -a x"${tarbin}" = x"yes"; then
+            binary_runtime
         fi
-        if test "`echo ${with_packages} | grep -c sysroot`" -gt 0; then
-            binary_sysroot
+        binary_toolchain
+
+	if test x"${tarbin}" = x"yes"; then
+	    binary_sysroot
         fi
 #        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
 #            binary_gdb

@@ -37,7 +37,7 @@ usage()
              [--set {libc}={glibc|eglibc|newlib}]
              [--set {linker}={ld|gold}]
              [--set {package}={toolchain|gdb|sysroot}]
-             [--snapshots <path>] [--tarball] [--tarbin] [--tarsrc]
+             [--snapshots <path>] [--tarball] [--tarbin] [--tarsrc] [--rpm]
              [--target {<target_triple>|''}] [--timeout <timeout_value>]
              [--usage]
              [{binutils|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}
@@ -297,6 +297,9 @@ OPTIONS
 
   --tarsrc
   		Build source tarballs after a successful build.
+
+  --rpm
+		Build binary RPM package after a successful build.
 
   --target	{<target_triple>|''}
 
@@ -962,6 +965,9 @@ while test $# -gt 0; do
 	    ;;
 	--tarsrc*|-tars*)
 	    tarsrc=yes
+	    ;;
+	--rpm|-rpm*)
+	    rpmbin=yes
 	    ;;
 	--targ*|-targ*)			# target
 	    check_directive $1 target targ $2
