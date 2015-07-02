@@ -51,6 +51,9 @@ else
     rm -fr ${user_workspace}/_build/* ${user_workspace}/_build/sysroots/*
 fi
 
+# By default, always update all sources
+update=""
+
 if test x"${runtests}" = xtrue; then
     chroot="--enable-schroot-test"
 fi
@@ -94,13 +97,14 @@ fi
 if test x"${tarbin}" = x"yes"; then
     # Canadian cross builds require a Linux hosted cross compiler first
     if test x"${canadian}" = x"true"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} ${check} gcc=${gcc_src} binutils=${binutils_src} ${platform} --build all ${libc}
+	$CONFIG_SHELL ${abe_dir}/abe.sh ${update} --release ${release} ${check} gcc=${gcc_src} binutils=${binutils_src} ${platform} --build all ${libc}
 	host="--host i686-w64-mingw32"
 	rm -fr ${local_builds}/${host}/${target}/
+	update="--disable update"
     else
 	host=""
     fi
-    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --release ${release} --tarbin ${check} gcc=${gcc_src}  binutils=${binutils_src} ${platform} ${host} --build all ${libc}
+    $CONFIG_SHELL ${abe_dir}/abe.sh ${update} --release ${release} --tarbin ${check} gcc=${gcc_src}  binutils=${binutils_src} ${platform} ${host} --build all ${libc}
 fi
 
 # force a failure if abe has build problems.
