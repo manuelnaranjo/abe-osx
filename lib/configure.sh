@@ -147,7 +147,7 @@ configure_build()
 
     # Force static linking unless dynamic linking is specified
     local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
-    if test x"${static}" = x"yes" -o x"${tarbin}" = x"yes"; then
+    if test x"${static}" = x"yes"; then
 	if test "`echo ${tool} | grep -c glibc`" -eq 0; then
 	    local opts="--disable-shared --enable-static"
 	fi
