@@ -63,7 +63,7 @@ fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
 logserver=""
 
 # Template of logs' directory name
-logname='gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}'
+logname='${job}${BUILD_NUMBER}-${branch}/${arch}.${target}'
 
 # Compiler languages to build
 languages=default
@@ -113,10 +113,36 @@ while test $# -gt 0; do
     shift
 done
 
+# Non matrix builds use node_selector, but matrix builds use NODE_NAME
+if test x"${node_selector}" != x; then
+    node="`echo ${node_selector} | tr '-' '_'`"
+    job=${JOB_NAME}
+else
+    node="`echo ${NODE_NAME} | tr '-' '_'`"
+    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
+fi
+
+# Get the version of GCC we're supposed to build
+change=""
+if test x"${gcc_branch}" = x""; then
+    echo "ERROR: Empty value passed to --gcc-branch."
+    echo "Maybe you meant to pass '--gcc-branch latest' ?"
+    exit 1
+else
+    if test x"${gcc_branch}" != x"latest"; then
+	change="${change} gcc=${gcc_branch}"
+    fi
+    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
+fi
+
+arch="`uname -m`"
+
+# Now that all variables from $logname template are known, calculate log dir.
+eval dir="$logname"
+
 # Split $logserver into "server:path".
 basedir="${logserver#*:}"
 logserver="${logserver%:*}"
-eval dir="$logname"
 
 # Check whether we should skip this build if artifacts are already in place
 if [ x"$logserver" != x"" ] && ssh $logserver test -d $basedir/$dir; then
@@ -149,7 +175,6 @@ if test "`echo $user_options | grep -c -- --release`" -gt 0; then
 fi
 
 # Get the versions of dependant components to use
-changes=""
 if test x"${gmp_snapshot}" != x"latest" -a x"${gmp_snapshot}" != x; then
     change="${change} gmp=${gmp_snapshot}"
 fi
@@ -158,14 +183,6 @@ if test x"${mpc_snapshot}" != x"latest" -a x"${mpc_snapshot}" != x; then
 fi
 if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
     change="${change} mpfr=${mpfr_snapshot}"
-fi
-
-# Get the version of GCC we're supposed to build
-if test x"${gcc_branch}" != x"latest" -a x"${gcc_branch}" != x; then
-    change="${change} gcc=${gcc_branch}"
-    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
-else
-    branch=
 fi
 
 if test x"${binutils_snapshot}" != x"latest" -a x"${binutils_snapshot}" != x; then
@@ -301,26 +318,6 @@ xgcc="`find ${user_workspace} -name xgcc`"
 # If we can't find GCC, our build failed, so don't continue
 if test x"${xgcc}" = x; then
     exit 1
-fi
-
-version="`${xgcc} --version | head -1 | cut -d ' ' -f 5`"
-if test x"${version}" = x"(experimental)" ; then
-    version=5.0
-fi
-if test x"${version}" = x"(prerelease)" ; then
-    version=4.9
-fi
-# bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
-distro="`lsb_release -c -s`"
-arch="`uname -m`"
-
-# Non matrix builds use node_selector, but matrix builds use NODE_NAME
-if test x"${node_selector}" != x; then
-    node="`echo ${node_selector} | tr '-' '_'`"
-    job=${JOB_NAME}
-else
-    node="`echo ${NODE_NAME} | tr '-' '_'`"
-    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 
 # This is the remote directory for tcwgweb where all test results and log
