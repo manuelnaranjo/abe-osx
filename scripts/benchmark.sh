@@ -78,13 +78,6 @@ if test "$((`umask` & 077))" -ne 63; then
     exit 1
   fi
 fi
-
-#TODO: Really, this check should operate on the route from the git server to localhost
-. "${topdir}/scripts/benchutil.sh"
-if ! check_private_route localhost; then
-  echo "Do not appear to be on private network, conservatively aborting" 1>&2
-  exit 1
-fi
 #End sanity checks
 
 tag=""

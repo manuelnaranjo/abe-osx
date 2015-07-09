@@ -180,12 +180,6 @@ if test $? -eq 0; then
         gateway=lab.validation.linaro.org
         ssh_opts="${ssh_opts} ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
         establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
-
-        #LAVA targets need to boot - do an early check that the route to the gateway is private, so that we can fail fast
-        if ! check_private_route "${gateway}"; then
-          echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
-          exit 1
-        fi
     esac
   fi
   lava_target="${ip}"
@@ -267,10 +261,6 @@ fi
 target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
 if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
-  exit 1
-fi
-if ! check_private_route "${gateway}"; then
-  echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
   exit 1
 fi
 for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
@@ -399,11 +389,6 @@ if test ${error} -ne 0; then
   error=1
 fi
 
-#Several days might have passed, re-check the route
-if ! check_private_route "${gateway}"; then
-  echo "Failed to confirm that route to target is private, conservatively aborting" 1>&2
-  exit 1
-fi
 for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
   mkdir -p "${logdir}/${benchmark}.git/`dirname ${log}`"
   (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
