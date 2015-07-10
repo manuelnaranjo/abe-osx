@@ -8,7 +8,6 @@ benchgccpath=
 targets=(${targets})
 maindir="`mktemp --tmpdir=${HOME} -d bench-XXX`"
 error=1
-results_dir="/work/benchmarking/${results_dir:-${JOB_NAME}/${BUILD_NUMBER}}"
 
 trap "rm -rf ${maindir}; exit \${error}" EXIT
 
@@ -21,9 +20,6 @@ if test x"${benchmark:-}" = x; then
   echo "No benchmark given to Benchmark job" 1>&2
   exit 1
 fi
-
-#Prepare results dir
-ssh abe "mkdir -p ${results_dir}"
 
 #Set up maindir
 echo "Building benchmark ${benchmark} in ${maindir}"
@@ -66,7 +62,6 @@ set +e
 "${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
 tmperr=$?
 set -e
-scp -r ./"${benchmark}"-log abe:"${results_dir}"
 if test ${tmperr} -eq 0; then
   error=0
 fi
