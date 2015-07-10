@@ -56,10 +56,10 @@ fi
 
 #Run benchmark
 cd "${maindir}"
-"${WORKSPACE}"/abe/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+"${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
 set +e
-"${WORKSPACE}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
+"${ABE_DIR}"/abe/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
 tmperr=$?
 set -e
 if test ${tmperr} -eq 0; then
