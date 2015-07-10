@@ -80,7 +80,7 @@ start_schroot_session()
     local was_verbose="${-//[^x]/}"
     if [ x"$was_verbose" != x"x" ]; then set -x; fi
     # Start testing schroot session.
-    dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt -d $shared_dir $hostname:$schroot_port" > $log 2>&1; result="$?"
+    dryrun "$topdir/scripts/test-schroot.sh -v -b $target_opt -m -e $board_exp $sysroot_opt $hostname:$schroot_port" > $log 2>&1; result="$?"
     if [ x"$was_verbose" != x"x" ]; then set +x; fi
 
     cat $log >&2
