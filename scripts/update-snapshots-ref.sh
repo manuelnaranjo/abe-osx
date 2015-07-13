@@ -78,6 +78,9 @@ for repo in $snapshots_dir-new/*.git; do
     )
 done
 
+echo "Snapshots status:"
+du -hs $snapshots_dir-new/*
+
 # "if true" is to have same indent as configure-machine.sh hunk from which
 # handling of parallel runs was copied.
 if true; then
