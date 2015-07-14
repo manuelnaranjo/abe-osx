@@ -78,13 +78,15 @@ if test x"${date}" != x; then
     release="${date}"    
 fi
 
-if test x"${clibrary}" != x; then
-    if test "`echo ${target} | grep -c linux`" -gt 0; then
-	libc="--set libc=${clibrary}"
+if test "`echo ${target} | grep -c linux`" -gt 0; then
+    if test "`echo ${gcc_src} | grep -c 5\.1`" -gt 0; then
+	libc="--set libc=glibc"
     else
-	# ELF and EABI based targets are bare metal only
-	libc="--set libc=newlib"
+	libc="--set libc=eglibc"
     fi
+else
+    # ELF and EABI based targets are bare metal only
+    libc="--set libc=newlib"
 fi
 
 # Build a toolchain, run the tests, and the create a source release as a tarball
