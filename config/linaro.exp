@@ -72,7 +72,7 @@ proc linaro_lab { kind } {
 }
 
 case "$target_triplet" in { 
-    { "arm-*linux-gnueabi*" } {
+    { "arm-*linux-gnueabi*" "armv[78]l-*linux-gnueabi*" } {
 	case "$native$myname" in {
 	    { tcwgrob* ripple* darkstar* } {
 #		set target_list { tcwgchromebook }
