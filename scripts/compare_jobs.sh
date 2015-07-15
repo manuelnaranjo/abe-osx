@@ -1,20 +1,16 @@
 #!/bin/bash
 
 mydir="`dirname $0`"
-logdir=/work/logs
 status=0
 
-if [ $# -lt 4 ]
+if [ $# != 2 ]
 then
-    echo "Usage: $0 job1 build1 job2 build2"
+    echo "Usage: $0 ref_logs new_logs"
     exit 1
 fi
 
-job1=$1
-job2=$3
-
-refnum=${job1}$2
-buildnum=${job2}$4
+ref_logs=$1
+new_logs=$2
 
 tmptargets=/tmp/targets.$$
 trap "rm -f ${tmptargets}" 0 1 2 3 5 9 13 15
@@ -42,7 +38,7 @@ EOF
 function xml_report_print_header
 {
     cat <<EOF
-<section name="Results comparison ${refnum} vs ${buildnum}"><table>
+<section name="Results comparison ${ref_logs} vs ${new_logs}"><table>
   <tr>
   <td fontattribute="bold" width="120" align="center">Target</td>
   <td fontattribute="bold" width="120" align="center">Status</td>
@@ -89,18 +85,18 @@ EOF
 # For the time being, we expect different jobs to store their results
 # in similar directories.
 
-# Build list of all build-targets validated for ${refnum}
+# Build list of all build-targets validated for ${ref_logs}
 # Use grep -v '*' to skip the case where the first regexp does not
 # match any directory.
-for dir in `echo ${logdir}/*/*/*-${refnum} | grep -v '*'`
+for dir in `echo ${ref_logs}/* | grep -v '*'`
 do
-    basename ${dir} | sed "s/-${refnum}//" >> ${tmptargets}
+    basename ${dir} >> ${tmptargets}
 done
 
-# Build list of all build-targets validated for ${buildnum}
-for dir in `echo ${logdir}/*/*/*-${buildnum} | grep -v '*'`
+# Build list of all build-targets validated for ${new_logs}
+for dir in `echo ${new_logs}/* | grep -v '*'`
 do
-    basename ${dir} | sed "s/-${buildnum}//" >> ${tmptargets}
+    basename ${dir} >> ${tmptargets}
 done
 
 if [ -s ${tmptargets} ]; then
@@ -118,8 +114,8 @@ xml_log_print_header > ${XML_LOG}.part
 
 for buildtarget in ${buildtargets}
 do
-    ref=`echo ${logdir}/*/*/${buildtarget}-${refnum} | grep -v '*'`
-    build=`echo ${logdir}/*/*/${buildtarget}-${buildnum} | grep -v '*'`
+    ref="${ref_logs}/${buildtarget}"
+    build="${new_logs}/${buildtarget}"
     echo "REF = "${ref}
     echo "BUILD = "${build}
     failed=false
@@ -128,7 +124,7 @@ do
     printf "\t# ============================================================== #\n" > ${mylog}
     printf "\t#\t\t*** ${buildtarget} ***\n" >> ${mylog}
     printf "\t# ============================================================== #\n\n" >> ${mylog}
-    [ ! -z "${build}" -a ! -z "${ref}" ] && ${mydir}/compare_tests -target ${target} \
+    [ -d "${build}" -a -d "${ref}" ] && ${mydir}/compare_tests -target ${target} \
 	${ref} ${build} >> ${mylog} || failed=true
 
     ${failed} && status=1
