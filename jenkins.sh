@@ -144,14 +144,71 @@ eval dir="$logname"
 basedir="${logserver#*:}"
 logserver="${logserver%:*}"
 
-# Check whether we should skip this build if artifacts are already in place
-if [ x"$logserver" != x"" ] && ssh $logserver test -d $basedir/$dir; then
-    echo "Logs are already present in $logserver:$basedir/$dir"
-    if ! $rebuild; then
-	echo "Nothing to be done"
-	exit 0
+# Check status of logs on $logserver and rebuild if appropriate.
+ssh $logserver mkdir -p $(dirname $basedir/$dir)
+# Loop and wait until we successfully grabbed the lock.  The while condition is,
+# effectively, "while true;" with a provision to skip if $logserver is not set.
+while [ x"$logserver" != x"" ]; do
+    # Non-blocking read lock, and check whether logs already exist.
+    log_status=$(ssh $logserver flock -ns $basedir/$dir.lock -c \
+	"\"if [ -e $basedir/$dir ]; then exit 0; else exit 2; fi\""; echo $?)
+
+    case $log_status in
+	0)
+	    echo "Logs are already present in $logserver:$basedir/$dir"
+	    if ! $rebuild; then
+		exit 0
+	    fi
+	    echo "But we are asked to rebuild them anyway"
+	    ;;
+	1)
+	    echo "Can't obtain read lock; waiting for another build to finish"
+	    sleep 60
+	    continue
+	    ;;
+	2)
+	    echo "Logs don't exist in $basedir/$dir, trying to rebuild"
+	    ;;
+	*)
+	    echo "ERROR: Unexpected status of logs: $log_status"
+	    exit 1
+	    ;;
+    esac
+
+    # Acquire the lock for the duration of the build.  The lock is released
+    # in the "trap" cleanup below on signal or normal exit.
+    # Note that the ssh command will be running in the background for the
+    # duration of the build (spot "&" at its end).  Ssh command will exit
+    # when lock file is deleted by the "trap" cleanup.
+    # We place a unique marker into the lock file to check on our side who
+    # has the lock, since we can't inspect return value of the ssh command.
+    #
+    # Note on '-tt': We forcefully allocate pseudo-tty for the flock command
+    # so that flock dies (through SIGHUP) and releases the lock when this
+    # script is cancelled or terminated for whatever reason.  Without SIGHUP
+    # reaching flock we risk situations when a lock will hang forever preventing
+    # any subsequent builds to progress.  There are a couple of options as to
+    # exactly how enable delivery of SIGHUP (e.g., set +m), and 'ssh -tt' seems
+    # like the simplest one.
+    ssh -tt $logserver flock -nx $basedir/$dir.lock -c \
+	"\"echo $(hostname)-$$-$BUILD_URL > $basedir/$dir.lock; while [ -e $basedir/$dir.lock ]; do sleep 10; done\"" &
+    pid=$!
+    # This is borderline fragile, since we are giving the above ssh command
+    # a fixed period of time (10sec) to connect to $logserver and populate
+    # $basedir/$dir.lock.  In practice, $logserver is a fast-ish machine,
+    # which serves connections quickly.  In the worst-case scenario, we will
+    # just retry a couple of times in this loop.
+    sleep 10
+
+    if [ x"$(ssh $logserver cat $basedir/$dir.lock)" \
+	= x"$(hostname)-$$-$BUILD_URL" ]; then
+	trap "ssh $logserver rm -f $basedir/$dir.lock" 0 1 2 3 5 9 13 15
+	# Hurray!  Break from the loop and go ahead with the build!
+	break
     fi
-fi
+
+    kill $pid || true
+done
 
 # Test the config parameters from the Jenkins Build Now page
 
