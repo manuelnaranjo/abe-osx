@@ -275,7 +275,13 @@ normalize_path()
 	    ;;
     esac
 
-    echo ${node}${branch:+~${branch}}${revision:+@${revision}}
+    if test "`echo $1 | grep -c glibc`" -gt 0; then
+	local delim='_'
+    else
+	local delim='@'
+    fi
+
+    echo ${node}${branch:+~${branch}}${revision:+${delim}${revision}}
 
     return 0
 }
@@ -770,7 +776,11 @@ create_release_tag()
 
     fi
 
-    echo ${rtag}
+    if test x"${release}" != x;then
+	rtag="`echo ${rtag} | sed -e 's:~linaro/gcc-::' -e 's:~linaro-::'`"
+    fi
+
+    echo `echo ${rtag} | tr '/' '-'`
     
     return 0
 }

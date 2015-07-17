@@ -1,3 +1,0 @@
-load_generic_config tcwg-common
-
-set_board_info hostname build-06.tcwglab

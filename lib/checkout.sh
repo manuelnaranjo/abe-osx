@@ -29,6 +29,10 @@ checkout_infrastructure()
 {
     trace "$*"
 
+    if test x"${supdate}" = xno; then
+	return 0
+    fi
+
     source_config infrastructure
 
     if test x"${depends}" = x; then
@@ -160,9 +164,6 @@ checkout_all()
 	fi
     done
     
-    # Since we just checked out all the sources, disable updating them again.
-    supdate=no
-
     notice "Checkout all took ${SECONDS} seconds"
 
     return 0
@@ -173,10 +174,11 @@ checkout_all()
 git_robust()
 {
     local try=1
+    local cmd="git $@"
 
     while [ "$try" -lt "10" ]; do
 	try="$(($try+1))"
-	git "$@" && break
+	flock ${local_builds}/git$$.lock --command "${cmd}" && break
     done
 }
 
@@ -195,23 +197,26 @@ checkout()
     local service=
     service="`get_git_service $1`"
     if test x"${service}" = x ; then
-	error "A proper url is required. Call get_URL first."
+	error "Unable to parse service from '$1'. You have either a bad URL, or an identifier that should be passed to get_URL."
 	return 1
     fi
 
     local repo=
-    repo="`get_git_repo $1`"
+    repo="`get_git_repo $1`" || return 1
 
+    #None of the following should be able to fail with the code as it is
+    #written today (and failures are therefore untestable) but propagate
+    #errors anyway, in case that situation changes.
     local tool=
-    tool="`get_toolname $1`"
+    tool="`get_toolname $1`" || return 1
     local url=
-    url="`get_git_url $1`"
+    url="`get_git_url $1`" || return 1
     local branch=
-    branch="`get_git_branch $1`"
+    branch="`get_git_branch $1`" || return 1
     local revision=
-    revision="`get_git_revision $1`"
+    revision="`get_git_revision $1`" || return 1
     local srcdir=
-    srcdir="`get_srcdir $1`"
+    srcdir="`get_srcdir $1`" || return 1
 
     case $1 in
 	svn*)
@@ -233,12 +238,18 @@ checkout()
 		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
 		else
 		    svn checkout $1 ${srcdir}
+                    if test $? -gt 0; then
+                        error "Failed to check out $1 to ${srcdir}"
+                        return 1
+                    fi
 		fi
 	    fi
 	    ;;
 	git*|http*|ssh*)
-	    #FIXME: This is an unreliable way to parse the repo directory.
-            local repodir="`echo ${srcdir} | cut -d '~' -f 1 | cut -d '@' -f 1`"
+            #FIXME: We deliberately ignored error returns from get_git_url,
+            #       because any path with an '@' in will result in errors.
+            #       Jenkins is wont to create such paths.
+            local repodir="`get_git_url ssh://${srcdir} | sed 's#^ssh://##'`"
 
 	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
 		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
@@ -255,6 +266,10 @@ checkout()
 		fi
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
+		if test $? -gt 0; then
+		    error "Failed to clone master branch from ${url} to ${repodir}"
+		    return 1
+		fi
 	    fi
 
 	    if test ! -d ${srcdir}; then
@@ -263,21 +278,27 @@ checkout()
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${tool} in ${srcdir}"
-		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
-		    if test $? -gt 0; then
-			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
-		    	return 1
+		    if test x${dryrun} != xyes; then
+			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
+			flock ${local_builds}/git$$.lock --command "${cmd}"
+			if test $? -gt 0; then
+			    error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
+				return 1
+			fi
 		    fi
 		    # git checkout of a commit leaves the head in detached state so we need to
 		    # give the current checkout a name.  Use -B so that it's only created if
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    notice "Checking out ${branch:+branch ${branch}}${branch-master branch} for ${tool} in ${srcdir}"
-		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
-		    if test $? -gt 0; then
-			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
-		   	return 1
+		    notice "Checking out branch ${branch} for ${tool} in ${srcdir}"
+		    if test x${dryrun} != xyes; then
+			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
+			flock ${local_builds}/git$$.lock --command "${cmd}"
+			if test $? -gt 0; then
+			    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+			    return 1
+			fi
 		    fi
 		fi
 		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
@@ -296,12 +317,12 @@ checkout()
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
-		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
+		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${revision})"
 		else
 		    # Make sure we are on the correct branch.
 		    # This is a no-op if $branch is empty and it
 		    # just gets master.
-		    dryrun "(cd ${srcdir} && git checkout -B ${branch} origin/${branch})"
+		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
@@ -514,7 +535,8 @@ change_branch()
     fi
 
     if test ! -d ${srcdir}/${branch}; then
-	dryrun "${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	local cmd="${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
+	dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then

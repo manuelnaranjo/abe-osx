@@ -35,9 +35,8 @@ if test $# -lt 1; then
 #    exit
 fi
 
-# load commonly used functions
-which_dir="`which $0`"
-topdir="`dirname ${which_dir}`"
+# Directory of ABE source files
+abe_dir="$(cd $(dirname $0); pwd)"
 
 # This is where all the builds go
 if test x"${WORKSPACE}" = x; then
@@ -48,14 +47,23 @@ user_workspace="${WORKSPACE}"
 # The files in this directory are shared across all platforms 
 shared="${HOME}/workspace/shared"
 
-# This is an optional directory for the master copy of the git repositories.
-user_git_repo="${shared}/snapshots"
+# This is an optional directory for the reference copy of the git repositories.
+git_reference="${HOME}/snapshots-ref"
+
+# GCC branch to build
+gcc_branch="latest"
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
+# Server to wget snapshots from.
+fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
+
 # Server to store results on.
-fileserver="abe.tcwglab.linaro.org"
+logserver=""
+
+# Template of logs' directory name
+logname='${job}${BUILD_NUMBER}-${branch}/${arch}.${target}'
 
 # Compiler languages to build
 languages=default
@@ -72,22 +80,134 @@ user_options=""
 # Return status
 status=0
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,languages:,runtests,target:,bootstrap,help -- "$@"`"
+# Whether to exclude some component from 'make check'
+excludecheck=
+
+# Whether to rebuild the toolchain even if logs are already present.
+# Note that the check is done on logserver/logname pair, so logname should not
+# be relying on variables that this script sets for match to succeed.
+# In practice, --norebuild option should be accompanied by something like
+# --logname gcc-<sha1>
+rebuild=true
+
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
 while test $# -gt 0; do
     case $1 in
+	--gcc-branch) gcc_branch=$2; shift ;;
         -s|--snapshots) user_snapshots=$2; shift ;;
-        -g|--gitrepo) user_git_repo=$2; shift ;;
+        -g|--gitrepo) git_reference=$2; shift ;;
         -c|--abe) abe_dir=$2; shift ;;
 	-t|--target) target=$2; shift ;;
         -w|--workspace) user_workspace=$2; shift ;;
         -o|--options) user_options=$2; shift ;;
         -f|--fileserver) fileserver=$2; shift ;;
+        --logserver) logserver=$2; shift ;;
+        --logname) logname=$2; shift ;;
         -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
+	--excludecheck) excludecheck=$2; shift ;;
+	--norebuild) rebuild=false ;;
 	-h|--help) usage ;;
     esac
     shift
+done
+
+# Non matrix builds use node_selector, but matrix builds use NODE_NAME
+if test x"${node_selector}" != x; then
+    node="`echo ${node_selector} | tr '-' '_'`"
+    job=${JOB_NAME}
+else
+    node="`echo ${NODE_NAME} | tr '-' '_'`"
+    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
+fi
+
+# Get the version of GCC we're supposed to build
+change=""
+if test x"${gcc_branch}" = x""; then
+    echo "ERROR: Empty value passed to --gcc-branch."
+    echo "Maybe you meant to pass '--gcc-branch latest' ?"
+    exit 1
+else
+    if test x"${gcc_branch}" != x"latest"; then
+	change="${change} gcc=${gcc_branch}"
+    fi
+    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
+fi
+
+arch="`uname -m`"
+
+# Now that all variables from $logname template are known, calculate log dir.
+eval dir="$logname"
+
+# Split $logserver into "server:path".
+basedir="${logserver#*:}"
+logserver="${logserver%:*}"
+
+# Check status of logs on $logserver and rebuild if appropriate.
+ssh $logserver mkdir -p $(dirname $basedir/$dir)
+# Loop and wait until we successfully grabbed the lock.  The while condition is,
+# effectively, "while true;" with a provision to skip if $logserver is not set.
+while [ x"$logserver" != x"" ]; do
+    # Non-blocking read lock, and check whether logs already exist.
+    log_status=$(ssh $logserver flock -ns $basedir/$dir.lock -c \
+	"\"if [ -e $basedir/$dir ]; then exit 0; else exit 2; fi\""; echo $?)
+
+    case $log_status in
+	0)
+	    echo "Logs are already present in $logserver:$basedir/$dir"
+	    if ! $rebuild; then
+		exit 0
+	    fi
+	    echo "But we are asked to rebuild them anyway"
+	    ;;
+	1)
+	    echo "Can't obtain read lock; waiting for another build to finish"
+	    sleep 60
+	    continue
+	    ;;
+	2)
+	    echo "Logs don't exist in $basedir/$dir, trying to rebuild"
+	    ;;
+	*)
+	    echo "ERROR: Unexpected status of logs: $log_status"
+	    exit 1
+	    ;;
+    esac
+
+    # Acquire the lock for the duration of the build.  The lock is released
+    # in the "trap" cleanup below on signal or normal exit.
+    # Note that the ssh command will be running in the background for the
+    # duration of the build (spot "&" at its end).  Ssh command will exit
+    # when lock file is deleted by the "trap" cleanup.
+    # We place a unique marker into the lock file to check on our side who
+    # has the lock, since we can't inspect return value of the ssh command.
+    #
+    # Note on '-tt': We forcefully allocate pseudo-tty for the flock command
+    # so that flock dies (through SIGHUP) and releases the lock when this
+    # script is cancelled or terminated for whatever reason.  Without SIGHUP
+    # reaching flock we risk situations when a lock will hang forever preventing
+    # any subsequent builds to progress.  There are a couple of options as to
+    # exactly how enable delivery of SIGHUP (e.g., set +m), and 'ssh -tt' seems
+    # like the simplest one.
+    ssh -tt $logserver flock -nx $basedir/$dir.lock -c \
+	"\"echo $(hostname)-$$-$BUILD_URL > $basedir/$dir.lock; while [ -e $basedir/$dir.lock ]; do sleep 10; done\"" &
+    pid=$!
+    # This is borderline fragile, since we are giving the above ssh command
+    # a fixed period of time (10sec) to connect to $logserver and populate
+    # $basedir/$dir.lock.  In practice, $logserver is a fast-ish machine,
+    # which serves connections quickly.  In the worst-case scenario, we will
+    # just retry a couple of times in this loop.
+    sleep 10
+
+    if [ x"$(ssh $logserver cat $basedir/$dir.lock)" \
+	= x"$(hostname)-$$-$BUILD_URL" ]; then
+	trap "ssh $logserver rm -f $basedir/$dir.lock" 0 1 2 3 5 9 13 15
+	# Hurray!  Break from the loop and go ahead with the build!
+	break
+    fi
+
+    kill $pid || true
 done
 
 # Test the config parameters from the Jenkins Build Now page
@@ -112,7 +232,6 @@ if test "`echo $user_options | grep -c -- --release`" -gt 0; then
 fi
 
 # Get the versions of dependant components to use
-changes=""
 if test x"${gmp_snapshot}" != x"latest" -a x"${gmp_snapshot}" != x; then
     change="${change} gmp=${gmp_snapshot}"
 fi
@@ -121,14 +240,6 @@ if test x"${mpc_snapshot}" != x"latest" -a x"${mpc_snapshot}" != x; then
 fi
 if test x"${mpfr_snapshot}" != x"latest" -a x"${mpfr_snapshot}" != x; then
     change="${change} mpfr=${mpfr_snapshot}"
-fi
-
-# Get the version of GCC we're supposed to build
-if test x"${gcc_branch}" != x"latest" -a x"${gcc_branch}" != x; then
-    change="${change} gcc=${gcc_branch}"
-    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
-else
-    branch=
 fi
 
 if test x"${binutils_snapshot}" != x"latest" -a x"${binutils_snapshot}" != x; then
@@ -141,15 +252,11 @@ fi
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
     check="--check all"
+    check="${check}${excludecheck:+ --excludecheck ${excludecheck}}"
 fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
     platform="--target ${target}"
-else
-    # For native builds, we don't check gdb because it is too slow
-    if test x"${runtests}" = xtrue; then
-	check="${check} --excludecheck gdb"
-    fi
 fi
 
 if test x"${libc}" != x; then
@@ -186,10 +293,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-if test x"${abe_dir}" = x; then
-    abe_dir=${topdir}
-fi
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${user_git_repo} --with-languages=${languages} --enable-schroot-test
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.
@@ -221,9 +325,26 @@ else
     try_bootstrap=""
 fi
 
+# Checkout all sources now to avoid grabbing lock for 1-2h while building and
+# testing runs.  We configure ABE to use reference snapshots, which are shared
+# across all builds and are updated by an external process.  The lock protects
+# us from looking into an inconsistent state of reference snapshots.
+(
+    flock -s 9
+    $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} ${change} --checkout all
+    # Workaround "--checkout all" bug.
+    # See https://bugs.linaro.org/show_bug.cgi?id=1338 .
+    if ! [ -d $user_snapshots/gcc.git ]; then
+	git clone --reference $git_reference/gcc.git http://git.linaro.org/toolchain/gcc.git $user_snapshots/gcc.git
+    fi
+) 9>${git_reference}.lock
+
+# Also fetch changes from gerrit
+(cd $user_snapshots/gcc.git; git fetch origin '+refs/changes/*:refs/remotes/gerrit/changes/*')
+
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${abe_dir}/abe.sh --parallel ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
 
 # If abe returned an error, make jenkins see this as a build failure
 if test $? -gt 0; then
@@ -256,26 +377,6 @@ if test x"${xgcc}" = x; then
     exit 1
 fi
 
-version="`${xgcc} --version | head -1 | cut -d ' ' -f 5`"
-if test x"${version}" = x"(experimental)" ; then
-    version=5.0
-fi
-if test x"${version}" = x"(prerelease)" ; then
-    version=4.9
-fi
-# bversion="`${target}-ld --version | head -1 | cut -d ' ' -f 5 | cut -d '.' -f 1-3`"
-distro="`lsb_release -c -s`"
-arch="`uname -m`"
-
-# Non matrix builds use node_selector, but matrix builds use NODE_NAME
-if test x"${node_selector}" != x; then
-    node="`echo ${node_selector} | tr '-' '_'`"
-    job=${JOB_NAME}
-else
-    node="`echo ${NODE_NAME} | tr '-' '_'`"
-    job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
-fi
-
 # This is the remote directory for tcwgweb where all test results and log
 # files get copied too.
 
@@ -306,12 +407,12 @@ else
 fi
 
 # This becomes the path on the remote file server    
-if test x"${runtests}" = xtrue; then
-    basedir="/work/logs"
-    dir="gcc-linaro-${version}/${branch}${revision}/${arch}.${target}-${job}${BUILD_NUMBER}"
-    ssh ${fileserver} mkdir -p ${basedir}/${dir}
+if test x"${logserver}" != x"" -a x"${runtests}" = xtrue; then
+    # Re-eval $dir as we now have full range of variables available.
+    eval dir="$logname"
+    ssh ${logserver} mkdir -p ${basedir}/${dir}
     if test x"${manifest}" != x; then
-	scp ${manifest} ${fileserver}:${basedir}/${dir}/
+	scp ${manifest} ${logserver}:${basedir}/${dir}/
     fi
 
 # If 'make check' works, we get .sum files with the results. These we
@@ -340,18 +441,18 @@ sums="`find ${user_workspace} -name \*.sum`"
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
 if test x"${canadian}" = x"true"; then
-    $CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${platform} --build all
+    $CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${platform} --build all
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${abe_dir}/abe.sh --nodepends --parallel ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
 # This setups all the files needed by tcwgweb
-if test x"${sums}" != x -o x"${runtests}" != x"true"; then
+if test x"${logserver}" != x"" && test x"${sums}" != x -o x"${runtests}" != x"true"; then
     if test x"${sums}" != x; then
 	test_logs=""
 	for s in ${sums}; do
@@ -373,25 +474,25 @@ if test x"${sums}" != x -o x"${runtests}" != x"true"; then
 	cp build.out build.err ${logs_dir}/ || status=1
 
 	xz ${logs_dir}/* || status=1
-	scp ${logs_dir}/* ${fileserver}:${basedir}/${dir}/ || status=1
+	scp ${logs_dir}/* ${logserver}:${basedir}/${dir}/ || status=1
 	rm -rf ${logs_dir} || status=1
-#	scp ${abe_dir}/tcwgweb.sh ${fileserver}:/tmp/tcwgweb$$.sh
-#	ssh ${fileserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-#	ssh ${fileserver} rm -f /tmp/tcwgweb$$.sh
+#	scp ${abe_dir}/tcwgweb.sh ${logserver}:/tmp/tcwgweb$$.sh
+#	ssh ${logserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
+#	ssh ${logserver} rm -f /tmp/tcwgweb$$.sh
 
 	echo "Sent test results"
     fi
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
-	scp ${srcfiles} ${fileserver}:/home/abe/var/snapshots/ || status=1
+	scp ${srcfiles} ${logserver}:/home/abe/var/snapshots/ || status=1
 	rm -f ${srcfiles} || status=1
     fi
 
     if test x"${tarbin}" = xtrue -a x"${release}" != x; then
-	allfiles="`ls ${shared}/snapshots/*${release}*.xz`"
+	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	binfiles="`echo ${allfiles} | egrep "arm|aarch"`"
-	scp ${binfiles} ${fileserver}:/work/space/binaries/ || status=1
+	scp ${binfiles} ${logserver}:/work/space/binaries/ || status=1
 	rm -f ${binfiles} || status=1
     fi
 

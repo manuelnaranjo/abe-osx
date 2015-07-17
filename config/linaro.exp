@@ -34,10 +34,28 @@ if {[info exists env(SYSROOT_UNDER_TEST)]} {
 
 set myname [get_local_hostname]
 
-if { "$tcl_platform(user)" == "buildslave" } {
-    set machine_prefix "infra"
-} else {
-    set machine_prefix "tcwg"
+proc linaro_lab { kind } {
+    global tcl_platform myname
+
+    case "$tcl_platform(user)" in {
+	{ *buildslave } {
+	    set user "infra"
+	}
+	default {
+	    set user "dev"
+	}
+    }
+
+    case "$myname" in {
+	{ ex40-* } {
+	    set lab "hetzner"
+	}
+	default {
+	    set lab "tcwglab"
+	}
+    }
+
+    return "$user-$lab-$kind"
 }
 
 case "$target_triplet" in { 
@@ -56,7 +74,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    set target_list [list $machine_prefix-armv8]
+		    set target_list [linaro_lab armv8]
 		} else {
 		    global SIM
 		    # CPU and sysroot are set through the environment
@@ -90,7 +108,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    set target_list [list $machine_prefix-armv8]
+		    set target_list [linaro_lab armv8]
 		} else {
 		    set SIM "qemu-aarch64"
 		    set target_list { aarch64-qemu }
@@ -106,14 +124,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    case "$myname" in {
-			{ tcwg-ex40-* } {
-			    set target_list [list $machine_prefix-tcwgex40]
-			}
-			default {
-			    set target_list [list $machine_prefix-tcwgex40]
-			}
-		    }
+		    set target_list [linaro_lab x86_64]
 		} else {
 		    set target_list { unix }
 		}
@@ -122,14 +133,8 @@ case "$target_triplet" in {
     }
     { "*linux-gnu*" } {
 	if { [info exists env(SCHROOT_TEST)] && $env(SCHROOT_TEST) == "yes" } {
-	    case "$myname" in {
-		{ tcwg-ex40-* } {
-		    set target_list [list $machine_prefix-tcwgex40qemu]
-		}
-		default {
-		    set target_list [list $machine_prefix-tcwgex40qemu]
-		}
-	    }
+	    set target_list [linaro_lab x86_64]
+	    set board_info([lindex $target_list 0],remote_sim) "qemu-[lindex [split $target_triplet -] 0] -cpu any -R 0 -L /sysroot"
 	} else {
 	    global SIM
 	    set target_list { "arm-sim" }

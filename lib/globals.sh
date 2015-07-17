@@ -28,14 +28,16 @@ gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
 # This is the default clibrary and can be overridden on the command line.
-clibrary="eglibc"
+clibrary="glibc"
 snapshots="default"
 configfile="default"
 dbuser="default"
 dbpasswd="default"
 
 # Don't set this unless you need to modify it.
-default_march=
+override_arch=
+override_cpu=
+override_tune=
 
 manifest=
 
@@ -102,6 +104,7 @@ release=""
 with_packages="toolchain,sysroot,gdb"
 building=yes
 
+override_linker=
 override_cflags=
 override_ldflags=
 override_runtestflags=
@@ -127,6 +130,8 @@ gerrit_change_number=""
 gerrit_event_type=""
 jenkins_job_name=""
 jenkins_job_url=""
+fileserver="${fileserver:-148.251.136.42}"
+sources_conf="${sources_conf:-${abe_path}/config/sources.conf}"
 
 # source a user specific config file for commonly used configure options.
 # These overide any of the above values.

@@ -23,6 +23,11 @@ configure_build()
 {
     trace "$*"
 
+    flock --wait 100 ${local_builds}/git$$.lock --command echo
+    if test $? -gt 0; then
+	error "Timed out waiting for a git checkout to complete."
+	return 1
+    fi
     local gitinfo="`get_source $1`"
 
     local tool="`get_toolname ${gitinfo}`"
@@ -68,7 +73,6 @@ configure_build()
     # Since Binutils and GDB have a shared git repository, this confuses the logic
     # of loading the right config file. If Binutils is already configured, then 
     # assume GDB.
-    echo "FOO"
     if test x"${2}" = x"gdb" -o x"${2}" = x"binutils"; then
 	local tool="${2}"
     fi
@@ -143,7 +147,7 @@ configure_build()
 
     # Force static linking unless dynamic linking is specified
     local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
-    if test x"${static}" = x"yes" -o x"${tarbin}" = x"yes"; then
+    if test x"${static}" = x"yes"; then
 	if test "`echo ${tool} | grep -c glibc`" -eq 0; then
 	    local opts="--disable-shared --enable-static"
 	fi
@@ -177,7 +181,13 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=${sysroots}/usr CC=${target}-gcc"
 	    ;;
 	*libc)
-	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
+	    # [e]glibc uses slibdir and rtlddir for some of the libraries and
+	    # defaults to lib64/ for aarch64.  We need to override this.
+	    # There's no need to install anything into lib64/ since we don't
+	    # have biarch systems.
+	    echo slibdir=/usr/lib > ${builddir}/configparms
+	    echo rtlddir=/lib >> ${builddir}/configparms
+	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr --libdir=/usr/lib"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
@@ -201,7 +211,7 @@ configure_build()
 			    # Only add the Linaro bug and version strings for
 			    # Linaro branches.
 			    if test "`echo ${gcc_version} | grep -ic linaro`" -gt 0; then
-				local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\" --with-pkgversion=\"Linaro GCC ${date}\""
+				local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\""
 			    fi
 			    ;;
 			gdbserver)
@@ -238,6 +248,9 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	binutils)
+	    if test x"${override_linker}" = x"gold"; then
+		local opts="${opts} --enable-gold=default"
+	    fi
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gdb*)
@@ -295,7 +308,7 @@ configure_build()
 	    fi
         fi
 #       fi
-        
+
 	# unset this to avoid problems later
 	unset default_configure_flags
 	unset opts

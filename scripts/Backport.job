@@ -29,7 +29,7 @@ EOF
     return 0
 }
 
-abe_dir="${WORKSPACE}/abe"
+abe_dir="$(dirname $0)/.."
 export CONFIG_SHELL="/bin/bash"
 
 cat << EOF > ${WORKSPACE}/BUILD-INFO.txt
@@ -55,7 +55,7 @@ esac
 if test x"${GERRIT_TOPIC}" != x; then
     gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
-$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}
+$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}${excludecheck:+ --excludecheck ${excludecheck}} --fileserver 148.251.136.42
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then

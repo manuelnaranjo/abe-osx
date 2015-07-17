@@ -33,7 +33,9 @@ runintmpdir=
 # existing build dir, otherwise we're in the srcdir so we need to run
 # configure in the tmpdir and run the tests from there.
 if test ! -e "${PWD}/host.conf"; then
-    (cd ${tmpdir} && ${abe_path}/configure --with-sources-conf=${abe_path}/testsuite/test_sources.conf)
+    (cd ${tmpdir} && ${abe_path}/configure --with-sources-conf=${abe_path}/testsuite/test_sources.conf --with-remote-snapshots=snapshots-ref)
+    # Run it once outside of dryrun mode so that we pull the md5sums file.
+    (cd ${tmpdir} && ${abe_path}/abe.sh --space 4096)
     runintmpdir=yes
 else
     # copy the md5sums file from the existing snapshots directory to the new local_snapshots directory.
@@ -161,7 +163,7 @@ test_failure()
     local match=$2
     local out=
 
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "ERROR ${match}" "ERROR ${cb_commands}"
 }
 
@@ -173,7 +175,7 @@ test_pass()
     local out=
 
     # Continue to search for error so we don't get false positives.
-    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
+    out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep "${match}" | sed -e 's:\(^ERROR\).*\('"${match}"'\).*:\1 \2:')`"
     cbtest ${testlineno} "${out}" "${match}" "VALID ${cb_commands}"
 }
 
@@ -224,13 +226,13 @@ test_config_default()
   # Let's make sure the stage is actually skipped.
   # --force makes sure we run through to the stage even
   # if the builddir builds stamps are new.
-  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --disable ${feature} --build all"
+  cb_commands="--dryrun --force --target arm-linux-gnueabihf --disable ${feature} --build all"
   test_pass "${cb_commands}" "${skip_match}"
 
   # Let's make sure the stage is actually NOT skipped.
   # --force makes sure we run through to the stage even
   # if the builddir builds stamps are new.
-  cb_commands="--dryrun --force --target arm-none-linux-gnueabihf --enable ${feature} --build all"
+  cb_commands="--dryrun --force --target arm-linux-gnueabihf --enable ${feature} --build all"
   test_pass "${cb_commands}" "${perform_match}"
 }
 
@@ -351,15 +353,15 @@ cb_commands="--dryrun --checkout gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout glibc.git"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout glibc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout=glibc.git"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout=glibc.git"
 match="A space is expected"
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
@@ -409,7 +411,7 @@ cb_commands="--target ${target} --dump"
 match='newlib'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabihf"
+target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
 match='eglibc'
@@ -421,7 +423,7 @@ cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabi"
+target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
@@ -431,7 +433,7 @@ cb_commands="--target ${target} --dump"
 match='eglibc'
 test_pass "${cb_commands}" "${match}"
 
-target="armeb-none-linux-gnueabi"
+target="armeb-linux-gnueabi"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
 match='eglibc'
@@ -508,13 +510,13 @@ match="Couldn't find the source for"
 test_failure "${cb_commands}" "${match}"
 
 # This tests that --build can go before --target and --target is still processed correctly.
-cb_commands="--dryrun --build all --target arm-none-linux-gnueabihf --dump"
-match='arm-none-linux-gnueabihf'
+cb_commands="--dryrun --build all --target arm-linux-gnueabihf --dump"
+match='arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout can go before --target and --target is still processed correctly.
-cb_commands="--dryrun --checkout all --target arm-none-linux-gnueabihf --dump"
-match='arm-none-linux-gnueabihf'
+cb_commands="--dryrun --checkout all --target arm-linux-gnueabihf --dump"
+match='arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 test_config_default make_docs 'Make Documentation' 'Skipping make docs'    'Making docs in'
@@ -556,7 +558,7 @@ match='Target is\:         arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # This tests that --checkout and --build can be run together.
-cb_commands="--dryrun --target arm-none-linux-gnueabihf --checkout all --build all"
+cb_commands="--dryrun --target arm-linux-gnueabihf --checkout all --build all"
 match=''
 test_pass "${cb_commands}" "${match}"
 
@@ -626,7 +628,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 # The same as previous but with other commands mixed in.
-target="arm-none-linux-gnueabihf"
+target="arm-linux-gnueabihf"
 cb_commands="--set libc=glibc --dry-run --build all --target ${target}"
 match=''
 test_pass "${cb_commands}" "${match}"
@@ -635,54 +637,58 @@ test_pass "${cb_commands}" "${match}"
 # be grepped in 'match'... yet.
 cb_commands="--dryrun --build gcc.git --stage 2"
 testlineno="`expr $LINENO + 1`"
-out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
+out="`(${runintmpdir:+cd ${tmpdir}} && ${abe_path}/abe.sh --space 4960 ${cb_commands} 2>&1 | tee ${testlogs}/${testlineno}.log | grep -c " build.*gcc.*stage2")`"
 if test ${out} -gt 0; then
     pass ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 else
     fail ${testlineno} "VALID: --dryrun --build gcc.git --stage 2"
 fi
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --march armv8-a --dump"
-match='Default march      armv8-a'
+cb_commands="--dry-run --target arm-linux-gnueabihf --set arch=armv8-a"
+match='Overriding default --with-arch to armv8-a'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --march=armv8-a --dump"
-match="A space is expected"
-test_failure "${cb_commands}" "${match}"
+cb_commands="--dry-run --target arm-linux-gnueabihf --set cpu=cortex-a57"
+match='Overriding default --with-cpu to cortex-a57'
+test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check=foo"
+cb_commands="--dry-run --target arm-linux-gnueabihf --set tune=cortex-a53"
+match='Overriding default --with-tune to cortex-a53'
+test_pass "${cb_commands}" "${match}"
+
+cb_commands="--dry-run --target arm-linux-gnueabihf --check=foo"
 match='is invalid after'
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
 # Yes this won't work because we match on 'exact' package name only.
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --dump --check gdb--dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --dump --check gdb--dump"
 match='dump is an invalid package'
 test_failure "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check gdb --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check gdb --dump"
 match='check              gdb'
 test_pass "${cb_commands}" "${match}"
 
-cb_commands="--dry-run --target arm-none-linux-gnueabihf --check all --dump"
+cb_commands="--dry-run --target arm-linux-gnueabihf --check all --dump"
 match='check              all'
 test_pass "${cb_commands}" "${match}"
 
 # Verify that --check without a directive doesn't strip the next switch from
 # the command line.
-cb_commands="--dry-run --check --target arm-none-linux-gnueabihf --dump"
-match='         arm-none-linux-gnueabihf'
+cb_commands="--dry-run --check --target arm-linux-gnueabihf --dump"
+match='         arm-linux-gnueabihf'
 test_pass "${cb_commands}" "${match}"
 
 # test various combinations of --check and --excludecheck
@@ -882,6 +888,23 @@ cb_commands="--check --excludecheck foo --dump"
 match='foo is an invalid package name'
 test_failure "${cb_commands}" "${match}"
 
+# Only perform this test if we're running in the tmpdir because we
+# don't want to damage the builds/ dir for a valid run.
+if test x"${runintmpdir}" = xyes; then
+    rm -rf ${tmpdir}/builds
+
+    # Test that builds/ is restored if it is removed.
+    cb_commands="--dry-run --target arm-linux-gnueabihf --dump --build all"
+    match=''
+    test_pass "${cb_commands}" "${match}"
+
+    if test ! -d "${tmpdir}/builds"; then
+	fail ${testlineno} "VALID: test that builds/ is restored if it is removed."
+    else
+	pass ${testlineno} "VALID: tests that builds/ is restored if it is removed."
+    fi
+fi
+
 # If the tests pass successfully clean up /tmp/<tmpdir> but only if the
 # directory name is conformant.  We don't want to accidentally remove /tmp.
 if test x"${tmpdir}" = x"/tmp"; then
@@ -897,4 +920,8 @@ fi
 # print the total of test results
 totals
 
+# We can't just return ${failures} or it could overflow to 0 (success)
+if test ${failures} -gt 0; then
+    exit 1
+fi
 exit 0

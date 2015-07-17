@@ -8,27 +8,24 @@ set -e
 
 arch="native"
 begin_session=false
-schroot_master=""
 shared_dir=""
 board_exp=""
 finish_session=false
-gen_schroot=false
 sysroot=""
 ssh_master=false
 target_ssh_opts=""
 host_ssh_opts=""
 profile="tcwg-test"
 multilib_path="lib"
+uname=""
 
-while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
+while getopts "a:bd:e:fh:l:mo:p:P:qu:v" OPTION; do
     case $OPTION in
 	a) arch=$OPTARG ;;
 	b) begin_session=true ;;
-	c) schroot_master="$OPTARG" ;;
 	d) shared_dir=$OPTARG ;;
 	e) board_exp="$OPTARG" ;;
 	f) finish_session=true ;;
-	g) gen_schroot=true ;;
 	h) multilib_path="$OPTARG" ;;
 	l) sysroot=$OPTARG ;;
 	m) ssh_master=true ;;
@@ -36,13 +33,14 @@ while getopts "a:bc:d:e:fgh:l:mo:p:P:qv" OPTION; do
 	p) host_ssh_opts="$OPTARG" ;;
 	P) profile="$OPTARG" ;;
 	q) exec > /dev/null ;;
+	u) uname="$OPTARG" ;;
 	v) set -x ;;
     esac
 done
 shift $((OPTIND-1))
 
 target="${1%:*}"
-port="${1#*:}"
+port="$(echo $1 | grep ":" | sed -e "s/.*://")"
 
 triplet_to_deb_arch()
 {
@@ -74,7 +72,8 @@ if [ -z "$target" ]; then
 fi
 
 if [ -z "$port" ]; then
-    port="22"
+    echo "ERROR: no custom [ssh] port specified"
+    exit 1
 fi
 
 use_qemu=false
@@ -144,132 +143,9 @@ rsh="ssh $rsh_opts"
 user="$(ssh $target_ssh_opts $target echo \$USER)"
 home="$(ssh $target_ssh_opts $target pwd)"
 
-if $gen_schroot; then
-    chroot=/tmp/$schroot_id.$$
-
-    # Make sure machine in the lab agree on what time it is.
-    ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
-
-    ssh $target_ssh_opts $target \
-	sudo rm -rf $chroot
-    ssh $target_ssh_opts $target \
-	sudo debootstrap \
-	--arch=$deb_arch \
-	--variant=minbase \
-	--include=iptables,openssh-server,rsync,sshfs \
-	--foreign \
-	$deb_dist $chroot
-    # Copy qemu binaries to handle foreign schroots.
-    ssh $target_ssh_opts $target \
-	sudo cp /usr/bin/qemu-\*-static $chroot/usr/bin/ || true
-    ssh $target_ssh_opts $target \
-	sudo chroot $chroot ./debootstrap/debootstrap --second-stage &
-    pid=$!
-    while sleep 10; do
-	if ! ssh $target_ssh_opts $target ps -e -o cmd= | grep -v "grep\|ssh" | grep "./debootstrap/debootstrap --second-stage" >/dev/null; then
-	    kill $pid || true
-	    break
-	fi
-    done
-
-    # Configure APT sources.
-    case "$deb_arch" in
-	amd64|i386) deb_mirror="http://archive.ubuntu.com/ubuntu/" ;;
-	*) deb_mirror="http://ports.ubuntu.com/ubuntu-ports/" ;;
-    esac
-    ssh $target_ssh_opts $target \
-	sudo chroot $chroot bash -c "\"for i in '' -updates -security -backports; do for j in '' -src; do echo deb\\\$j $deb_mirror $deb_dist\\\$i main restricted universe multiverse >> /etc/apt/sources.list; done; done\""
-
-    case "$deb_arch" in
-	amd64) extra_packages="qemu-user-static gdb gdbserver" ;;
-	*) extra_packages="gdb gdbserver" ;;
-    esac
-
-    case "$profile" in
-	"tcwg-build") extra_packages="autoconf autogen automake bash bison build-essential ccrypt dejagnu flex gawk git g++ gcc libncurses5-dev libtool make texinfo wget xz-utils" ;;
-    esac
-
-    if ! [ -z "$extra_packages" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot apt-get update
-	ssh $target_ssh_opts $target \
-	    sudo chroot $chroot apt-get install -y "$extra_packages"
-    fi
-
-    if [ "$(echo "$extra_packages" | grep -c qemu-user-static)" = "0" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo rm -f $chroot/usr/bin/qemu-\*-static
-    fi
-
-    # Install foundation model in x86_64 chroots for bare-metal testing
-    if [ x"$deb_arch" = x"amd64" ]; then
-	ssh $target_ssh_opts $target \
-	    sudo mkdir -p $chroot/linaro/foundation-model/Foundation_v8pkg
-	ssh $target_ssh_opts $target \
-	    sudo rsync -a /linaro/foundation-model/Foundation_v8pkg/ $chroot/linaro/foundation-model/Foundation_v8pkg/
-    fi
-
-    if echo "$extra_packages" | grep -q "git"; then
-	ssh $target_ssh_opts $target \
-	    sudo ln -s /usr/share/doc/git/contrib/workdir/git-new-workdir $chroot/usr/local/bin/
-	ssh $target_ssh_opts $target \
-	    sudo chmod a+x $chroot/usr/share/doc/git/contrib/workdir/git-new-workdir
-    fi
-
-    ssh $target_ssh_opts $target \
-	sudo mkdir -p /var/chroots/
-    ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd $chroot && tar --one-file-system -czf /var/chroots/$schroot_id.tgz .\""
-
-    ssh $target_ssh_opts $target \
-	sudo rm -rf $chroot
-
-    case "$deb_arch" in
-	armhf|i386) personality="personality=linux32" ;;
-	*) personality="" ;;
-    esac
-
-    ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\"" <<EOF
-[$schroot_id]
-type=file
-file=/var/chroots/$schroot_id.tgz
-groups=users
-root-groups=users
-profile=$profile
-$personality
-EOF
-
-    if ! [ -z "$schroot_master" ]; then
-	scp $target_ssh_opts $target:/var/chroots/$schroot_id.tgz $schroot_master/
-	mkdir -p $schroot_master/chroot.d/
-	scp $target_ssh_opts $target:/etc/schroot/chroot.d/$schroot_id $schroot_master/chroot.d/
-    fi
-fi
-
-if ! [ -z "$schroot_master" ]; then
-    # Make sure machine in the lab agree on what time it is.
-    ssh $target_ssh_opts $target \
-	sudo ntpdate pool.ntp.org >/dev/null 2>&1 || true
-
-    ssh $target_ssh_opts $target \
-	sudo mkdir -p /var/chroots/
-
-    cat $schroot_master/$schroot_id.tgz | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /var/chroots/$schroot_id.tgz\""
-    cat $schroot_master/chroot.d/$schroot_id | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cat > /etc/schroot/chroot.d/$schroot_id\""
-
-    (cd $schroot_master && tar -c $profile/ | ssh $target_ssh_opts $target \
-	sudo bash -c "\"cd /etc/schroot && rm -rf $profile && tar -x && chown -R root:root $profile/\"")
-fi
-
 if $begin_session; then
     ssh $target_ssh_opts $target schroot -b -c chroot:$schroot_id -n $profile-$port -d /
-    $schroot sh -c "\"echo $user - data $((1024*1024)) >> /etc/security/limits.conf\""
-    $schroot sh -c "\"echo $user - nproc 1000 >> /etc/security/limits.conf\""
-    # Set ssh port
+    # Start ssh server on custom port
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
     $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
@@ -277,12 +153,9 @@ if $begin_session; then
     $schroot sed -i -e "\"/.*MaxStartups.*/d\"" -e "\"/.*MaxSesssions.*/d\"" /etc/ssh/sshd_config
     $schroot bash -c "\"echo \\\"MaxStartups 256\\\" >> /etc/ssh/sshd_config\""
     $schroot bash -c "\"echo \\\"MaxSessions 256\\\" >> /etc/ssh/sshd_config\""
-    $schroot sed -i -e "'/check_for_upstart [0-9]/d'" /etc/init.d/ssh
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.
-    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT || true
-    # Debian (but not Ubuntu) has wrong permissions on /bin/fusermount.
-    $schroot chmod +x /bin/fusermount || true
+    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >dev/null 2>&1 || true
 
     $schroot mkdir -p /root/.ssh
     ssh $target_ssh_opts $target cat .ssh/authorized_keys | $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
@@ -342,6 +215,19 @@ fi
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
 
+    if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
+	# Our aarch64 sysroot has everything in /lib64, but executables
+	# still expect to find dynamic linker under /lib/ld-linux-aarch64.so.1
+	if [ -h $sysroot/lib ]; then
+	    $rsh root@$target "rm /sysroot/lib"
+	fi
+	if [ -h $sysroot/lib ] \
+	    || ! [ -e $sysroot/lib/ld-linux-aarch64.so.1 ]; then
+	    $rsh root@$target "mkdir -p /sysroot/lib/"
+	    $rsh root@$target "cd /sysroot/lib; ln -s ../lib64/ld-linux-aarch64.so.1 ."
+	fi
+    fi
+
     if ! $use_qemu; then
 	# Make sure that sysroot libraries are searched before any other.
 	$rsh root@$target "cat > /etc/ld.so.conf.new" <<EOF
@@ -354,12 +240,6 @@ EOF
 	# Remove /etc/ld.so.cache to workaround QEMU problem for targets with
 	# different endianness (i.e., /etc/ld.so.cache is endian-dependent).
 	$rsh root@$target "rm /etc/ld.so.cache"
-	if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
-	    # Our aarch64 sysroot has everything in /lib64, but executables
-	    # still expect to find dynamic linker under
-	    # /lib/ld-linux-aarch64.so.1
-	    $rsh root@$target "ln -s /sysroot/lib64 /sysroot/lib"
-	fi
 	# Cleanup runaway QEMU processes that ran for more than 2 minutes.
 	# Note the "-S none" option -- ssh does not always detach from process
 	# when multiplexing is used.  I think this is a bug in ssh.
@@ -371,13 +251,34 @@ EOF
     echo $target:$port installed sysroot $sysroot
 fi
 
+if [ x"$uname" != x"" ]; then
+    old_uname="$($rsh root@$target "uname -m")"
+    $rsh root@$target "mv /bin/uname /bin/uname.real"
+    $rsh root@$target "cat > /bin/uname" <<EOF
+#!/bin/bash
+
+/bin/uname.real "\$@" | sed -e "s/$old_uname/$uname/g"
+exit \${PIPESTATUS[0]}
+EOF
+    $rsh root@$target "chmod a+x /bin/uname"
+fi
+
 if $ssh_master; then
     ssh $orig_target_ssh_opts -o Port=$port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -fMN $target
 fi
 
 # Keep the session alive when file /dont_kill_me is present
-if $finish_session && [ x`$schroot cat /dont_keep_session` = x"1" ]; then
-    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT || true
+if $finish_session; then
+    # Perform all operations from outside of schroot session since the inside
+    # may be completely broken (e.g., bash doesn't start).
+    schroot_location="$(ssh $target_ssh_opts $target schroot --location -c session:$profile-$port)"
+    if [ x"$(ssh $target_ssh_opts $target cat $schroot_location/dont_keep_session)" != x"1" ]; then
+	finish_session=false
+    fi
+fi
+
+if $finish_session; then
+    $schroot iptables -I INPUT -p tcp --dport $port -j REJECT >/dev/null 2>&1 || true
     ssh $target_ssh_opts $target schroot -f -e -c session:$profile-$port | true
     if [ x"${PIPESTATUS[0]}" != x"0" ]; then
 	# tcwgbuildXX machines have a kernel problem that a bind mount will be

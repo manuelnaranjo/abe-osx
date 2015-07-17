@@ -1064,3 +1064,13 @@ test_parser tool "${in}" "${match}" "${errmatch}"
 in="binutils-gdb.git/linaro_binutils-2_24-branch"
 match='binutils-gdb'
 test_parser tool "${in}" "${match}" "${errmatch}"
+
+# Test the special case code to detect binutils-gdb unified tarballs.
+in="binutils-gdb-2015.05.tar.xz"
+match='binutils-gdb'
+test_parser tool "${in}" "${match}" "${errmatch}"
+
+# Make sure only the 'gcc' part is deteccted.
+in="gcc-release-candidate-2015.05-rc2.tar.xz"
+match='gcc'
+test_parser tool "${in}" "${match}" "${errmatch}"

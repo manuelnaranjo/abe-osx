@@ -8,6 +8,7 @@ else
     topdir=$PWD
 fi
 
+test_sources_conf="${topdir}/testsuite/test_sources.conf"
 # configure generates host.conf from host.conf.in.
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -17,8 +18,9 @@ else
     . "${topdir}/lib/common.sh" || exit 1
     warning "no host.conf file!  Synthesizing a framework for testing."
 
-    remote_snapshots=http://abe.validation.linaro.org/snapshots
+    remote_snapshots="${remote_snapshots:-/snapshots}"
     wget_bin=/usr/bin/wget
+    NEWWORKDIR=/usr/local/bin/git-new-workdir
     sources_conf=${topdir}/testsuite/test_sources.conf
 fi
 echo "Testsuite using ${sources_conf}"
@@ -113,6 +115,9 @@ totals()
     echo "Total test results:"
     echo "	Passes: ${passes}"
     echo "	Failures: ${failures}"
+    if test ${xpasses} -gt 0; then
+	echo "	Unexpected Passes: ${xpasses}"
+    fi
     if test ${xfailures} -gt 0; then
 	echo "	Expected Failures: ${xfailures}"
     fi
@@ -520,6 +525,120 @@ else
 fi
 
 # ----------------------------------------------------------------------------------
+echo "============= fetch_http() tests ================"
+
+# It doesn't exist yet, so it should error out if we try to fetch with supdate=no.
+out="`supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0 -a ! -e ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no"
+fi
+
+# Now try to download it with supdate=yes (default) unspecified and it should
+# work and return 0 and show the file has been downloaded.
+out="`fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes)"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes)"
+fi
+
+# It exists again, so it should pass even if supdate=no
+out="`supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no when source exists"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no when source exists"
+fi
+
+# force should override supdate and this should re-download
+out="`force=yes supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes"
+fi
+
+# Test the case where wget_bin isn't set.
+rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
+# force should override supdate and this should download for the first time.
+out="`force=yes supdate=no fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes and sources don't exist"
+else
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=no and \${force}=yes and sources don't exist"
+fi
+
+# Get a timestamp of the most recently downloaded version.
+gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+# Sleep so that the timestamps differ (if they will)
+sleep 1s
+
+# Try to download it again with supdate=yes explicit and it
+# should return 0 (that we've already downloaded it) but not download again.
+out="`supdate=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+ret=$?
+
+# Compare the second timestamp to make sure they're equal (i.e., that a new
+# one wasn't downloaded).
+gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+if test $ret -eq 0 -a ${gmp_stamp1} -eq ${gmp_stamp2}; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes"
+fi
+
+# Sleep so that the timestamps differ (if they will)
+sleep 1s
+
+# Try to download it again with supdate=yes and force=yes explicit it
+# should download it again and return 0 (and the timestamp should differ)
+out="`force=yes supdate=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+ret=$?
+
+# Compare to the second timestamp to make sure they're not equal.
+gmp_stamp3=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+
+if test $ret -eq 0 -a ${gmp_stamp2} -ne ${gmp_stamp3}; then
+    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes and \${force}=yes"
+else
+    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${supdate}=yes and \${force}=yes"
+fi
+
+out="`fetch_http md5sums 2>/dev/null`"
+if test $? -eq 0; then
+    pass "fetch_http md5sums"
+else
+    fail "fetch_http md5sums"
+fi
+
+# remove md5sums so we can test fetch().
+if test ! -e "${local_snapshots}/md5sums"; then
+    rm ${local_snapshots}/md5sums
+fi
+
+# Test the case where wget_bin isn't set.
+rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
+out="`unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -gt 0; then
+    pass "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes) should fail."
+else
+    fail "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz (implicit \${supdate}=yes) should fail."
+fi
+
+# Verify that '1' is returned when a non-existent file is requested.
+out="`fetch_http no_such_file 2>/dev/null`"
+if test $? -gt 0; then
+    pass "fetch_http no_such_file (implicit \${supdate}=yes) should fail."
+else
+    fail "fetch_http no_such_file (implicit \${supdate}=yes) should fail."
+fi
+
 echo "============= fetch() tests ================"
 out="`fetch md5sums 2>/dev/null`"
 if test $? -eq 0; then
@@ -601,31 +720,24 @@ else
     fixme "get_URL returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_URL: git URL where sources.conf has a tab"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL gcc_tab.git`"
-    if test x"`echo ${out}`" = x"http://staging.git.linaro.org/git/toolchain/gcc.git"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL gcc_tab.git`"
+if test x"`echo ${out}`" = x"http://staging.git.linaro.org/git/toolchain/gcc.git"; then
+   pass "${testing}"
 else
-    untested "${testing}"
+   fail "${testing}"
+   fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: nomatch.git@<revision> shouldn't have a corresponding sources.conf url."
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL nomatch.git@12345 2>/dev/null`"
-    if test x"${out}" = x""; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL nomatch.git@12345 2>/dev/null`"
+if test x"${out}" = x""; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_URL returned ${out}"
 fi
 
 echo "============= get_URL() tests with erroneous service:// inputs ================"
@@ -790,58 +902,42 @@ echo "============= get_URL() http://git@ tests ================"
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git identifier should match http://git@<url>/<repo>.git"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL git_gcc.git`"
-    if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL git_gcc.git`"
+if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL git_gcc.git/branch`"
-    if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
-	pass "${testing} http://git@<url>/<repo>.git~<branch>"
-    else
-	fail "${testing} http://git@<url>/<repo>.git~<branch>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch`"
+if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
+    pass "${testing} http://git@<url>/<repo>.git~<branch>"
 else
-    untested "${testing} http://git@<url>/<repo>.git"
+    fail "${testing} http://git@<url>/<repo>.git~<branch>"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL git_gcc.git/branch@12345`"
-    if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
-	pass "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
-    else
-	fail "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch@12345`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
+    pass "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
 else
-    untested "${testing} http://git@<url>/<repo>.git"
+    fail "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL git_gcc.git@12345`"
-    if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
-	pass "${testing} http://git@<url>/<repo>.git@<revision>"
-    else
-	fail "${testing} http://git@<url>/<repo>.git@<revision>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL git_gcc.git@12345`"
+if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
+    pass "${testing} http://git@<url>/<repo>.git@<revision>"
 else
-    untested "${testing} http://git@<url>/<repo>.git"
+    fail "${testing} http://git@<url>/<repo>.git@<revision>"
+    fixme "get_URL returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -851,86 +947,62 @@ echo "============= get_URL() http://user.name@ tests ================"
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git identifier should match http://user.name@<url>/<repo>.git"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL user_gcc.git`"
-    if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git"; then
-	pass "${testing} http://<user.name>@<url>/<repo>.git"
-    else
-	fail "${testing} http://<user.name>@<url>/<repo>.git"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL user_gcc.git`"
+if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git"; then
+    pass "${testing} http://<user.name>@<url>/<repo>.git"
 else
-    untested "${testing}"
+    fail "${testing} http://<user.name>@<url>/<repo>.git"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL user_gcc.git/branch`"
-    if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
-	pass "${testing} http://user.name@<url>/<repo>.git~<branch>"
-    else
-	fail "${testing} http://user.name@<url>/<repo>.git~<branch>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch`"
+if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
+    pass "${testing} http://user.name@<url>/<repo>.git~<branch>"
 else
-    untested "${testing} http://user.name@<url>/<repo>.git"
+    fail "${testing} http://user.name@<url>/<repo>.git~<branch>"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL user_gcc.git/branch@12345`"
-    if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
-	pass "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
-    else
-	fail "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch@12345`"
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
+    pass "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
 else
-    untested "${testing} http://username@<url>/<repo>.git"
+    fail "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
+    fixme "get_URL returned ${out}"
 fi
 
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL user_gcc.git@12345`"
-    if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
-	pass "${testing} http://user.name@<url>/<repo>.git@<revision>"
-    else
-	fail "${testing} http://user.name@<url>/<repo>.git@<revision>"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL user_gcc.git@12345`"
+if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
+    pass "${testing} http://user.name@<url>/<repo>.git@<revision>"
 else
-    untested "${testing} http://username@<url>/<repo>.git"
+    fail "${testing} http://user.name@<url>/<repo>.git@<revision>"
+    fixme "get_URL returned ${out}"
 fi
 
 echo "============= get_URL() svn and lp tests ================"
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf svn identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL gcc-svn-4.8`"
-    if test x"`echo ${out}`" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL gcc-svn-4.8`"
+if test x"`echo ${out}`" = x"svn://gcc.gnu.org/svn/gcc/branches/gcc-4_8-branch"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_URL returned ${out}"
 fi
 
 testing="get_URL: sources.conf launchpad identifier should match"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_URL cortex-strings`"
-    if test x"`echo ${out}`" = x"lp:cortex-strings"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_URL returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_URL cortex-strings`"
+if test x"`echo ${out}`" = x"lp:cortex-strings"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_URL returned ${out}"
 fi
 
 # ----------------------------------------------------------------------------------
@@ -973,9 +1045,6 @@ fi
 
 echo "============= get_source() tests ================"
 # TODO Test ${sources_conf} for ${in} for relevant tests.
-#      Mark tests as untested if the expected match isn't in sources_conf.
-#      This might be due to running testsuite in a builddir rather than a
-#      source dir.
 
 # get_sources might, at times peak at latest for a hint if it can't find
 # things.  Keep it unset unless you want to test a specific code leg.
@@ -1109,63 +1178,49 @@ for transport in ssh git http; do
   fi
 done
 
-# These aren't valid if testing from a build directory.
-testing="get_source: full url with <repo>.git with no matching source.conf entry should fail."
-if test ! -e "${PWD}/host.conf"; then
-    in="http://git.linaro.org/git/toolchain/foo.git"
-    if test x"${debug}" = x"yes"; then
-        out="`get_source ${in}`"
-    else
-        out="`get_source ${in} 2>/dev/null`"
-    fi
-    if test x"${out}" = x"http://git.linaro.org/git/toolchain/foo.git"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+# The regular sources.conf won't have this entry
+testing="get_source: full url with <repo>.git with matching source.conf entry should succeed."
+in="http://git.linaro.org/git/toolchain/foo.git"
+if test x"${debug}" = x"yes"; then
+    out="`sources_conf=${test_sources_conf} get_source ${in}`"
 else
-    untested "${testing}"
+    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+fi
+if test x"${out}" = x"http://git.linaro.org/git/toolchain/foo.git"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
-# These aren't valid if testing from a build directory.
+# No sources.conf should have this entry, but use the one under test control
 testing="get_source: <repo>.git identifier with no matching source.conf entry should fail."
-if test ! -e "${PWD}/host.conf"; then
-    in="nomatch.git"
-    if test x"${debug}" = x"yes"; then
-        out="`get_source ${in}`"
-    else
-        out="`get_source ${in} 2>/dev/null`"
-    fi
-    if test x"${out}" = x""; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+in="nomatch.git"
+if test x"${debug}" = x"yes"; then
+    out="`sources_conf=${test_sources_conf} get_source ${in}`"
 else
-    untested "${testing}"
+    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+fi
+if test x"${out}" = x""; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
-# These aren't valid if testing from a build directory.
+# No sources.conf should have this entry, but use the one under test control
 testing="get_source: <repo>.git@<revision> identifier with no matching source.conf entry should fail."
-if test ! -e "${PWD}/host.conf"; then
-    in="nomatch.git@12345"
-
-    if test x"${debug}" = x"yes"; then
-	out="`get_source ${in}`"
-    else
-	out="`get_source ${in} 2>/dev/null`"
-    fi
-
-    if test x"${out}" = x""; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+in="nomatch.git@12345"
+if test x"${debug}" = x"yes"; then
+    out="`sources_conf=${test_sources_conf} get_source ${in}`"
 else
-    untested "${testing}"
+    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+fi
+if test x"${out}" = x""; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
 testing="get_source: tag matching an svn repo in ${sources_conf}"
@@ -1182,60 +1237,47 @@ else
     fixme "get_source returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git matches non .git suffixed url."
 in="foo.git"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_source ${in} 2>/dev/null`"
-    if test x"${out}" = x"git://testingrepository/foo"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git/<branch> matches non .git suffixed url."
 in="foo.git/bar"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_source ${in} 2>/dev/null`"
-    if test x"${out}" = x"git://testingrepository/foo~bar"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo~bar"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
+# The regular sources.conf won't have this entry.
 testing="get_source: <repo>.git/<branch>@<revision> matches non .git suffixed url."
 in="foo.git/bar@12345"
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_source ${in} 2>/dev/null`"
-    if test x"${out}" = x"git://testingrepository/foo~bar@12345"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo~bar@12345"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
 in="foo.git@12345"
 testing="get_source: ${sources_conf}:${in} matching no .git in <repo>@<revision>."
-if test ! -e "${PWD}/host.conf"; then
-    out="`get_source ${in} 2>/dev/null`"
-    if test x"${out}" = x"git://testingrepository/foo@12345"; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "get_source returned ${out}"
-    fi
+out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
+if test x"${out}" = x"git://testingrepository/foo@12345"; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "get_source returned ${out}"
 fi
 
 testing="get_source: partial match in snapshots, latest not set."
@@ -1316,17 +1358,13 @@ fi
 branch=
 revision=
 testing="create_release_tag: repository branch empty"
-if test -d ${srcdir}; then
-    in="gcc.git"
-    out="`create_release_tag ${in} | grep -v TRACE`"
-    if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
-	pass "${testing}"
-    else
-	fail "${testing}"
-	fixme "create_release_tag returned ${out}"
-    fi
+in="gcc.git"
+out="`create_release_tag ${in} | grep -v TRACE`"
+if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
+    pass "${testing}"
 else
-    untested "${testing}"
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
 fi
 
 testing="create_release_tag: tarball"
@@ -1351,6 +1389,88 @@ echo "================================================"
 
 # These can be painfully slow so test small repos.
 
+#confirm that checkout works with raw URLs
+rm -rf "${local_snapshots}"/*.git*
+testing="http://abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+in="${testing}"
+if test x"${debug}" = xyes; then
+  out="`cd ${local_snapshots} && checkout ${testing}`"
+else
+  out="`cd ${local_snapshots} && checkout ${testing} 2>/dev/null`"
+fi
+if test $? -eq 0; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+#confirm that checkout fails approriately with a range of bad services in raw URLs
+for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
+  rm -rf "${local_snapshots}"/*.git*
+  in="${service}abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+  testing="checkout: ${in} should fail with 'proper URL required' message."
+  if test x"${debug}" = xyes; then
+    out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
+  else
+    out="`cd ${local_snapshots} && checkout ${in} 2>&1`"
+  fi
+  if test $? -eq 0; then
+    fail "${testing}"
+  else
+    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_URL\\.)$"; then
+      pass "${testing}"
+    else
+      fail "${testing}"
+    fi
+  fi
+done
+
+#confirm that checkout fails with bad repo - abe is so forgiving that I can only find one suitable input
+rm -rf "${local_snapshots}"/*.git*
+in="http://"
+testing="checkout: ${in} should fail with 'cannot parse repo' message."
+if test x"${debug}" = xyes; then
+  out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
+else
+  out="`cd ${local_snapshots} && checkout ${in} 2>&1`"
+fi
+if test $? -eq 0; then
+  fail "${testing}"
+else
+  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: git_parser (Malformed input\\. No repo found\\.)$"; then
+    pass "${testing}"
+  else
+    fail "${testing}"
+  fi
+fi
+
+rm -rf "${local_snapshots}"/*
+in="`get_URL abe.git`"
+testing="checkout: abe.git should produce ${local_snapshots}/abe.git"
+if (cd "${local_snapshots}" && \
+    if test x"${debug}" = xyes; then checkout "${in}" > /dev/null; else checkout "${in}" > /dev/null 2>&1; fi && \
+    test `ls | wc -l` -eq 1 && \
+    ls abe.git > /dev/null); then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
+rm -rf "${local_snapshots}"/*
+in="`get_URL abe.git`"
+in="`get_git_url ${in}`"
+testing="checkout: abe.git~staging should produce ${local_snapshots}/abe.git and ${local_snapshots}/abe.git~staging"
+if (cd "${local_snapshots}" && \
+    if test x"${debug}" = xyes; then checkout "${in}~staging" > /dev/null; else
+      checkout "${in}~staging" >/dev/null 2>&1; fi && \
+    test `ls | wc -l` -eq 2 && \
+    ls abe.git > /dev/null && \
+    ls abe.git~staging > /dev/null); then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
 test_checkout ()
 {
     local should="$1"
@@ -1358,47 +1478,86 @@ test_checkout ()
     local package="$3"
     local branch="$4"
     local revision="$5"
+    local expected="$6"
 
     #in="${package}${branch:+/${branch}}${revision:+@${revision}}"
     in="${package}${branch:+~${branch}}${revision:+@${revision}}"
 
     local gitinfo=
-    gitinfo="`get_URL ${in}`"
+    gitinfo="`sources_conf=${test_sources_conf} get_URL ${in}`"
 
     local tag=
-    tag="`get_git_url ${gitinfo}`"
+    tag="`sources_conf=${test_sources_conf} get_git_url ${gitinfo}`"
     tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
 
     # We also support / designated branches, but want to move to ~ mostly.
     #tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
 
+    #Make sure there's no hanging state relating to this test before it runs
+    if ls "${local_snapshots}/${package}"* > /dev/null 2>&1; then
+      rm -rf "${local_snapshots}/${package}"*
+    fi
+
     if test x"${debug}" = x"yes"; then
-	out="`(cd ${local_snapshots} && checkout ${tag})`"
+        if test x"${expected}" = x; then
+	    out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag})`"
+        else
+            out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag} 2> >(tee /dev/stderr))`"
+        fi
     else
-	out="`(cd ${local_snapshots} && checkout ${tag} 2>/dev/null)`"
+        if test x"${expected}" = x; then
+	    out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag} 2>/dev/null)`"
+        else
+	    out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag} 2>&1)`"
+        fi
     fi
 
     local srcdir=
-    srcdir="`get_srcdir "${tag}"`"
+    srcdir="`sources_conf=${test_sources_conf} get_srcdir "${tag}"`"
 
     local branch_test=
     if test ! -d ${srcdir}; then
 	branch_test=0
     elif test x"${branch}" = x -a x"${revision}" = x; then
 	branch_test=`(cd ${srcdir} && git branch | grep -c "^\* master$")`
+    elif test x"${revision}" = x; then
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch}$")`
     else
-	branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch:+${branch}${revision:+_}}${revision:+${revision}}$")`
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* local_${revision}$")`
+    fi
+
+    #Make sure we leave no hanging state
+    if ls "${local_snapshots}/${package}"* > /dev/null 2>&1; then
+      rm -rf "${local_snapshots}/${package}"*
     fi
 
     if test x"${branch_test}" = x1 -a x"${should}" = xpass; then
-	pass "${testing}"
-	return 0
+        if test x"${expected}" = x; then
+            pass "${testing}"
+        else
+            if echo "${out}" | grep -q "${expected}"; then
+	        pass "${testing}"
+	        return 0
+            else
+                fail "${testing}"
+                return 1
+            fi
+        fi
     elif test x"${branch_test}" = x1 -a x"${should}" = xfail; then
 	fail "${testing}"
 	return 1
     elif test x"${branch_test}" = x0 -a x"${should}" = xfail; then
-	pass "${testing}"
-	return 0
+        if test x"${expected}" = x; then
+            pass "${testing}"
+        else
+            if echo "${out}" | grep -q "${expected}"; then
+	        pass "${testing}"
+	        return 0
+            else
+                fail "${testing}"
+                return 1
+            fi
+        fi
     else
 	fail "${testing}"
 	return 1
@@ -1406,70 +1565,78 @@ test_checkout ()
 }
 
 testing="checkout: http://git@<url>/<repo>.git"
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch=''
-   revision=''
-   should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+package="abe.git"
+branch=''
+revision=''
+should="pass"
+expected=''
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 
 testing="checkout: http://git@<url>/<repo>.git/<branch>"
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch="gerrit"
-   revision=''
-   should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+package="abe.git"
+branch="gerrit"
+revision=''
+should="pass"
+expected=''
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 
 testing="checkout: http://git@<url>/<repo>.git@<revision>"
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch=''
-   revision="9bcced554dfc"
-   should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+package="abe.git"
+branch=''
+revision="9bcced554dfc"
+should="pass"
+expected=''
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 
-testing="checkout: http://git@<url>/<repo>.git/unusedbranchnanme@<revision>"
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch="unusedbranchname"
-   revision="9bcced554dfc"
-   should="pass"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+testing="checkout: http://git@<url>/<repo>.git/unusedbranchname@<revision>"
+package="abe.git"
+branch="unusedbranchname"
+revision="9bcced554dfc"
+should="pass"
+expected=''
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 
-testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail."
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch="nonexistentbranch"
-   revision=''
-   should="fail"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+testing="checkout: svn://testingrepository/foo should fail with 'checkout failed' message."
+package="foo-svn"
+branch=''
+revision=''
+should="fail"
+expected="^ERROR.*: checkout (Failed to check out svn://testingrepository/foo to ${local_snapshots}/foo)$"
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
 
-testing="checkout: http://git@<url>/<repo>.git@<nonexistentrevision> should fail."
-if test ! -e "${PWD}/host.conf"; then
-   package="abe.git"
-   branch=''
-   revision="123456bogusbranch"
-   should="fail"
-   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-else
-    untested "${testing}"
-fi
+testing="checkout: git://testingrepository/foo should fail with 'clone failed' message."
+package="foo.git"
+branch=''
+revision=''
+should="fail"
+expected="^ERROR.*: checkout (Failed to clone master branch from git://testingrepository/foo to ${local_snapshots}/foo)$"
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+
+testing="checkout: http://git@<url>/<repo>.git/<nonexistentbranch> should fail with 'branch does not exist' message."
+package="abe.git"
+branch="nonexistentbranch"
+revision=''
+should="fail"
+expected="^ERROR.*: checkout (Branch ${branch} likely doesn't exist in git repo ${package}\\!)$"
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+
+testing="checkout: http://git@<url>/<repo>.git@<nonexistentrevision> should fail with 'revision does not exist' message."
+package="abe.git"
+branch=''
+revision="123456bogusbranch"
+should="fail"
+expected="^ERROR.*: checkout (Revision ${revision} likely doesn't exist in git repo ${package}\\!)$"
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+
+testing="checkout: http://git@<url>/<repo>.git~<branch> should pass with appropriate notice"
+package="abe.git"
+branch='staging'
+revision=""
+should="pass"
+expected="^NOTE: Checking out branch staging for abe in .\\+~staging$"
+test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}" "${expected}"
+
+rm -rf "${local_snapshots}"/*.git*
 
 echo "============= misc tests ================"
 testing="pipefail"
@@ -1533,11 +1700,11 @@ else
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
   if test $? -eq 0; then
-    xpass "${testing}"
+    pass "${testing}"
   else
-    xfail "${testing}"
+    fail "${testing}"
   fi
 fi
 testing="postfix make args (make_install)"
@@ -1549,11 +1716,11 @@ else
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
-  echo "${out}" | grep -- "${cmp_makeflags} 2>&1" > /dev/null
+  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
   if test $? -eq 0; then
-    xpass "${testing}"
+    pass "${testing}"
   else
-    xfail "${testing}"
+    fail "${testing}"
   fi
 fi
 cmp_makeflags=
@@ -1596,15 +1763,11 @@ fi
 # TODO: Test checkout with a multi-/ branch
 
 #testing="checkout: http://git@<url>/<repo>.git~multi/part/branch."
-#if test ! -e "${PWD}/host.conf"; then
-#   package="glibc.git"
-#   branch='release/2.18/master'
-#   revision=""
-#   should="pass"
-#   test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-#else
-#    untested "${testing}"
-#fi
+#package="glibc.git"
+#branch='release/2.18/master'
+#revision=""
+#should="pass"
+#test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
 
 . "${topdir}/testsuite/srcdir-tests.sh"
 
@@ -1612,3 +1775,8 @@ fi
 # print the total of test results
 totals
 
+# We can't just return ${failures} or it could overflow to 0 (success)
+if test ${failures} -gt 0; then
+    exit 1
+fi
+exit 0

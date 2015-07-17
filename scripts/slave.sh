@@ -24,7 +24,7 @@ chown -R buildslave:buildslave /linaro/
 chown -R buildslave:buildslave /opt/
 
 # Update hosts so we can find this machine via HTTP
-echo "88.98.47.97	 abe.tcwglab.linaro.org" >> /etc/hosts
+echo "88.98.47.97	 148.251.136.42" >> /etc/hosts
 
 # Setup default SSH config so builds can use SSH to access the targets for testing. This
 # is setup for external access to the TCWG build farm, which go through a proxy, and is

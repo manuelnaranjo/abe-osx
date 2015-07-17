@@ -13,10 +13,10 @@ print_schroot_board_files()
     fi
 
     # Run dummy runtest to figure out which target boards load schroot-ssh.exp
-    runtest $target --tool none 2>&1 \
-	| grep -B5 "^Using .*/schroot-ssh.exp as generic interface file for target\.\$" \
-	| grep "^Using .* as board description file for target\.\$" \
-	| sed -e "s/^Using \(.*\) as board description file for target\.\$/\1/"
+    runtest $target --tool none 2>&1 | awk '
+/^Using .* as board description file for target\.$/ { board=$2 }
+/^Using .*\/schroot-ssh.exp as generic interface file for target\.$/ { print board }
+'
     rm -f none.log none.sum
 }
 
@@ -158,6 +158,9 @@ start_schroot_sessions()
     if test x"$result" != x"0"; then
 	return 1
     fi
+
+    # Cleanup schroot sessions if user kills testing
+    trap "stop_schroot_sessions" HUP INT KILL TERM
 
     schroot_make_opts="SCHROOT_PORT=$schroot_port"
     if $shared_dir_ok; then

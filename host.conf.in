@@ -39,6 +39,7 @@ parallel=@ENABLE_PARALLEL@
 makeversion=@MAKEVERSION@
 
 wget_bin=@WGET@
+fileserver=@FILESERVER@
 bash_shell=@BASH@
 LSBCC=@LSBCC@
 LSBCXX=@LSBCXX@

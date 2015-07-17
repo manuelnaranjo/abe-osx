@@ -609,6 +609,8 @@ SOURCES_CONF
 FILESERVER
 ABE_TOP
 BUILDDATE
+QEMU_AARCH64
+QEMU_ARM
 AUTOGEN
 BISON
 FLEX
@@ -1918,6 +1920,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 missing=
+optional=
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -3203,8 +3206,9 @@ fi
 
 
 
-# Linux Foundation installs them in /opt/lsb.  Ubuntu will install them
-# in the default system library path.
+# Linux Foundation installs them in /opt/lsb. Older Ubuntus will install them
+# in the default system library path, but as of Trusty you have to get LSB from
+# the Linux Foundation.
 # Extract the first word of "lsbcc", so it can be a program name with args.
 set dummy lsbcc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3486,6 +3490,100 @@ $as_echo "$as_me: WARNING: You need 'autogen' to run configure for GCC properly!
    missing="${missing} autogen"
 fi
 
+# Extract the first word of "qemu-arm", so it can be a program name with args.
+set dummy qemu-arm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_QEMU_ARM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $QEMU_ARM in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_QEMU_ARM="$QEMU_ARM" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_QEMU_ARM="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+QEMU_ARM=$ac_cv_path_QEMU_ARM
+if test -n "$QEMU_ARM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $QEMU_ARM" >&5
+$as_echo "$QEMU_ARM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test x"${QEMU_ARM}" = x; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'qemu-arm' to run test the toolchain properly!" >&5
+$as_echo "$as_me: WARNING: You need 'qemu-arm' to run test the toolchain properly!" >&2;}
+# Ubuntu uses qemu-user-static, Newer Fedora uses qemu-system-arm and qemu-system-aarch64,
+# and older Fedora's use just qemu as the package name.
+#   missing="${missing} qemu"
+fi
+# Older qemu packages don't contain the AARCH64 simulator
+# Extract the first word of "qemu-aarch64", so it can be a program name with args.
+set dummy qemu-aarch64; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_QEMU_AARCH64+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $QEMU_AARCH64 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_QEMU_AARCH64="$QEMU_AARCH64" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_QEMU_AARCH64="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+QEMU_AARCH64=$ac_cv_path_QEMU_AARCH64
+if test -n "$QEMU_AARCH64"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $QEMU_AARCH64" >&5
+$as_echo "$QEMU_AARCH64" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test x"${QEMU_AARCH64}" = x; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You need 'qemu-aaarch64' to run test the toolchain properly!" >&5
+$as_echo "$as_me: WARNING: You need 'qemu-aaarch64' to run test the toolchain properly!" >&2;}
+#   missing="${missing} qemu"
+fi
+
 #AC_CHECK_LIB(ncurses, doupdate)
 #if test x${ac_cv_lib_ncurses_doupdate} != x"yes"; then
 #   AC_MSG_WARN([You need 'libncurses' to run configure for GDB properly!])
@@ -3677,7 +3775,7 @@ fi
 if test "${with_fileserver+set}" = set; then :
   withval=$with_fileserver; FILESERVER=${withval}
 else
-  FILESERVER='abe.tcwglab.linaro.org'
+  FILESERVER='148.251.136.42'
 fi
 
 
@@ -3685,9 +3783,7 @@ fi
 
 # Check whether --with-sources-conf was given.
 if test "${with_sources_conf+set}" = set; then :
-  withval=$with_sources_conf; SOURCES_CONF=${withval}
-else
-  SOURCES_CONF="${srcdir}/config/sources.conf"
+  withval=$with_sources_conf; SOURCES_CONF="${srcdir}/config/sources.conf"
   dir="`dirname ${SOURCES_CONF}`"
   base="`cd ${dir} && pwd`"
   conf="`basename  ${SOURCES_CONF}`"
@@ -3762,9 +3858,7 @@ fi
 
 # Check whether --with-remote-snapshots was given.
 if test "${with_remote_snapshots+set}" = set; then :
-  withval=$with_remote_snapshots; REMOTE_SNAPSHOTS=${withval}
-else
-  REMOTE_SNAPSHOTS="http://${FILESERVER}/snapshots"
+  withval=$with_remote_snapshots; REMOTE_SNAPSHOTS="${withval}"
 fi
 
 
@@ -4120,15 +4214,14 @@ $as_echo "no" >&6; }
 fi
 
 
-# Texinfo 5 can't process the gcc texinfo files until they are fixed,
+# Texinfo 5.0 can't process the gcc texinfo files until they are fixed,
 # so we have to disable it for Ubuntu 14.04 "trusty".
-if test `lsb_release -i -s` = "Ubuntu"; then
-   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
-   if test "${texversion}" -gt 4; then
-         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo" >&5
-$as_echo "$as_me: WARNING: On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo" >&2;}
-   fi
-fi
+#if test "`uname -v | grep -c  Ubuntu`" -gt 0; then
+#   texversion="`dpkg-query -W -f='\${Version}' texinfo | cut -d '.' -f 1`"
+#   if test "${texversion}" -gt 4; then
+#         AC_MSG_WARN([On Ubuntu Trusty systems, you may need to upgrade to have a working version of makeinfo])
+#   fi
+#fi
 
 
 # Extract the first word of "git-new-workdir", so it can be a program name with args.
@@ -5357,6 +5450,7 @@ rm -f Makefile
 cat<<EOF > Makefile
 check:
 	${srcdir}/testsuite/test.sh
+	${srcdir}/test.sh
 EOF
 
 # Local Variables:

@@ -20,7 +20,6 @@
 fetch()
 {
 #    trace "$*"
-
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
@@ -36,9 +35,10 @@ fetch()
     # The md5sums file is a special case as it's used to find all
     # the other names of the tarballs for remote downloading.
     if test x"$1" = x"md5sums"; then
-	# Move the existing file to force a fresh copy to be downloaded.
-	# Otherwise this file can get stale, and new tarballs not found.
-	if test -f ${local_snapshots}/md5sums; then
+	# Move the existing file to force a fresh copy to be downloaded
+	# every time ABE is run.  Otherwise this file can get stale, and new
+	# tarballs will not be found.
+	if test -f ${local_snapshots}/md5sums -a x"${supdate}" = x"yes"; then
 	    mv -f ${local_snapshots}/md5sums ${local_snapshots}/md5sums.bak
 	fi
 	fetch_http md5sums
@@ -135,26 +135,52 @@ fetch_http()
 	fi
     fi
 
-    if test ! -e ${local_snapshots}/${getfile} -o x"${force}" = xyes; then
-	notice "Downloading ${getfile} to ${local_snapshots}"
-	if test x"${wget_bin}" != x; then
-	    # --continue --progress=bar
-	    # NOTE: the timeout is short, and we only try twice to access the
-	    # remote host. This is to improve performance when offline, or
-	    # the remote host is offline.
-	    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${remote_snapshots}/${getfile}"
-	    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
-		warning "downloaded file ${getfile} has zero data!"
-		return 1
+   # Forcing trumps ${supdate} and always results in sources being updated.
+   if test x"${force}" != xyes; then
+	if test x"${supdate}" = xno; then
+	    if test -e "${local_snapshots}/${getfile}"; then
+		notice "${getfile} already exists and updating has been disabled."
+		return 0
 	    fi
+	    error "${getfile} doesn't exist and updating has been disabled."
+	    return 1
 	fi
-    else
-	# We don't want this message for md5sums, since it's so often
-	# downloaded.
-	if test x"${getfile}" != x"md5sums"; then
-	    notice "${getfile} already exists in ${local_snapshots}"
+	# else we'll update the file if the version in the reference dir or on
+	# the server is newer than the local copy (if it exists).
+	if test -e "${git_reference_dir}/${getfile}"; then
+	    notice "Copying ${getfile} from reference dir to ${local_snapshots}"
+	    dryrun "cp ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+	    return 0
 	fi
+   fi
+
+    # You MUST have " " around ${wget_bin} or test ! -x will
+    # 'succeed' if ${wget_bin} is an empty string.
+    if test ! -x "${wget_bin}"; then
+	error "wget executable not available (or not executable)."
+	return 1
     fi
+
+    # We don't want this message for md5sums, since it's so often
+    # downloaded.
+    if test x"${getfile}" != x"md5sums"; then
+        notice "Downloading ${getfile} to ${local_snapshots}"
+    fi
+
+    local overwrite=
+    if test x${force} = xyes; then
+	overwrite="-O ${local_snapshots}/${getfile}"
+    fi
+
+    # NOTE: the timeout is short, and we only try twice to access the
+    # remote host. This is to improve performance when offline, or
+    # the remote host is offline.
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile}${overwrite:+ ${overwrite}}"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
+       warning "downloaded file ${getfile} has zero data!"
+       return 1
+    fi
+
     return 0
 }
 
