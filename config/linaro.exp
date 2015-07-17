@@ -35,7 +35,7 @@ if {[info exists env(SYSROOT_UNDER_TEST)]} {
 set myname [get_local_hostname]
 
 proc linaro_lab { kind } {
-    global tcl_platform myname
+    global tcl_platform myname board_info target_triplet
 
     case "$tcl_platform(user)" in {
 	{ *buildslave } {
@@ -53,6 +53,19 @@ proc linaro_lab { kind } {
 	default {
 	    set lab "tcwglab"
 	}
+    }
+
+    if { "$kind" == "qemu" } {
+	global SIM sysroot
+	set board_info(arm-sim,sim,options) "-cpu any -R 0 -L $sysroot"
+	set qemu_arch "[lindex [split $target_triplet -] 0]"
+	case "$qemu_arch" in {
+	    { armv[78]l } {
+		set qemu_arch "arm"
+	    }
+	}
+	set SIM "setarch x86_64 -R qemu-$qemu_arch"
+	return "arm-sim"
     }
 
     return "$user-$lab-$kind"
@@ -74,7 +87,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    set target_list [linaro_lab armv8]
+		    set target_list [linaro_lab qemu]
 		} else {
 		    global SIM
 		    # CPU and sysroot are set through the environment
@@ -108,7 +121,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    set target_list [linaro_lab armv8]
+		    set target_list [linaro_lab qemu]
 		} else {
 		    set SIM "qemu-aarch64"
 		    set target_list { aarch64-qemu }
@@ -133,8 +146,7 @@ case "$target_triplet" in {
     }
     { "*linux-gnu*" } {
 	if { [info exists env(SCHROOT_TEST)] && $env(SCHROOT_TEST) == "yes" } {
-	    set target_list [linaro_lab x86_64]
-	    set board_info([lindex $target_list 0],remote_sim) "qemu-[lindex [split $target_triplet -] 0] -cpu any -R 0 -L /sysroot"
+	    set target_list [linaro_lab qemu]
 	} else {
 	    global SIM
 	    set target_list { "arm-sim" }
