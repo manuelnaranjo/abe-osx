@@ -407,7 +407,7 @@ else
 fi
 
 # This becomes the path on the remote file server    
-if test x"${logserver}" != x"" -a x"${runtests}" = xtrue; then
+if test x"${logserver}" != x""; then
     # Re-eval $dir as we now have full range of variables available.
     eval dir="$logname"
     ssh ${logserver} mkdir -p ${basedir}/${dir}
@@ -453,35 +453,34 @@ fi
 
 # This setups all the files needed by tcwgweb
 if test x"${logserver}" != x"" && test x"${sums}" != x -o x"${runtests}" != x"true"; then
+    logs_dir=$(mktemp -d)
+
     if test x"${sums}" != x; then
 	test_logs=""
 	for s in ${sums}; do
 	    test_logs="$test_logs ${s%.sum}.log"
 	done
 
-	logs_dir=$(mktemp -d)
 	cp ${sums} ${test_logs} ${logs_dir}/ || status=1
 	
 	# Copy over the logs from make check, which we need to find testcase errors.
 	checks="`find ${user_workspace} -name check\*.log`"
 	cp ${checks} ${logs_dir}/ || status=1
-	
-	# Copy over the build logs
-	logs="`find ${user_workspace} -name make\*.log`"
-	cp ${logs} ${logs_dir}/ || status=1
-
-	# Copy stdout and stderr output from abe.
-	cp build.out build.err ${logs_dir}/ || status=1
-
-	xz ${logs_dir}/* || status=1
-	scp ${logs_dir}/* ${logserver}:${basedir}/${dir}/ || status=1
-	rm -rf ${logs_dir} || status=1
-#	scp ${abe_dir}/tcwgweb.sh ${logserver}:/tmp/tcwgweb$$.sh
-#	ssh ${logserver} /tmp/tcwgweb$$.sh --email --base ${basedir}/${dir}
-#	ssh ${logserver} rm -f /tmp/tcwgweb$$.sh
-
-	echo "Sent test results"
     fi
+
+    # Copy over the build logs
+    logs="`find ${user_workspace} -name make\*.log`"
+    cp ${logs} ${logs_dir}/ || status=1
+
+    # Copy stdout and stderr output from abe.
+    cp build.out build.err ${logs_dir}/ || status=1
+
+    xz ${logs_dir}/* || status=1
+    scp ${logs_dir}/* ${logserver}:${basedir}/${dir}/ || status=1
+    rm -rf ${logs_dir} || status=1
+
+    echo "Uploaded test results and build logs to ${logserver}:${basedir}/${dir}/ with status: $status"
+
     if test x"${tarsrc}" = xtrue -a x"${release}" != x; then
 	allfiles="`ls ${user_snapshots}/*${release}*.xz`"
 	srcfiles="`echo ${allfiles} | egrep -v "arm|aarch"`"
