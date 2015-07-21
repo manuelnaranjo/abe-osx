@@ -691,6 +691,10 @@ make_install()
 
     if test x"${tool}" = x"gcc"; then
 	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
+	if test  `echo ${host} | grep -c mingw` -eq 1 -a -e /usr/${host}/lib/libwinpthread-1.dll; then
+	    local builddir="`get_builddir ${gcc_version}`-stage2"
+	    cp /usr/${host}/lib/libwinpthread-1.dll ${builddir}/gcc
+	fi
     fi
 
     return 0

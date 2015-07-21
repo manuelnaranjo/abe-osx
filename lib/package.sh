@@ -237,8 +237,8 @@ binary_toolchain()
 
     # Some mingw packages have a runtime dependency on libwinpthread-1.dll, so a copy
     # is put in bin so all executables will work.
-    if test "`echo ${host} | grep -c mingw`" -gt 0; then
-	cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ${local_builds}/destdir/${host}/bin/
+    if test "`echo ${host} | grep -c mingw`" -gt 0 -a -e /usr/${host}/lib/libwinpthread-1.dll; then
+	cp /usr/${host}/lib/libwinpthread-1.dll ${local_builds}/destdir/${host}/bin/
     fi
 
     if test x"${rpmbin}" = x"yes"; then
