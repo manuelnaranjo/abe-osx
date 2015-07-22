@@ -31,57 +31,6 @@ function get_addr
   echo "${listener_addr}" | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
 }
 
-#Return 0 if we're inside the lava network
-#Return 1 if we're outside the lava network
-#Return 2 if we don't know where we are
-#Typically, 2 will be returned if we can't ssh into the hackbox. This tends
-#to mean we're not configured to do so and could happen both inside and outside
-#the LAVA network.
-function lava_network
-{
-  local hackbox_mac
-
-  hackbox_mac="`ssh -F /dev/null -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${1:+${1}@}lab.validation.linaro.org 'cat /sys/class/net/eth0/address'`"
-  if test $? -ne 0; then
-    echo "Failed to get hackbox mac" 1>&2
-    echo "Tried: ssh -F /dev/null -o PasswordAuthentication=no -o PubkeyAuthentication=yes ${1:+${1}@}lab.validation.linaro.org 'cat /sys/class/net/eth0/address'" >&2
-    return 2 #We couldn't get the mac, stop trying to figure out where we are
-  fi
-  /usr/sbin/arp 10.0.0.10 | grep -q "${hackbox_mac}";
-  if test $? -eq 0; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-function lava_user
-{
-  local usr="${USER}"
-  if echo "$1" | grep -q '^http'; then
-    echo "LAVA URL must exclude protocol (e.g. http://, https://)" 1>&2
-    return 1
-  fi
-  if echo "$1" | grep -Eq '^.+@'; then
-    usr="${1/@*}"
-    usr="${usr/:*}"
-  fi
-  echo "${usr}"
-}
-
-function lava_server
-{
-  if echo "$1" | grep -q '^http'; then
-    echo "LAVA URL must exclude protocol (e.g. http://, https://)" 1>&2
-    return 1
-  fi
-  if echo "$1" | grep -Eq '^.+@'; then
-    echo "$1" | sed 's/[^@]*@//'
-  else
-    echo "$1"
-  fi
-}
-
 #Attempt to use read to discover whether there is a record to read from the producer
 #If we time out, check to see whether the producer still seems to be alive.
 #We can check more than one pid, if we have visibility of some other process(s) that we

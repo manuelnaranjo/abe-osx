@@ -1,8 +1,6 @@
 #!/bin/bash
 #This script takes a build of a benchmark and transfers it to, and runs it on
-#a single target. The target may be LAVA or non-LAVA. The script is mostly
-#LAVA-agnostic - apart from the section that initiates the LAVA session, there
-#is some awareness of it in the exit handler, and that's all.
+#a single target.
 set -o pipefail
 set -o nounset
 
@@ -11,14 +9,12 @@ trap 'exit ${error}' TERM INT HUP QUIT
 
 tag=
 session_pid=
-lava_pid=
 listener_pid=
 benchmark=
 device=
 keep=
 cautious=''
 build_dir=
-lava_target=
 run_benchargs=
 while getopts g:b:d:t:a:kpc flag; do
   case "${flag}" in
@@ -54,13 +50,6 @@ else
 fi
 topdir="${abe_path}" #abe global, but this should be the right value for abe
 confdir="${topdir}/config/boards/bench"
-if test x"${LAVA_SERVER:-}" != x; then
-  lava_url="${LAVA_SERVER}"
-else
-  lava_url="${USER}@validation.linaro.org/RPC2/"
-  echo "Environment variable LAVA_SERVER not set, defaulted to ${lava_url}" 1>&2
-fi
-
 benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
@@ -86,14 +75,10 @@ fi
 temps="`mktemp -dt XXXXXXXXX`" || exit 1
 listener_file="${temps}/listener_file"
 listener_fifo="${temps}/listener_fifo"
-lava_fifo="${temps}/lava_fifo"
 mkfifo "${listener_fifo}" || exit 1
 exec {listener_handle}<>${listener_fifo}
-mkfifo "${lava_fifo}" || exit 1
-exec {lava_handle}<>"${lava_fifo}"
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
-#we should not leave lava targets reserved
 clean_benchmark()
 {
   error=$?
@@ -131,26 +116,9 @@ clean_benchmark()
     wait "${listener_pid}"
   fi
 
-  if test x"${lava_pid:-}" != x; then
-    if (test x"${keep}" = x && test ${error} -ne 0) || test x"${keep}" = 'x-k'; then
-      echo "Not killing lava session, to ensure session remains open for investigation/cleanup."
-      kill "${lava_pid}" 2>/dev/null
-      wait "${lava_pid}"
-    else
-      kill -USR1 "${lava_pid}" 2>/dev/null
-      wait "${lava_pid}"
-    fi
-
-    #Make sure we see any messages from the lava.sh handlers
-    dd iflag=nonblock <&${lava_handle} 2>/dev/null | awk "{print \"${lava_target}: \" \$0}"
-  fi
-
-  #Delete these last so that we can still get messages through the lava fifo
   if test -d "${temps}"; then
     exec {listener_handle}>&-
     exec {listener_handle}<&-
-    exec {lava_handle}>&-
-    exec {lava_handle}<&-
     rm -rf "${temps}"
     if test $? -ne 0; then
       echo "Failed to delete ${temps}" 1>&2
@@ -161,65 +129,8 @@ clean_benchmark()
   exit "${error}"
 }
 
-ssh_opts="-F /dev/null ${LAVA_SSH_KEYFILE:+-o IdentityFile=${LAVA_SSH_KEYFILE}}"
+ssh_opts="-F /dev/null"
 establish_listener_opts=
-
-#Handle LAVA case
-echo "${ip}" | grep '\.json$' > /dev/null
-if test $? -eq 0; then
-  lava_user="`lava_user ${lava_url}`"
-  if test $? -ne 0; then
-    echo "Unable to find username from ${lava_url}" 1>&2
-    exit 1
-  fi
-  if test -z "${LAVA_IN_LAB}"; then
-    lava_network "${lava_user}"
-    case $? in
-      2) echo "Unable to determing location w.r.t. lava lab: assuming outside" 1>&2 ;;
-      1)
-        gateway=lab.validation.linaro.org
-        ssh_opts="${ssh_opts} ProxyCommand='ssh ${lava_user}@${gateway} nc -q0 %h %p'"
-        establish_listener_opts="-f 10.0.0.10:${lava_user}@${gateway}"
-    esac
-  fi
-  lava_target="${ip}"
-  ip=''
-  tee_output=/dev/console
-  echo "Acquiring LAVA target ${lava_target}"
-  echo "${topdir}/scripts/lava.sh ${tag:+-g "${tag}"} -s ${lava_url} -j ${confdir}/${lava_target} -b ${boot_timeout:-30}"
-
-  ${topdir}/scripts/lava.sh ${tag:+-g "${tag}"} -s "${lava_url}" -j "${confdir}/${lava_target}" -b "${boot_timeout-:30}" >&${lava_handle} 2>&1 &
-  if test $? -ne 0; then
-    echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
-    exit 1
-  fi
-  lava_pid=$!
-  while true; do
-    line="`bgread -t 5 ${lava_pid} <&${lava_handle}`"
-    if test $? -ne 0; then
-      echo "${lava_target}: Failed to read lava output" 1>&2
-      exit 1
-    fi
-    echo "${lava_target}: $line"
-    if echo "${line}" | grep '^LAVA target ready at ' > /dev/null; then
-      ip="`echo ${line} | cut -d ' ' -f 5 | sed 's/\s*$//'`"
-      break
-    fi
-  done
-  #After this point, lava.sh should produce no output until we reach the exit handlers.
-  #Our exit handler checks the pipe from lava.sh before closing down.
-
-  if test x"${ip:-}" = x; then
-    echo "+++ Failed to acquire LAVA target ${lava_target}" 1>&2
-    exit 1
-  fi
-fi
-
-if test -z "${gateway:-}"; then
-  gateway="${ip/*@}"
-fi
-#LAVA-agnostic from here, apart from a section in the exit handler, and bgread
-#monitoring of the LAVA process while we're waiting for the benchmark to end
 
 #Set up our listener
 listener_addr="`get_addr`"
@@ -354,16 +265,10 @@ fi
 )&
 session_pid=$!
 
-#lava_pid will expand to empty if we're not using lava
-#lava_pid will expand to empty if we're not using lava
 #No sense in setting a deadline on this one, it's order of days for many cases
-ip="`bgread ${listener_pid} ${lava_pid} <&${listener_handle}`"
+ip="`bgread ${listener_pid} <&${listener_handle}`"
 if test $? -ne 0; then
-  if test x"${lava_pid:-}" = x; then
-    echo "Failed to read post-benchmark-run IP" 1>&2
-  else
-    echo "LAVA process died, or otherwise failed while waiting to read post-benchmark-run IP" 1>&2
-  fi
+  echo "Failed to read post-benchmark-run IP" 1>&2
   exit 1
 fi
 

@@ -10,7 +10,6 @@ set -o pipefail
 set -o nounset
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
-#we should not leave lava targets reserved
 trap clean_top EXIT
 trap 'error=1; exit' TERM INT HUP QUIT
 
@@ -48,12 +47,11 @@ $0 [-tckh] -b <benchmark> <board...>
        be treated as an error, even if recoverable. On by default.
   -h   Show this help.
   -k   Keep. If this is set, benchmark sources and results will be left on
-       target. LAVA targets will not be released.
+       target.
 
   <board...> may be anything that has a file in config/boards/bench, e.g. the
   existence of arndale.conf means that you can put arndale here. At least one
-  target may be specified. ssh targets must only be specified once. LAVA
-  targets can be specified as many times as you like.
+  target may be specified. Each target must only be specified once.
 
   If building natively, board is optional. If not given, the benchmark will
   run on localhost.
@@ -129,9 +127,7 @@ while getopts g:f:a:i:b:kpchs flag; do
   esac
 done
 shift $((OPTIND - 1))
-devices=("$@") #Duplicate targets are fine for lava, they will resolve to different instances of the same machine.
-               #Duplicate targets not fine for ssh access, where they will just resolve to the same machine every time.
-               #TODO: Check for multiple instances of a given non-lava target
+devices=("$@")
 
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
