@@ -7,9 +7,12 @@ set -o nounset
 trap clean_benchmark EXIT
 trap 'exit ${error}' TERM INT HUP QUIT
 
+#Precondition: the target is in known_hosts
+ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
+host_ip="`hostname -I | tr -d '[[:space:]]'`" #hostname -I includes a trailing space
+
 tag=
 session_pid=
-listener_pid=
 benchmark=
 device=
 keep=
@@ -61,22 +64,11 @@ if test $? -ne 0; then
   exit 1
 fi
 
-. "${topdir}"/scripts/benchutil.sh
-if test $? -ne 0; then
-  echo "+++ Unable to source ${topdir}/benchutil.sh" 1>&2
-  exit 1
-fi
 . "${confdir}/${device}.conf" #We can't use abe's source_config here as it requires us to have something get_toolname can parse
 if test $? -ne 0; then
   echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
   exit 1
 fi
-
-temps="`mktemp -dt XXXXXXXXX`" || exit 1
-listener_file="${temps}/listener_file"
-listener_fifo="${temps}/listener_fifo"
-mkfifo "${listener_fifo}" || exit 1
-exec {listener_handle}<>${listener_fifo}
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 clean_benchmark()
@@ -111,46 +103,8 @@ clean_benchmark()
     wait "${session_pid}"
   fi
 
-  if test x"${listener_pid:-}" != x; then
-    kill "${listener_pid}" 2>/dev/null
-    wait "${listener_pid}"
-  fi
-
-  if test -d "${temps}"; then
-    exec {listener_handle}>&-
-    exec {listener_handle}<&-
-    rm -rf "${temps}"
-    if test $? -ne 0; then
-      echo "Failed to delete ${temps}" 1>&2
-      error=1
-    fi
-  fi
-
   exit "${error}"
 }
-
-ssh_opts="-F /dev/null"
-establish_listener_opts=
-
-#Set up our listener
-listener_addr="`get_addr`"
-if test $? -ne 0; then
-  echo "Unable to get IP for listener" 1>&2
-  exit 1
-fi
-"${topdir}"/scripts/establish_listener.sh ${establish_listener_opts} "${listener_addr}" 4200 5200 >&${listener_handle} &
-listener_pid=$!
-listener_addr="`bgread -T 60 ${listener_pid} <&${listener_handle}`"
-if test $? -ne 0; then
-  echo "Failed to read listener address" 1>&2
-  exit 1
-fi
-listener_port="`bgread -T 60 ${listener_pid} <&${listener_handle}`"
-if test $? -ne 0; then
-  echo "Failed to read listener port" 1>&2
-  exit 1
-fi
-echo "Listener ${listener_addr}:${listener_port}"
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip:-(unknown)} after boot" 1>&2
@@ -209,8 +163,6 @@ if test x"${uncontrolled:-}" = xyes; then
   flags="-u"
 fi
 
-#TODO: Repetition of hostname echoing is ugly, but seems to be needed -
-#      perhaps there is some delay after the interface comes up
 (
    pids=()
    cleanup()
@@ -234,23 +186,13 @@ fi
       cd `tar tjf ${buildtar} | head -n1` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
-     listener_found=0; \
-     for i in {1..10}; do \
-       if ping -c 1 ${listener_addr}; then \
-         listener_found=1; \
+     while true; do \
+       if ping -i 11 -c 1 ${host_ip}; then \
          break; \
        fi \
      done; \
-     if test \\\${listener_found} -eq 1; then \
-       echo \"\\\${USER}@\\\`/sbin/ifconfig eth0 | grep 'inet addr' | sed 's/[^:]*://' | cut -d ' ' -f 1\\\`:\\\${ret}\" | nc ${listener_addr} ${listener_port}; \
-       if test \\\${ret} -eq 0; then \
-         true; \
-       else \
-         false; \
-       fi \
-     else \
-       false; \
-     fi" \
+     echo \\\${ret} > ${target_dir}/RETCODE \
+     exit \\\${ret}" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
    if test $? -ne 0; then
@@ -265,27 +207,16 @@ fi
 )&
 session_pid=$!
 
-#No sense in setting a deadline on this one, it's order of days for many cases
-ip="`bgread ${listener_pid} <&${listener_handle}`"
-if test $? -ne 0; then
-  echo "Failed to read post-benchmark-run IP" 1>&2
-  exit 1
-fi
-
-error="`echo ${ip} | sed 's/.*://'`"
+#Wait for a ping from the target
+#This assumes that the target's identifier does not change
+#This should hold for name in a DNS network, but not necessarily for IP
+#Today LAVA lab does not provide DNS, but IP seems stable in practice
+#Rather than work around lack of DNS, just make sure we notice if the IP changes
+while ! tcpdump -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
+error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" 'cat ${target_dir}/RETCODE' ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine exit code, assuming the worst." 1>&2
   error=1
-fi
-ip="`echo ${ip} | sed 's/:.*//' | sed 's/\s*$//'`"
-if test $? -ne 0; then
-  echo "Unable to determine IP, giving up." 1>&2
-  exit 1
-fi
-
-if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-  echo "Unable to connect to target after ${ip:-(unknown)} benchmark run" 1>&2
-  exit 1
 fi
 
 if test ${error} -ne 0; then
