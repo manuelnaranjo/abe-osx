@@ -7,9 +7,6 @@ set -o pipefail
 benchgccpath=
 targets=(${targets})
 maindir="`mktemp --tmpdir=${HOME} -d bench-XXX`"
-error=1
-
-trap "rm -rf ${maindir}; exit \${error}" EXIT
 
 #A little parameter checking
 if test x"${toolchain:-}" = x; then
@@ -58,10 +55,4 @@ fi
 cd "${maindir}"
 "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
-set +e
 "${ABE_DIR}"/scripts/benchmark.sh ${run_flags:+-a "${run_flags//\"/\\\"}"} ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} ${benchgccpath:+-i ${benchgccpath}} -b ${benchmark} ${targets[@]}
-tmperr=$?
-set -e
-if test ${tmperr} -eq 0; then
-  error=0
-fi
