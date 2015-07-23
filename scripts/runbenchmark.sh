@@ -107,7 +107,7 @@ clean_benchmark()
 }
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
-  echo "Unable to connect to target ${ip:-(unknown)} after boot" 1>&2
+  echo "Unable to connect to target ${ip:-(unknown)}" 1>&2
   exit 1
 fi
 
