@@ -6,7 +6,6 @@ set -o pipefail
 
 benchgccpath=
 targets=(${targets})
-maindir="`mktemp --tmpdir=${HOME} -d bench-XXX`"
 
 #A little parameter checking
 if test x"${toolchain:-}" = x; then
