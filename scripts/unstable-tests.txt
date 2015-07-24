@@ -61,31 +61,31 @@ aarch64-linux-gnu:22_locale/numpunct/members/pod/1.cc execution test
 23_containers/deque/cons/2.cc execution test
 aarch64-linux-gnu:26_numerics/random/lognormal_distribution/operators/serialize.cc execution test
 26_numerics/complex/inserters_extractors/char/1.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/seekoff/char/1-io.cc execution test
+arm-sim:27_io/basic_filebuf/seekoff/char/1-io.cc execution test
 aarch64-linux-gnu:27_io/basic_filebuf/sgetc/char/1-out.cc execution test
 27_io/basic_filebuf/open/char/2.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/1-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/1-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/2-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sbumpc/char/2-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/seekpos/char/2-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/1-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/2-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sgetc/char/2-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/1-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/1-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/2-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/snextc/char/2-io.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sputbackc/char/1-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sputbackc/char/2-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sungetc/char/1-in.cc execution test
-armeb-linux-gnueabihf:27_io/basic_filebuf/sungetc/char/2-in.cc execution test
+arm-sim:27_io/basic_filebuf/sbumpc/char/1-in.cc execution test
+arm-sim:27_io/basic_filebuf/sbumpc/char/1-io.cc execution test
+arm-sim:27_io/basic_filebuf/sbumpc/char/2-in.cc execution test
+arm-sim:27_io/basic_filebuf/sbumpc/char/2-io.cc execution test
+arm-sim:27_io/basic_filebuf/seekpos/char/2-io.cc execution test
+arm-sim:27_io/basic_filebuf/sgetc/char/1-io.cc execution test
+arm-sim:27_io/basic_filebuf/sgetc/char/2-in.cc execution test
+arm-sim:27_io/basic_filebuf/sgetc/char/2-io.cc execution test
+arm-sim:27_io/basic_filebuf/snextc/char/1-in.cc execution test
+arm-sim:27_io/basic_filebuf/snextc/char/1-io.cc execution test
+arm-sim:27_io/basic_filebuf/snextc/char/2-in.cc execution test
+arm-sim:27_io/basic_filebuf/snextc/char/2-io.cc execution test
+arm-sim:27_io/basic_filebuf/sputbackc/char/1-in.cc execution test
+arm-sim:27_io/basic_filebuf/sputbackc/char/2-in.cc execution test
+arm-sim:27_io/basic_filebuf/sungetc/char/1-in.cc execution test
+arm-sim:27_io/basic_filebuf/sungetc/char/2-in.cc execution test
 27_io/basic_istream/seekg/char/fstream.cc execution test
 27_io/basic_istream/tellg/char/fstream.cc execution test
-armeb-linux-gnueabihf:27_io/basic_ofstream/pthread2.cc execution test
+arm-sim:27_io/basic_ofstream/pthread2.cc execution test
 arm-linux-gnueabi:27_io/basic_ostream/inserters_other/wchar_t/1.cc execution test
-armeb-linux-gnueabihf:30_threads/condition_variable/54185.cc execution test
-armeb-linux-gnueabihf:30_threads/lock/2.cc execution test
+arm-sim:30_threads/condition_variable/54185.cc execution test
+arm-sim:30_threads/lock/2.cc execution test
 aarch64-linux-gnu:experimental/string_view/operations/find/wchar_t/2.cc execution test
 aarch64-linux-gnu:ext/slist/check_construct_destroy.cc execution test
 aarch64-linux-gnu:ext/random/simd_fast_mersenne_twister_engine/cons/default.cc execution test
@@ -98,4 +98,4 @@ aarch64-linux-gnu:tr1/5_numerical_facilities/special_functions/17_hyperg/check_n
 # asan
 arm-linux-gnueabi:c-c++-common/asan/swapcontext-test-1.c
 arm-linux-gnueabihf:c-c++-common/asan/swapcontext-test-1.c
-armeb-linux-gnueabihf:c-c++-common/asan/heap-overflow-1.c
+arm-sim:c-c++-common/asan/heap-overflow-1.c

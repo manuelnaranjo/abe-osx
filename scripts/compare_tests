@@ -101,9 +101,15 @@ if [ -d "$1" -a -d "$2" ] ; then
 	( for fname in `cat $lst5`; do xzcat $2/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum2
 	# At some point, we'll add --no-unstable --unstable-test=${my_path}/unstable-tests.txt
 	if [ "x${target}" != "x" ] ; then
-	    target="--target ${target}"
+	    unstable_target="--unstable-marker ${target}"
 	fi
-	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l --unstable-test=${my_path}/unstable-tests.txt ${target} $sum1 $sum2
+	for sum in $sum1 $sum2; do
+	    board="$(grep "Running target " $sum | head -n 1 | sed -e "s/Running target //")"
+	    if [ x"$board" != x"" ]; then
+		unstable_target="$unstable_target --unstable-marker $board"
+	    fi
+	done
+	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l --unstable-test=${my_path}/unstable-tests.txt ${unstable_target} $sum1 $sum2
 	ret=$?
 	if [ $ret -eq 2 ]; then
 		exit_status=`expr $exit_status + 1`
