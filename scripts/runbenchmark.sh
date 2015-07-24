@@ -12,7 +12,6 @@ ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
 host_ip="`hostname -I | tr -d '[[:space:]]'`" #hostname -I includes a trailing space
 
 tag=
-session_pid=
 benchmark=
 device=
 keep=
@@ -98,11 +97,6 @@ clean_benchmark()
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
   fi
 
-  if test x"${session_pid:-}" != x; then
-    kill "${session_pid}" 2>/dev/null
-    wait "${session_pid}"
-  fi
-
   exit "${error}"
 }
 
@@ -164,20 +158,6 @@ if test x"${uncontrolled:-}" = xyes; then
 fi
 
 (
-   pids=()
-   cleanup()
-   {
-     local pid
-     for pid in "${pids[@]}"; do
-       if test x"${pid:-}" != x; then
-         kill ${pid} 2>/dev/null
-         wait ${pid} 2>/dev/null
-       fi
-     done
-     exit
-   }
-   trap cleanup EXIT
-
    . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
@@ -199,13 +179,7 @@ fi
      echo "Something went wrong when we tried to dispatch job" 1>&2
      exit 1
    fi
-   pids+=($!)
-   sleep infinity&
-   waiter=$!
-   pids+=(${waiter})
-   wait ${waiter}
-)&
-session_pid=$!
+)
 
 #Wait for a ping from the target
 #This assumes that the target's identifier does not change
