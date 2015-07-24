@@ -88,7 +88,8 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
       #''   (default) - clean up and release target unless there is an error
       #'-k' (keep)    - unconditionally keep target-side data and target
 target=
-while getopts g:f:a:i:b:kpchs flag; do
+post_target_cmd=
+while getopts g:f:a:i:b:e:kpchs flag; do
   case "${flag}" in
     g) tag="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
@@ -116,6 +117,7 @@ while getopts g:f:a:i:b:kpchs flag; do
        echo 'Unconditional release (-p) set: data will be scrubbed and target released, even if run fails'
     ;;
     f) compiler_flags="${OPTARG}";;
+    e) post_target_cmd="${OPTARG}";;
     h)
        usage
        exit 0
@@ -190,7 +192,7 @@ if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   exit 1
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 

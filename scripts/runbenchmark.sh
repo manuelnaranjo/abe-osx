@@ -18,7 +18,8 @@ keep=
 cautious=''
 build_dir=
 run_benchargs=
-while getopts g:b:d:t:a:kpc flag; do
+post_target_cmd=
+while getopts g:b:d:t:e:a:kpc flag; do
   case "${flag}" in
     g) tag="${OPTARG}";;
     k) keep='-k';;
@@ -28,6 +29,7 @@ while getopts g:b:d:t:a:kpc flag; do
     d) device="${OPTARG}";;
     t) buildtar="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
+    e) post_target_cmd="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1
@@ -95,6 +97,14 @@ clean_benchmark()
     fi
   else
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
+  fi
+
+  if test ${error} -eq 0; then
+    echo "Sending post-target command '${post_target_cmd}' - will not check error code"
+    if test x"${post_target_cmd}" != x; then
+      (. ${topdir}/lib/common.sh; remote_exec "${ip}" "${post_target_cmd}" ${ssh_opts})
+    fi
+    #We don't check the error code because this might well include a shutdown
   fi
 
   exit "${error}"
