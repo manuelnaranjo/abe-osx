@@ -166,12 +166,12 @@ fi
       cd `tar tjf ${buildtar} | head -n1` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
+     echo \\\${ret} > ${target_dir}/RETCODE && \
      while true; do \
        if ping -i 11 -c 1 ${host_ip}; then \
          break; \
        fi \
      done; \
-     echo \\\${ret} > ${target_dir}/RETCODE \
      exit \\\${ret}" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
