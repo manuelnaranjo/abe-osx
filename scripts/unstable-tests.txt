@@ -46,6 +46,14 @@ aarch64-linux-gnu:gfortran.dg/tiny_2.f90  -Os  execution test
 aarch64-linux-gnu:gfortran.dg/unf_io_convert_3.f90  -O3 -g  execution test
 gfortran.dg/tl_editing.f90
 gfortran.dg/streamio_14.f90
+# This is https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64921
+gfortran.dg/class_allocate_18.f90   -O0  execution test
+gfortran.dg/class_allocate_18.f90   -O1  execution test
+gfortran.dg/class_allocate_18.f90   -O2  execution test
+gfortran.dg/class_allocate_18.f90   -O3 -fomit-frame-pointer  execution test
+gfortran.dg/class_allocate_18.f90   -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.dg/class_allocate_18.f90   -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.dg/class_allocate_18.f90   -Os  execution test
 
 #libgomp
 aarch64-linux-gnu:libgomp.fortran/allocatable10.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
