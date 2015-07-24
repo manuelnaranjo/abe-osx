@@ -26,6 +26,7 @@ gcc.dg/atomic/c11-atomic-exec-5.c
 arm-linux-gnueabihf:gcc.dg/cpp/_Pragma3.c
 aarch64-linux-gnu:gcc.dg/torture/vec-cvt-1.c  -O3 -fomit-frame-pointer -funroll-loops  execution test
 aarch64-linux-gnu:gcc.target/aarch64/aapcs64/test_19.c execution,  -O2
+arm-sim:gcc.dg/di-sync-multithread.c execution test
 
 # g++
 aarch64-linux-gnu:g++.dg/opt/temp2.C -std=c++1y execution test
@@ -55,10 +56,14 @@ aarch64-linux-gnu:libgomp.fortran/simd7.f90  -O3 -fomit-frame-pointer -funroll-l
 aarch64-linux-gnu:libgomp.fortran/task3.f90  -O2  execution test
 
 # libstdc++
+arm-sim:20_util/shared_ptr/thread/mutex_weaktoshared.cc execution test
 aarch64-linux-gnu:21_strings/basic_string/operations/find/wchar_t/3.cc execution test
+arm-sim:21_strings/basic_string/pthread33394.cc execution test
+arm-sim:21_strings/basic_string/pthread4.cc execution test
 aarch64-linux-gnu:22_locale/num_get/get/wchar_t/2.cc execution test
 aarch64-linux-gnu:22_locale/numpunct/members/pod/1.cc execution test
 23_containers/deque/cons/2.cc execution test
+arm-sim:23_containers/list/pthread5.cc execution test
 aarch64-linux-gnu:26_numerics/random/lognormal_distribution/operators/serialize.cc execution test
 26_numerics/complex/inserters_extractors/char/1.cc execution test
 arm-sim:27_io/basic_filebuf/seekoff/char/1-io.cc execution test
@@ -80,12 +85,16 @@ arm-sim:27_io/basic_filebuf/sputbackc/char/1-in.cc execution test
 arm-sim:27_io/basic_filebuf/sputbackc/char/2-in.cc execution test
 arm-sim:27_io/basic_filebuf/sungetc/char/1-in.cc execution test
 arm-sim:27_io/basic_filebuf/sungetc/char/2-in.cc execution test
+arm-sim:27_io/basic_ostringstream/pthread3.cc execution test
 27_io/basic_istream/seekg/char/fstream.cc execution test
 27_io/basic_istream/tellg/char/fstream.cc execution test
 arm-sim:27_io/basic_ofstream/pthread2.cc execution test
 arm-linux-gnueabi:27_io/basic_ostream/inserters_other/wchar_t/1.cc execution test
+arm-sim:30_threads/call_once/39909.cc execution test
 arm-sim:30_threads/condition_variable/54185.cc execution test
+arm-sim:30_threads/condition_variable_any/50862.cc execution test
 arm-sim:30_threads/lock/2.cc execution test
+arm-sim:30_threads/promise/60966.cc execution test
 aarch64-linux-gnu:experimental/string_view/operations/find/wchar_t/2.cc execution test
 aarch64-linux-gnu:ext/slist/check_construct_destroy.cc execution test
 aarch64-linux-gnu:ext/random/simd_fast_mersenne_twister_engine/cons/default.cc execution test
