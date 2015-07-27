@@ -184,24 +184,6 @@ fetch_http()
     return 0
 }
 
-fetch_scp()
-{
-    error "unimplemented"
-}
-
-fetch_rsync()
-{
-    local getfile="`basename $1`"
-
-    dryrun "${rsync_bin} $1 ${local_snapshots}"
-    if test ! -e ${local_snapshots}/${getfile}; then
-	warning "${getfile} didn't download via rsync!"
-	return 1
-    fi
-    
-    return 0
-}
-
 check_md5sum()
 {
 #    trace "$*"
