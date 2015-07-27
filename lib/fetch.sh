@@ -111,10 +111,13 @@ fetch()
 	return 1
     fi
 
+    # Fetch only supports fetching files which have an entry in the md5sums file.
+    # An unlisted file should never get this far anyway.
     dryrun "check_md5sum ${getfile}"
-#    if test $? -gt 0; then
-#	return 1
-#    fi
+    if test $? -gt 0 -a x"${force}" != xyes; then
+	error "md5sums don't match!"
+	return 1
+    fi
 
     create_stamp "${stampdir}" "${stamp}"
 
@@ -184,54 +187,34 @@ fetch_http()
     return 0
 }
 
+# This is a single purpose function which will report whether the input getfile
+# in $1 has an entry in the md5sum file and whether that entry's md5sum matches
+# the actual file's downloaded md5sum.
 check_md5sum()
 {
 #    trace "$*"
 
+    # ${local_snapshots}/md5sums is a pre-requisite.
     if test ! -e ${local_snapshots}/md5sums; then
-	fetch_http md5sums
-	if test $? -gt 0; then
-	    error "couldn't fetch md5sums"
-	    return 1
-	fi
+        error "${local_snapshots}/md5sums is missing."
+        return 1
     fi
 
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"."; then
-	local dir=""
+    local entry=
+    entry=$(grep "${1}" ${local_snapshots}/md5sums)
+    if test x"${entry}" = x; then
+        error "No md5sum entry for $1!"
+        return 1
     fi
 
-    # Drop the file name from .tar to the end to keep grep happy
-    local getfile=`echo ${1}`
+    # Ask md5sum to verify the md5sum of the downloaded file against the hash in
+    # the index.  md5sum must be executed from the snapshots directory.
+    pushd ${local_snapshots} &>/dev/null
+    dryrun "echo \"${entry}\" | md5sum --status --check -"
+    md5sum_ret=$?
+    popd &>/dev/null
 
-    newsum="`md5sum ${local_snapshots}/$1 | cut -d ' ' -f 1`"
-    oldsum="`grep ${getfile} ${local_snapshots}/md5sums | cut -d ' ' -f 1`"
-    # if there isn't an entry in the md5sum file, we're probably downloading
-    # something else that's less critical.
-    if test x"${oldsum}" = x; then
-	warning "No md5sum entry for $1!"
-	return 0
-    fi
-
-    if test x"${oldsum}" = x"${newsum}"; then
-	notice "md5sums matched"
-	# We don't need to pass $2 to get_builddir() in this case because the
-	# builddir is always based on a tarball and therefore we don't have a
-	# special builddir for a combined binutils and gdb.
-	local builddir="`get_builddir $1`"
-	rm -f ${builddir}/md5sum
-	echo "${newsum} > ${builddir}/md5sum"
-	return 0
-    else
-	error "md5sums don't match!"
-	if test x"${force}" = x"yes"; then
-	    return 0
-	else
-	    return 1
-	fi
-    fi
-
-    return 0
+    return $md5sum_ret
 }
 
 # decompress and untar a fetched tarball
