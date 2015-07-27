@@ -4,12 +4,23 @@ echo "============= dryrun() tests ================"
 
 dryrun="no"
 testing="dryrun quote preservation (dryrun=no)"
-out=`dryrun 'echo "enquoted"'`
-if test x"${out}" = $'xRUN: echo "enquoted"\nenquoted'; then
+
+# 'RUN' gets put on stderr.
+out=`dryrun 'echo "enquoted"' 2>&1`
+if test x"${out/$'\n'/ }" = x"RUN: echo \"enquoted\" enquoted"; then
   pass "${testing}"
 else
   fail "${testing}"
 fi
+
+# Without piping stderr to stdout we shouldn't get 'RUN' output.
+out=`dryrun 'echo "enquoted"' 2>/dev/null`
+if test x"${out/$'\n'/}" = x"enquoted"; then
+  pass "${testing}"
+else
+  fail "${testing}"
+fi
+
 dryrun="yes"
 testing="dryrun quote preservation (dryrun=yes)"
 out=`dryrun 'echo "enquoted"' 2>&1`
@@ -46,7 +57,7 @@ dryrun="no"
 expected_ret=0
 testing="dryrun return value propogation on success returning external call using (set -o pipefail)."
 ret=
-dryrun 'pwd 2>&1 | tee -a _dryrun' >/dev/null
+dryrun 'pwd 2>&1 | tee -a _dryrun' &>/dev/null
 ret=$?
 if test ${ret} -le ${expected_ret}; then
     pass "${testing}"
@@ -58,7 +69,7 @@ fi
 expected_ret=0
 testing="dryrun return value propogation on success returning internal subshell function using (set -o pipefail)."
 ret=
-dryrun '$(dryrun_return_0 2>&1 | tee -a _dryrun)' >/dev/null
+dryrun '$(dryrun_return_0 2>&1 | tee -a _dryrun)' &>/dev/null
 ret=$?
 if test ${ret} -le ${expected_ret}; then
     pass "${testing}"
@@ -70,7 +81,7 @@ fi
 expected_ret=0
 testing="dryrun return value propogation on success returning internal function using (set -o pipefail)."
 ret=
-dryrun 'dryrun_return_0 2>&1 | tee -a _dryrun' >/dev/null
+dryrun 'dryrun_return_0 2>&1 | tee -a _dryrun' &>/dev/null
 ret=$?
 if test ${ret} -le ${expected_ret}; then
     pass "${testing}"
@@ -82,7 +93,7 @@ fi
 expected_ret=1
 testing="dryrun return value propogation on failure returning external call using (set -o pipefail)."
 ret=
-dryrun 'ls unknownfile 2>&1 | tee -a _dryrun' >/dev/null
+dryrun 'ls unknownfile 2>&1 | tee -a _dryrun' &>/dev/null
 ret=$?
 if test ${ret} -ge ${expected_ret}; then
     pass "${testing}"
@@ -94,7 +105,7 @@ fi
 expected_ret=1
 testing="dryrun return value propogation on failure returning internal subshell function using (set -o pipefail)."
 ret=
-dryrun '$(dryrun_return_1 2>&1 | tee -a _dryrun)' >/dev/null
+dryrun '$(dryrun_return_1 2>&1 | tee -a _dryrun)' &>/dev/null
 ret=$?
 if test ${ret} -ge ${expected_ret}; then
     pass "${testing}"
@@ -106,7 +117,7 @@ fi
 expected_ret=1
 testing="dryrun return value propogation on failure returning internal function using (set -o pipefail)."
 ret=
-dryrun 'dryrun_return_1 2>&1 | tee -a _dryrun' >/dev/null
+dryrun 'dryrun_return_1 2>&1 | tee -a _dryrun' &>/dev/null
 ret=$?
 if test ${ret} -ge ${expected_ret}; then
     pass "${testing}"
