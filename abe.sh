@@ -1187,6 +1187,11 @@ if test x"${GERRIT_CHANGE_ID}" != x -o x"${gerrit_trigger}" = xyes; then
     eval `gerrit_info $HOME`
 fi
 
+if test x"${force}" = xyes -a x"$supdate" = xno; then
+    warning "You have specified \"--force\" and \"--disable update\"."
+    echo "         Using \"--force\" overrides \"--disable update\".  Sources will be redownloaded."
+fi
+
 timeout_save=${wget_timeout}
 wget_timeout=10
 # Get the md5sums file, which is used later to get the URL for remote files
