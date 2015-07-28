@@ -168,9 +168,10 @@ fi
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
      while true; do \
-       if ping -i 11 -c 1 ${host_ip}; then \
+       if ping -c 1 ${host_ip}; then \
          break; \
        fi \
+       sleep 11; \
      done; \
      exit \\\${ret}" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
