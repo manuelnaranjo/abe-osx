@@ -90,6 +90,11 @@ clean_benchmark()
       (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}" ${ssh_opts})
       if test $? -eq 0; then
         echo "Removed ${target_dir} from ${ip}"
+        echo "Sending post-target command '${post_target_cmd}' - will not check error code"
+        if test x"${post_target_cmd}" != x; then
+          (. ${topdir}/lib/common.sh; remote_exec "${ip}" "${post_target_cmd}" ${ssh_opts})
+        fi
+        #We don't check the error code because this might well include a shutdown
       else
         echo "Failed to remove ${target_dir} from ${ip}. You might want to go in and clean up." 1>&2
         error=1
@@ -97,14 +102,6 @@ clean_benchmark()
     fi
   else
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
-  fi
-
-  if test ${error} -eq 0; then
-    echo "Sending post-target command '${post_target_cmd}' - will not check error code"
-    if test x"${post_target_cmd}" != x; then
-      (. ${topdir}/lib/common.sh; remote_exec "${ip}" "${post_target_cmd}" ${ssh_opts})
-    fi
-    #We don't check the error code because this might well include a shutdown
   fi
 
   exit "${error}"
