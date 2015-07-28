@@ -53,7 +53,7 @@ else
     exit 1
 fi
 topdir="${abe_path}" #abe global, but this should be the right value for abe
-confdir="${topdir}/config/boards/bench"
+confdir="${topdir}/config/bench/boards"
 benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2

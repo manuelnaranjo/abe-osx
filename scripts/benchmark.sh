@@ -49,7 +49,7 @@ $0 [-tckh] -b <benchmark> <board...>
   -k   Keep. If this is set, benchmark sources and results will be left on
        target.
 
-  <board...> may be anything that has a file in config/boards/bench, e.g. the
+  <board...> may be anything that has a file in config/bench/boards, e.g. the
   existence of arndale.conf means that you can put arndale here. At least one
   target may be specified. Each target must only be specified once.
 
