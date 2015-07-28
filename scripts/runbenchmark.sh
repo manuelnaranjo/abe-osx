@@ -167,10 +167,8 @@ fi
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
-     while true; do \
-       if ping -c 1 ${host_ip}; then \
-         break; \
-       fi \
+     while ! test -e ${target_dir}/postrunack; do \
+       ping -c 1 ${host_ip}; \
        sleep 11; \
      done; \
      exit \\\${ret}" \
@@ -188,6 +186,10 @@ fi
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
 while ! tcpdump -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
+if ! (. ${topdir}/lib/common.sh; remote_exec "${ip}" "touch ${target_dir}/postrunack" ${ssh_opts}); then
+  echo "Warning: Failed to send post-run ack to target"
+  #Don't set $error, this is just a warning
+fi
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" 'cat ${target_dir}/RETCODE' ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine exit code, assuming the worst." 1>&2
