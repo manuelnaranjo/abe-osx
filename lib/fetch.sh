@@ -320,28 +320,3 @@ extract()
     create_stamp "${stampdir}" "${stamp}"
     return 0
 }
-
-# This updates an existing checked out source tree 
-update_source()
-{
-    # Figure out which DCCS it uses
-    dccs=
-    if test -f .git; then
-	dccs="git pull"
-    fi
-    if test -f .bzr; then
-	dccs="bzr pull"
-    fi
-    if test -f .svn; then
-	dccs="svn update"
-    fi
-    if test x"${dccs}" != x; then
-	echo "Update sources with: ${dccs}"
-    else
-	echo "ERROR: can't determine DCCS!"
-	return
-    fi
-
-    # update the source
-    (cd $1 && ${dccs})
-}
