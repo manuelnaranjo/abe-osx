@@ -1,0 +1,3 @@
+#!/bin/bash
+lava-network broadcast eth0
+sleep infinity

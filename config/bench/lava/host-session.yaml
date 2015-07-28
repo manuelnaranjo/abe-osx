@@ -1,0 +1,39 @@
+metadata:
+  name: bench-session-debian
+  format: "Lava-Test-Shell Test Definition 1.0"
+  description: "Benchmarking Session"
+  version: 1.0
+
+params:
+    PUB_KEY: None
+    ABE_BRANCH: benchmarking
+    BENCHMARK: fakebench
+    TOOLCHAIN: https://releases.linaro.org/14.11/components/toolchain/binaries/arm-linux-gnueabihf/gcc-linaro-4.9-2014.11-x86_64_arm-linux-gnueabihf.tar.xz
+    RUN_FLAGS: None
+    COMPILER_FLAGS: None
+    BENCH_DEBUG: None
+
+install:
+    deps:
+        - autogen
+        - binutils
+        - bison
+        - dejagnu
+        - flex
+        - gawk
+        - gcc
+        - gcc-multilib
+        - g++-multilib
+        - git
+        - inotify-tools
+        - libgfortran3
+        - libncurses5-dev
+        - make
+        - openssh-server
+        - rsync
+        - texinfo
+        - wget
+run:
+    steps:
+        - ./config/bench/lava/setup "$PUB_KEY"
+        - env BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS"

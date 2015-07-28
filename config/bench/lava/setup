@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Hostname for early debugging: $(cat /etc/hostname)"
+echo "IP address for early debugging: $(hostname -I)"
+
+mkdir -p ~/.ssh/
+echo "$1" >> ~/.ssh/authorized_keys
+echo "Public Key Installed: $1"
+
+/etc/init.d/ssh restart
+echo "sshd re-started"
