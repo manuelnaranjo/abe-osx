@@ -89,14 +89,19 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
       #'-k' (keep)    - unconditionally keep target-side data and target
 target=
 post_target_cmd=
-while getopts g:f:a:i:b:e:kpchs flag; do
+while getopts a:b:ce:f:g:hi:kps flag; do
   case "${flag}" in
-    g) tag="${OPTARG}";;
     a) run_benchargs="${OPTARG}";;
-    s) skip_build=1;;
-    i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     b) benchmark="${OPTARG}";;
     c) cautious=;;
+    e) post_target_cmd="${OPTARG}";;
+    f) compiler_flags="${OPTARG}";;
+    g) tag="${OPTARG}";;
+    h)
+       usage
+       exit 0
+    ;;
+    i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     k)
        if test x"${keep}" = 'x-p'; then
          echo '-k overriding earlier -p'
@@ -116,12 +121,7 @@ while getopts g:f:a:i:b:e:kpchs flag; do
        keep='-p'
        echo 'Unconditional release (-p) set: data will be scrubbed and target released, even if run fails'
     ;;
-    f) compiler_flags="${OPTARG}";;
-    e) post_target_cmd="${OPTARG}";;
-    h)
-       usage
-       exit 0
-    ;;
+    s) skip_build=1;;
     *)
        echo "Bad arg" 1>&2
        exit 1

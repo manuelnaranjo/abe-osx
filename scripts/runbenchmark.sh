@@ -19,17 +19,17 @@ cautious=''
 build_dir=
 run_benchargs=
 post_target_cmd=
-while getopts g:b:d:t:e:a:kpc flag; do
+while getopts a:b:cd:e:g:kpt: flag; do
   case "${flag}" in
+    a) run_benchargs="${OPTARG}";;
+    b) benchmark="${OPTARG}";;
+    c) cautious='-c';;
+    d) device="${OPTARG}";;
+    e) post_target_cmd="${OPTARG}";;
     g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
-    c) cautious='-c';;
-    b) benchmark="${OPTARG}";;
-    d) device="${OPTARG}";;
     t) buildtar="${OPTARG}";;
-    a) run_benchargs="${OPTARG}";;
-    e) post_target_cmd="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        exit 1
