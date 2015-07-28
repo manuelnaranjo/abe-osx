@@ -26,7 +26,7 @@ cd "${maindir}"
 mkdir bin
 cd bin
 if echo x"${toolchain}" | grep -q '^xhttp'; then
-  wget "${toolchain}"
+  wget -q "${toolchain}"
   tar xf "`basename ${toolchain}`"
   #TODO: abe way to handle this?
   if test x"${toolchain##.tgz}" = x.tgz; then
