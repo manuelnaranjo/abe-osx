@@ -1198,7 +1198,7 @@ fi
 timeout_save=${wget_timeout}
 wget_timeout=10
 # Get the md5sums file, which is used later to get the URL for remote files
-fetch md5sums
+fetch_md5sums
 wget_timeout=${timeout_save}
 
 if test ! -z "${do_makecheck}"; then
