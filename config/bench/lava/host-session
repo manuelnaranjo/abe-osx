@@ -45,14 +45,6 @@ fi
 ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
 chmod 755 /usr/local/bin/git-new-workdir
 
-#Get abe
-export ABE_DIR=~/src/abe
-mkdir -p "${ABE_DIR}" || exit 1
-if ! git clone ${abe_branch:+-b ${abe_branch}} http://git.linaro.org/toolchain/abe "${ABE_DIR}"; then
-  rm -rf "${ABE_DIR}"
-  exit 1
-fi
-
 #Generate one-time key
 mkdir ~/data || exit 1
 if ! ssh-keygen -P '' -f ~/data/onetime > /dev/null < /dev/null; then
@@ -120,6 +112,7 @@ done
 #Don't need the agent any more, kill the socket
 rm ~/data/socket
 
+export ABE_DIR
 export targets="${target_names[@]}"
 export maindir="/${HOME}/bench"
 export post_target_cmd="shutdown -h 0"

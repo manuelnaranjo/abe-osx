@@ -36,4 +36,4 @@ install:
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
-        - env BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS"
+        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS"
