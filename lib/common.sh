@@ -748,10 +748,10 @@ create_release_tag()
 
     local rtag="`get_git_tag $1`"
 
-    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[0-9][0-9][0-9][0-9]\.[0-9][0-9].*::'`"
-	
+    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[-0-9\.]\.[0-9\.\-]*::'`"
+
     if test x"${release}" = x; then
-    # extract the branch from the version
+	# extract the branch from the version
 	local srcdir="`get_srcdir ${version}`"
 	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
 	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
@@ -762,10 +762,10 @@ create_release_tag()
         # return the version string array
 	local rtag="${rtag}${revision}-${date}"
     else
-	local version="`echo $1 | sed -e 's:[a-z\./-]*::' -e 's:-branch::' -e 's:^_::' | tr '_' '.' `"
+	local version="`echo $1 | grep -o '\-[0-9\.]*\-' | tr -d '-'`"
 	local tool="`get_toolname $1`"
 	if test x"${version}" = x; then
-	    local version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
+	    local version="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
 	    local version="`echo ${version} | sed -e 's:[a-z\./-]*::' -e 's:-branch::'`"
 	fi
 	local rtag="${name}-${version}-${release}"

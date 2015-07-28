@@ -1462,6 +1462,46 @@ else
     fixme "create_release_tag returned ${out}"
 fi
 
+testing="create_release_tag: snapshot tarball"
+in="gcc-linaro-snapshot-5.1-2015.06-1.tar.xz"
+out="`create_release_tag ${in} | grep -v TRACE`"
+toolname="`echo ${out} | cut -d ' ' -f 1`"
+branch="`echo ${out} | cut -d ' ' -f 2`"
+revision="`echo ${out} | cut -d ' ' -f 3`"
+if test x"${out}" = x"gcc-linaro-snapshot-${date}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+export release="2015.06-1"
+testing="create_release_tag: snapshot tarball with release"
+in="gcc-linaro-snapshot-5.1-2015.06-1.tar.xz"
+out="`create_release_tag ${in} | grep -v TRACE`"
+toolname="`echo ${out} | cut -d ' ' -f 1`"
+branch="`echo ${out} | cut -d ' ' -f 2`"
+revision="`echo ${out} | cut -d ' ' -f 3`"
+if test x"${out}" = x"gcc-linaro-snapshot-5.1-2015.06-1"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+branch=
+revision=
+testing="create_release_tag: repository branch empty with release"
+in="gcc.git"
+out="`create_release_tag ${in} | grep -v TRACE`"
+if test "`echo ${out} | grep -c "gcc-linaro-5-2015.06-1"`" -gt 0; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+release=
 branch=
 revision=
 testing="create_release_tag: repository branch empty"
@@ -1474,6 +1514,7 @@ else
     fixme "create_release_tag returned ${out}"
 fi
 
+release=
 testing="create_release_tag: tarball"
 in="gcc-linaro-4.8-2013.09.tar.xz"
 out="`create_release_tag ${in} | grep -v TRACE`"
