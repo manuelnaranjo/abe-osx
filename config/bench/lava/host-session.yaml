@@ -6,7 +6,6 @@ metadata:
 
 params:
     PUB_KEY: None
-    ABE_BRANCH: benchmarking
     BENCHMARK: fakebench
     TOOLCHAIN: https://releases.linaro.org/14.11/components/toolchain/binaries/arm-linux-gnueabihf/gcc-linaro-4.9-2014.11-x86_64_arm-linux-gnueabihf.tar.xz
     RUN_FLAGS: None
