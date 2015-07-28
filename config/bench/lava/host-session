@@ -3,10 +3,13 @@ set -u
 set -o pipefail
 
 error=1
+if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
+  export BENCH_DEBUG=
+fi
 
 function exitfunc {
   if test ${error} -ne 0; then
-    if test x"${BENCH_DEBUG}" != x && test x"${BENCH_DEBUG}" != xNone; then
+    if test x"${BENCH_DEBUG}" != x; then
       echo "Trapped exit with error ${error}"
       echo "Sleeping for debug"
       echo "ssh -o ControlMaster=no -o ControlPath=/dev/null `hostname -I | tr -d '[[:blank:]]'`.lab"
