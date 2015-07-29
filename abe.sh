@@ -1105,6 +1105,9 @@ while test $# -gt 0; do
 		    mpf*|mpfr)
 			mpfr_version="${value}"
 			;;
+                    lin*|linux)
+			linux_version="${value}"
+			;;
 		    mpc)
 			mpc_version="${value}"
 			;;
