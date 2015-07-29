@@ -1,5 +1,5 @@
 metadata:
-  name: bench-session
+  name: bench-session-kvm
   format: "Lava-Test-Shell Test Definition 1.0"
   description: "Benchmarking Session"
   version: 1.0
@@ -12,6 +12,9 @@ install:
         - openssh-server
         - make
         - cpufrequtils
+        - binutils
+        - gawk
+        - libgfortran3
         - inotify-tools
 
 run:
