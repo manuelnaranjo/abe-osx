@@ -13,7 +13,7 @@ set -o nounset
 trap clean_top EXIT
 trap 'error=1; exit' TERM INT HUP QUIT
 
-error=0
+error=1
 declare -A runpids
 
 clean_top()
@@ -63,7 +63,8 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
-    exit 1
+    error=1
+    exit
 fi
 topdir="${abe_path}" #abe global, but this should be the right value for abe
 
@@ -73,7 +74,8 @@ if test "$((`umask` & 077))" -ne 63; then
   echo "umask grants permissions to group and world, will remove those permissions" 1>&2
   if ! umask g-rwx,o-rwx; then
     echo "umask failed, wibble, aborting" 1>&2
-    exit 1
+    error=1
+    exit
   fi
 fi
 #End sanity checks
@@ -99,7 +101,8 @@ while getopts a:b:ce:f:g:hi:kps flag; do
     g) tag="${OPTARG}";;
     h)
        usage
-       exit 0
+       error=0
+       exit
     ;;
     i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     k)
@@ -111,7 +114,8 @@ while getopts a:b:ce:f:g:hi:kps flag; do
        echo 'Continue? (y/N)'
        read answer
        if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
-         exit 0
+         error=0
+         exit
        fi
     ;;
     p)
@@ -124,7 +128,8 @@ while getopts a:b:ce:f:g:hi:kps flag; do
     s) skip_build=1;;
     *)
        echo "Bad arg" 1>&2
-       exit 1
+       error=1
+       exit
     ;;
   esac
 done
@@ -134,15 +139,18 @@ devices=("$@")
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 if test x"${benchmark_gcc_path:-}" = x; then
   echo "No GCC given (-i)" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 if ! test -x "${benchmark_gcc_path}"; then
   echo "GCC '${benchmark_gcc_path}' does not exist or is not executable" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
   benchmark_gcc_triple=
@@ -160,7 +168,8 @@ else #cross-build, implies we need remote devices
   benchmark_gcc_triple="`basename ${benchmark_gcc_path%-gcc}`"
   if test ${#devices[@]} -eq 0; then
     echo "Cross-compiling gcc '${benchmark_gcc_path} given, but no devices given for run" 1>&2
-    exit 1
+    error=1
+    exit
   fi
 fi
 
@@ -169,14 +178,16 @@ if test x"${skip_build:-}" = x; then
   (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
-    exit 1
+    error=1
+    exit
   fi
 fi
 
 builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
 #Compress build to a tmpfile in our top-level working directory
@@ -185,17 +196,20 @@ fi
 cmpbuild="`mktemp -p ${abe_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
 if test $? -ne 0; then
   echo "Unable to create temporary file for compressed build output" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
   echo "Unable to compress ${builddir} to ${cmpbuild}" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 for device in "${devices[@]}"; do
   "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
+error=0
 running_pids=("${!runpids[@]}")
 while true; do
   for running_pid in "${running_pids[@]}"; do

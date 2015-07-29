@@ -4,8 +4,10 @@
 set -o pipefail
 set -o nounset
 
+error=1
+
 trap clean_benchmark EXIT
-trap 'exit ${error}' TERM INT HUP QUIT
+trap 'exit ${error}' TERM INT HUP QUIT #Signal death can be part of normal control flow (see 'kill' invocations in benchmark.sh)
 
 #Precondition: the target is in known_hosts
 ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
@@ -32,17 +34,18 @@ while getopts a:b:cd:e:g:kpt: flag; do
     t) buildtar="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
-       exit 1
+       error=1
+       exit
     ;;
   esac
 done
 shift $((OPTIND - 1))
 if test $# -ne 0; then
   echo "Surplus arguments: $@" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
-error=1
 tee_output=/dev/null
 
 # load the configure file produced by configure
@@ -50,32 +53,34 @@ if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
 else
     echo "ERROR: no host.conf file!  Did you run configure?" 1>&2
-    exit 1
+    error=1
+    exit
 fi
 topdir="${abe_path}" #abe global, but this should be the right value for abe
 confdir="${topdir}/config/bench/boards"
 benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 safe_output="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git safe_output`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
 . "${confdir}/${device}.conf" #We can't use abe's source_config here as it requires us to have something get_toolname can parse
 if test $? -ne 0; then
   echo "+++ Failed to source ${confdir}/${device}.conf" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
 #Make sure that subscripts clean up - we must not leave benchmark sources or data lying around,
 clean_benchmark()
 {
-  error=$?
-
   if test x"${ip:-}" != x; then
     if test x"${target_dir:-}" = x; then
       echo "No directory to remove from ${ip}"
@@ -104,12 +109,13 @@ clean_benchmark()
     echo "Target post-boot initialisation did not happen, thus nothing to clean up."
   fi
 
-  exit "${error}"
+  exit ${error}
 }
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip:-(unknown)}" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
 #Should be a sufficient UID, as we wouldn't want to run multiple benchmarks on the same target at the same time
@@ -120,20 +126,23 @@ fi
 mkdir -p "${logdir}/${benchmark}.git"
 if test $? -ne 0; then
   echo "Failed to create dir ${logdir}" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 
 #Create and populate working dir on target
 target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
 if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
-  exit 1
+  error=1
+  exit
 fi
 for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
   (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
-    exit 1
+    error=1
+    exit
   fi
 done
 
@@ -223,4 +232,4 @@ if test ${error} -eq 0; then
 else
   echo "+++ Run of ${benchmark} on ${device} failed"
 fi
-exit ${error}
+exit
