@@ -668,6 +668,39 @@ if test ! -e "${local_snapshots}/md5sums.bak"; then
 else
     pass "Found ${local_snapshots}/md5sums.bak"
 fi
+
+# Download a clean/new copy for the check_md5sum tests
+rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz*
+fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null
+
+out="`check_md5sum 'infrastructure/gmp-5.1.3.tar.xz' 2>/dev/null`"
+if test $? -gt 0; then
+    fail "check_md5sum failed for 'infrastructure/gmp-5.1.3.tar.xz"
+else
+    pass "check_md5sum passed for 'infrastructure/gmp-5.1.3.tar.xz"
+fi
+
+# Test with a non-infrastructure file
+out="`check_md5sum 'infrastructure/foo.tar.xz' 2>/dev/null`"
+if test $? -gt 0; then
+    pass "check_md5sum failed as expected for 'infrastructure/foo.tar.xz"
+else
+    fail "check_md5sum passed as expected for 'infrastructure/foo.tar.xz"
+fi
+
+mv ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz.back
+echo "empty file" > ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
+# Test an expected failure case.
+out="`check_md5sum 'infrastructure/gmp-5.1.3.tar.xz' 2>/dev/null`"
+if test $? -gt 0; then
+    pass "check_md5sum failed as expected for nonmatching 'infrastructure/gmp-5.1.3.tar.xz file"
+else
+    fail "check_md5sum passed unexpectedly for nonmatching 'infrastructure/gmp-5.1.3.tar.xz file"
+fi
+
+mv ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz.back ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+
 # ----------------------------------------------------------------------------------
 echo "============= find_snapshot() tests ================"
 
