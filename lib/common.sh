@@ -70,7 +70,9 @@ dryrun()
 	    read answer
 	    return $?
 	fi
-        echo "RUN: $1"
+	# Output this to stderr so we don't pollute functions that return
+	# information to stdout.
+        echo "RUN: $1" 1>&2
 
 	# This block restricts the set -o pipefail to ONLY the command being
 	# evaluated.  The set -o pipefail command will cause the right-most
