@@ -184,7 +184,7 @@ checkout_all()
 	esac
 
     	local gitinfo="`get_source ${package}`"
-	if test x"${gitinfo}" = x; then
+	if test x"${gitinfo}" != x; then
 	    local checkout_ret=
 	    checkout ${gitinfo}
 	    checkout_ret=$?
@@ -193,6 +193,9 @@ checkout_all()
 		error "Failed checkout out of $i."
 		return 1
 	    fi
+	else
+	    error "Unable to find source url for package $package."
+	    return 1
 	fi
     done
     
