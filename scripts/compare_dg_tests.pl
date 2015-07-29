@@ -80,7 +80,7 @@ my ($testroot, $basename);
 my ($ref_file_name, $res_file_name);
 my $nounstable=0;
 my $unstablefile=0;
-my $target="";
+my @unstable_markers=();
 
 GetOptions ("l"           => \$long,
             "s"           => \$short,
@@ -91,7 +91,7 @@ GetOptions ("l"           => \$long,
             "basename=s"  => \$basename,
             "no-unstable"  => \$nounstable,
             "unstable-tests=s" => \$unstablefile,
-            "target=s"    => \$target);
+            "unstable-marker=s"    => \@unstable_markers);
 
 $ref_file_name = $ARGV[0] if ($#ARGV == 1);
 $res_file_name = $ARGV[1] if ($#ARGV == 1);
@@ -210,11 +210,14 @@ sub read_unstable($)
 	   # Check if line is of type: target:testname
 	   if (/^(.*):/)
 	   {
-	       if ($target eq $1) {
-		   # If target matches the one supplied as script
-		   # argument, add the testname to the list
-		   $test =~ s/.*://;
-		   push @unstable_tests, $test;
+	       foreach my $unstable_marker (@unstable_markers)
+	       {
+		   if ($unstable_marker eq $1) {
+		       # If target matches the one supplied as script
+		       # argument, add the testname to the list
+		       $test =~ s/.*://;
+		       push @unstable_tests, $test;
+		   }
 	       }
 	   } else {
 	       push @unstable_tests, $test;
