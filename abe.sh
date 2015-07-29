@@ -1248,6 +1248,16 @@ if test ! -z ${do_dump}; then
     dump
 fi
 
+# Both checkout and build need the build dir.  'build' uses it for the builds
+# but checkout uses it for file git locks.
+if test ! -z "${do_checkout}" -o ! -z "${do_build}"; then
+    # Sometimes a user might remove ${local_builds} to restart the build.
+    if test ! -d "${local_builds}"; then
+	warning "${local_builds} does not exist. Recreating build directory!"
+	mkdir -p ${local_builds}
+    fi
+fi
+
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then
 	url="`get_source ${do_checkout}`"
@@ -1271,12 +1281,6 @@ if test ! -z ${do_checkout}; then
 fi
 
 if test ! -z ${do_build}; then
-    # Sometimes a user might remove ${local_builds} to restart the build.
-    if test ! -d "${local_builds}"; then
-	warning "${local_builds} does not exist. Recreating build directory!"
-	mkdir -p ${local_builds}
-    fi
-
     if test x"${do_build}" != x"all"; then
 	buildingall=no
 	gitinfo="`get_source ${do_build}`"
