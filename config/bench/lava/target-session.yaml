@@ -17,6 +17,7 @@ install:
         - gawk
         - libgfortran3
         - rsync
+        - inotify-tools
 
 run:
     steps:

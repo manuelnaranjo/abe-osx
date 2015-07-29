@@ -1,3 +1,6 @@
 #!/bin/bash
 lava-network broadcast eth0
-sleep infinity
+mkdir "${HOME}/messages"
+while ! test -e "${HOME}/messages/release"; do
+  inotifywait -e create "${HOME}/messages"
+done
