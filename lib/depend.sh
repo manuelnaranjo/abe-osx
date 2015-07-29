@@ -158,8 +158,40 @@ infrastructure()
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
     local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+
+    local version=
     for i in ${depends}; do
-     	files="${files} `grep /$i ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+	case $i in
+	    linux) version=${linux_version} ;;
+	    mpfr) version=${mpfr_version} ;;
+	    mpc) version=${mpc_version} ;;
+	    gmp) version=${gmp_version} ;;
+	    dejagnu) version=${dejagnu_version} ;;
+	    *)
+		error "config/infrastructure.conf contains an unknown dependency: $i"
+		return 1
+		;;
+	esac
+
+	# If the user didn't set it, check the <component>.conf files for
+	# 'latest'.
+	if test "${version:+set}" != "set"; then
+	    version="`grep ^latest= ${topdir}/config/${i}.conf | cut -d '\"' -f 2`"
+	    # Sometimes config/${i}.conf uses <component>-version and sometimes
+	    # it just uses 'version'.  Regardless, searching the md5sums file requires
+	    # that we include the component name.
+	    version=${i}-${version#${i}-}
+	fi
+
+	if test "${version:+found}" != "found"; then
+	    error "Can't find a version for component \"$i\" in ${i}.conf"
+	    return 1
+	fi
+
+	# Hopefully we only return the exact match for each one.  Depending
+	# how vague the user is it might match on multiple tarballs.
+	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+	unset version
     done
 
     # Store the current value so we can reset it after we're done.
