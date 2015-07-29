@@ -408,7 +408,7 @@ manifest()
     fi
 
     rm -f ${outfile}
-    cat >> ${outfile} <<EOF 
+    cat >> ${outfile} <<EOF
 # Build machine data
 build=${build}
 host=${host}
@@ -425,21 +425,46 @@ mpfr_versionnum=${mpfr_version}
 
 # Binutils
 binutils_branch=${binutils_version}
+EOF
+
+    if test "`echo ${binutils_branch} | grep -c \.tar\.`" -eq 0; then
+	cat >> ${outfile} <<EOF
 binutils_revision=${binutils_revision}
 binutils_version=binutils-gdb.git@${binutils_revision}
+EOF
+    fi
+
+    cat >> ${outfile} <<EOF
 
 # DejaGnu
 dejagnu_version=${dejagnu_version}
 
 # GDB
 gdb_branch=${gdb_version}
+
+EOF
+
+    if test "`echo ${gdb_branch} | grep -c \.tar\.`" -eq 0; then
+	cat >> ${outfile} <<EOF
 gdb_revision=${gdb_revision}
 gdb_version=binutils-gdb.git@${gdb_revision}
+EOF
+    fi
+
+    cat >> ${outfile} <<EOF
 
 # GCC
 gcc_branch=${gcc_branch}
-gcc_revision=${gcc_revision}
-gcc_version=gcc.git@${gcc_revision}
+EOF
+
+    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
+	cat >> ${outfile} <<EOF
+    echo gcc_revision=${gcc_revision}
+    echo gcc_version=gcc.git@${gcc_revision}
+EOF
+    fi
+
+    cat >> ${outfile} <<EOF
 
 # C Library
 clibrary=${clibrary}
@@ -456,7 +481,7 @@ EOF
 
     # Gerrit info, if triggered
     if test x"${gerrit_trigger}" = xyes; then
-	cat >> ${outfile} <<EOF 
+	cat >> ${outfile} <<EOF
 gerrit_branch=${gerrit_branch}
 gerrit_revision=${gerrit_revision}
 
@@ -496,9 +521,13 @@ EOF
 	    ;;
     esac
 
-    local srcdir="`get_srcdir ${gcc_version}`"
     echo "---------------------------------------------" >> ${outfile}
-    cd ${srcdir} && git log -n 1 >> ${outfile}
+    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
+	local srcdir="`get_srcdir ${gcc_version}`"
+	# Invoke in a subshell in order to prevent state-change of the current
+	# working directory after manifest is called.
+	$(cd ${srcdir} && git log -n 1 >> ${outfile})
+    fi
 
     echo ${outfile}
     return 0
