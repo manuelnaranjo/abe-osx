@@ -40,6 +40,7 @@ fi
 
 #Non-parameters that we need to pass to Benchmark.job
 export ABE_DIR
+export post_build_cmd="rm ${HOME}/data/socket"
 export post_target_cmd='touch ${HOME}/messages/release'
 export maindir="/${HOME}/bench"
 mkdir "${maindir}" || exit 1
@@ -74,7 +75,7 @@ ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{pr
 #Request agent just before we need it
 #This would be two keys in one agent if we wanted one for source, one for job
 echo "*** WAITING FOR AGENT: ${ip_addr}"
-echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A ${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && inotifywait -e close ${ABE_DIR}/abe.sh"
+echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A ${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
 while ! test -e ~/data/socket; do
   inotifywait -e create ~/data
 done
