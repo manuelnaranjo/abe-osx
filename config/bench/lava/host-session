@@ -38,6 +38,13 @@ else
   export compiler_flags="$5"
 fi
 
+#Non-parameters that we need to pass to Benchmark.job
+export ABE_DIR
+export post_target_cmd='touch ${HOME}/messages/release'
+export maindir="/${HOME}/bench"
+mkdir "${maindir}" || exit 1
+chmod 700 "${maindir}" || exit 1
+
 #Create directory to store src
 if ! (mkdir ~/benchsrc && chmod 700 ~/benchsrc); then
   echo "Failed to create directory for source" >&2
@@ -117,12 +124,7 @@ done
 #Don't need the agent any more, kill the socket
 rm ~/data/socket
 
-export ABE_DIR
 export targets="${target_names[@]}"
-export maindir="/${HOME}/bench"
-export post_target_cmd='touch ${HOME}/messages/release'
-mkdir "${maindir}"
-chmod 700 "${maindir}"
 
 echo "Running benchmark... I may be some time"
 if ! "${ABE_DIR}"/scripts/Benchmark.job; then
