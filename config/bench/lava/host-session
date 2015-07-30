@@ -60,10 +60,8 @@ ssh-add ~/data/onetime
 #Need to be able to ssh to self to get local sources
 #Can reuse the onetime key for this
 cat ~/data/onetime.pub >> ~/.ssh/authorized_keys
-if ! ssh -o NoHostAuthenticationForLocalhost=yes localhost true; then
-  echo "Failed to ssh to self" >&2
-  exit 1
-fi
+echo -n 'localhost ' >> ~/.ssh/known_hosts
+cat /etc/ssh/ssh_host_ecdsa_key.pub >> ~/.ssh/known_hosts
 
 #Generate config file for each target in multinode job
 lava-network broadcast eth0
