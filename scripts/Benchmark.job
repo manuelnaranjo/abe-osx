@@ -53,13 +53,23 @@ fi
 #Run benchmark
 echo cd "${maindir}"
      cd "${maindir}"
+
+#Configure
 echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
      "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
+#Build
+echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
+     "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
+
+#Post-build command
+${post_build_cmd:-}
+
+#Run
 if test x"${BENCH_DEBUG:-}" = x; then
   politeness='-p'
 else
   politeness=
 fi
-echo "${ABE_DIR}"/scripts/benchmark.sh ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
-     "${ABE_DIR}"/scripts/benchmark.sh ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
+echo "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
+     "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
