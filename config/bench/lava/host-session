@@ -59,19 +59,11 @@ chmod 755 /usr/local/bin/git-new-workdir
 if ! ssh-keygen -P '' -f ~/.ssh/id_rsa > /dev/null < /dev/null; then
   exit 1
 fi
-eval `ssh-agent`
-ssh-add ~/.ssh/id_rsa
 
 #Create directory for communication with other hosts
 mkdir ~/data || exit 1
 
-#Need to be able to ssh to self to get local sources
-#Can reuse the onetime key for this
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-echo -n 'localhost ' >> ~/.ssh/known_hosts
-cat /etc/ssh/ssh_host_ecdsa_key.pub >> ~/.ssh/known_hosts
-
-#Also need to be able to ssh to dev-private
+#Need to be able to ssh to dev-private
 echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
 
 #Generate config file for each target in multinode job
@@ -82,14 +74,11 @@ ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{pr
 #Request agent just before we need it
 #This would be two keys in one agent if we wanted one for source, one for job
 echo "*** WAITING FOR AGENT: ${ip_addr}"
-echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A ${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e ~/data/socket; do inotifywait -e delete ~/data; done'"
+echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A ${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && inotifywait -e close ${ABE_DIR}/abe.sh"
 while ! test -e ~/data/socket; do
   inotifywait -e create ~/data
 done
-#Best practice would be to use abe to do this, but I hope this is temporary
-SSH_AUTH_SOCK=~/data/socket git clone "`grep ${benchmark} ${ABE_DIR}/config/sources.conf | awk '{print $2}'`" ~/benchsrc/${benchmark}.git || exit 1
-#An alternative to the following would be to pass ${benchmark}=ssh://... to abe.sh
-sed -i "s#^\\(${benchmark}\\.git[[:blank:]]\\+\\).*#\\1ssh://localhost/~/benchsrc/${benchmark}.git#" "${ABE_DIR}"/config/sources.conf || exit 1
+export SSH_AUTH_SOCK=~/data/socket
 
 target_names=()
 for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; do
@@ -99,7 +88,7 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
 
   #Check that target is accessible, add it to our known_hosts,
   #add our one-time key to its authorized_keys
-  if ! cat ~/.ssh/id_rsa.pub | SSH_AUTH_SOCK=~/data/socket ssh -o StrictHostKeyChecking=no "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
+  if ! cat ~/.ssh/id_rsa.pub | ssh -o StrictHostKeyChecking=no "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
     echo "Could not access target ${target_ip} (${lava_name})" >&2
     exit 1
   fi
@@ -120,9 +109,6 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
     target_names=("${target_names[@]}" "${lava_name}")
   fi
 done
-
-#Don't need the agent any more, kill the socket
-rm ~/data/socket
 
 export targets="${target_names[@]}"
 
