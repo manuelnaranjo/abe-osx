@@ -46,12 +46,6 @@ export maindir="/${HOME}/bench"
 mkdir "${maindir}" || exit 1
 chmod 700 "${maindir}" || exit 1
 
-#Create directory to store src
-if ! (mkdir ~/benchsrc && chmod 700 ~/benchsrc); then
-  echo "Failed to create directory for source" >&2
-  exit 1
-fi
-
 #Initialize git-new-workdir - sadly not just an apt-get call
 ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
 chmod 755 /usr/local/bin/git-new-workdir
