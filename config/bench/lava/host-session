@@ -78,9 +78,9 @@ while ! test -e ~/data/socket; do
   inotifywait -e create ~/data
 done
 #Best practice would be to use abe to do this, but I hope this is temporary
-SSH_AUTH_SOCK=~/data/socket git clone "`grep ${benchmark} ${ABE_DIR}/config/sources.conf | awk '{print $2}'`" ~/benchsrc/${benchmark} || exit 1
+SSH_AUTH_SOCK=~/data/socket git clone "`grep ${benchmark} ${ABE_DIR}/config/sources.conf | awk '{print $2}'`" ~/benchsrc/${benchmark}.git || exit 1
 #An alternative to the following would be to pass ${benchmark}=ssh://... to abe.sh
-sed -i "s#^\\(${benchmark}[[:blank:]]\\+\\).*#\\1 ssh://localhost/~/benchsrc/#" "${ABE_DIR}"/config/sources.conf || exit 1
+sed -i "s#^\\(${benchmark}\\.git[[:blank:]]\\+\\).*#\\1ssh://localhost/~/benchsrc/${benchmark}.git#" "${ABE_DIR}"/config/sources.conf || exit 1
 
 target_names=()
 for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; do
