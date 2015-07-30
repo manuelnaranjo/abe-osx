@@ -83,7 +83,7 @@ fi
 tag=""
 compiler_flags=""
 run_benchargs=""
-skip_build=
+phases="both"
 benchmark_gcc_path=
 cautious='-c'
 keep= #'-p' (polite)  - clean up and release target even if there is an error
@@ -91,7 +91,7 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
       #'-k' (keep)    - unconditionally keep target-side data and target
 target=
 post_target_cmd=
-while getopts a:b:ce:f:g:hi:kps flag; do
+while getopts a:b:ce:f:g:hi:kps: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -125,7 +125,14 @@ while getopts a:b:ce:f:g:hi:kps flag; do
        keep='-p'
        echo 'Unconditional release (-p) set: data will be scrubbed and target released, even if run fails'
     ;;
-    s) skip_build=1;;
+    s)
+       phases="${OPTARG}"
+       if test x"${phases}" != xrunonly && test x"${phases}" != xbuildonly && test x"${phases}" != xboth; then
+         echo "-s takes 'runonly', 'buildonly' or 'both'" 1>&2
+         error=1
+         exit
+       fi
+    ;;
     *)
        echo "Bad arg" 1>&2
        error=1
@@ -173,7 +180,7 @@ else #cross-build, implies we need remote devices
   fi
 fi
 
-if test x"${skip_build:-}" = x; then
+if test x"${phases}" != xrunonly; then
   #abe can build the benchmarks just fine
   (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
   if test $? -ne 0; then
@@ -181,6 +188,10 @@ if test x"${skip_build:-}" = x; then
     error=1
     exit
   fi
+fi
+if test x"${phases}" = xbuildonly; then
+  error=0
+  exit
 fi
 
 builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
