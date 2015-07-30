@@ -15,7 +15,6 @@ install:
         - binutils
         - gawk
         - libgfortran3
-        - inotify-tools
 
 run:
     steps:

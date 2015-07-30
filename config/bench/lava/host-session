@@ -41,7 +41,7 @@ fi
 #Non-parameters that we need to pass to Benchmark.job
 export ABE_DIR
 export post_build_cmd="rm ${HOME}/data/socket"
-export post_target_cmd='touch ${HOME}/messages/release'
+export post_target_cmd='kill \\$(pidof sleep)'
 export maindir="/${HOME}/bench"
 mkdir "${maindir}" || exit 1
 chmod 700 "${maindir}" || exit 1
