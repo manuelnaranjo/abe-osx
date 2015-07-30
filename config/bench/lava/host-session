@@ -49,17 +49,18 @@ ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
 chmod 755 /usr/local/bin/git-new-workdir
 
 #Generate one-time key
-mkdir ~/data || exit 1
-if ! ssh-keygen -P '' -f ~/data/onetime > /dev/null < /dev/null; then
-  rm -rf ~/data
+if ! ssh-keygen -P '' -f ~/.ssh/id_rsa > /dev/null < /dev/null; then
   exit 1
 fi
 eval `ssh-agent`
-ssh-add ~/data/onetime
+ssh-add ~/.ssh/id_rsa
+
+#Create directory for communication with other hosts
+mkdir ~/data || exit 1
 
 #Need to be able to ssh to self to get local sources
 #Can reuse the onetime key for this
-cat ~/data/onetime.pub >> ~/.ssh/authorized_keys
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 echo -n 'localhost ' >> ~/.ssh/known_hosts
 cat /etc/ssh/ssh_host_ecdsa_key.pub >> ~/.ssh/known_hosts
 
@@ -88,7 +89,7 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
 
   #Check that target is accessible, add it to our known_hosts,
   #add our one-time key to its authorized_keys
-  if ! cat ~/data/onetime.pub | SSH_AUTH_SOCK=~/data/socket ssh -o StrictHostKeyChecking=no "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
+  if ! cat ~/.ssh/id_rsa.pub | SSH_AUTH_SOCK=~/data/socket ssh -o StrictHostKeyChecking=no "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
     echo "Could not access target ${target_ip} (${lava_name})" >&2
     exit 1
   fi
