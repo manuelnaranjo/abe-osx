@@ -64,6 +64,9 @@ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 echo -n 'localhost ' >> ~/.ssh/known_hosts
 cat /etc/ssh/ssh_host_ecdsa_key.pub >> ~/.ssh/known_hosts
 
+#Also need to be able to ssh to dev-private
+echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
+
 #Generate config file for each target in multinode job
 lava-network broadcast eth0
 lava-network collect eth0
