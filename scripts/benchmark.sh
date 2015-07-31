@@ -91,7 +91,7 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
       #'-k' (keep)    - unconditionally keep target-side data and target
 target=
 post_target_cmd=
-while getopts a:b:ce:f:g:hi:kps: flag; do
+while getopts a:b:ce:f:g:hi:km:ps: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -118,6 +118,7 @@ while getopts a:b:ce:f:g:hi:kps: flag; do
          exit
        fi
     ;;
+    m) make_flags="${OPTARG}";;
     p)
        if test x"${keep}" = 'x-k'; then
          echo '-p overriding earlier -k'
@@ -182,7 +183,7 @@ fi
 
 if test x"${phases}" != xrunonly; then
   #abe can build the benchmarks just fine
-  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
+  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     error=1

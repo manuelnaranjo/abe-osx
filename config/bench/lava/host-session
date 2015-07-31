@@ -38,9 +38,14 @@ else
   export compiler_flags="$5"
 fi
 if test x"$6" = xNone; then
+  export make_flags=
+else
+  export make_flags="$6"
+fi
+if test x"$7" = xNone; then
   export prebuilt=
 else
-  export prebuilt="$6"
+  export prebuilt="$7"
 fi
 
 #Non-parameters that we need to pass to Benchmark.job
