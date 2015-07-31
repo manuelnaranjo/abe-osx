@@ -63,8 +63,14 @@ if test x"${benchgccpath}" != x; then
 fi
 
 #Build
-echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
-     "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
+if test x"${prebuilt:-}" = x; then
+  echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
+       "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
+else
+  #TODO: Store tarball in a tmpdir
+  tar xf "`get_thing ${prebuilt}`"
+  rm "${prebuilt#*:}"
+fi
 
 #Post-build command
 ${post_build_cmd:-}

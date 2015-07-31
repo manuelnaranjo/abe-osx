@@ -37,6 +37,11 @@ if test x"$5" = xNone; then
 else
   export compiler_flags="$5"
 fi
+if test x"$6" = xNone; then
+  export prebuilt=
+else
+  export prebuilt="$6"
+fi
 
 #Non-parameters that we need to pass to Benchmark.job
 export ABE_DIR
