@@ -17,27 +17,39 @@ if test x"${benchmark:-}" = x; then
   exit 1
 fi
 
+function get_thing {
+  local thing="$1"
+  if echo x"${thing}" | grep -q '^xhttp'; then
+    wget -q "${thing}"
+    basename "${thing}"
+  else
+    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${prebuilt%%:*}" "${prebuilt#*:}" .)
+    basename "${prebuilt#*:}"
+  fi
+}
+
 #Set up maindir
 echo "Building benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}"
 cd "${maindir}"
 
+#Configure
+#Must have run configure before first call to get_thing
+echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+     "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+
 #Install toolchain
 mkdir bin
-cd bin
-if echo x"${toolchain}" | grep -q '^xhttp'; then
-  wget -q "${toolchain}"
-  tar xf "`basename ${toolchain}`"
-  #TODO: abe way to handle this?
-  if test x"${toolchain##.tgz}" = x.tgz; then
-    benchgccpath="`echo $PWD/\`basename ${toolchain%%.tgz}\`/bin/*gcc`"
-  else
-    benchgccpath="`echo $PWD/\`basename ${toolchain%%.tar.*}\`/bin/*gcc`"
-  fi
-else
+if test x"${toolchain:0:1}" = x/; then
   echo "Toolchain assumed to be path on builder"
   benchgccpath="${toolchain}"
+else
+  tarball="`get_thing ${toolchain}`"
+  tar xf "${tarball}" -C bin
+  benchgccpath="`ls ${PWD}/bin/*/bin/*gcc`"
+  rm "${tarball}"
 fi
+
 if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
   echo "Should be exactly one GCC path" 1>&2
   echo "Got: ${benchgccpath}" 1>&2
@@ -49,14 +61,6 @@ if test x"${benchgccpath}" != x; then
     exit 1
   fi
 fi
-
-#Run benchmark
-echo cd "${maindir}"
-     cd "${maindir}"
-
-#Configure
-echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
-     "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
 #Build
 echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
