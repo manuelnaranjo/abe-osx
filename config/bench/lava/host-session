@@ -70,6 +70,8 @@ mkdir ~/data || exit 1
 
 #Need to be able to ssh to dev-private
 echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
+#Permit scping of toolchains/built benchmarks from this machine
+echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> ~/.ssh/known_hosts
 
 #Generate config file for each target in multinode job
 lava-network broadcast eth0
