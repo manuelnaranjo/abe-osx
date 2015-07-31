@@ -497,7 +497,7 @@ set_package()
 	    ;;
 	makeflags|ma*)
 #	    override_makeflags="${setting}"
-	    set make_flags="${make_flags} ${setting}"
+	    make_flags="${make_flags} ${setting}"
 	    notice "Overriding ${setting} to MAKEFLAGS"
 	    return 0
 	    ;;
