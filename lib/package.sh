@@ -246,12 +246,17 @@ binary_toolchain()
 	build_rpm ${destdir}
     fi
     if test x"${tarbin}" = x"yes"; then
-	# make the tarball from the tree we just created.
-	notice "Making binary tarball for toolchain, please wait..."
-	dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
+	if test `echo ${host} | grep -c mingw` -eq 0; then
+	    # make the tarball from the tree we just created.
+	    notice "Making binary tarball for toolchain, please wait..."
+	    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
 
-	rm -f ${local_snapshots}/${tag}.tar.xz.asc
-	dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+	    rm -f ${local_snapshots}/${tag}.tar.xz.asc
+	    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
+	else
+	    notice "Making binary toolchain package for Windows, please wait..."
+	    ${local_snapshots}/infrastructure/installjammer/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
+	fi
     fi
     
     rm -fr ${local_builds}/tmp.$$

@@ -87,6 +87,10 @@ checkout_infrastructure()
 	unset version
     done
 
+    if test `echo ${host} | grep -c mingw` -eq 1 -a x"${tarbin}" = xyes; then
+	files="${files} installjammer-1.2.15.tar.gz"
+    fi
+
     for i in ${files}; do
 	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
         local gitinfo=
@@ -120,6 +124,7 @@ checkout_infrastructure()
 	    fi
 	fi
     done
+
     return 0
 }
 
