@@ -350,8 +350,8 @@ OPTIONS
 			# Matches an identifier in sources.conf:
 			glibc=glibc.git
 
-			# Matches a tar snapshot in md5sums:
-			glibc=eglibc-linaro-2.17-2013.07
+			# Matches a tar snapshot
+			glibc=eglibc-linaro-2.17-2013.07.tar.xz
 
 			# Direct URL:
 			glibc=git://sourceware.org/git/glibc.git
@@ -384,8 +384,6 @@ ABE GENERATED FILES AND DIRECTORIES
 
   snapshots/infrastructure Infrastructure (non-distributed) sources are stored
 			here.
-
-  snapshots/md5sums	The snapshots file of maintained package tarballs.
 
 AUTHOR
   Rob Savoye <rob.savoye@linaro.org>
@@ -651,33 +649,6 @@ check_optional_directive()
     fi
     echo "$directive"
     return 0
-}
-
-# This gets a list from a remote server of the available tarballs. We use HTTP
-# instead of SSH so it's more accessible to those behind nasty firewalls.
-# base - already checkout out source trees
-# snapshots - tarballs of various source snapshots
-# prebuilt - prebuilt executables
-get_list()
-{
-    echo "Get version list for $1..."
-
-    # http://abe.validation.linaro.org/snapshots
-    case $1 in
-	testcode|t*)
-	    testcode="`grep testcode ${local_snapshots}/testcode/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${testcode}"
-	    ;;
-	snapshots|s*)
-	    snapshots="`egrep -v "\.asc|\.diff|\.txt|xdelta|base|infrastructure|testcode" ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
-	    echo "${snapshots}"
-	    ;;
-	infrastructure|i*)
-	    infrastructure="`grep infrastructure ${local_snapshots}/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${infrastructure}"
-	    ;;
-    esac
-	    return 0
 }
 
 # Get some info on the build system
@@ -1194,12 +1165,6 @@ if test x"${force}" = xyes -a x"$supdate" = xno; then
     warning "You have specified \"--force\" and \"--disable update\"."
     echo "         Using \"--force\" overrides \"--disable update\".  Sources will be redownloaded."
 fi
-
-timeout_save=${wget_timeout}
-wget_timeout=10
-# Get the md5sums file, which is used later to get the URL for remote files
-fetch_md5sums
-wget_timeout=${timeout_save}
 
 if test ! -z "${do_makecheck}"; then
     # If we encounter 'all' in ${do_makecheck} anywhere we just overwrite

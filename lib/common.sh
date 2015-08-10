@@ -407,35 +407,15 @@ find_snapshot()
 	dir=""
     fi
 
-    #rm -f ${local_snapshots}/md5sums
-    #fetch_http md5sums
-    #fetch_rsync ${remote_snapshots}/md5sums
-
-    # Search for the snapshot in the md5sum file, and filter out anything we don't want.
-    snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
+    local name="`echo $1 | cut -d '-' -f 1`"
+    local snapshot="`grep ^${name} ${sources_conf}| tr -s ' ' | cut -d ' ' -f 2`"
     if test x"${snapshot}" != x; then
-	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	    warning "Too many results for $1!"
-	    echo "${snapshot}"
-	    return 1
-	fi
-	echo "${snapshot}"
+	echo "$1.tar"
 	return 0
-    fi
-
-#    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
-    if test x"${snapshot}" = x; then
+    else
 	warning "No results for $1!"
 	return 1
     fi
-    if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	warning "Too many results for $1!"
-	echo "${snapshot}"
-	return 1
-    fi
-
-    echo ${snapshot}
-    return 0
 }
 
 # Get the full path or URL to checkout or download sources of a toolchain

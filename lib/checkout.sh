@@ -41,12 +41,6 @@ checkout_infrastructure()
 	return 1
     fi
 
-    # This shouldn't happen, but it's nice for regression verification.
-    if test ! -e ${local_snapshots}/md5sums; then
-	error "Missing ${local_snapshots}/md5sums file needed for infrastructure libraries."
-	return 1
-    fi
-
     # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
@@ -59,7 +53,7 @@ checkout_infrastructure()
 	    mpfr) version=${mpfr_version} ;;
 	    mpc) version=${mpc_version} ;;
 	    gmp) version=${gmp_version} ;;
-	    dejagnu) version=${dejagnu_version} ;;
+	    dejagnu) version=${dejagnu_version} ; continue ;;
 	    *)
 		error "config/infrastructure.conf contains an unknown dependency: $i"
 		return 1
@@ -81,9 +75,8 @@ checkout_infrastructure()
 	    return 1
 	fi
 
-	# Hopefully we only download the exact match for each one.  Depending
 	# how vague the user is it might download multiple tarballs.
-	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+	files="${files} ${version}"
 	unset version
     done
 
@@ -108,11 +101,15 @@ checkout_infrastructure()
 		return 1
 	    fi
 	else
-	    fetch ${gitinfo}
-	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
-	    fi
+	    for i in xz bz2 gz; do
+		fetch ${gitinfo}.$i
+		if test $? -gt 0; then
+		    warning "Couldn't fetch tarball ${gitinfo}.$i"
+		    continue
+		fi
+		break
+	    done
+	    notice "Fetched tarball ${gitinfo}.$i"
 	    extract ${gitinfo}
 	    if test $? -gt 0; then
 		error "Couldn't extract tarball ${gitinfo}"

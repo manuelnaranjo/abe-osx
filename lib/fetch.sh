@@ -16,64 +16,29 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# The fetch_md5sums() function is special because the md5sums file is used by
-# ABE for knowing where to fetch other files, i.e. it's used by fetch(). This
-# function should only be called once at the start of every ABE run.  This
-# function does not respect supdate=no.  It is harmless to download new versions
-# of md5sums.
-fetch_md5sums()
-{
-    if test "${git_reference_dir:+set}" = "set" -a -e "${git_reference_dir}/md5sums"; then
-	# The user specified that they want to fetch from the reference dir.  This
-	# will always fetch if the version in the reference dir is newer.
-	fetch_reference md5sums
-    else
-	# The fetch_http function will always attempt to fetch the remote file
-	# if the version on the server is newer than the local version.
-	fetch_http md5sums
-    fi
-
-    # If the fetch_*() fails we might have a previous version of md5sums in
-    # ${local_snapshots}.  Use that, otherwise we have no choice but to fail.
-    if test ! -s ${local_snapshots}/md5sums; then
-	return 1
-    fi
-    return 0
-}
-
 # Fetch a file from a remote machine.  All decision logic should be in this
 # function, not in the fetch_<protocol> functions to avoid redundancy.
 fetch()
 {
-#    trace "$*"
+    trace "$*"
+
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
     fi
 
-    # Peel off 'infrastructure/'
     local file="`basename $1`"
-
-    # The md5sums file should have been downloaded before fetch() was
-    # ever called.
-    if test ! -e "${local_snapshots}/md5sums"; then
-	error "${local_snapshots}/md5sums is missing."
-	return 1
-    fi
-
-    # We can grab the full file name by searching for it in the md5sums file.
-    # Match on the first hit.  This might be prepended with the
-    # 'infrastructure/' directory name if it's an infrastructure file.
-    local getfile="$(grep ${file} -m 1 ${local_snapshots}/md5sums | cut -d ' ' -f 3)"
+    local name="`basename $1 | cut -d '-' -f 1`"
+    local getfile="`grep ^${name} ${sources_conf}| tr -s ' ' | cut -d ' ' -f 2`/${file}"
     if test x"${getfile}" = x; then
-	error "${file} not in md5sum!"
+	error "${file} not in ${sources_conf}!"
 	return 1
     fi
 
     # Forcing trumps ${supdate} and always results in sources being updated.
     if test x"${force}" != xyes; then
 	if test x"${supdate}" = xno; then
-	    if test -e "${local_snapshots}/${getfile}"; then
+	    if test -e "${getfile}"; then
 		notice "${getfile} already exists and updating has been disabled."
 		return 0
 	    fi
@@ -100,8 +65,13 @@ fetch()
 	return 1
     fi
 
-    # Fetch only supports fetching files which have an entry in the md5sums file.
-    # An unlisted file should never get this far anyway.
+    # download from the file server or copy the file from the reference dir
+    fetch_${protocol} ${getfile}.asc
+    if test $? -gt 0; then
+	warning "No md5sum file for ${getfile}.asc"
+	return 1
+    fi
+
     dryrun "check_md5sum ${getfile}"
     if test $? -gt 0 -a x"${force}" != xyes; then
 	error "md5sums don't match!"
@@ -209,19 +179,9 @@ extract()
 # on the server is newer than the destination file.
 fetch_http()
 {
-#    trace "$*"
+    trace "$*"
 
     local getfile=$1
-
-    # This provides the infrastructure/ directory if ${getfile} contains it.
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"./"; then
-	local dir=""
-    else
-	if test ! -d ${local_snapshots}/${dir}; then
-	    mkdir -p ${local_snapshots}/${dir}
-	fi
-    fi
 
     # You MUST have " " around ${wget_bin} or test ! -x will
     # 'succeed' if ${wget_bin} is an empty string.
@@ -230,27 +190,35 @@ fetch_http()
 	return 1
     fi
 
+    # Extract the last directory
+    local dir="`dirname ${getfile}`"
+    local dir="`basename ${dir}`"
+    if test x"${dir}" = x"snapshots"; then
+	dir=""
+    fi
+
     # Force will cause us to overwrite the version in local_snapshots unconditionally.
     local overwrite_or_timestamp=
     if test x${force} = xyes; then
 	# This is the only way to explicitly overwrite the destination file
 	# with wget.
 	overwrite_or_timestamp="-O ${local_snapshots}/${getfile}"
-        notice "Downloading ${getfile} to ${local_snapshots} unconditionally."
+        notice "Downloading ${getfile} to ${local_snapshots}/${dir} unconditionally."
     else
 	# We only every download if the version on the server is newer than
 	# the local version.
 	overwrite_or_timestamp="-N"
-        notice "Downloading ${getfile} to ${local_snapshots} if version on server is newer than local version."
+        notice "Downloading ${getfile} to ${local_snapshots}/${dir} if version on server is newer than local version."
     fi
 
     # NOTE: the timeout is short, and we only try twice to access the
     # remote host. This is to improve performance when offline, or
     # the remote host is offline.
-    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile} ${overwrite_or_timestamp}"
-    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
-       warning "downloaded file ${getfile} has zero data!"
-       return 1
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${getfile} ${overwrite_or_timestamp}"
+    local name="`basename ${getfile}`"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${dir}/${name}; then
+	warning "downloaded file ${getfile},$i has zero data!"
+	return 1
     fi
 
     return 0
@@ -295,25 +263,20 @@ fetch_reference()
 # the actual file's downloaded md5sum.
 check_md5sum()
 {
-#    trace "$*"
+    trace "$*"
 
-    # ${local_snapshots}/md5sums is a pre-requisite.
-    if test ! -e ${local_snapshots}/md5sums; then
-        error "${local_snapshots}/md5sums is missing."
-        return 1
-    fi
-
-    local entry=
-    entry=$(grep "${1}" ${local_snapshots}/md5sums)
-    if test x"${entry}" = x; then
-        error "No md5sum entry for $1!"
+    local dir="`dirname $1`"
+    local dir="/`basename ${dir}`"
+    local entry="`basename $1.asc`"
+    if test ! -e "${local_snapshots}${dir}/${entry}"; then
+        error "No md5sum file for ${entry}!"
         return 1
     fi
 
     # Ask md5sum to verify the md5sum of the downloaded file against the hash in
     # the index.  md5sum must be executed from the snapshots directory.
-    pushd ${local_snapshots} &>/dev/null
-    dryrun "echo \"${entry}\" | md5sum --status --check -"
+    pushd ${local_snapshots}${dir} &>/dev/null
+    dryrun "md5sum --status --check ${entry}"
     md5sum_ret=$?
     popd &>/dev/null
 
