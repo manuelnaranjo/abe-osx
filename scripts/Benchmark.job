@@ -24,8 +24,8 @@ function get_thing {
     wget -q "${thing}"
     basename "${thing}"
   else
-    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${prebuilt%%:*}" "${prebuilt#*:}" .)
-    basename "${prebuilt#*:}"
+    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${thing%%:*}" "${thing#*:}" .)
+    basename "${thing#*:}"
   fi
 }
 
