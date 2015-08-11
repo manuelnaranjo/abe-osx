@@ -39,7 +39,7 @@ cd "${maindir}"
 echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
      "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
-#Install toolchain
+#Install toolchain - needed even for prebuilt case, so we can do analysis of binaries
 mkdir bin
 if test x"${toolchain:0:1}" = x/; then
   echo "Toolchain assumed to be path on builder"
