@@ -34,6 +34,7 @@ function get_thing {
 echo "Building benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}"
 cd "${maindir}"
+maindir="`pwd`"
 
 #Configure
 #Must have run configure before first call to get_thing
