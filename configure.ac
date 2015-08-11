@@ -159,7 +159,7 @@ result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
-       packages="${packages} gcc-multilib g++-multilib libncurses5-dev"
+       packages="${packages} gcc-multilib g++-multilib libncurses5-dev libpython2.7-dev"
     fi
     for i in ${packages}; do
     AC_MSG_CHECKING([if $i is installed])
@@ -178,10 +178,13 @@ else
 yum="`which yum 2> /dev/null`"
 result=$?
 if test ${result} -eq 0; then
-    packages="${packages} ncurses-devel"
+    packages="${packages} ncurses-devel python-devel"
     for i in ${packages}; do
         AC_MSG_CHECKING([if $i is installed])
-        exists="`rpm -q -a $i| grep -c $i`"
+	# RPM based systems might install via meta-packages but the rpm database
+	# can't be searched on meta-package name, so strip off any trailing
+	# information when searching the rpm database.
+        exists="`rpm -q -a ${i//.*/}| grep -c ${i//.*/}`"
         if test ${exists} -eq 0; then
            AC_MSG_RESULT([no, install $i])
            missing="${missing} $i"
