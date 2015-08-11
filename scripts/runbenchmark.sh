@@ -202,7 +202,7 @@ fi
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
 while ! tcpdump -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
-error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" 'cat ${target_dir}/RETCODE' ${ssh_opts})`"
+error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine exit code, assuming the worst." 1>&2
   error=1
