@@ -22,11 +22,12 @@ function get_thing {
   local thing="$1"
   if echo x"${thing}" | grep -q '^xhttp'; then
     wget -q "${thing}"
-    basename "${thing}"
   else
-    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${thing%%:*}" "${thing#*:}" .)
-    basename "${thing#*:}"
+    local server="${thing%%:*}"
+    thing="${thing#*:}"
+    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
   fi
+  basename "${thing}"
 }
 
 #Set up maindir
