@@ -51,7 +51,7 @@ fi
 #Non-parameters that we need to pass to Benchmark.job
 export ABE_DIR
 export post_build_cmd="rm ${HOME}/data/socket"
-export post_target_cmd='kill \\$(cat /root/sleeper)'
+export post_target_cmd="cat /root/sleeper | xargs kill"
 export maindir="/${HOME}/bench"
 mkdir "${maindir}" || exit 1
 chmod 700 "${maindir}" || exit 1
