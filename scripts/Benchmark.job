@@ -7,6 +7,9 @@ set -o pipefail
 
 benchgccpath=
 targets=(${targets})
+tmpdir="`mktemp -dt downloads-XXXXXXX`"
+
+trap "rm -rf ${tmpdir}" EXIT
 
 #A little parameter checking
 if test x"${toolchain:-}" = x; then
@@ -20,14 +23,16 @@ fi
 
 function get_thing {
   local thing="$1"
+  pushd "${tmpdir}" > /dev/null
   if echo x"${thing}" | grep -q '^xhttp'; then
     wget -q "${thing}"
   else
     local server="${thing%%:*}"
     thing="${thing#*:}"
-    (. host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
   fi
-  basename "${thing}"
+  popd > /dev/null
+  echo "${tmpdir}/`basename ${thing}`"
 }
 
 #Set up maindir
@@ -70,7 +75,6 @@ if test x"${prebuilt:-}" = x; then
   echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${make_flags:+-m \"${make_flags}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${targets[@]}"
        "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${make_flags:+-m  "${make_flags}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
 else
-  #TODO: Store tarball in a tmpdir
   benchtar="`get_thing ${prebuilt}`"
   tar xf "${benchtar}"
   rm "${benchtar}"
