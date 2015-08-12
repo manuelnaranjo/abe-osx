@@ -342,6 +342,9 @@ fi
 # Also fetch changes from gerrit
 (cd $user_snapshots/gcc.git; git fetch origin '+refs/changes/*:refs/remotes/gerrit/changes/*')
 
+# Turn on extra verbose dejagnu logging
+export RUNTESTFLAGS="-v -v -d"
+
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
 #$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
