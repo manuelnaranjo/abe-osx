@@ -272,6 +272,16 @@ fetch_reference()
 	return 1
     fi
 
+    # This provides the infrastructure/ directory if ${getfile} contains it.
+    local dir="`dirname $getfile`/"
+    if test x"${dir}" = x"./"; then
+	local dir=""
+    else
+	if test ! -d ${local_snapshots}/${dir}; then
+	    mkdir -p ${local_snapshots}/${dir}
+	fi
+    fi
+
     # Force will cause an overwrite.
     if test x"${force}" != xyes; then
 	local update_on_change="-u"

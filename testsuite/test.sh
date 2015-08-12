@@ -725,6 +725,26 @@ else
     fail "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no --force=yes failed unexpectedly when the source exists."
 fi
 
+cp ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz ${local_refdir}/infrastructure/ &>/dev/null
+
+# Test to make sure the fetch_reference creates the infrastructure directory.
+rm -rf ${local_snapshots}/infrastructure &>/dev/null
+out="`git_reference_dir=${local_refdir} fetch_reference infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
+    pass "fetch_reference infrastructure/gmp-5.1.3.tar.xz  passed as expected because the infrastructure/ directory was created."
+else
+    fail "fetch_reference infrastructure/gmp-5.1.3.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+fi
+
+# Test the same, but through the fetch() function.
+rm -rf ${local_snapshots}/infrastructure &>/dev/null
+out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
+    pass "git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz passed as expected because the infrastructure/ directory was created."
+else
+    fail "git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+fi
+
 # Download a clean/new copy for the check_md5sum tests
 rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz* &>/dev/null
 fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null
