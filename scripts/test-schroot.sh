@@ -82,13 +82,18 @@ if ! triplet_to_deb_arch "$arch" >/dev/null 2>&1; then
     arch="native"
 fi
 
-cpu="$(ssh $target uname -m)"
+# Use '|| true' to avoid early exit if $target does not answer.
+cpu="$(ssh $target uname -m)" || true
 case "$cpu" in
     aarch64) native_arch=aarch64-linux-gnu ;;
     armv7l) native_arch=arm-linux-gnueabihf ;;
     armv7*) native_arch=arm-linux-gnueabi ;;
     i686) native_arch=i686-linux-gnu ;;
     x86_64) native_arch=x86_64-linux-gnu ;;
+    "")
+	echo "ERROR: target $target returned no cpu type."
+	exit 1
+	;;
     *)
 	echo "ERROR: unrecognized native target $cpu"
 	exit 1
