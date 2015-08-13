@@ -76,7 +76,7 @@ if test x"${prebuilt:-}" = x; then
        "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${make_flags:+-m  "${make_flags}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${targets[@]}"
 else
   benchtar="`get_thing ${prebuilt}`"
-  tar xf "${benchtar}"
+  tar xf "${benchtar}" --exclude='*.git/.git/*'
   rm "${benchtar}"
 fi
 
