@@ -178,8 +178,9 @@ fi
    remote_exec_async \
      "${ip}" \
      "cd ${target_dir} && \
-      tar xjf `basename ${buildtar}` && \
+      tar xjf `basename ${buildtar}` --exclude='*.git/.git/*' && \
       cd `tar tjf ${buildtar} | head -n1` && \
+      rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
