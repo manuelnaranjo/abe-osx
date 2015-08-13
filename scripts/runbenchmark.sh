@@ -11,7 +11,7 @@ trap 'exit ${error}' TERM INT HUP QUIT #Signal death can be part of normal contr
 
 #Precondition: the target is in known_hosts
 ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
-host_ip="`hostname -I | tr -d '[[:space:]]'`" #hostname -I includes a trailing space
+host_ip="`hostname -I | cut -f 1 -d ' '`" #hostname -I includes a trailing space
 
 tag=
 benchmark=
