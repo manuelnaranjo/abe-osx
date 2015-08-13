@@ -34,6 +34,7 @@ install:
         - rsync
         - texinfo
         - wget
+        - xz-utils
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
