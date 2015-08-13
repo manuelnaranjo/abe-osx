@@ -96,7 +96,7 @@
 #
 #   A full git url with branch and revision information, e.g.,
 #
-#      http://firstname.lastname@staging.git.linaro.org/git/toolchain/gcc.git/linaro_4.9_branch@12345
+#      http://firstname.lastname@git.linaro.org/git/toolchain/gcc.git/linaro_4.9_branch@12345
 #
 #   A git repo identifier with branch and revision information:
 #

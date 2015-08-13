@@ -62,7 +62,7 @@ fi
 
 for transport in git ssh http; do
   testing="normalize_path: full git (${transport}) url with ~ branch"
-  in="${transport}://staging.git.linaro.org/git/toolchain/gcc.git/linaro-4.8-branch"
+  in="${transport}://git.linaro.org/git/toolchain/gcc.git/linaro-4.8-branch"
   out="`normalize_path ${in}`"
   if test x"${out}" = x"gcc.git~linaro-4.8-branch"; then
       pass "${testing}"

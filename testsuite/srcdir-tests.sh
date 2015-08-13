@@ -5,7 +5,7 @@ echo "============= get_srcdir() tests ================"
 # FIXME: Note these following test cases only PASS if you have the source
 # directories created already.
 if test -d ${local_snapshots}/gcc.git; then
-    in="git://git@staging.git.linaro.org/toolchain/gcc.git"
+    in="git://git@git.linaro.org/toolchain/gcc.git"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git"; then
 	pass "get_srcdir: git repository"
@@ -37,7 +37,7 @@ if test -d ${local_snapshots}/gcc.git-linaro-4.8-branch; then
 	fixme "get_srcdir returned ${out}"
     fi
 
-    in="git://git@staging.git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
+    in="git://git@git.linaro.org/toolchain/gcc.git/linaro-4.8-branch"
     out="`get_srcdir $in | grep -v TRACE`"
     if test x"${out}" = x"${local_snapshots}/gcc.git-linaro-4.8-branch/gcc-4_8-branch"; then
 	pass "get_srcdir: git repository URL with branch"
@@ -204,7 +204,7 @@ else
 fi
 
 testing="get_srcdir: http://<user>@<url>/<repo>.git"
-in="http://git@staging.git.linaro.org/git/toolchain/abe.git"
+in="http://git@git.linaro.org/git/toolchain/abe.git"
 out="`get_srcdir $in`"
 if test x"${out}" = x"${local_snapshots}/abe.git"; then
     pass "${testing}"
@@ -214,7 +214,7 @@ else
 fi
 
 testing="get_srcdir: http://<user>@<url>/<repo>.git@<revision>"
-in="http://git@staging.git.linaro.org/git/toolchain/abe.git@12345"
+in="http://git@git.linaro.org/git/toolchain/abe.git@12345"
 out="`get_srcdir $in`"
 if test x"${out}" = x"${local_snapshots}/abe.git@12345"; then
     pass "${testing}"

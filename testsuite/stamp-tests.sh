@@ -102,7 +102,7 @@ match="linux-linaro-3.11-rc6-2013.08-build.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 
 errmatch=0
-in="configure http://staging.git.linaro.org/git/toolchain/gcc.git"
+in="configure http://git.linaro.org/git/toolchain/gcc.git"
 match="gcc.git-configure.stamp"
 test_get_stamp_name "${in}" "${match}" "${errmatch}"
 

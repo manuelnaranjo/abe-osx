@@ -355,7 +355,7 @@ fi
 # ----------------------------------------------------------------------------------
 # Test http:// git combinations
 testing="get_toolname: http://<repo>.git"
-in="http://staging.git.linaro.org/git/toolchain/binutils.git"
+in="http://git.linaro.org/git/toolchain/binutils.git"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -365,7 +365,7 @@ else
 fi
 
 testing="get_toolname: http://<repo>.git/<branch>"
-in="http://staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch"
+in="http://git.linaro.org/git/toolchain/binutils.git/2.4-branch"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -375,7 +375,7 @@ else
 fi
 
 testing="get_toolname: http://<repo>.git/<branch>@<revision>"
-in="http://staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
+in="http://git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -385,7 +385,7 @@ else
 fi
 
 testing="get_toolname: http://<repo>.git@<revision>"
-in="http://staging.git.linaro.org/git/toolchain/binutils.git@12345"
+in="http://git.linaro.org/git/toolchain/binutils.git@12345"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -397,7 +397,7 @@ fi
 # ----------------------------------------------------------------------------------
 # Test http://<user>@ git combinations
 testing="get_toolname: http://<user>@<repo>.git"
-in="http://git@staging.git.linaro.org/git/toolchain/binutils.git"
+in="http://git@git.linaro.org/git/toolchain/binutils.git"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -407,7 +407,7 @@ else
 fi
 
 testing="get_toolname: http://<user>@<repo>.git/<branch>"
-in="http://git@staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch"
+in="http://git@git.linaro.org/git/toolchain/binutils.git/2.4-branch"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -417,7 +417,7 @@ else
 fi
 
 testing="get_toolname: http://<user>@<repo>.git/<branch>@<revision>"
-in="http://git@staging.git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
+in="http://git@git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -427,7 +427,7 @@ else
 fi
 
 testing="get_toolname: http://<user>@<repo>.git@<revision>"
-in="http://git@staging.git.linaro.org/git/toolchain/binutils.git@12345"
+in="http://git@git.linaro.org/git/toolchain/binutils.git@12345"
 out="`get_toolname ${in}`"
 if test x"${out}" = x"binutils"; then
     pass "${testing}"
@@ -850,7 +850,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: git URL where sources.conf has a tab"
 out="`sources_conf=${test_sources_conf} get_URL gcc_tab.git`"
-if test x"`echo ${out}`" = x"http://staging.git.linaro.org/git/toolchain/gcc.git"; then
+if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/gcc.git"; then
    pass "${testing}"
 else
    fail "${testing}"
@@ -888,7 +888,7 @@ else
 fi
 
 testing="get_URL: Input contains an http:// service."
-out="`get_URL http://staging.git.linaro.org/git/toolchain/eglibc.git 2>/dev/null`"
+out="`get_URL http://git.linaro.org/git/toolchain/eglibc.git 2>/dev/null`"
 if test $? -eq 1; then
     pass "${testing}"
 else
@@ -1030,7 +1030,7 @@ echo "============= get_URL() http://git@ tests ================"
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git identifier should match http://git@<url>/<repo>.git"
 out="`sources_conf=${test_sources_conf} get_URL git_gcc.git`"
-if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git"; then
+if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -1040,7 +1040,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch`"
-if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
+if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git~branch"; then
     pass "${testing} http://git@<url>/<repo>.git~<branch>"
 else
     fail "${testing} http://git@<url>/<repo>.git~<branch>"
@@ -1050,7 +1050,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git@git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
     pass "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
 else
     fail "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
@@ -1060,7 +1060,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL git_gcc.git@12345`"
-if test x"`echo ${out}`" = x"http://git@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
+if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git@12345"; then
     pass "${testing} http://git@<url>/<repo>.git@<revision>"
 else
     fail "${testing} http://git@<url>/<repo>.git@<revision>"
@@ -1075,7 +1075,7 @@ echo "============= get_URL() http://user.name@ tests ================"
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git identifier should match http://user.name@<url>/<repo>.git"
 out="`sources_conf=${test_sources_conf} get_URL user_gcc.git`"
-if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git"; then
+if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git"; then
     pass "${testing} http://<user.name>@<url>/<repo>.git"
 else
     fail "${testing} http://<user.name>@<url>/<repo>.git"
@@ -1085,7 +1085,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch`"
-if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch"; then
+if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git~branch"; then
     pass "${testing} http://user.name@<url>/<repo>.git~<branch>"
 else
     fail "${testing} http://user.name@<url>/<repo>.git~<branch>"
@@ -1095,7 +1095,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
+if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
     pass "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
 else
     fail "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
@@ -1105,7 +1105,7 @@ fi
 # The regular sources.conf won't have this entry.
 testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
 out="`sources_conf=${test_sources_conf} get_URL user_gcc.git@12345`"
-if test x"`echo ${out}`" = x"http://user.name@staging.git.linaro.org/git/toolchain/gcc.git@12345"; then
+if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git@12345"; then
     pass "${testing} http://user.name@<url>/<repo>.git@<revision>"
 else
     fail "${testing} http://user.name@<url>/<repo>.git@<revision>"
@@ -1559,7 +1559,7 @@ echo "================================================"
 
 #confirm that checkout works with raw URLs
 rm -rf "${local_snapshots}"/*.git*
-testing="http://abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+testing="http://abe.git@git.linaro.org/git/toolchain/abe.git"
 in="${testing}"
 if test x"${debug}" = xyes; then
   out="`cd ${local_snapshots} && checkout ${testing}`"
@@ -1575,7 +1575,7 @@ fi
 #confirm that checkout fails approriately with a range of bad services in raw URLs
 for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
   rm -rf "${local_snapshots}"/*.git*
-  in="${service}abe.git@staging.git.linaro.org/git/toolchain/abe.git"
+  in="${service}abe.git@git.linaro.org/git/toolchain/abe.git"
   testing="checkout: ${in} should fail with 'proper URL required' message."
   if test x"${debug}" = xyes; then
     out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
