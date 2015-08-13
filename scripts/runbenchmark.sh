@@ -177,17 +177,21 @@ fi
    . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
-     "cd ${target_dir} && \
+     "function phonehome \
+      { \
+        while test -e ${target_dir}; do \
+          ping -c 1 ${host_ip}; \
+          sleep 11; \
+        done; \
+      }; \
+      trap phonehome EXIT; \
+      cd ${target_dir} && \
       tar xjf `basename ${buildtar}` --exclude='*.git/.git/*' && \
       cd `tar tjf ${buildtar} | head -n1` && \
       rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
-     while test -e ${target_dir}; do \
-       ping -c 1 ${host_ip}; \
-       sleep 11; \
-     done; \
      exit \\\${ret}" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
