@@ -401,6 +401,9 @@ get_git_service()
     out="`git_parser service ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -412,6 +415,9 @@ get_git_user()
     out="`git_parser user ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -423,6 +429,9 @@ get_git_url()
     out="`git_parser url ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -434,6 +443,9 @@ get_git_tool()
     out="`git_parser tool ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -445,6 +457,9 @@ get_git_repo()
     out="`git_parser repo ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -456,6 +471,9 @@ get_git_branch()
     out="`git_parser branch ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -467,6 +485,9 @@ get_git_revision()
     out="`git_parser revision ${in}`"
     ret=$?
     echo "${out}"
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+    fi
     return ${ret}
 }
 
@@ -480,17 +501,21 @@ get_git_tag()
     local revision=
     repo="`git_parser repo ${in}`"
     ret=$?
+    if test ${ret} -ne 0; then
+	error "Malformed input \"${in}\""
+	return ${ret}
+    fi
     if test x"${repo}" = x; then
 	error "repository name required for meaningful response."
 	return ${ret}
     fi
 
-    branch="`get_git_branch ${in}`"
+    branch="`get_git_branch ${in}`" || ( error "Malformed input \"${in}\""; return 1 )
 
     # Multi-path branches should have forward slashes replaced with dashes.
     branch="`echo ${branch} | sed 's:/:-:g'`"
 
-    revision="`git_parser revision ${in}`"
+    revision="`git_parser revision ${in}`" || ( error "Malformed input \"${in}\""; return 1 )
     echo "${repo}${branch:+~${branch}}${revision:+@${revision}}"
     return 0
 }

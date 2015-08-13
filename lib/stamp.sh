@@ -42,7 +42,7 @@ get_stamp_name()
 	# e.g., infrastructure/gmp-2.1.2.tar.xz -> gmp-2.1.2
 	name_fragment="`basename ${name_fragment}`"
     else
-	name_fragment="`get_git_tag ${git_or_tar}`"
+	name_fragment="`get_git_tag ${git_or_tar}`" || return 1
 	if test x"${name_fragment}" = x; then
 	    error "Couldn't determine stamp name."
 	    return 1

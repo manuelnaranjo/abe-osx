@@ -228,7 +228,7 @@ gerrit_build_status()
     local srcdir="`get_srcdir $1`"
     local status="$2"
     local resultsfile="${3:-}"
-    local revision="`get_git_revision ${srcdir}`"
+    local revision="`get_git_revision ${srcdir}`" || return 1
     local msgfile="/tmp/test-results-$$.txt"
     local code="0"
 

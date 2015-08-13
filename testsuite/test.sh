@@ -1630,7 +1630,7 @@ done
 #confirm that checkout fails with bad repo - abe is so forgiving that I can only find one suitable input
 rm -rf "${local_snapshots}"/*.git*
 in="http://"
-testing="checkout: ${in} should fail with 'cannot parse repo' message."
+testing="checkout: ${in} should fail with 'Malformed input' message."
 if test x"${debug}" = xyes; then
   out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
 else
@@ -1639,7 +1639,7 @@ fi
 if test $? -eq 0; then
   fail "${testing}"
 else
-  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: git_parser (Malformed input\\. No repo found\\.)$"; then
+  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: get_git_repo (Malformed input \"http://\")$"; then
     pass "${testing}"
   else
     fail "${testing}"
