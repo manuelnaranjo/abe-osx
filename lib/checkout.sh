@@ -350,9 +350,9 @@ checkout()
 		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${revision})"
 		else
 		    # Make sure we are on the correct branch.
-		    # This is a no-op if $branch is empty and it
-		    # just gets master.
-		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
+		    # If ${branch} is empty we set it to HEAD and checkout HEAD.
+		    : ${branch:=HEAD}
+		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${branch} origin/${branch})"
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
