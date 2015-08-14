@@ -184,18 +184,34 @@ checkout_all()
 	esac
 
     	local gitinfo="`get_source ${package}`"
-	if test x"${gitinfo}" != x; then
+	if test -z "${gitinfo}"; then
+	    error "No matching source found for \"${name}\"."
+	    return 1
+	fi
+
+	# If it doesn't have a service it's probably a tarball that we need to
+	# fetch, especially likely if passed in on the command line.
+	local service=
+	service="`get_git_service ${gitinfo}`"
+	if test x"${service}" != x; then
 	    local checkout_ret=
 	    checkout ${gitinfo}
 	    checkout_ret=$?
-
 	    if test ${checkout_ret} -gt 0; then
-		error "Failed checkout out of $i."
+		error "Failed checkout out of ${name}."
 		return 1
 	    fi
 	else
-	    error "Unable to find source url for package $package."
-	    return 1
+	    fetch ${gitinfo}
+	    if test $? -gt 0; then
+		error "Couldn't fetch tarball ${gitinfo}"
+		return 1
+	    fi
+	    extract ${gitinfo}
+	    if test $? -gt 0; then
+		error "Couldn't extract tarball ${gitinfo}"
+		return 1
+	    fi
 	fi
     done
     
