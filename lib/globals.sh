@@ -55,10 +55,6 @@ wget_progress_style=
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no
 
-#
-launchpad_id=
-svn_id=
-
 # config values for the build machine
 libc_version=
 kernel=${kernel:+${kernel}}

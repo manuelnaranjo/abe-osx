@@ -259,32 +259,6 @@ checkout()
     srcdir="`get_srcdir $1`" || return 1
 
     case $1 in
-	svn*)
-	    local trunk="`echo $1 |grep -c trunk`"
-	    if test ${trunk} -gt 0; then
-		local dir="`dirname $1`"
-		local dir="`basename ${dir}`/trunk"
-	    fi
-	    if test x"${force}" =  xyes; then
-		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${srcdir}"
-	    fi
-	    if test x"${usegit}" =  xyes; then
-		local out="`git svn clone $1 ${srcdir}`"
-	    else
-		if test -e ${srcdir}/.svn; then
-		    (cd ${srcdir} && svn update)
-		    # Extract the revision number from the update message
-		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
-		else
-		    svn checkout $1 ${srcdir}
-                    if test $? -gt 0; then
-                        error "Failed to check out $1 to ${srcdir}"
-                        return 1
-                    fi
-		fi
-	    fi
-	    ;;
 	git*|http*|ssh*)
             #FIXME: We deliberately ignored error returns from get_git_url,
             #       because any path with an '@' in will result in errors.
@@ -403,41 +377,6 @@ push ()
 
     # We use git for our copy by importing from the other systems
     case $1 in
-	bzr*|lp*)
-	    if test x"${usegit}" =  xyes; then
-		#out="`git-bzr push $1 ${local_snapshots}/${dir}`"
-		echo "FIXME: shouldn't be here!"
-	    else
-		if test -e ${local_snapshots}/${dir}/.bzr; then
-		    #out="`(cd ${local_snapshots}/${dir} && bzr push)`"
-		    notice "Pushing ${dir} upstream..."
-		    notice "bzr push ${url}"
-		else
-		    error "${local_snapshots}/${dir} doesn't exist!"
-		    return 1
-		fi
-	    fi
-	    ;;
-	svn*)
-	    local trunk="`echo $1 |grep -c trunk`"
-	    if test ${trunk} -gt 0; then
-		local dir="`dirname $1`"
-		local dir="`basename ${dir}`/trunk"
-	    fi
-	    if test x"${usegit}" =  xyes; then
-		#out="`git svn push $1 ${local_snapshots}/${dir}`"
-		echo "FIXME: shouldn't be here!"
-	    else
-		if test -e ${local_snapshots}/${dir}/.svn; then
-		    #out="`(cd ${local_snapshots}/${dir} && svn commit`"
-		    notice "Pushing ${dir} upstream"
-		    notice "svn commit ${url}"
-		else
-		    error "${local_snapshots}/${dir} doesn't exist!"
-		    return 1
-		fi
-	    fi
-	    ;;
 	git*|ssh*)
 	    if test x"$3" = x; then
 		warning "No branch given, so using master or trunk"
@@ -474,53 +413,6 @@ commit ()
 
     # We use git for our copy by importing from the other systems
     case $1 in
-	bzr*|lp*)
-	    if test x"${usegit}" =  xyes; then
-		#out="`git-bzr push $1 ${local_snapshots}/${dir}`"
-		echo "FIXME: shouldn't be here!"
-	    else
-		if test x"$2" = x; then
-		    warning "No file given, so commiting all"
-		    local files=""
-		else
-		    local files="$2"
-		fi
-		if test -e ${local_snapshots}/${dir}/.bzr; then
-		    #out="`(cd ${local_snapshots}/${dir} && bzr commit --file ${local_snapshots}/${dir}/commitmsg.txt ${files}`"
-		    notice "Committing ${dir} to local repository..."
-		    notice "bzr commit -m \"`cat ${local_snapshots}/${dir}/commitmsg.txt`\" ${files}"
-		else
-		    error "${local_snapshots}/${dir} doesn't exist!"
-		    return 1
-		fi
-	    fi
-	    ;;
-	svn*)
-	    local trunk="`echo $1 |grep -c trunk`"
-	    if test ${trunk} -gt 0; then
-		local dir="`dirname $1`"
-		local dir="`basename ${dir}`/trunk"
-	    fi
-	    if test x"$2" = x; then
-		warning "No file given, so commiting all"
-		local files=""
-	    else
-		local files="$2"
-	    fi
-	    if test x"${usegit}" =  xyes; then
-		#out="`git svn push $1 ${local_snapshots}/${dir}`"
-		echo "FIXME: shouldn't be here!"
-	    else
-		if test -e ${local_snapshots}/${dir}/.svn; then
-		    #out="`(cd ${local_snapshots}/${dir} && svn commit --file ${local_snapshots}/${dir}/commitmsg.txt ${files}`"
-		    notice "Committing ${files} to remote repository"
-		    notice "svn commit -m  \"`cat ${local_snapshots}/${dir}/commitmsg.txt`\" ${files}"
-		else
-		    error "${local_snapshots}/${dir} doesn't exist!"
-		    return 1
-		fi
-	    fi
-	    ;;
 	git*|ssh*)
 	    if test x"$2" = x; then
 		warning "No files given, so commiting all"

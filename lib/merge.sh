@@ -27,7 +27,7 @@ merge_diff()
     # cleanup leftover files
     notice "Making a diff from merge-r$1"
     rm -f ${bzr_top}/merge-$1.diff.txt
-    diff -ruNp -x '*.patch' -x '*.svn' -x '*~' -x '*.bzr' -x '*.rej' -x '*.orig' -x '*.edited' -x '*diff.txt' -x '*.log' -x 'x' -x '*merge-left*' -x '*merge-right*' -x "*.working" -x '*/.gitignore' 4.8-branch ${merge_top}/merge-r$1 > ${bzr_top}/merge-r$1.diff.txt
+    diff -ruNp -x '*.patch' -x '*.rej' -x '*.orig' -x '*.edited' -x '*diff.txt' -x '*.log' -x 'x' -x '*merge-left*' -x '*merge-right*' -x "*.working" -x '*/.gitignore' 4.8-branch ${merge_top}/merge-r$1 > ${bzr_top}/merge-r$1.diff.txt
     
     # revert the bzr source tree so we get a clean patch
     notice "Reverting previous changes"
@@ -48,10 +48,6 @@ merge_diff()
 merge_prep()
 {
     if test ! -e ${merge_top}/merge-r$1; then
-#	svn checkout svn+ssh://${svn_id}@gcc.gnu.org/svn/gcc/branches/linaro/gcc-$i-branch $1-branch
-#    fi
-
-    #  svn checkout svn+ssh://${gccsvn_id}@gcc.gnu.org/svn/gcc/branches/gcc-$1-branch $1-branch
 	notice "Cloning source tree into branch merge-r$1"
 	cp -r ${merge_top}/4.8-branch ${merge_top}/merge-r$1
     fi
@@ -70,12 +66,10 @@ merge_branch()
     notice "Merging revision from trunk: $1"
 
     if test ! -e ${merge_top}/merge-r$1/merge.log; then
-	#conflicts="`svn merge --accept postpone -c $1 /linaro/src/gnu/gcc/trunk`"
-	(cd ${merge_top}/merge-r$1 && svn merge --accept postpone -c $1 ${trunk_top} 2>&1 | tee ${merge_top}/merge-r$1/merge.log)
+	(cd ${merge_top}/merge-r$1 && git merge --accept postpone -c $1 ${trunk_top} 2>&1 | tee ${merge_top}/merge-r$1/merge.log)
     fi
 
     notice "Looking for merge conflicts..."
-    #conflicts="`svn status | grep "^C"`"
     conflicts="`grep "^C" ${merge_top}/merge-r$1/merge.log | sed -e 's:^C *: :' | tr -d '\n'`"
     notice "Conflicts: ${conflicts}"	
     
@@ -112,7 +106,7 @@ merge_branch()
 	    # munge the raw patch to the text equivalent, where we manually add
 	    # it to the top of the ChangeLog.linaro file.
 	    if test ! -e ${merge_top}/merge-r$1/diff.txt; then
-		svn diff -c $1 ${trunk_top}/$i 2>&1 > ${merge_top}/merge-r$1/diff.txt
+		git diff -c $1 ${trunk_top}/$i 2>&1 > ${merge_top}/merge-r$1/diff.txt
 	    fi
 	    grep "^\+" ${merge_top}/merge-r$1/diff.txt | sed -e 's:^\+::' | grep -v "revision" 2>&1 > ${merge_top}/merge-r$1/body.patch
 	    # So this mess is because if the last commit is by he same person as
@@ -143,7 +137,7 @@ merge_branch()
 	    rm -f ${merge_top}/merge-r$1/*.patch ${merge_top}/merge-r$1/diff.txt
 	    # We can now revert the ChangeLog that was conflicted, as the entry
 	    # is in the proper ChangeLong.linaro file.
-	    (cd  ${merge_top}/merge-r$1 && svn revert $i)
+	    (cd  ${merge_top}/merge-r$1 && git revert $i)
 	else
 	    problems=" ${problems} $i"
 	    echo "${merge_top}/merge-r$1/$i" >> ${merge_top}/merge-r$1/problems.txt
@@ -172,5 +166,5 @@ merge_patch()
 {
     echo $1
 
-    svn diff -c $1 > $i.patch
+    git diff -c $1 > $i.patch
 }

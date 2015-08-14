@@ -129,7 +129,7 @@ notice()
 #
 # $1 - The toolchain component identifier.
 #
-# Returns a string that represents the full URL for an svn, lp, or git service
+# Returns a string that represents the full URL for a git service
 # that matches the identifier in the sources.conf file.
 # 
 # [Optional] Return a branch and revision number for git if tagged
@@ -235,13 +235,6 @@ normalize_path()
 
     local branch=""
     case ${process} in
-	lp*)
-	    local node="`echo ${process} | sed -e 's@lp:@@' -e 's:/:_:'`"
-	    ;;
-	bzr*)
-	    local node="`echo ${process} | sed -e 's:^.*branch/::'`"
-	    local node="`echo ${node} | sed -e 's:/:_:'`"
-	    ;;
 	git*|http*|ssh*)
             if test "`echo ${process} | grep -c "\.tar"`" -gt 0 -o "`echo ${process} | grep -c "\.tgz"`" -gt 0; then
                 local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
@@ -258,10 +251,6 @@ normalize_path()
 		local revision=
 		revision="`get_git_revision ${process}`"
 	    fi
-	    ;;
-	svn*)
-	    local node="`echo ${process} | sed -e 's@^.*/svn/@@'`"
-	    local node="`basename ${node}`"
 	    ;;
 	*.tar.*)
 	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
@@ -460,7 +449,7 @@ get_source()
     local url=
     # If a full URL or git repo identifier isn't passed as an argument,
     # assume we want a tarball snapshot
-    if test `echo $1 | egrep -c "^svn|^git|^http|^ssh|^bzr|^lp|\.git"` -eq 0; then
+    if test `echo $1 | egrep -c "^git|^http|^ssh|\.git"` -eq 0; then
         local snapshot
 	snapshot=`find_snapshot $1`
 	if test $? -gt 0; then
@@ -508,7 +497,7 @@ get_source()
 	fi
     else
 	# This leg captures direct urls that don't start or end in .git.
-	# This include svn directories and git identifiers that start with http://.
+	# This includes git identifiers that start with http://.
 	if test `echo $1 | egrep -c "\.git"` -eq 0 -a `echo $1 | egrep -c "^git"` -eq 0; then
 	#if test `echo $1 | egrep -c "\.git"` -eq 0; then
 	    local url=$1
@@ -593,7 +582,7 @@ get_source()
 # Get the proper source directory
 # $1 - The component name, which is one of the following:
 # 
-#   A git, http, ssh, svn, lp URL
+#   A git, http, ssh URL
 #   A repository identifier mapping an entry in sources.conf
 #   A tarball
 # 
