@@ -464,8 +464,8 @@ EOF
 
     if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
 	cat >> ${outfile} <<EOF
-    echo gcc_revision=${gcc_revision}
-    echo gcc_version=gcc.git@${gcc_revision}
+gcc_revision=${gcc_revision}
+gcc_version=gcc.git@${gcc_revision}
 EOF
     fi
 
