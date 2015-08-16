@@ -136,6 +136,12 @@ extract()
     # Name of the downloaded tarball.
     local tarball="`dirname ${srcdir}`/${file}"
 
+    # Initialize component data structures
+    local builddir="`get_builddir $1`"
+    local url="http://${fileserver}${remote_snapshots}"
+    component_init ${tool} URL="$1" URL="${url}" SRCDIR="${srcdir}" FILESPEC="${file}" BUILDDIR="${builddir}"
+
+
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
     check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
@@ -192,6 +198,8 @@ extract()
 	    return 1
 	fi
     fi
+    
+    local tool="`get_toolname $1`"
 
     create_stamp "${stampdir}" "${stamp}"
     return 0
