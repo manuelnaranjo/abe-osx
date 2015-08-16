@@ -36,7 +36,7 @@ declare -Ag toolchain
 #	    
 component_init ()
 {
-#    trace "$*"
+    trace "$*"
 
     local component=
     for i in $*; do
@@ -48,7 +48,7 @@ component_init ()
 		return 1
 	    fi
 	else
-	    component=$i
+	    component="`echo $i | sed -e 's:-[0-9a-z\.\-]*::'`"
 	    declare -Ag ${component}
 	    eval ${component}[TOOL]="${component}"
 	    if test $? -gt 0; then
@@ -72,7 +72,8 @@ component_init ()
 set_component_url ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -87,7 +88,8 @@ set_component_url ()
 set_component_revision ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -102,7 +104,8 @@ set_component_revision ()
 set_component_srcdir ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -117,7 +120,8 @@ set_component_srcdir ()
 set_component_builddir ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -132,7 +136,8 @@ set_component_builddir ()
 set_component_filespec ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -147,7 +152,8 @@ set_component_filespec ()
 set_component_branch ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -170,7 +176,8 @@ set_component_branch ()
 get_component_url ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -185,7 +192,8 @@ get_component_url ()
 get_component_revision ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -200,7 +208,8 @@ get_component_revision ()
 get_component_srcdir ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -215,7 +224,8 @@ get_component_srcdir ()
 get_component_builddir ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -230,7 +240,8 @@ get_component_builddir ()
 get_component_filespec ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -245,13 +256,44 @@ get_component_filespec ()
 get_component_branch ()
 {
 #    trace "$*"
-    local component=$1
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
 	eval "echo \${${component}[BRANCH]}"
+    fi
+
+    return 0
+}
+
+# declare -p does print the same data from the array, but this is an easier to
+# read version of the same data.
+component_dump()
+{
+    trace "$*"
+
+    local flag="`set -o | grep xtrace| tr -s ' ' | tr -d '\t' | cut -d ' ' -f 2`"
+    set +x
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    declare -p ${component} 2>&1 > /dev/null
+    if test $? -gt 0; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    fi
+
+    local data="`declare -p ${component} | sed -e 's:^.*(::' -e 's:).*$::'`"
+    
+    echo "Data dump of component \"${component}\""
+    for i in ${data}; do
+	echo "	$i"
+    done
+
+    if test x"${flag}" = x"on"; then
+        set -x
     fi
 
     return 0
