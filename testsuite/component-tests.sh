@@ -4,7 +4,7 @@ abe_path=/linaro/src/linaro/abe/parser
 . ${abe_path}/testsuite/common.sh
 . ${abe_path}/lib/component.sh
 
-echo "============= *_component_*() tests ================"
+echo "============= component_init() tests ================"
 
 # FIXME: Note these following test cases only PASS if you have the source
 # directories created already.
@@ -17,6 +17,8 @@ else
     fail "component_init() two data structures"
     init="no"
 fi
+
+echo "============= set_component_*() tests ================"
 
 disp="URL is set"
 if test x"${init}" = x"yes"; then
@@ -122,6 +124,8 @@ else
 fi
 
 # Getter function tests
+echo "============= get_component_*() tests ================"
+
 disp="get_component_url() ld"
 out="`get_component_url ld`"
 if test x"${init}" = x"yes"; then
@@ -187,3 +191,15 @@ else
     untested  "${disp}"
 fi
 
+disp="get_component_branch() ld"
+out="`get_component_branch ld`"
+if test x"${init}" = x"yes"; then
+    if test x"${out}" = x"ffff"; then
+	pass "${disp}"
+    else
+	fail "${disp}"
+	fixme "${disp}"
+    fi
+else
+    untested  "${disp}"
+fi
