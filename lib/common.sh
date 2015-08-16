@@ -33,6 +33,7 @@ set -o pipefail
 . "${topdir}/lib/stamp.sh" || exit 1
 . "${topdir}/lib/schroot.sh" || exit 1
 . "${topdir}/lib/gerrit.sh" || exit 1
+. "${topdir}/lib/component.sh" || exit 1
 
 #
 # All the set* functions set global variables used by the other functions.
