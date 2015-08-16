@@ -376,6 +376,10 @@ checkout()
 	return 1
     fi
 
+    # Initialize component data structures
+    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
+    component_init ${tool} URL="${url}" SRCDIR="${srcdir}" BRANCH="${branch}" REVISION="`srcdir_revision ${srcdir}`" FILESPEC="${repo}" BUILDDIR="${builddir}"
+
     return 0
 }
 
