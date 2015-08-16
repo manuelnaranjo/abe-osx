@@ -115,7 +115,7 @@ fetch()
 # decompress and untar a fetched tarball
 extract()
 {
-#    trace "$*"
+    trace "$*"
 
     local extractor=
     local taropt=
@@ -140,7 +140,7 @@ extract()
 
     # Initialize component data structures
     local builddir="`get_builddir $1`"
-    local url="http://${fileserver}${remote_snapshots}"
+    local url="http://${fileserver}${remote_snapshots}/`dirname $1`"
     component_init ${tool} URL="$1" URL="${url}" SRCDIR="${srcdir}" FILESPEC="${file}" BUILDDIR="${builddir}"
 
 
