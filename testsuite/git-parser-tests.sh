@@ -68,6 +68,20 @@ test_parser()
 echo "============= git_parser() tests ================"
 
 errmatch=0
+in="linaro-gcc-2015.08-rc1.tar.xz"
+match='linaro-gcc'
+test_parser tag "${in}" "${match}" "${errmatch}"
+match=''
+test_parser revision "${in}" "${match}" "${errmatch}"
+
+errmatch=0
+in="linaro-gcc-2015.08-2-rc1.tar.xz"
+match='linaro-gcc'
+test_parser tag "${in}" "${match}" "${errmatch}"
+match=''
+test_parser revision "${in}" "${match}" "${errmatch}"
+
+errmatch=0
 in="gcc.git/linaro-4.8-branch"
 match='linaro-4.8-branch'
 test_parser branch "${in}" "${match}" "${errmatch}"

@@ -1549,6 +1549,36 @@ else
     fixme "create_release_tag returned ${out}"
 fi
 
+export release="2015.08-rc1"
+testing="create_release_tag: release candidate tarball with release"
+in="gcc-linaro-5.1-2015.08-rc1.tar.xz"
+out="`create_release_tag ${in} | grep -v TRACE`"
+toolname="`echo ${out} | cut -d ' ' -f 1`"
+branch="`echo ${out} | cut -d ' ' -f 2`"
+revision="`echo ${out} | cut -d ' ' -f 3`"
+if test x"${out}" = x"gcc-linaro-5.1-2015.08-rc1"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+export release="2015.08-2-rc1"
+testing="create_release_tag: release candidate tarball with release"
+in="gcc-linaro-5.1-2015.08-2-rc1.tar.xz"
+out="`create_release_tag ${in} | grep -v TRACE`"
+toolname="`echo ${out} | cut -d ' ' -f 1`"
+branch="`echo ${out} | cut -d ' ' -f 2`"
+revision="`echo ${out} | cut -d ' ' -f 3`"
+if test x"${out}" = x"gcc-linaro-5.1-2015.08-2-rc1"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+
+
 # ----------------------------------------------------------------------------------
 echo "============= checkout () tests ================"
 echo "  Checking out sources into ${local_snapshots}"

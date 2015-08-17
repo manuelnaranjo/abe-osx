@@ -732,7 +732,7 @@ create_release_version()
 }
 
 
-# Parse a version string and produced the proper output fields. This is
+# Parse a version string and produce the proper output fields. This is
 # used when naming releases for both directories, tarballs, and
 # internal version numbers. The version string looks like
 # 'gcc.git/gcc-4.8-branch' or 'gcc-linaro-4.8-2013.09'
@@ -748,7 +748,7 @@ create_release_tag()
 
     local rtag="`get_git_tag $1`"
 
-    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[-0-9\.]\.[0-9\.\-]*::'`"
+    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[-0-9\.]\.[0-9\.\-][-rc0-9\.]*::'`"
 
     if test x"${release}" = x; then
 	# extract the branch from the version
@@ -762,7 +762,8 @@ create_release_tag()
         # return the version string array
 	local rtag="${rtag}${revision}-${date}"
     else
-	local version="`echo $1 | grep -o '\-[0-9\.]*\-' | tr -d '-'`"
+	# grep -o returns multiple lines. Match only on the first using 'head -1'.
+	local version="`echo $1 | grep -o '\-[0-9\.]*\-' | head -1 | tr -d '-'`"
 	local tool="`get_toolname $1`"
 	if test x"${version}" = x; then
 	    local version="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
