@@ -186,8 +186,8 @@ fi
       }; \
       trap phonehome EXIT; \
       cd ${target_dir} && \
-      tar xjf `basename ${buildtar}` --exclude='*.git/.git/*' && \
-      cd `tar tjf ${buildtar} | head -n1` && \
+      tar xf `basename ${buildtar}` --exclude='*.git/.git/*' && \
+      cd `tar tf ${buildtar} | head -n1` && \
       rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \

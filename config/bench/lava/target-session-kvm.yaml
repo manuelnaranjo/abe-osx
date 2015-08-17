@@ -15,6 +15,7 @@ install:
         - binutils
         - gawk
         - libgfortran3
+        - xz-utils
 
 run:
     steps:

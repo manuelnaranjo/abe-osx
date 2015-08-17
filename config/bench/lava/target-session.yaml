@@ -12,6 +12,7 @@ install:
         - openssh-server
         - make
         - cpufrequtils
+        - xz-utils
 
 run:
     steps:
