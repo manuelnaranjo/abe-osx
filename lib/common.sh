@@ -39,7 +39,6 @@ set -o pipefail
 # All the set* functions set global variables used by the other functions.
 # This way there can be some error recovery and handing.
 #
-
 set_config()
 {
     echo "Set config file to $1..."
@@ -172,13 +171,10 @@ get_URL()
    
     local srcs="${sources_conf}"
     if test -e ${srcs}; then
-	if test "`grep -c "^${node}" ${srcs}`" -gt 1; then
-	    error "Need unique component and version to get URL!"
-	    return 1
-	fi
 	# We don't want to match on partial matches
 	# (hence looking for a trailing space or \t).
-	if test "`grep -c "^${node} " ${srcs}`" -lt 1 -a "`grep -Pc "^${node}\t" ${srcs}`" -lt 1; then
+	local node="`echo ${node} | sed -e 's:-[0-9a-z\.\-]*::'`"
+	if test "`grep -c "^${node} " ${srcs}`" -lt 1 -a "`grep -c "^${node}.git" ${srcs}`" -lt 1; then
 	    error "Component \"${node}\" not found in ${srcs} file!"
 	    return 1
 	fi
