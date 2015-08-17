@@ -51,24 +51,9 @@ fetch()
 	return 1
     fi
 
-    # Peel off 'infrastructure/'
-    local file="`basename $1`"
+    local tool=$1
 
-    # The md5sums file should have been downloaded before fetch() was
-    # ever called.
-    if test ! -e "${local_snapshots}/md5sums"; then
-	error "${local_snapshots}/md5sums is missing."
-	return 1
-    fi
-
-    # We can grab the full file name by searching for it in the md5sums file.
-    # Match on the first hit.  This might be prepended with the
-    # 'infrastructure/' directory name if it's an infrastructure file.
-    local getfile="$(grep ${file} -m 1 ${local_snapshots}/md5sums | cut -d ' ' -f 3)"
-    if test x"${getfile}" = x; then
-	error "${file} not in md5sum!"
-	return 1
-    fi
+    local getfile="`get_component_filespec ${tool}`" || return 1
 
     # Forcing trumps ${supdate} and always results in sources being updated.
     if test x"${force}" != xyes; then
@@ -95,7 +80,7 @@ fetch()
     fi
 
     # download from the file server or copy the file from the reference dir
-    fetch_${protocol} ${getfile}
+    fetch_${protocol} ${tool}
     if test $? -gt 0; then
 	return 1
     fi
@@ -119,15 +104,18 @@ extract()
 
     local extractor=
     local taropt=
+    local tool=$1
 
-    if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
-	local file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
+    component_dump $tool
+
+    local url="`get_component_url ${tool}`"
+    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	local dir="/infrastructure"
     else
-	local file="`echo $1 | cut -d '/' -f 2`"
+	local dir=""
     fi
-
-    local srcdir=
-    srcdir="`get_srcdir $1`"
+    local file="`get_component_filespec ${tool}`"
+    local srcdir="`get_component_srcdir ${tool}`"
 
     local stamp=
     stamp="`get_stamp_name extract $1`"
@@ -136,13 +124,10 @@ extract()
     local stampdir="`dirname ${srcdir}`"
 
     # Name of the downloaded tarball.
-    local tarball="`dirname ${srcdir}`/${file}"
+    local tarball="${srcdir}/${file}"
 
     # Initialize component data structures
     local builddir="`get_builddir $1`"
-    local url="http://${fileserver}${remote_snapshots}/`dirname $1`"
-    component_init ${tool} URL="$1" URL="${url}" SRCDIR="${srcdir}" FILESPEC="${file}" BUILDDIR="${builddir}"
-
 
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
@@ -178,8 +163,8 @@ extract()
     fi
 
     local taropts="${taropt}xf"
-    notice "Extracting ${srcdir} from ${tarball}."
-    dryrun "tar ${taropts} ${tarball} -C `dirname ${srcdir}`"
+    notice "Extracting from ${tarball}."
+    dryrun "tar ${taropts} ${tarball} -C ${srcdir}"
 
     # FIXME: this is hopefully a temporary hack for tarballs where the
     # directory name versions doesn't match the tarball version. This means
@@ -217,18 +202,20 @@ extract()
 # on the server is newer than the destination file.
 fetch_http()
 {
-#    trace "$*"
+    trace "$*"
 
-    local getfile=$1
+    local tool=$1
+    local getfile="`get_component_filespec ${tool}`"
+    local url="`get_component_url ${tool}`/${getfile}"
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"./"; then
-	local dir=""
+    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	local dir="/infrastructure"
     else
-	if test ! -d ${local_snapshots}/${dir}; then
-	    mkdir -p ${local_snapshots}/${dir}
-	fi
+	local dir=""
+    fi
+    if test ! -d ${local_snapshots}${dir}; then
+	mkdir -p ${local_snapshots}${dir}
     fi
 
     # You MUST have " " around ${wget_bin} or test ! -x will
@@ -255,8 +242,8 @@ fetch_http()
     # NOTE: the timeout is short, and we only try twice to access the
     # remote host. This is to improve performance when offline, or
     # the remote host is offline.
-    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile} ${overwrite_or_timestamp}"
-    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url} ${overwrite_or_timestamp}"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}; then
        warning "downloaded file ${getfile} has zero data!"
        return 1
     fi

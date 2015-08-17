@@ -81,9 +81,7 @@ checkout_infrastructure()
 	    return 1
 	fi
 
-	# Hopefully we only download the exact match for each one.  Depending
-	# how vague the user is it might download multiple tarballs.
-	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+	files="${files} ${version}"
 	unset version
     done
 
@@ -92,32 +90,31 @@ checkout_infrastructure()
     fi
 
     for i in ${files}; do
-	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-        local gitinfo=
-	gitinfo="`get_source ${name}`"
+	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:-[0-9a-z\.]*::' -e 's:\.git.*::'`"
+	collect_data $i
+
+        local gitinfo="`get_component_url $i`/$i"
 	if test -z "${gitinfo}"; then
 	    error "No matching source found for \"${name}\"."
 	    return 1
 	fi
 
 	# Some infrastructure packages (like dejagnu) come from a git repo.
-	local service=
-	service="`get_git_service ${gitinfo}`"
-	if test x"${service}" != x; then
+	if test "`echo $i | grep -c \.tar\.`" -eq 0; then
 	    local checkout_ret=
-	    checkout ${gitinfo}
+	    checkout $i
 	    checkout_ret=$?
 	    if test ${checkout_ret} -gt 0; then
 		error "Failed checkout out of ${name}."
 		return 1
 	    fi
 	else
-	    fetch ${gitinfo}
+	    fetch $i
 	    if test $? -gt 0; then
 		error "Couldn't fetch tarball ${gitinfo}"
 		return 1
 	    fi
-	    extract ${gitinfo}
+	    extract $i
 	    if test $? -gt 0; then
 		error "Couldn't extract tarball ${gitinfo}"
 		return 1
@@ -132,6 +129,8 @@ checkout_infrastructure()
 # nothing else.
 checkout_all()
 {
+    trace "$*"
+
     local packages=
     packages="binutils libc gcc gdb"
 
@@ -235,28 +234,16 @@ checkout()
     fi
 
     local service=
-    service="`get_git_service $1`"
-    if test x"${service}" = x ; then
-	error "Unable to parse service from '$1'. You have either a bad URL, or an identifier that should be passed to get_URL."
-	return 1
-    fi
+    local repo="`get_component_url $1`" || return 1
 
-    local repo=
-    repo="`get_git_repo $1`" || return 1
-
-    #None of the following should be able to fail with the code as it is
-    #written today (and failures are therefore untestable) but propagate
-    #errors anyway, in case that situation changes.
-    local tool=
-    tool="`get_toolname $1`" || return 1
-    local url=
-    url="`get_git_url $1`" || return 1
-    local branch=
-    branch="`get_git_branch $1`" || return 1
-    local revision=
-    revision="`get_git_revision $1`" || return 1
-    local srcdir=
-    srcdir="`get_srcdir $1`" || return 1
+    # None of the following should be able to fail with the code as it is
+    # written today (and failures are therefore untestable) but propagate
+    # errors anyway, in case that situation changes.
+    local tool="$1"
+    local url="`get_component_url ${tool}`" || return 1
+    local branch="`get_component_branch ${tool}`" || return 1
+    local revision="`get_component_revision ${tool}`" || return 1
+    local srcdir="`get_component_srcdir ${tool}`" || return 1
 
     case $1 in
 	svn*)
@@ -378,7 +365,7 @@ checkout()
 
     # Initialize component data structures
     local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
-    component_init ${tool} URL="${url}" SRCDIR="${srcdir}" BRANCH="${branch}" REVISION="`srcdir_revision ${srcdir}`" FILESPEC="${repo}" BUILDDIR="${builddir}"
+#    component_init ${tool} URL="${url}" SRCDIR="${srcdir}" BRANCH="${branch}" REVISION="`srcdir_revision ${srcdir}`" FILESPEC="${repo}" BUILDDIR="${builddir}"
 
     return 0
 }
