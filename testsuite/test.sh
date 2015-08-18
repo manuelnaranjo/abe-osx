@@ -552,6 +552,10 @@ else
     fail "fetch_http infrastructure/gmp-5.1.3.tar.xz updated unexpectedly (force=no)"
 fi
 
+# If the two operations happen within the same second then their timestamps will
+# be equivalent.  This sleep operation forces the timestamps apart.
+sleep 2s
+
 # Now try it with force on
 out="`force=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
