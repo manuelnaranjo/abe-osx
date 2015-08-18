@@ -85,7 +85,7 @@ fetch()
 
     # Fetch only supports fetching files which have an entry in the md5sums file.
     # An unlisted file should never get this far anyway.
-    dryrun "check_md5sum ${getfile}"
+    dryrun "check_md5sum ${tool}"
     if test $? -gt 0 -a x"${force}" != xyes; then
 	error "md5sums don't match!"
 	return 1
@@ -104,61 +104,54 @@ extract()
     local taropt=
     local tool=$1
 
-    component_dump $tool
-
     local url="`get_component_url ${tool}`"
     if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure"
+	local dir="/infrastructure/"
     else
 	local dir=""
     fi
     local file="`get_component_filespec ${tool}`"
     local srcdir="`get_component_srcdir ${tool}`"
 
-    local stamp=
-    stamp="`get_stamp_name extract $1`"
+    # local stamp=
+    stamp="`get_stamp_name extract ${dir}$1`"
 
     # Extract stamps go into srcdir
-    local stampdir="`dirname ${srcdir}`"
+    local stampdir="${srcdir}"
 
     # Name of the downloaded tarball.
     local tarball="${srcdir}/${file}"
 
     # Initialize component data structures
-    local builddir="`get_builddir $1`"
+    local builddir="`get_component_builddir ${tool}`"
 
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
     check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
     ret=$?
     if test $ret -eq 0; then
-	return 0 
+    	return 0 
     elif test $ret -eq 255; then
-	# the ${tarball} isn't present.
-	return 1
+    	# the ${tarball} isn't present.
+    	return 1
     fi
 
     # Figure out how to decompress a tarball
     case "${file}" in
-	*.xz)
-	    local extractor="xz -d "
-	    local taropt="J"
-	    ;;
-	*.bz*)
-	    local extractor="bzip2 -d "
-	    local taropt="j"
-	    ;;
-	*.gz)
-	    local extractor="gunzip "
-	    local taropt="x"
-	    ;;
-	*) ;;
+    	*.xz)
+    	    local extractor="xz -d "
+    	    local taropt="J"
+    	    ;;
+    	*.bz*)
+    	    local extractor="bzip2 -d "
+    	    local taropt="j"
+    	    ;;
+    	*.gz)
+    	    local extractor="gunzip "
+    	    local taropt="x"
+    	    ;;
+    	*) ;;
     esac
-
-    if test -d ${srcdir} -a x"${force}" = xno; then
-	notice "${srcdir} already exists. Removing to extract newer version!"
-	dryrun "rm -rf ${srcdir}"
-    fi
 
     local taropts="${taropt}xf"
     notice "Extracting from ${tarball}."
@@ -172,20 +165,18 @@ extract()
     # dryrun has to skip this step otherwise execution will always drop into
     # this leg.
     if test x"${dryrun}" != xyes -a ! -d ${srcdir}; then
-	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
-	if test ! -d ${srcdir}; then
-	    dir2="`dirname ${srcdir}`/${dir2}"
-	    warning "${tarball} didn't extract to ${srcdir} as expected!"
-	    notice "Making a symbolic link from ${dir2} to ${srcdir}!"
-	    dryrun "ln -sf ${dir2} ${srcdir}"
-	else
-	    error "${srcdir} already exists!"
-	    return 1
-	fi
+    	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
+    	if test ! -d ${srcdir}; then
+    	    dir2="${srcdir}/${dir2}"
+    	    warning "${tarball} didn't extract to ${srcdir} as expected!"
+    	    notice "Making a symbolic link from ${dir2} to ${srcdir}!"
+    	    dryrun "ln -sf ${dir2} ${srcdir}"
+    	else
+    	    error "${srcdir} already exists!"
+    	    return 1
+    	fi
     fi
     
-    local tool="`get_toolname $1`"
-
     create_stamp "${stampdir}" "${stamp}"
     return 0
 }
@@ -245,6 +236,10 @@ fetch_http()
        warning "downloaded file ${getfile} has zero data!"
        return 1
     fi
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url}.asc ${overwrite_or_timestamp}"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}.asc; then
+       warning "downloaded file ${getfile}.asc has zero data!"
+    fi
 
     return 0
 }
@@ -298,25 +293,28 @@ fetch_reference()
 # the actual file's downloaded md5sum.
 check_md5sum()
 {
-#    trace "$*"
+    trace "$*"
 
-    # ${local_snapshots}/md5sums is a pre-requisite.
-    if test ! -e ${local_snapshots}/md5sums; then
-        error "${local_snapshots}/md5sums is missing."
-        return 1
+    local tool=$1
+    
+    local file="`get_component_filespec ${tool}`.asc"
+    local url="`get_component_url ${tool}`"
+
+    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	local dir="/infrastructure/"
+    else
+	local dir=""
     fi
 
-    local entry=
-    entry=$(grep "${1}" ${local_snapshots}/md5sums)
-    if test x"${entry}" = x; then
-        error "No md5sum entry for $1!"
+    if test -e x"${local_snapshots}${dir}/${file}" = x; then
+        error "No md5sum file for ${tool}!"
         return 1
     fi
 
     # Ask md5sum to verify the md5sum of the downloaded file against the hash in
     # the index.  md5sum must be executed from the snapshots directory.
-    pushd ${local_snapshots} &>/dev/null
-    dryrun "echo \"${entry}\" | md5sum --status --check -"
+    pushd ${local_snapshots}${dir} &>/dev/null
+    dryrun "md5sum --status --check ${file}"
     md5sum_ret=$?
     popd &>/dev/null
 
