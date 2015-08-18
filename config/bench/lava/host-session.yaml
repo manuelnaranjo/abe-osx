@@ -25,6 +25,7 @@ install:
         - gcc
         - gcc-multilib
         - g++-multilib
+        - gfortran
         - git
         - inotify-tools
         - libgfortran3
