@@ -739,8 +739,8 @@ make_check()
 	case "${target}" in
 	    "$build"|*"-elf"*) make_flags="${make_flags} -j ${cpus}" ;;
 	    # Try to find out which test is crashing the aarch64-linux-gnu
-	    # boards.
-	    aarch64-linux-gnu) make_flags="${make_flags} -j 1" ;;
+	    # boards and x86_64 builders.
+	    aarch64-linux-gnu|x86_64*) make_flags="${make_flags} -j 1" ;;
 	    # Double parallelization when running tests on remote boards
 	    # to avoid host idling when waiting for the board.
 	    *) make_flags="${make_flags} -j $((2*${cpus}))" ;;

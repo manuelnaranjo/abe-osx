@@ -343,7 +343,7 @@ fi
 (cd $user_snapshots/gcc.git; git fetch origin '+refs/changes/*:refs/remotes/gerrit/changes/*')
 
 # Turn on extra verbose dejagnu logging
-export RUNTESTFLAGS="-v -v -d"
+export RUNTESTFLAGS="-v -v -v -v -d"
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
