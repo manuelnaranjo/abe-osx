@@ -731,13 +731,13 @@ make_check()
     fi
 
     if test x"${override_runtestflags}" != x; then
-        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags}\""
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags} -v -v -v -v -d\""
     fi
 
     if test x"${parallel}" = x"yes"; then
 	local make_flags
 	case "${target}" in
-	    "$build"|*"-elf"*) make_flags="${make_flags} -j ${cpus}" ;;
+	    "$build"|*"-elf"*) make_flags="${make_flags} -j 1" ;;
 	    # Try to find out which test is crashing the aarch64-linux-gnu
 	    # boards and x86_64 builders.
 	    aarch64-linux-gnu|x86_64*) make_flags="${make_flags} -j 1" ;;
