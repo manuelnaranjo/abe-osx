@@ -30,6 +30,10 @@ function get_thing {
     local server="${thing%%:*}"
     thing="${thing#*:}"
     (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    if ! test -e "`basename ${thing}`"; then #TODO HACK set -e fails to apply to above incantation
+      echo "Download of ${server}:${thing} failed" >&2
+      exit 1
+    fi
   fi
   popd > /dev/null
   echo "${tmpdir}/`basename ${thing}`"
