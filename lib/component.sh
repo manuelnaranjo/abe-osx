@@ -39,16 +39,17 @@ component_init ()
     trace "$*"
 
     local component=
-    for i in $*; do
-	if test "`echo $i | grep -c '='`" -gt 0; then
-	    name="`echo $i | cut -d '=' -f 1`"
-	    value="`echo $i | cut -d '=' -f 2`"
+    local index=
+    for index in $*; do
+	if test "`echo ${index} | grep -c '='`" -gt 0; then
+	    name="`echo ${index} | cut -d '=' -f 1`"
+	    value="`echo ${index} | cut -d '=' -f 2`"
 	    eval ${component}[${name}]="${value}"
 	    if test $? -gt 0; then
 		return 1
 	    fi
 	else
-	    component="`echo $i | sed -e 's:-[0-9a-z\.\-]*::'`"
+	    component="`echo ${index} | sed -e 's:-[0-9a-z\.\-]*::'`"
 	    declare -Ag ${component}
 	    eval ${component}[TOOL]="${component}"
 	    if test $? -gt 0; then
@@ -73,7 +74,7 @@ set_component_url ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -89,7 +90,7 @@ set_component_revision ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -105,7 +106,7 @@ set_component_srcdir ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -121,7 +122,7 @@ set_component_builddir ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -137,7 +138,7 @@ set_component_filespec ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -153,7 +154,7 @@ set_component_branch ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     declare -p ${component} 2>&1 > /dev/null
     if test $? -gt 0; then
 	echo "WARNING: ${component} does not exist!"
@@ -177,9 +178,8 @@ get_component_url ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -193,9 +193,8 @@ get_component_revision ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -209,9 +208,8 @@ get_component_srcdir ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -225,9 +223,8 @@ get_component_builddir ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -241,9 +238,8 @@ get_component_filespec ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -257,9 +253,8 @@ get_component_branch ()
 {
 #    trace "$*"
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
@@ -278,9 +273,8 @@ component_dump()
     local flag="`set -o | grep xtrace| tr -s ' ' | tr -d '\t' | cut -d ' ' -f 2`"
     set +x
 
-    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::'`"
-    declare -p ${component} 2>&1 > /dev/null
-    if test $? -gt 0; then
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     fi
@@ -295,6 +289,56 @@ component_dump()
     if test x"${flag}" = x"on"; then
         set -x
     fi
+
+    return 0
+}
+
+collect_data ()
+{
+    trace "$*"
+
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+    local version="${component}_version"
+    local tool="${!version}"
+    if test x"${tool}" = x; then
+	eval ${component}_version="`grep ^latest= ${topdir}/config/${component}.conf | cut -d '\"' -f 2`"
+    fi
+
+    if test `echo $1 | grep -c "\.tar"` -gt 0; then
+	local url="`get_URL ${component}`"
+	if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	    local dir="/infrastructure"
+	else
+	    local dir=""
+	fi
+	local filespec="`basename $1`"
+    else
+	local gitinfo="${!version}"
+	local branch="`get_git_branch ${gitinfo}`"
+	local search=
+	case ${component} in
+	    binutils*) search="binutils-gdb.git";;
+	    gdb*) search="binutils-gdb.git" ;;
+	    *) search="${component}\." ;;
+	esac
+	local url="`grep ^${search} ${sources_conf} | tr -s ' ' | cut -d ' ' -f 2`"
+	if test x"{$url}" = x; then
+	    warning "${component} Not found in  ${sources_conf}"
+	    return 1
+	fi
+	local filespec="`basename ${url}`"
+	local url="`dirname ${url}`"
+	local revision="`get_git_revision ${gitinfo}`"
+	local fixbranch="`echo ${branch} | tr '/' '~'`"
+	local dir=${component}.git${branch:+~${fixbranch}}${revision:+@${revision}}
+    fi
+
+    
+    local builddir="${local_builds}/${host}/${target}/${dir}"
+    local srcdir="${local_snapshots}/${dir}"
+
+    fixme "TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}}"
+    component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}}
 
     return 0
 }
