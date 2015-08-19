@@ -731,7 +731,7 @@ make_check()
     fi
 
     if test x"${override_runtestflags}" != x; then
-        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags} -v -v -v --debug\""
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags} -v -v -v\""
     fi
 
     if test x"${parallel}" = x"yes"; then
