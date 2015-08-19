@@ -297,7 +297,7 @@ check_md5sum()
 {
     trace "$*"
 
-    local tool=$1
+    local tool="`basename $1`"
     
     local file="`get_component_filespec ${tool}`.asc"
     local url="`get_component_url ${tool}`"
