@@ -755,7 +755,7 @@ make_check()
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
 	# Overwrite ${checklog} in order to provide a clean log file
 	# if make check has been run more than once on a build tree.
-	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml -v -v -v\" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	if test $? -gt 0; then
 	    error "make check -C ${builddir} failed."
 	    return 1
@@ -827,7 +827,7 @@ make_check()
 
 	for i in ${dirs}; do
 	    # Always append "tee -a" to the log when building components individually
-            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags}\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee -a ${checklog}"
+            dryrun "make ${check_targets} SYSROOT_UNDER_TEST=${sysroots} FLAGS_UNDER_TEST=\"\" PREFIX_UNDER_TEST=\"${local_builds}/destdir/${host}/bin/${target}-\" RUNTESTFLAGS=\"${runtest_flags} -v -v\" ${schroot_make_opts} ${make_flags} -w -i -k -C ${builddir}$i 2>&1 | tee -a ${checklog}"
 	    if test $? -gt 0; then
 		error "make ${check_targets} -C ${builddir}$i failed."
 		return 1
