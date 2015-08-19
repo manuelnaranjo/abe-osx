@@ -148,12 +148,6 @@ infrastructure()
 	return 1
     fi
 
-    # This shouldn't happen, but it's nice for regression verification.
-    if test ! -e ${local_snapshots}/md5sums; then
-	error "Missing ${local_snapshots}/md5sums file needed for infrastructure libraries."
-	return 1
-    fi
-   
     # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
@@ -190,7 +184,7 @@ infrastructure()
 
 	# Hopefully we only return the exact match for each one.  Depending
 	# how vague the user is it might match on multiple tarballs.
-	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
+	files="${files} ${version}"
 	unset version
     done
 
