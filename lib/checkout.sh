@@ -117,32 +117,32 @@ checkout_infrastructure()
 	files="${files} installjammer-1.2.15.tar.gz"
     fi
 
-    for i in ${files}; do
-	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:-[0-9a-z\.]*::' -e 's:\.git.*::'`"
-	collect_data $i
+    for j in ${files}; do
+	local name="`echo $j | sed -e 's:\.tar\..*::' -e 's:-[0-9a-z\.]*::' -e 's:\.git.*::'`"
+	collect_data $j
 
-        local gitinfo="`get_component_url $i`/$i"
+        local gitinfo="`get_component_url $j`/$j"
 	if test -z "${gitinfo}"; then
 	    error "No matching source found for \"${name}\"."
 	    return 1
 	fi
 
 	# Some infrastructure packages (like dejagnu) come from a git repo.
-	if test "`echo $i | grep -c \.tar\.`" -eq 0; then
+	if test "`echo $j | grep -c \.tar\.`" -eq 0; then
 	    local checkout_ret=
-	    checkout $i
+	    checkout $j
 	    checkout_ret=$?
 	    if test ${checkout_ret} -gt 0; then
 		error "Failed checkout out of ${name}."
 		return 1
 	    fi
 	else
-	    fetch $i
+	    fetch $j
 	    if test $? -gt 0; then
 		error "Couldn't fetch tarball ${gitinfo}"
 		return 1
 	    fi
-	    extract $i
+	    extract $j
 	    if test $? -gt 0; then
 		error "Couldn't extract tarball ${gitinfo}"
 		return 1
@@ -188,62 +188,16 @@ checkout_all()
     fi
 
     for i in ${packages}; do
-	local package=
-	case $i in
-	    gdb)
-		package=${gdb_version}
-		;;
-	    binutils)
-		package=${binutils_version}
-		;;
-	    gcc)
-		package=${gcc_version}
-		;;
-	    libc)
-		if test x"${clibrary}" = x"eglibc"; then
-		    package=${eglibc_version}
-		elif  test x"${clibrary}" = x"glibc"; then
-		    package=${glibc_version}
-		elif test x"${clibrary}" = x"newlib"; then
-		    package=${newlib_version}
-		else
-		    error "\${clibrary}=${clibrary} not supported."
-		    return 1
-		fi
-		;;
-	    *)
-		;;
-	esac
-
-    	local gitinfo="`get_source ${package}`"
-	if test -z "${gitinfo}"; then
-	    error "No matching source found for \"${name}\"."
-	    return 1
+	local package=$i
+	if test x"$i" = x"libc"; then
+	    package="${clibrary}"
 	fi
+	collect_data ${package}
 
-	# If it doesn't have a service it's probably a tarball that we need to
-	# fetch, especially likely if passed in on the command line.
-	local service=
-	service="`get_git_service ${gitinfo}`"
-	if test x"${service}" != x; then
-	    local checkout_ret=
-	    checkout ${gitinfo}
-	    checkout_ret=$?
-	    if test ${checkout_ret} -gt 0; then
-		error "Failed checkout out of ${name}."
-		return 1
-	    fi
-	else
-	    fetch ${gitinfo}
-	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
-	    fi
-	    extract ${gitinfo}
-	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
-		return 1
-	    fi
+	checkout ${package}
+	if test $? -gt 0; then
+	    error "Failed checkout out of ${package}."
+	    return 1
 	fi
     done
     
@@ -272,30 +226,49 @@ checkout()
 {
     trace "$*"
 
-    if test x"$1" = x; then
-	error "No URL given!"
-	return 1
-    fi
-
-    local service=
-    local repo="`get_component_url $1`" || return 1
+    backtrace
+    local tool="$1"
+    component_dump ${tool}
 
     # None of the following should be able to fail with the code as it is
     # written today (and failures are therefore untestable) but propagate
     # errors anyway, in case that situation changes.
-    local tool="$1"
     local url="`get_component_url ${tool}`" || return 1
     local branch="`get_component_branch ${tool}`" || return 1
     local revision="`get_component_revision ${tool}`" || return 1
     local srcdir="`get_component_srcdir ${tool}`" || return 1
+    local repo="`get_component_filespec ${tool}`"
+    local protocol="`echo ${url} | cut -d ':' -f 1`"
 
-    case $1 in
+    case ${protocol} in
+	svn*)
+	    local trunk="`echo $1 |grep -c trunk`"
+	    if test ${trunk} -gt 0; then
+		local dir="`dirname $1`"
+		local dir="`basename ${dir}`/trunk"
+	    fi
+	    if test x"${force}" =  xyes; then
+		#rm -fr ${local_snapshots}/${dir}
+		echo "Removing existing sources for ${srcdir}"
+	    fi
+	    if test x"${usegit}" =  xyes; then
+		local out="`git svn clone $1 ${srcdir}`"
+	    else
+		if test -e ${srcdir}/.svn; then
+		    (cd ${srcdir} && svn update)
+		    # Extract the revision number from the update message
+		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
+		else
+		    svn checkout $1 ${srcdir}
+                    if test $? -gt 0; then
+                        error "Failed to check out $1 to ${srcdir}"
+                        return 1
+                    fi
+		fi
+	    fi
+	    ;;
 	git*|http*|ssh*)
-            #FIXME: We deliberately ignored error returns from get_git_url,
-            #       because any path with an '@' in will result in errors.
-            #       Jenkins is wont to create such paths.
-            local repodir="`get_git_url ssh://${srcdir} | sed 's#^ssh://##'`"
-
+            local repodir="${url}/${repo}"
 	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
 		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
 		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
@@ -303,16 +276,15 @@ checkout()
 
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
-	    if test ! -d ${repodir}; then
-		local git_reference_opt
-		if [ x"$git_reference_dir" != x"" -a \
-		    -d "$git_reference_dir/$(basename $repodir)" ]; then
-		    local git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
+	    if test ! -d ${local_snapshots}/${repo}; then
+		local git_reference_opt=
+		if test -d "${git_reference_dir}/${repo}"; then
+		    local git_reference_opt="--reference ${git_reference_dir}/${repo}"
 		fi
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
+		dryrun "git_robust clone ${git_reference_opt} ${repodir} ${local_snapshots}/${repo}"
 		if test $? -gt 0; then
-		    error "Failed to clone master branch from ${url} to ${repodir}"
+		    error "Failed to clone master branch from ${url} to ${url}"
 		    return 1
 		fi
 	    fi
@@ -352,9 +324,9 @@ checkout()
 		# Some packages allow the build to modify the source directory and
 		# that might screw up abe's state so we restore a pristine branch.
 		notice "Updating sources for ${tool} in ${srcdir}"
-		dryrun "(cd ${repodir} && git stash --all)"
-		dryrun "(cd ${repodir} && git reset --hard)"
-		dryrun "(cd ${repodir} && git_robust pull)"
+		dryrun "(cd ${rsrcdir} && git stash --all)"
+		dryrun "(cd ${srcdir} && git reset --hard)"
+		dryrun "(cd ${srcdir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
@@ -380,10 +352,6 @@ checkout()
 	error "Couldn't checkout $1 !"
 	return 1
     fi
-
-    # Initialize component data structures
-    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
-#    component_init ${tool} URL="${url}" SRCDIR="${srcdir}" BRANCH="${branch}" REVISION="`srcdir_revision ${srcdir}`" FILESPEC="${repo}" BUILDDIR="${builddir}"
 
     return 0
 }
