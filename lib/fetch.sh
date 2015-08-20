@@ -45,20 +45,28 @@ fetch_md5sums()
 # function, not in the fetch_<protocol> functions to avoid redundancy.
 fetch()
 {
-#    trace "$*"
+    trace "$*"
+
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
     fi
 
-    local tool=$1
+    local component=$1
+    local getfile="`get_component_filespec ${component}`" || return 1
+    local url="`get_component_url ${component}`/${getfile}"
 
-    local getfile="`get_component_filespec ${tool}`" || return 1
+    # This provides the infrastructure/ directory if ${getfile} contains it.
+    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	local dir="/infrastructure"
+    else
+	local dir=""
+    fi
 
     # Forcing trumps ${supdate} and always results in sources being updated.
     if test x"${force}" != xyes; then
 	if test x"${supdate}" = xno; then
-	    if test -e "${local_snapshots}/${getfile}"; then
+	    if test -e "${local_snapshots}${dir}/${getfile}"; then
 		notice "${getfile} already exists and updating has been disabled."
 		return 0
 	    fi
@@ -71,7 +79,7 @@ fetch()
 
     # If the user has specified a git_reference_dir, then we'll use it if the
     # file exists in the reference dir.
-    if test -e "${git_reference_dir}/${getfile}" -a x"${force}" != xyes; then
+    if test -e "${git_reference_dir}${dir}/${getfile}" -a x"${force}" != xyes; then
 	# This will always fetch if the version in the reference dir is newer.
 	local protocol=reference
     else
@@ -80,14 +88,14 @@ fetch()
     fi
 
     # download from the file server or copy the file from the reference dir
-    fetch_${protocol} ${tool}
+    fetch_${protocol} ${component}
     if test $? -gt 0; then
 	return 1
     fi
 
     # Fetch only supports fetching files which have an entry in the md5sums file.
     # An unlisted file should never get this far anyway.
-    dryrun "check_md5sum ${tool}"
+    dryrun "check_md5sum ${component}"
     if test $? -gt 0 -a x"${force}" != xyes; then
 	error "md5sums don't match!"
 	return 1
@@ -104,16 +112,16 @@ extract()
 
     local extractor=
     local taropt=
-    local tool=$1
+    local component=$1
 
-    local url="`get_component_url ${tool}`"
+    local url="`get_component_url ${component}`"
     if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
 	local dir="/infrastructure/"
     else
 	local dir=""
     fi
-    local file="`get_component_filespec ${tool}`"
-    local srcdir="`get_component_srcdir ${tool}`"
+    local file="`get_component_filespec ${component}`"
+    local srcdir="`get_component_srcdir ${component}`"
 
     # local stamp=
     stamp="`get_stamp_name extract ${dir}$1`"
@@ -122,10 +130,10 @@ extract()
     local stampdir="${srcdir}"
 
     # Name of the downloaded tarball.
-    local tarball="${srcdir}/${file}"
+    local tarball="${local_snapshots}${dir}/${file}"
 
     # Initialize component data structures
-    local builddir="`get_component_builddir ${tool}`"
+    local builddir="`get_component_builddir ${component}`"
 
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
