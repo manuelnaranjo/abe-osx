@@ -1277,7 +1277,7 @@ fi
 if test ! -z ${do_build}; then
     if test x"${do_build}" != x"all"; then
 	buildingall=no
-	gitinfo="`get_source ${do_build}`"
+	gitinfo="${do_build}"
 	if test x"${gitinfo}" = x; then
 	    error "Couldn't find the source for ${do_build}"
 	    build_failure
