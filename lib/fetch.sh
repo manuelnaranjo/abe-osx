@@ -16,31 +16,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# The fetch_md5sums() function is special because the md5sums file is used by
-# ABE for knowing where to fetch other files, i.e. it's used by fetch(). This
-# function should only be called once at the start of every ABE run.  This
-# function does not respect supdate=no.  It is harmless to download new versions
-# of md5sums.
-fetch_md5sums()
-{
-    if test "${git_reference_dir:+set}" = "set" -a -e "${git_reference_dir}/md5sums"; then
-	# The user specified that they want to fetch from the reference dir.  This
-	# will always fetch if the version in the reference dir is newer.
-	fetch_reference md5sums
-    else
-	# The fetch_http function will always attempt to fetch the remote file
-	# if the version on the server is newer than the local version.
-	fetch_http md5sums
-    fi
-
-    # If the fetch_*() fails we might have a previous version of md5sums in
-    # ${local_snapshots}.  Use that, otherwise we have no choice but to fail.
-    if test ! -s ${local_snapshots}/md5sums; then
-	return 1
-    fi
-    return 0
-}
-
 # Fetch a file from a remote machine.  All decision logic should be in this
 # function, not in the fetch_<protocol> functions to avoid redundancy.
 fetch()
@@ -261,8 +236,10 @@ fetch_http()
 # whether it is newer or not.
 fetch_reference()
 {
-#    trace "$*"
+    trace "$*"
+
     local getfile=$1
+    local url="`get_component_url ${getfile}`"
 
     # Prevent error with empty variable-expansion.
     if test x"${getfile}" = x""; then
@@ -271,7 +248,11 @@ fetch_reference()
     fi
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    local dir="`dirname $getfile`/"
+    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+	local dir="/infrastructure/"
+    else
+	local dir=""
+    fi
     if test x"${dir}" = x"./"; then
 	local dir=""
     else
@@ -290,9 +271,9 @@ fetch_reference()
 
     # Only copy if the source file in the reference dir is newer than
     # that file in the local_snapshots directory (if it exists).
-    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}${dir}/${getfile} ${local_snapshots}${dir}/${getfile}"
     if test $? -gt 0; then
-	error "Copying ${getfile} from reference dir to ${local_snapshots} failed."
+	error "Copying ${getfile} from reference dir to ${local_snapshots}${dir} failed."
 	return 1
     fi
     return 0
