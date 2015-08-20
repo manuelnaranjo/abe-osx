@@ -138,9 +138,6 @@ infrastructure()
 {
     trace "$*"
 
-    rm -f ${local_snapshots}/infrastructure/ChangeLog
-    fetch_http infrastructure/ChangeLog
-
     source_config infrastructure
 
     if test x"${depends}" = x; then
@@ -148,11 +145,7 @@ infrastructure()
 	return 1
     fi
 
-    # We have to grep each dependency separately to preserve the order, as
-    # some libraries depend on other libraries being bult first. Egrep
-    # unfortunately sorts the files, which screws up the order.
-    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
-
+    local files=
     local version=
     for i in ${depends}; do
 	case $i in
@@ -171,9 +164,6 @@ infrastructure()
 	# 'latest'.
 	if test "${version:+set}" != "set"; then
 	    version="`grep ^latest= ${topdir}/config/${i}.conf | cut -d '\"' -f 2`"
-	    # Sometimes config/${i}.conf uses <component>-version and sometimes
-	    # it just uses 'version'.  Regardless, searching the md5sums file requires
-	    # that we include the component name.
 	    version=${i}-${version#${i}-}
 	fi
 
@@ -185,6 +175,8 @@ infrastructure()
 	# Hopefully we only return the exact match for each one.  Depending
 	# how vague the user is it might match on multiple tarballs.
 	files="${files} ${version}"
+	collect_data ${version}
+
 	unset version
     done
 
@@ -199,8 +191,8 @@ infrastructure()
 	if test $i = "make" -a "${makeversion}" = "4.0"; then
 	    continue
 	fi
-	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-	build ${name}
+	local component="`echo $i | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+	build $i
 	buildret=$?
 	if test ${buildret} -gt 0; then
 	    error "Building ${name} failed."
