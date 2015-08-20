@@ -206,6 +206,7 @@ fi
 #This should hold for name in a DNS network, but not necessarily for IP
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
+#'sleep 1' just here because the while loop has to do _something_
 while ! tcpdump -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then

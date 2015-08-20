@@ -74,7 +74,7 @@ echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHA
 echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> ~/.ssh/known_hosts
 
 #Generate config file for each target in multinode job
-lava-network broadcast eth0
+lava-network broadcast eth0 #Required with the lava-network, due to BZ1704
 lava-network collect eth0
 ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{print $1}'` ipv4)"
 
