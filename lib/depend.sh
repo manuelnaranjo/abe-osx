@@ -174,7 +174,7 @@ infrastructure()
 
 	# Hopefully we only return the exact match for each one.  Depending
 	# how vague the user is it might match on multiple tarballs.
-	files="${files} ${version}"
+	files="${files} $i-${version}"
 	collect_data ${version}
 
 	unset version
