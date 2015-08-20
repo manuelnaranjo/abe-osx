@@ -1,5 +1,6 @@
 #!/bin/bash
 lava-network broadcast eth0
+lava-send "config_`lava-self`" "config=${1}"
 sleep infinity&
 echo $! > /root/sleeper
 wait $!

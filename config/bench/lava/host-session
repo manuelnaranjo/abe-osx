@@ -101,8 +101,9 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   fi
 
   #Generate configuration files for target
-  target_type="$(echo ${lava_name} | sed 's/[[:digit:]]*$//')" #TODO: HACK
-  if test $? -ne 0; then echo "Failed to find target type from ${lava_name}"; exit 1; fi
+  lava-wait "config_${lava_name}"
+  target_type="`cut -d = -f 2 /tmp/lava_multi_node_cache.txt`"
+  if test $? -ne 0; then echo "Failed to find config file for ${lava_name}"; exit 1; fi
   sed "s/^ip=.*/ip=${target_ip}/" "${ABE_DIR}/config/bench/boards/${target_type}.conf" > "${ABE_DIR}/config/bench/boards/${lava_name}.conf"
   if test $? -ne 0; then echo "Failed to generate config file for target ${lava_name}"; exit 1; fi
 
