@@ -1260,13 +1260,7 @@ fi
 
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then
-	url="`get_source ${do_checkout}`"
-	if test $? -gt 0; then
-	    error "Couldn't find the source for ${do_checkout}"
-	    build_failure
-	fi
-
-	checkout ${url}
+	checkout ${do_checkout}
 	if test $? -gt 0; then
 	    error "--checkout ${url} failed."
 	    build_failure
