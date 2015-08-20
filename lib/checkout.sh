@@ -41,12 +41,6 @@ checkout_infrastructure()
 	return 1
     fi
 
-    # This shouldn't happen, but it's nice for regression verification.
-    if test ! -e ${local_snapshots}/md5sums; then
-	error "Missing ${local_snapshots}/md5sums file needed for infrastructure libraries."
-	return 1
-    fi
-
     # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
@@ -203,6 +197,9 @@ checkout_all()
     
     notice "Checkout all took ${SECONDS} seconds"
 
+    # Set this to no, since all the sources are now checked out
+    supdate=no
+
     return 0
 }
 
@@ -226,18 +223,16 @@ checkout()
 {
     trace "$*"
 
-    backtrace
-    local tool="$1"
-    component_dump ${tool}
+    local component="$1"
 
     # None of the following should be able to fail with the code as it is
     # written today (and failures are therefore untestable) but propagate
     # errors anyway, in case that situation changes.
-    local url="`get_component_url ${tool}`" || return 1
-    local branch="`get_component_branch ${tool}`" || return 1
-    local revision="`get_component_revision ${tool}`" || return 1
-    local srcdir="`get_component_srcdir ${tool}`" || return 1
-    local repo="`get_component_filespec ${tool}`"
+    local url="`get_component_url ${component}`" || return 1
+    local branch="`get_component_branch ${component}`" || return 1
+    local revision="`get_component_revision ${component}`" || return 1
+    local srcdir="`get_component_srcdir ${component}`" || return 1
+    local repo="`get_component_filespec ${component}`"
     local protocol="`echo ${url} | cut -d ':' -f 1`"
 
     case ${protocol} in
@@ -294,7 +289,7 @@ checkout()
 		# branch AND a commit is redundant and potentially contradictory.  For this
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
-		    notice "Checking out revision for ${tool} in ${srcdir}"
+		    notice "Checking out revision for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
 			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
 			flock ${local_builds}/git$$.lock --command "${cmd}"
@@ -308,7 +303,7 @@ checkout()
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    notice "Checking out branch ${branch} for ${tool} in ${srcdir}"
+		    notice "Checking out branch ${branch} for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
 			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
 			flock ${local_builds}/git$$.lock --command "${cmd}"
@@ -323,7 +318,7 @@ checkout()
 	    elif test x"${supdate}" = xyes; then
 		# Some packages allow the build to modify the source directory and
 		# that might screw up abe's state so we restore a pristine branch.
-		notice "Updating sources for ${tool} in ${srcdir}"
+		notice "Updating sources for ${component} in ${srcdir}"
 		dryrun "(cd ${rsrcdir} && git stash --all)"
 		dryrun "(cd ${srcdir} && git reset --hard)"
 		dryrun "(cd ${srcdir} && git_robust pull)"

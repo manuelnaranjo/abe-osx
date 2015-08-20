@@ -411,8 +411,6 @@ collect_data ()
 {
     trace "$*"
 
-    backtrace
-
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
     source_config ${component}
