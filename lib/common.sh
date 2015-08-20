@@ -342,8 +342,8 @@ source_config()
     stage1_flags=""
     stage2_flags=""
 
-    conf="`get_config $1`"
-    if test $? -eq 0; then
+    local conf="${topdir}/config/$1.conf"
+    if test -e ${conf}; then
         . "${conf}"
         return 0
     else
@@ -353,15 +353,13 @@ source_config()
 
 read_config()
 {
-    conf="`get_config $1`"
-    if test $? -gt 0; then
-        return 1
-    else
-        local value="`export ${2}= && . ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
-        local retval=$?
-        echo "${value}"
-        return ${retval}
-    fi
+    local conf="${topdir}/config/$1.conf"
+    local value="`export ${2}= && . ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
+    local retval=$?
+    unset ${2}
+    echo "${value}"
+
+    return ${retval}
 }
 
 # Extract the name of the toolchain component being built
