@@ -21,14 +21,19 @@ declare -Ag toolchain
 # This file attempts to turn an associative array into a semblance of a
 # data structure. Note that this will only work with the bash shell.
 #
-# The default fields are 
+# The default fields are calculated at runtime
 # TOOL
 # URL
 # REVISION
-# BRANCH
 # SRCDIR
 # BUILDDIR
 # FILESPEC
+# These values are extracted from the config/[component].conf files
+# BRANCH
+# MAKEFLAGS
+# STATICLINK
+# CONFIGURE
+# RUNTESTFLAGS
 
 # Initialize the associative array
 # parameters:
@@ -38,12 +43,12 @@ component_init ()
 {
     trace "$*"
 
-    local component=
+    local component="$1"
     local index=
     for index in $*; do
 	if test "`echo ${index} | grep -c '='`" -gt 0; then
 	    name="`echo ${index} | cut -d '=' -f 1`"
-	    value="`echo ${index} | cut -d '=' -f 2`"
+	    value="`echo ${index} | sed -e 's:^[a-zA-Z]*=::' | tr '%' ' '`"
 	    eval ${component}[${name}]="${value}"
 	    if test $? -gt 0; then
 		return 1
@@ -56,6 +61,8 @@ component_init ()
 		return 1
 	    fi
 	fi
+	name=
+	value=
     done
 
     return 0
@@ -166,6 +173,18 @@ set_component_branch ()
     return 0
 }
 
+# BRANCH is parsed from the config file for each component, but can be redefined
+# on the command line at runtime.
+# BRANCH
+# These next few fields are also from the config file for each component, but as
+# defaults, they aren't changed from the command line, so don't have set_component_*
+# functions.
+#
+# MAKEFLAGS
+# STATICLINK
+# CONFIGURE
+# RUNTESTFLAGS
+
 # Accessor functions for the data structure to get "private" data. This is a crude
 # approximation of an object oriented API for this data structure. All of the getters
 # take only one argument, which is the toolname, ie... gcc, gdb, etc...
@@ -264,6 +283,101 @@ get_component_branch ()
     return 0
 }
 
+get_component_makeflags ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval "echo \${${component}[MAKEFLAGS]}"
+    fi
+
+    return 0
+}
+
+get_component_configure ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval "echo \${${component}[CONFIGURE]}"
+    fi
+
+    return 0
+}
+
+get_component_staticlink ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval "echo \${${component}[STATICLINK]}"
+    fi
+
+    return 0
+}
+
+get_component_runtestflags ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval "echo \${${component}[RUNTESTFLAGS]}"
+    fi
+
+    return 0
+}
+
+component_is_tar ()
+{
+    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	if test "`get_component_filespec ${component} | grep -c \.tar\.`" -gt 0; then
+	    echo "yes"
+	    return 0
+	else
+	    echo "no"
+	    return 1
+	fi
+    fi
+}
+
+get_component_subdir ()
+{
+    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	if test "`get_component_filespec ${component} | grep -c \.tar\.`" -gt 0; then
+	    echo "yes"
+	    return 0
+	fi
+    fi
+}
+
 # declare -p does print the same data from the array, but this is an easier to
 # read version of the same data.
 component_dump()
@@ -297,11 +411,15 @@ collect_data ()
 {
     trace "$*"
 
+    backtrace
+
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+
+    source_config ${component}
     local version="${component}_version"
     local tool="${!version}"
     if test x"${tool}" = x; then
-	eval ${component}_version="`grep ^latest= ${topdir}/config/${component}.conf | cut -d '\"' -f 2`"
+	eval ${component}_version="${latest}"
     fi
 
     if test `echo $1 | grep -c "\.tar"` -gt 0; then
@@ -311,7 +429,8 @@ collect_data ()
 	else
 	    local dir=""
 	fi
-	local filespec="`basename $1`"
+	local filespec="${component}-${latest}"
+	local dir="`echo ${dir}/${filespec} | sed -e 's:\.tar.*::'`"
     else
 	local gitinfo="${!version}"
 	local branch="`get_git_branch ${gitinfo}`"
@@ -319,6 +438,7 @@ collect_data ()
 	case ${component} in
 	    binutils*) search="binutils-gdb.git";;
 	    gdb*) search="binutils-gdb.git" ;;
+	    stage*) search="gcc.git" ;;
 	    *) search="${component}\." ;;
 	esac
 	local url="`grep ^${search} ${sources_conf} | tr -s ' ' | cut -d ' ' -f 2`"
@@ -332,13 +452,23 @@ collect_data ()
 	local fixbranch="`echo ${branch} | tr '/' '~'`"
 	local dir=${component}.git${branch:+~${fixbranch}}${revision:+@${revision}}
     fi
-
     
+    # Extract a few other data variables from the conf file and store them so
+    # the conf file only needs to be sourced once.
+    local confvars="${static_link:+STATICLINK=${static_link}}"
+    confvars="${confvars} ${default_makeflags:+MAKEFLAGS=\"`echo ${default_makeflags} | tr ' ' '%'`\"}"
+    confvars="${confvars} ${default_configure_flags:+CONFIGURE=\"`echo ${default_configure_flags} | tr ' ' '%'`\"}"
+    confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
+
     local builddir="${local_builds}/${host}/${target}/${dir}"
     local srcdir="${local_snapshots}/${dir}"
 
-    fixme "TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}}"
-    component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}}
+    fixme "TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}"
+    component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}
+
+    default_makeflags=
+    default_configure_flags=
+    runtest_flags=
 
     return 0
 }
