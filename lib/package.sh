@@ -76,7 +76,6 @@ binary_runtime()
 {
     trace "$*"
 
-#    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
     local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
 
     # no expicit release tag supplied, so create one.
@@ -85,16 +84,9 @@ binary_runtime()
 	    local gcc_version="~`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	fi
 	
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local branch="`basename ${gcc_version}`"
-	else
-	    if test `echo ${gcc_version} | grep -c "\.git"`; then
-		local branch=
-	    fi
-	fi
-	
-	local builddir="`get_builddir ${gcc_version} stage2`"
-	local srcdir="`get_srcdir ${gcc_version}`"
+	local branch="`get_component_builddir gcc`"
+	local builddir="`get_component_builddir gcc`-stage2"
+	local srcdir="`get_component_srcdir gcc`"
 
 	local date="`date +%Y%m%d`"
 	if test -d ${srcdir}/.gito -o -e ${srcdir}/.gitignore; then
@@ -140,14 +132,9 @@ binary_gdb()
 
     local version="`${target}-gdb --version | head -1 | grep -o " [0-9\.][0-9].*\." | tr -d ')'`"
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
-    local builddir="`get_builddir ${gdb_version} gdb`"
+    local builddir="`get_component_builddir gdb`-gdb"
     local destdir="${local_builds}/tmp.$$/${tag}-tmp"
     local prefix="${local_builds}/destdir/${host}"
-
-    local gdb_static="`grep ^static_link= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-
-#    if test x"${gdb_static}" = x"yes"; then
-#    fi
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
@@ -190,16 +177,9 @@ binary_toolchain()
 	if test x"${gcc_version}" = x; then
 	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
 	fi
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local branch="`basename ${gcc_version}`"
-	else
-	    if test `echo ${gcc_version} | grep -c "\.git"`; then
-		local branch=
-	    fi
-	fi
-	
 	local date="`date +%Y%m%d`"
-	local srcdir="`get_srcdir ${gcc_version}`"
+	local branch="`get_component_branch gcc`"
+	local srcdir="`get_component_srcdir gcc`"
 
 	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
 	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
@@ -272,37 +252,7 @@ binary_sysroot()
 
     # no expicit release tag supplied, so create one.
     if test x"${release}" = x; then
-	if test x"${clibrary}" = x"newlib"; then
-	    if test x"${newlb_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
-	    else
-		local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
-	    fi
-	    local srcdir="`get_srcdir ${libc_version}`"
-	elif test x"${clibrary}" = x"glibc"; then
-	    if test x"${glibc_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    else
-		local libc_version="`echo ${glibc_version} | cut -d '/' -f 1`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    fi
-	else
-	    if test x"${eglibc_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    else
-		local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    fi
-	fi
-
-	local builddir="`get_builddir ${libc_version}`"
-	
+	local srcdir="`get_component_srcdir ${libc_version}`"	
         # if test "`echo $1 | grep -c '@'`" -gt 0; then
         # 	local commit="@`echo $1 | cut -d '@' -f 2`"
         # else
@@ -407,7 +357,7 @@ gerrit_revision=${gerrit_revision}
 EOF
     fi
 
-    for i in gcc binutils glibc; do
+    for i in gcc binutils ${clibrary}; do
 	echo "--------------------- $i ----------------------" >> ${outfile}
 	local srcdir="`get_component_srcdir $i`"
 	# Invoke in a subshell in order to prevent state-change of the current
@@ -434,8 +384,8 @@ binutils_src_tarball()
     fi
 
     local dir="`normalize_path ${binutils_version}`"
-    local srcdir="`get_srcdir ${binutils_version}`"
-    local builddir="`get_builddir ${binutils_version} binutils`"
+    local srcdir="`get_component_srcdir ${binutils_version}`"
+    local builddir="`get_component_builddir ${binutils_version} binutils`"
     local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
 
     # clean up files that don't go into a release, often left over from development

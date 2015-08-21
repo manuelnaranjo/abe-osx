@@ -677,7 +677,7 @@ make_install()
     if test x"${component}" = x"gcc"; then
 	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
 	if test  `echo ${host} | grep -c mingw` -eq 1 -a -e /usr/${host}/lib/libwinpthread-1.dll; then
-	    local builddir="`get_builddir ${gcc_version}`-stage2"
+	    local builddir="`get_component_builddir ${gcc_version}`-stage2"
 	    cp /usr/${host}/lib/libwinpthread-1.dll ${builddir}/gcc
 	fi
     fi
@@ -832,7 +832,7 @@ make_clean()
 {
     trace "$*"
 
-    builddir="`get_builddir $1 ${2:+$2}`"
+    builddir="`get_component_builddir $1 ${2:+$2}`"
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
