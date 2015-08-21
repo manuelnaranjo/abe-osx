@@ -347,64 +347,12 @@ manifest()
 {
     trace "$*"
 
-
     # This function relies too heavily on the built toolchain to do anything
     # in dryrun mode.
     if test x"${dryrun}" = xyes; then
 	return 0;
     fi
 
-    if test x"${gmp_version}" = x; then
-	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${mpc_version}" = x; then
-	local mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${mpfr_version}" = x; then
-	local mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${gdb_version}" = x; then
-	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-    fi
-    local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
-
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_revision="`srcdir_revision ${srcdir}`"
-
-    local srcdir="`get_srcdir ${gdb_version}`"
-    local gdb_revision="`srcdir_revision ${srcdir}`"
-    
-    if test x"${dejagnu_version}" = x; then
-	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${dejagnu_version}`"
-    local dejagnu_revision="`srcdir_revision ${srcdir}`"
-    
-    if test x"${linux_version}" = x; then
-	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${binutils_version}" = x; then
-	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision="`srcdir_revision ${srcdir}`"
-
-    local abe_revision="`srcdir_revision ${abe_path}`"
-
-    if test x"${clibrary}" = x"eglibc"; then
-	local srcdir="`get_srcdir ${eglibc_version}`"
-    elif  test x"${clibrary}" = x"glibc"; then
-	local srcdir="`get_srcdir ${glibc_version}`"
-    elif test x"${clibrary}" = x"newlib"; then
-	local srcdir="`get_srcdir ${newlib_version}`"
-    fi
-    local libc_version="`srcdir_revision ${abe_path}`"
-    
-    local mtag=
     if test x"$1" = x; then
 	mtag="`create_release_tag ${gcc_version}`"
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
@@ -413,6 +361,28 @@ manifest()
     fi
 
     rm -f ${outfile}
+    for i in ${toolchain[*]}; do
+	local component="$i"
+
+	echo "# Component data for ${component}" >> ${outfile}
+
+	local filespec="`get_component_filespec ${component}`"
+	local url="`get_component_url ${component} `/${filespec}"
+	echo "${component}_URL=${url}" >> ${outfile}
+
+	local branch="`get_component_branch ${component}`"
+	if test x"${branch}" != x; then
+	    echo "${component}_branch=${branch}" >> ${outfile}
+	fi
+
+	local revision="`get_component_revision ${component}`"
+	if test x"${revision}" != x; then
+	    echo "${component}_revision=${revision}" >> ${outfile}
+	fi
+
+	echo "" >> ${outfile}
+    done
+
     cat >> ${outfile} <<EOF
 # Build machine data
 build=${build}
@@ -423,64 +393,8 @@ hostname=${hostname}
 distribution=${distribution}
 host_gcc=${host_gcc_version}
 
-Component versions
-gmp_versionnum=${gmp_version}
-mpc_versionnum=${mpc_version}
-mpfr_versionnum=${mpfr_version}
-
-# Binutils
-binutils_branch=${binutils_version}
-EOF
-
-    if test "`echo ${binutils_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-binutils_revision=${binutils_revision}
-binutils_version=binutils-gdb.git@${binutils_revision}
-EOF
-    fi
-
-    cat >> ${outfile} <<EOF
-
-# DejaGnu
-dejagnu_version=${dejagnu_version}
-
-# GDB
-gdb_branch=${gdb_version}
-
-EOF
-
-    if test "`echo ${gdb_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-gdb_revision=${gdb_revision}
-gdb_version=binutils-gdb.git@${gdb_revision}
-EOF
-    fi
-
-    cat >> ${outfile} <<EOF
-
-# GCC
-gcc_branch=${gcc_branch}
-EOF
-
-    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-gcc_revision=${gcc_revision}
-gcc_version=gcc.git@${gcc_revision}
-EOF
-    fi
-
-    cat >> ${outfile} <<EOF
-
-# C Library
-clibrary=${clibrary}
-libc_version=${libc_version}
-
 # Kernel
 linux_version=${linux_version}
-
-# Abe revision used
-abe_revision=${abe_revision}
-abe_version="abe.git@${abe_revision}"
 
 EOF
 
@@ -493,47 +407,15 @@ gerrit_revision=${gerrit_revision}
 EOF
     fi
 
-    case ${clibrary} in
-	glibc)
-	    local srcdir="`get_srcdir ${glibc_version}`"
-	    if test x"${glibc_version}" = x; then
-	        glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-	    fi
-	    local glibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
-	    echo "glibc_version=${glibc_version}" >> ${outfile}
-	    echo "glibc_revision=${glibc_revision}" >> ${outfile}
-	    ;;
-	newlib)
-	    local srcdir="`get_srcdir ${newlib_version}`"
-	    if test x"${newlib_version}" = x; then
-	        newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-	    fi
-	    local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
-	    echo "newlib_version=${newlib_version}" >> ${outfile}
-	    echo "newlib_revision=${newlib_revision}" >> ${outfile}
-	    ;;
-	eglibc|*)
-	    local srcdir="`get_srcdir ${eglibc_version}`"
-	    if test x"${eglibc_version}" = x; then
-	        eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-	    fi
-	    local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
-
-	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
-	    echo "eglibc_revision=${eglibc_revision}" >> ${outfile}
-	    ;;
-    esac
-
-    echo "---------------------------------------------" >> ${outfile}
-    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
-	local srcdir="`get_srcdir ${gcc_version}`"
+    for i in gcc binutils glibc; do
+	echo "--------------------- $i ----------------------" >> ${outfile}
+	local srcdir="`get_component_srcdir $i`"
 	# Invoke in a subshell in order to prevent state-change of the current
 	# working directory after manifest is called.
 	$(cd ${srcdir} && git log -n 1 >> ${outfile})
-    fi
-
+	echo "" >> ${outfile}
+    done
+    
     echo ${outfile}
     return 0
 }
