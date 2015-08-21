@@ -482,7 +482,7 @@ make_all()
     fi
 
     # Enable an errata fix for aarch64 that effects the linker
-    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${target} | grep -c aarch64` -gt 0; then
+    if test "`echo ${component} | grep -c glibc`" -gt 0 -a `echo ${target} | grep -c aarch64` -gt 0; then
 	local make_flags="${make_flags} LDFLAGS=\"-Wl,--fix-cortex-a53-843419\" "
     fi
 
@@ -491,7 +491,7 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
+    if test x"${override_cflags}" != x -a x"${component}" != x"eglibc"; then
 	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
     else
 	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
@@ -643,12 +643,7 @@ make_install()
         # a single sysroot for now. FIXME: we should not disable multilibs!
         local make_flags=" tooldir=${sysroots}/usr/"
         if test x"$2" = x"libgloss"; then
-            local make_flags="${make_flags} install-rdimon"
-            if test `echo ${target} | grep -c aarch64` -gt 0; then  
-                local builddir="${builddir}/aarch64"
-            else
-                local builddir="${builddir}/arm"
-            fi
+            local make_flags="${make_flags}"
         fi
     fi
 
@@ -664,14 +659,15 @@ make_install()
     component_dump ${component}
 
     local default_makeflags= #"`get_component_makeflags ${component}`"
-    if test x"${tool}" = x"gdb" ; then
+    if test x"${component}" = x"gdb" ; then
+	local log="`dirname ${builddir}`/install.log"
 	if test x"$2" != x"gdbserver" ; then
-            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
         else
-            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
         fi
     else
-	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
     fi
     if test $? != "0"; then
         warning "Make install failed!"
