@@ -98,11 +98,11 @@ extract()
     local file="`get_component_filespec ${component}`"
     local srcdir="`get_component_srcdir ${component}`"
 
-    # local stamp=
-    stamp="`get_stamp_name extract ${dir}$1`"
+    local stamp=
+    stamp="`get_stamp_name extract $1`"
 
     # Extract stamps go into srcdir
-    local stampdir="${srcdir}"
+    local stampdir="${local_snapshots}${dir}"
 
     # Name of the downloaded tarball.
     local tarball="${local_snapshots}${dir}/${file}"
@@ -140,7 +140,7 @@ extract()
 
     local taropts="${taropt}xf"
     notice "Extracting from ${tarball}."
-    dryrun "tar ${taropts} ${tarball} -C ${srcdir}"
+    dryrun "tar ${taropts} ${tarball} -C `dirname ${srcdir}`"
 
     # FIXME: this is hopefully a temporary hack for tarballs where the
     # directory name versions doesn't match the tarball version. This means
