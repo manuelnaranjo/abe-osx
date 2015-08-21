@@ -297,7 +297,7 @@ check_md5sum()
 	local dir=""
     fi
 
-    if test -e x"${local_snapshots}${dir}/${file}" = x; then
+    if test -e "${local_snapshots}${dir}/${file}"; then
         error "No md5sum file for ${tool}!"
         return 1
     fi
