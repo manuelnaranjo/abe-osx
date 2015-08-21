@@ -128,26 +128,6 @@ checkout_all()
     local packages=
     packages="binutils libc gcc gdb"
 
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${binutils_version}" = x; then
-	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${eglibc_version}" = x; then
-	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${newlib_version}" = x; then
-	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${glibc_version}" = x; then
-	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${gdb_version}" = x; then
-	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-    fi
-
     checkout_infrastructure
     if test $? -gt 0; then
 	return 1
@@ -518,7 +498,7 @@ change_branch()
     local version="`basename $1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
 
-    local srcdir="`get_srcdir $1`"
+    local srcdir="`get_component_srcdir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local revision="`echo $1 | cut -d '@' -f 2`"
     else
