@@ -189,6 +189,7 @@ checkout_all()
 	collect_data ${package}
 
 	checkout ${package}
+
 	if test $? -gt 0; then
 	    error "Failed checkout out of ${package}."
 	    return 1
@@ -230,10 +231,9 @@ checkout()
     # errors anyway, in case that situation changes.
     local url="`get_component_url ${component}`" || return 1
     local branch="`get_component_branch ${component}`" || return 1
-    local revision="`get_component_revision ${component}`" || return 1
     local srcdir="`get_component_srcdir ${component}`" || return 1
     local repo="`get_component_filespec ${component}`"
-    local protocol="`echo ${url} | cut -d ':' -f 1`"
+    local protocol="`echo ${url} | cut -d ':' -f 1`"    
 
     case ${protocol} in
 	svn*)
@@ -264,6 +264,7 @@ checkout()
 	    ;;
 	git*|http*|ssh*)
             local repodir="${url}/${repo}"
+#	    local revision= `echo ${gcc_version} | grep -o "[~@][0-9a-z]*\$" | tr -d '~@'`"
 	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
 		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
 		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
@@ -338,6 +339,12 @@ checkout()
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
+
+	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
+	    if test x"${revision}" != x"${newrev}" -a x"${revision}" != x; then
+		error "SHA1s don't match for ${component}!, now is ${newrev}, was ${revision}"
+	    fi
+	    set_component_revision ${component} ${newrev}
 	    ;;
 	*)
 	    ;;
