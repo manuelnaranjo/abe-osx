@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-declare -Ag toolchain
+declare -ag toolchain
 
 # This file attempts to turn an associative array into a semblance of a
 # data structure. Note that this will only work with the bash shell.
@@ -64,6 +64,8 @@ component_init ()
 	name=
 	value=
     done
+
+    toolchain=(${toolchain[@]} ${component})
 
     return 0
 }
@@ -413,13 +415,26 @@ collect_data ()
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
+    # ABE's data is extracted differently tan the rest.
+    if test x"${component}" = x"abe"; then
+	pushd ${abe_path}
+	local revision="`git log --format=format:%H -n 1`"
+	local branch="`git branch | grep "^\*" | cut -d ' ' -f 2`"
+	local url="`git config --get remote.origin.url`"
+	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
+	local filespec="abe.git"
+	popd
+	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}}
+ 	return 0
+    fi
+
     source_config ${component}
     local version="${component}_version"
     local tool="${!version}"
     if test x"${tool}" = x; then
 	eval ${component}_version="${latest}"
     fi
-
+    
     if test `echo $1 | grep -c "\.tar"` -gt 0; then
 	local url="`get_URL ${component}`"
 	if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
@@ -432,6 +447,7 @@ collect_data ()
     else
 	local gitinfo="${!version}"
 	local branch="`get_git_branch ${gitinfo}`"
+	local revision="`get_git_revision ${gitinfo}`"
 	local search=
 	case ${component} in
 	    binutils*) search="binutils-gdb.git";;
@@ -446,7 +462,6 @@ collect_data ()
 	fi
 	local filespec="`basename ${url}`"
 	local url="`dirname ${url}`"
-	local revision="`get_git_revision ${gitinfo}`"
 	local fixbranch="`echo ${branch} | tr '/' '~'`"
 	local dir=${component}.git${branch:+~${fixbranch}}${revision:+@${revision}}
     fi
