@@ -426,6 +426,9 @@ abe="`basename $0`"
 # this is used to launch builds of dependant components
 command_line_arguments=$*
 
+# Initialie an entry in the data array for components
+collect_data abe
+
 #
 # These functions actually do something
 #
