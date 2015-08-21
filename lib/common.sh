@@ -285,25 +285,6 @@ normalize_path()
     return 0
 }
 
-# Extract the build directory from the URL of the source tree as it
-# varies depending on which source code control system is used.
-#
-# $1 - The full URL to the source tree as returned by get_URL()
-get_builddir()
-{
-    # We should be more strict but this works with identifiers
-    # as well because we might be passed a tar file.
-    local dir="`normalize_path $1`"
-
-    if test x"$2" = x"libgloss"; then
-     	echo "${local_builds}/${host}/${target}/${dir}/${target}/libgloss"
-    else
-	echo "${local_builds}/${host}/${target}/${dir}${2:+-$2}"
-    fi
-
-    return 0
-}
-
 get_config()
 {
     conf="`get_toolname $1`.conf"
@@ -437,104 +418,6 @@ find_snapshot()
     return 0
 }
 
-# Get the proper source directory
-# $1 - The component name, which is one of the following:
-# 
-#   A git, http, ssh URL
-#   A repository identifier mapping an entry in sources.conf
-#   A tarball
-# 
-# Returns the fully qualified srcdir
-get_srcdir()
-{
-#    trace "$*"
-    
-    if test `echo $1 | grep -c "\.tar"` -gt 0; then
-	# tarballs have no branch or revision
-	local dir="`echo $1 | sed -e 's:\.tar.*::'`"
-    else
-	local process=$1
-
-	# The git parser will return results for all valid services.
-	local service=
-	service="`get_git_service ${process}`" || return 1
-
-	# The git parser functions are most reliable when called with
-	# a full URL and this verifies that a repo identifier has a
-	# valid sources.conf entry.
-	if test x"${service}" = x; then
-	    local process=
-	    process="`get_URL $1`"
-	    if test $? -gt 0; then 
-		error "get_srcdir called with invalid input."
-		return 1
-	    fi
-	fi
-
-	local tool=
-	tool="`get_toolname ${process}`"
-
-	local repo=
-	repo="`get_git_repo ${process}`" || return 1
-
-	local branch=
-	branch="`get_git_branch ${process}`" || return 1
-
-	# Multi-path branches should have / replaces with dashes.
-	branch="`echo ${branch} | sed 's:/:-:g'`"
-
-	local revision=
-	revision="`get_git_revision ${process}`" || return 1
-
-	local dir=${repo}${branch:+~${branch}}${revision:+@${revision}}
-    fi
-    
-    local srcdir="${local_snapshots}/${dir}"
-
-    # Some components have non-standard directory layouts.
-    case ${tool} in
-	gcc*)
-# FIXME: How does this work with current g.l.o gcc sources?
-
-	    # The Linaro gcc git branches are git repositories converted from
-	    # bzr so they have goofy directory layouts which include the branch
-	    # as a directory inside the source directory.
-	    local newdir="`echo ${srcdir} | sed -e 's:\.git-linaro::' | tr '.' '_'`"
-	    local newdir="`basename ${newdir}`"
-	    # If the top level file doesn't yet exist then the user is asking
-	    # where to put the source.  If it does exist then they're asking
-	    # where the actual source is located.
-	    if test ! -e ${srcdir}/config.sub; then
-		# Fixme!
-		if test -e ${srcdir}/${newdir}${revision}/config.sub; then
-		    local srcdir="${srcdir}/${newdir}${revision}"
-		fi
-	    fi
-	    ;;
-	eglibc*)
-            # Eglibc has no top level configure script, it's in the libc
-	    # subdirectory.
-	    if test -d "${srcdir}/libc"; then
-	    	# If the directory already exists the caller wants to know
-		# where the sources are.
-		local srcdir="${srcdir}/libc"
-	    fi
-	    # Else if the directory does not yet exist the caller wants to know
-	    # where to put the eglibc sources.
-	    ;;
-	*)
-	    ;;
-    esac
-    
-    if test x"$2" = x"libgloss"; then
-	local srcdir="${srcdir}/libgloss"
-    fi
-
-    echo ${srcdir}
-
-    return 0
-}
-
 # Parse a version string and produce a release version string suitable
 # for the LINARO-VERSION file.
 create_release_version()
@@ -551,7 +434,7 @@ create_release_version()
 	    local branch="~`echo ${version} | cut -d '/' -f 2 | cut -d '@' -f 1`"
 	fi
 
-	local srcdir="`get_srcdir ${version}`"
+	local srcdir="`get_component_srcdir ${version}`"
 	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
 	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
@@ -599,7 +482,7 @@ create_release_tag()
 
     if test x"${release}" = x; then
 	# extract the branch from the version
-	local srcdir="`get_srcdir ${version}`"
+	local srcdir="`get_component_srcdir ${version}`"
 	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
 	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
 	fi
