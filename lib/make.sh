@@ -24,21 +24,23 @@ build_all()
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
     
+    local infrastructure="`grep ^depends ${topdir}/config/infrastructure.conf | tr -d '"' | sed -e 's:^depends=::'`"
+
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
 	if test "`echo ${host} | grep -c mingw`" -gt 0; then
 	    # As Mingw32 requires a cross compiler to be already built, so we don't need
 	    # to rebuilt the sysroot.
-            local builds="infrastructure binutils libc stage2 gdb"
+            local builds="${infrastructure} binutils libc stage2 gdb"
 	else
-            local builds="infrastructure binutils stage1 libc stage2 gdb"
+            local builds="${infrastructure} binutils stage1 libc stage2 gdb"
 	fi
 	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 libc gdb" # native build
+        local builds="${infrastructure} binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
@@ -70,7 +72,7 @@ build_all()
     local build_all_ret=
 
     # Checkout all the sources
-    checkout_all
+    checkout_all ${builds}
     if test $? -ne 0; then
         error "checkout_all failed"
         return 1;
@@ -86,10 +88,6 @@ build_all()
             read answer
         fi
         case $i in
-            infrastructure)
-                infrastructure
-                build_all_ret=$?
-                ;;
             # Build stage 1 of GCC, which is a limited C compiler used to compile
             # the C library.
             libc)
@@ -149,9 +147,13 @@ build_all()
                 build ${gdb_version} gdbserver
                 build_all_ret=$?
                 ;;
+            binutils)
+		build ${binutils_version} binutils
+                build_all_ret=$?
+                ;;
             # Build anything not GCC or infrastructure
             *)
-                build ${binutils_version} binutils
+		build $i
                 build_all_ret=$?
                 ;;
         esac
@@ -333,10 +335,10 @@ build()
 	# Don't attempt to get sources if updating is disabled. If checkout_all()
 	# has been called, (build_all() does), then there is no need to keep
 	# updating.
-	if test x"${supdate}" = xno; then
+	if test x"${supdate}" = xyes; then
             component_is_tar ${component}
             if test $? -gt 0; then
-		# Don't update the compiler sources between stage1 and stage2 builds if this
+-		# Don't update the compiler sources between stage1 and stage2 builds if this
 		# is a cross build.
 		notice "Checking out ${component} ${2:+$2}"
 		checkout ${component}
@@ -513,7 +515,7 @@ make_all()
     # Some components require extra flags to make: we put them at the end so that config files can override
     local default_makeflags="`get_component_makeflags ${component}`"
 
-    if test x"${component}" = x"gdb" -a x"$2" == x"gdbserver"; then
+    if test x"$2" = x"gdbserver"; then
        default_makeflags="gdbserver CFLAGS=--sysroot=${sysroots}"
     fi
 
