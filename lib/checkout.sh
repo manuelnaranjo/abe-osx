@@ -24,123 +24,45 @@
 # but we also want to work with the native source code control system.
 usegit=no
 
-# This is used by abe.sh --checkout all but not by --build
-checkout_infrastructure()
-{
-    trace "$*"
-
-    if test x"${supdate}" = xno; then
-	warning "checkout_infrastructure called with --disable update. Checkout of infrastructure files will be skipped."
-	return 0
-    fi
-
-    source_config infrastructure
-
-    if test x"${depends}" = x; then
-	error "No dependencies listed for infrastructure libraries!"
-	return 1
-    fi
-
-    # We have to grep each dependency separately to preserve the order, as
-    # some libraries depend on other libraries being bult first. Egrep
-    # unfortunately sorts the files, which screws up the order.
-    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
-
-    local version=
-    for i in ${depends}; do
-	case $i in
-	    linux) version=${linux_version} ;;
-	    mpfr) version=${mpfr_version} ;;
-	    mpc) version=${mpc_version} ;;
-	    gmp) version=${gmp_version} ;;
-	    dejagnu) version=${dejagnu_version} ;;
-	    *)
-		error "config/infrastructure.conf contains an unknown dependency: $i"
-		return 1
-		;;
-	esac
-
-	# If the user didn't set it, check the <component>.conf files for
-	# 'latest'.
-	if test "${version:+set}" != "set"; then
-	    version="`grep ^latest= ${topdir}/config/${i}.conf | cut -d '\"' -f 2`"
-	    # Sometimes config/${i}.conf uses <component>-version and sometimes
-	    # it just uses 'version'.  Regardless, searching the md5sums file requires
-	    # that we include the component name.
-	    version=${i}-${version#${i}-}
-	fi
-
-	if test "${version:+found}" != "found"; then
-	    error "Can't find a version for component \"$i\" in ${i}.conf"
-	    return 1
-	fi
-
-	files="${files} ${version}"
-	unset version
-    done
-
-    if test `echo ${host} | grep -c mingw` -eq 1 -a x"${tarbin}" = xyes; then
-	files="${files} installjammer-1.2.15.tar.gz"
-    fi
-
-    for j in ${files}; do
-	local name="`echo $j | sed -e 's:\.tar\..*::' -e 's:-[0-9a-z\.]*::' -e 's:\.git.*::'`"
-	collect_data $j
-
-        local gitinfo="`get_component_url $j`/$j"
-	if test -z "${gitinfo}"; then
-	    error "No matching source found for \"${name}\"."
-	    return 1
-	fi
-
-	# Some infrastructure packages (like dejagnu) come from a git repo.
-	if test "`echo $j | grep -c \.tar\.`" -eq 0; then
-	    local checkout_ret=
-	    checkout $j
-	    checkout_ret=$?
-	    if test ${checkout_ret} -gt 0; then
-		error "Failed checkout out of ${name}."
-		return 1
-	    fi
-	else
-	    fetch $j
-	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
-	    fi
-	    extract $j
-	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
-		return 1
-	    fi
-	fi
-    done
-
-    return 0
-}
-
 # This is similar to make_all except it _just_ gathers sources trees and does
 # nothing else.
 checkout_all()
 {
     trace "$*"
 
-    local packages=
-    packages="binutils libc gcc gdb"
-
-    checkout_infrastructure
-    if test $? -gt 0; then
-	return 1
-    fi
+    local packages="$*"
 
     for i in ${packages}; do
 	local package=$i
 	if test x"$i" = x"libc"; then
 	    package="${clibrary}"
 	fi
+	if test x"${package}" = x"stage1" -o x"${package}" = x"stage2"; then
+	    package="gcc"
+	fi
 	collect_data ${package}
 
-	checkout ${package}
+	local filespec="`get_component_filespec ${package}`"
+	if test "`component_is_tar ${package}`" = no; then
+ 	    local checkout_ret=
+	    checkout ${package}
+	    checkout_ret=$?
+	    if test ${checkout_ret} -gt 0; then
+		error "Failed checkout out of ${name}."
+		return 1
+	    fi
+	else
+	    fetch ${package}
+	    if test $? -gt 0; then
+		error "Couldn't fetch tarball ${package}"
+		return 1
+	    fi
+	    extract ${package}
+	    if test $? -gt 0; then
+		error "Couldn't extract tarball ${package}"
+		return 1
+	    fi
+	fi
 
 	if test $? -gt 0; then
 	    error "Failed checkout out of ${package}."
@@ -151,7 +73,7 @@ checkout_all()
     notice "Checkout all took ${SECONDS} seconds"
 
     # Set this to no, since all the sources are now checked out
-    supdate=no
+    supdate=no-
 
     return 0
 }
