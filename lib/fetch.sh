@@ -23,15 +23,13 @@
 # of md5sums.
 fetch_md5sums()
 {
-    if test "${git_reference_dir:+set}" = "set" -a -e "${git_reference_dir}/md5sums"; then
-	# The user specified that they want to fetch from the reference dir.  This
-	# will always fetch if the version in the reference dir is newer.
-	fetch_reference md5sums
-    else
-	# The fetch_http function will always attempt to fetch the remote file
-	# if the version on the server is newer than the local version.
-	fetch_http md5sums
-    fi
+    # The fetch_http function will always attempt to fetch the remote file
+    # if the version on the server is newer than the local version.
+    # Note, we don't want to fetch md5sums from $git_reference_dir because
+    # it is not versioned in the filename like other gmp-* or linux-* files
+    # are.  $git_reference_dir is a caching mechanism serving fast access to
+    # git/file content, but it doesn't provide any master copies of content.
+    fetch_http md5sums
 
     # If the fetch_*() fails we might have a previous version of md5sums in
     # ${local_snapshots}.  Use that, otherwise we have no choice but to fail.
