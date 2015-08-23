@@ -433,21 +433,31 @@ collect_data ()
     local tool="${!version}"
     if test x"${tool}" = x; then
 	eval ${component}_version="${latest}"
+    fi    
+    eval "local latest=\${${component}_version}"
+    if test "`echo ${latest} | grep -c ${component}`" -eq 0; then
+	latest="${component}-${latest}"
     fi
-    
-    if test `echo $1 | grep -c "\.tar"` -gt 0; then
-	local url="`get_URL ${component}`"
+    if test `echo ${latest} | grep -c "\.tar"` -gt 0; then
+	if test "`echo ${latest} | grep -c 'http*://.*\.tar\.'`" -eq 0; then
+	    local url="`grep "^${component} " ${sources_conf} | tr -s ' ' | cut -d ' ' -f 2`"
+	    local filespec="${latest}"
+	else
+	    local url="`dirname ${latest}`"
+	    local filespec="`basename ${latest}`"
+	fi
+
 	if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
 	    local dir="/infrastructure"
 	else
 	    local dir=""
 	fi
-	local filespec="${component}-${latest}"
+#	local filespec="${component}-${latest}"
 	local dir="`echo ${dir}/${filespec} | sed -e 's:\.tar.*::'`"
     else
 	local gitinfo="${!version}"
-	local branch="`get_git_branch ${gitinfo}`"
-	local revision="`get_git_revision ${gitinfo}`"
+	local branch="`get_git_branch ${version}`"
+	local revision="`get_git_revision ${version}`"
 	local search=
 	case ${component} in
 	    binutils*) search="binutils-gdb.git";;
@@ -471,6 +481,10 @@ collect_data ()
     local confvars="${static_link:+STATICLINK=${static_link}}"
     confvars="${confvars} ${default_makeflags:+MAKEFLAGS=\"`echo ${default_makeflags} | tr ' ' '%'`\"}"
     confvars="${confvars} ${default_configure_flags:+CONFIGURE=\"`echo ${default_configure_flags} | tr ' ' '%'`\"}"
+    if test x"${component}" = "xgcc"; then
+	confvars="${confvars} ${default_configure_flags:+STAGE1=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${default_configure_flags:+STAGE2=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
+    fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
 
     local builddir="${local_builds}/${host}/${target}/${dir}"
