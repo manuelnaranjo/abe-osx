@@ -29,7 +29,7 @@ fetch()
 
     local component=$1
     local getfile="`get_component_filespec ${component}`" || return 1
-    local url="`get_component_url ${component}`/${getfile}"
+    local url="`get_component_url ${component}`"
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
     if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
