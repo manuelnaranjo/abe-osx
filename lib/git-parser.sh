@@ -17,7 +17,7 @@
 # 
 
 # NOTICE: This service is most reliable when passed a full URL (including
-#         service identifier, e.g., lp:, svn://, http://, git://).
+#         service identifier, e.g., http://, git://).
 #
 # The get_git_<part> functions all operate on the same premise:
 #
@@ -128,12 +128,7 @@ git_parser()
     # Set to '1' if something in ${in} is malformed.
     local err=0
 
-    local service="`echo "${in}" | sed -n ' s#\(^git\)://.*#\1#p; s#\(^ssh\)://.*#\1#p; s#\(^http\)://.*#\1#p;  s#\(^https\)://.*#\1#p; s#\(^svn\)://.*#\1#p; s#\(^lp\):[/]*.*#\1#p'`"
-
-    # An http service with /svn in the url is actually an svn service.
-    if test x"${service}" = x"http" -a "`echo ${in} | egrep -c "\/svn"`" -gt 0; then
-	service="svn"
-    fi
+    local service="`echo "${in}" | sed -n ' s#\(^git\)://.*#\1#p; s#\(^ssh\)://.*#\1#p; s#\(^http\)://.*#\1#p;  s#\(^https\)://.*#\1#p; '`"
 
     # Do this early because this is called often and we don't need all that
     # other parsing in this case.
@@ -178,25 +173,6 @@ git_parser()
 		# Strip superflous -linaro tags
 		local tool="`echo ${tool} | sed -e 's:-linaro::'`"
 		echo ${tool}
-		;;
-	    *)
-		;;
-	esac
-	return 0
-    fi
-
-    # Just bail out early if this is an svn service. 
-    # This _should_ capture http://<foo>/svn
-    if test x"${service}" = x"svn"; then
-	case ${part} in
-	    repo|tool)
-		# Strip any trailing branch information.
-		local repo="`echo ${in} | sed -e 's:-[0-9].*::' -e 's:/trunk::'`"
-		repo="`basename ${repo}`"
-		echo "${repo}"
-		;;
-	    url)
-		echo "${in}"
 		;;
 	    *)
 		;;
