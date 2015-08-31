@@ -64,10 +64,14 @@ generate_snapshots ()
 
 if $generate; then
     generate_snapshots
+
+    # Remove checked-out branch directories
+    rm -rf ${snapshots_dir}-new/*~*
+
+    # Remove md5sums to force ABE to fetch canonical version via http://.
+    rm ${snapshots_dir}-new/md5sums
 fi
 
-# Remove checked-out branch directories
-rm -rf $snapshots_dir-new/*~*
 
 # Cleanup stale branches
 for repo in $snapshots_dir-new/*.git; do
@@ -92,7 +96,7 @@ if true; then
     for M in $todo_machines; do
 	(
 	    rsync -az --delete $snapshots_dir-new/ $M:$snapshots_dir-new/
-	    ssh -fn $M "flock -x $snapshots_dir.lock -c \"rsync -a $snapshots_dir-new/ $snapshots_dir/\""
+	    ssh -fn $M "flock -x $snapshots_dir.lock -c \"rsync -a --delete ${snapshots_dir}-new/ $snapshots_dir/\""
 	) > /tmp/update-snapshots-ref.$$.$M 2>&1 &
 	pids[$M]=$!
     done
