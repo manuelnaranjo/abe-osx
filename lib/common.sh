@@ -93,16 +93,31 @@ dryrun()
     return 0
 }
 
+backtrace()
+{
+    local flag="`set -o | grep xtrace| tr -s ' ' | tr -d '\t' | cut -d ' ' -f 2`"
+    set +x
+
+    local frame=1
+    while caller $frame 2>&1 > /dev/null; do
+        local src="`echo ${BASH_SOURCE[${frame}]} 2>&1 | sed -e "s:${abe_path}/::"`"
+        echo "  STACKFRAME(${frame}): ${src}: ${FUNCNAME[${frame}]}:(${BASH_LINENO[${frame}]})"
+        ((frame++));
+    done
+
+    if test x"${flag}" = x"on"; then
+        set -x
+    fi
+}
+
 trace()
 {
     echo "TRACE(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)" 1>&2
-
 }
 
 fixme()
 {
     echo "FIXME(#${BASH_LINENO}): ${FUNCNAME[1]} ($*)" 1>&2
-
 }
 
 error()
