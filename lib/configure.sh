@@ -40,8 +40,8 @@ configure_build()
     # The git parser functions shall return valid results for all
     # services, especially once we have a URL.
 
-    local url="`get_git_url ${gitinfo}`"
-    local tag="`get_git_tag ${gitinfo}`"
+    local url="`get_git_url ${gitinfo}`" || return 1
+    local tag="`get_git_tag ${gitinfo}`" || return 1
     local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
     local stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
     local builddir="`get_builddir ${gitinfo} ${2:+$2}`"

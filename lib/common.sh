@@ -151,7 +151,7 @@ get_URL()
 
     # It makes no sense to call get_URL if you already have the URL.
     local service=
-    service="`get_git_service $1`"
+    service="`get_git_service $1`" || return 1
     if test x"${service}" != x; then
 	error "Input already contains a url."
 	return 1
@@ -161,13 +161,13 @@ get_URL()
     # input parameters.  The git parser will always return the 'repo'
     # for an identifier as long as it follows some semblance of sanity.
     local node=
-    node="`get_git_repo $1`"
+    node="`get_git_repo $1`" || return 1
 
     # Optional elements for git repositories.
     local branch=
-    branch="`get_git_branch $1`"
+    branch="`get_git_branch $1`" || return 1
     local revision=
-    revision="`get_git_revision $1`"
+    revision="`get_git_revision $1`" || return 1
    
     local srcs="${sources_conf}"
     if test -e ${srcs}; then
@@ -247,16 +247,16 @@ normalize_path()
                 local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
 	    else
 		local node=
-		node="`get_git_repo ${process}`"
+		node="`get_git_repo ${process}`" || return 1
 
 		local branch=
-		branch="`get_git_branch ${process}`"
+		branch="`get_git_branch ${process}`" || return 1
 
 		# Multi-path branches should have forward slashes replaced with dashes.
 		branch="`echo ${branch} | sed 's:/:-:g'`"
 
 		local revision=
-		revision="`get_git_revision ${process}`"
+		revision="`get_git_revision ${process}`" || return 1
 	    fi
 	    ;;
 	svn*)
@@ -376,13 +376,13 @@ get_toolname()
     fi
 
     local tool=
-    tool="`get_git_tool $1`"
+    tool="`get_git_tool $1`" || return 1
 
     # binutils and gdb are special.  They share a repository and the tool is
     # designated by the branch.
     if test x"${tool}" = x"binutils-gdb"; then
 	local branch=
-	branch="`get_git_branch $1`"
+	branch="`get_git_branch $1`" || return 1
 	tool="`echo ${branch} | sed -e 's:.*binutils.*:binutils:' -e 's:.*gdb.*:gdb:'`"
     fi
 
@@ -523,7 +523,7 @@ get_source()
     if test x"${url}" = x; then
 
 	local service=
-	service="`get_git_service $1`"
+	service="`get_git_service $1`" || return 1
 
 	# This might be a full URL or just an identifier.  Use the
 	# service field to determine this.
@@ -542,12 +542,12 @@ get_source()
 
 	local url=
 	local url_ret=
-	url="`get_git_url ${gitinfo}`"
+	url="`get_git_url ${gitinfo}`" || return 1
 	url_ret=$?
 	local branch=
-	branch="`get_git_branch ${gitinfo}`"
+	branch="`get_git_branch ${gitinfo}`" || return 1
 	local revision=
-	revision="`get_git_revision ${gitinfo}`"
+	revision="`get_git_revision ${gitinfo}`" || return 1
 
 #
 #	local url="`echo ${gitinfo} | cut -d ' ' -f 1`"
@@ -610,7 +610,7 @@ get_srcdir()
 
 	# The git parser will return results for all valid services.
 	local service=
-	service="`get_git_service ${process}`"
+	service="`get_git_service ${process}`" || return 1
 
 	# The git parser functions are most reliable when called with
 	# a full URL and this verifies that a repo identifier has a
@@ -628,16 +628,16 @@ get_srcdir()
 	tool="`get_toolname ${process}`"
 
 	local repo=
-	repo="`get_git_repo ${process}`"
+	repo="`get_git_repo ${process}`" || return 1
 
 	local branch=
-	branch="`get_git_branch ${process}`"
+	branch="`get_git_branch ${process}`" || return 1
 
 	# Multi-path branches should have / replaces with dashes.
 	branch="`echo ${branch} | sed 's:/:-:g'`"
 
 	local revision=
-	revision="`get_git_revision ${process}`"
+	revision="`get_git_revision ${process}`" || return 1
 
 	local dir=${repo}${branch:+~${branch}}${revision:+@${revision}}
     fi
@@ -746,7 +746,7 @@ create_release_tag()
     local branch=
     local revision=
 
-    local rtag="`get_git_tag $1`"
+    local rtag="`get_git_tag $1`" || return 1
 
     local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[-0-9\.]\.[0-9\.\-][-rc0-9\.]*::'`"
 

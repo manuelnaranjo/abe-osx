@@ -102,7 +102,7 @@ checkout_infrastructure()
 
 	# Some infrastructure packages (like dejagnu) come from a git repo.
 	local service=
-	service="`get_git_service ${gitinfo}`"
+	service="`get_git_service ${gitinfo}`" || return 1
 	if test x"${service}" != x; then
 	    local checkout_ret=
 	    checkout ${gitinfo}
@@ -251,7 +251,7 @@ checkout()
     fi
 
     local service=
-    service="`get_git_service $1`"
+    service="`get_git_service $1`" || return 1
     if test x"${service}" = x ; then
 	error "Unable to parse service from '$1'. You have either a bad URL, or an identifier that should be passed to get_URL."
 	return 1

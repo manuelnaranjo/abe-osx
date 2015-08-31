@@ -326,7 +326,7 @@ build()
     # because it can't be reparsed by the parser (since '/' characters are
     # converted to '-' characters in branch names.
     local tag=
-    tag="`get_git_tag ${gitinfo}`"
+    tag="`get_git_tag ${gitinfo}`" || return 1
 
     local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
 
