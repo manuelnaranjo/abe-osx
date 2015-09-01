@@ -185,9 +185,10 @@ configure_build()
 	    # defaults to lib64/ for aarch64.  We need to override this.
 	    # There's no need to install anything into lib64/ since we don't
 	    # have biarch systems.
+	    echo libdir=/lib > ${builddir}/configparms
 	    echo slibdir=/usr/lib > ${builddir}/configparms
 	    echo rtlddir=/lib >> ${builddir}/configparms
-	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr --libdir=/usr/lib"
+	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
