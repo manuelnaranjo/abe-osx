@@ -28,7 +28,7 @@ fetch()
     fi
 
     local component=$1
-    local getfile="`get_component_filespec ${component}`" || return 1
+    local getfile="`get_component_filespec ${component}`"
     local url="`get_component_url ${component}`"
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
@@ -97,9 +97,10 @@ extract()
     fi
     local file="`get_component_filespec ${component}`"
     local srcdir="`get_component_srcdir ${component}`"
+    local version="`basename ${srcdir}`"
 
     local stamp=
-    stamp="`get_stamp_name extract $1`"
+    stamp="`get_stamp_name extract ${version}`"
 
     # Extract stamps go into srcdir
     local stampdir="${local_snapshots}${dir}"
