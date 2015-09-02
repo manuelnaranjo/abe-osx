@@ -40,7 +40,8 @@ configure_build()
     # services, especially once we have a URL.
     local srcdir="`get_component_srcdir ${component}`"
     local builddir="`get_component_builddir ${component}`${2:+-$2}"
-    local stamp="`get_stamp_name configure ${component} ${2:+$2}`"
+    local version="`basename ${srcdir}`"
+    local stamp="`get_stamp_name configure ${version} ${2:+$2}`"
 
     # Don't look for the stamp in the builddir because it's in builddir's
     # parent directory.
@@ -66,13 +67,6 @@ configure_build()
 #	fi
     fi
 
-    # Since Binutils and GDB have a shared git repository, this confuses the logic
-    # of loading the right config file. If Binutils is already configured, then 
-    # assume GDB.
-    if test x"${2}" = x"gdb" -o x"${2}" = x"binutils"; then
-	local component="${2}"
-    fi
-    
     if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
@@ -177,9 +171,10 @@ configure_build()
 	    # defaults to lib64/ for aarch64.  We need to override this.
 	    # There's no need to install anything into lib64/ since we don't
 	    # have biarch systems.
+	    echo libdir=/lib > ${builddir}/configparms
 	    echo slibdir=/usr/lib > ${builddir}/configparms
 	    echo rtlddir=/lib >> ${builddir}/configparms
-	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr --libdir=/usr/lib"
+	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
@@ -208,7 +203,6 @@ configure_build()
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
-			    local srcdir="${srcdir}/gdbserver"
 			    ;;
 			bootstrap*)
 			    notice "Building bootstrapped GCC"
@@ -245,14 +239,14 @@ configure_build()
 	    fi
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	gdb*)
+	gdb)
  	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
-	    if test x"$2" = x"gdbserver"; then
-		local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
-		local srcdir="${srcdir}/gdb/gdbserver"
-	    else
-		local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
-	    fi
+	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
+	    dryrun "mkdir -p ${builddir}"
+	    ;;
+	gdbserver)
+ 	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
+	    local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
 	# These are only built for the host
@@ -263,6 +257,8 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
     esac
+
+    local flags="`get_component_configure ${component}`"
 
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
