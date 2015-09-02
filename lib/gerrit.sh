@@ -319,7 +319,7 @@ gerrit_fetch_patch()
 	warning "Gerrit support not specified, will try anyway"
     fi
 
-    local srcdir="`get_component_srcdir gcc.git~${gerrit['BRANCH']}`"
+    local srcdir="`get_component_srcdir gcc`"
 
     rm -f /tmp/gerrit$$.patch
     (cd ${srcdir} && git fetch ssh://gerrit['USERNAME']@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
