@@ -44,28 +44,6 @@ build_all()
         notice "Buildall: Building \"${builds}\" for native target ${target}."
     fi
     
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-        gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${binutils_version}" = x; then
-        binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${eglibc_version}" = x; then
-        eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${newlib_version}" = x; then
-        newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-        libgloss_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${glibc_version}" = x; then
-        glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-    fi
-
-    if test x"${gdb_version}" = x; then
-        gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-    fi
-    
     # cross builds need to build a minimal C compiler, which after compiling
     # the C library, can then be reconfigured to be fully functional.
 
@@ -91,17 +69,7 @@ build_all()
             # Build stage 1 of GCC, which is a limited C compiler used to compile
             # the C library.
             libc)
-                if test x"${clibrary}" = x"eglibc"; then
-                    build ${eglibc_version}
-                elif  test x"${clibrary}" = x"glibc"; then
-                    build ${glibc_version}
-                elif test x"${clibrary}" = x"newlib"; then
-                    build ${newlib_version}
-                    build ${newlib_version} libgloss
-                else
-                    error "\${clibrary}=${clibrary} not supported."
-                    return 1
-                fi
+                build ${clibrary}
                 build_all_ret=$?
                 ;;
             stage1)
@@ -139,19 +107,6 @@ build_all()
 		    sed -i -e 's/.*FIXME: //' ${sysroots}/usr/include/sys/types.h
 		fi
                 ;;
-            gdb)
-                build ${gdb_version} gdb
-                build_all_ret=$?
-                ;;
-            gdbserver)
-                build ${gdb_version} gdbserver
-                build_all_ret=$?
-                ;;
-            binutils)
-		build ${binutils_version} binutils
-                build_all_ret=$?
-                ;;
-            # Build anything not GCC or infrastructure
             *)
 		build $i
                 build_all_ret=$?
@@ -316,12 +271,16 @@ build()
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
  
+    if test "`echo $2 | grep -c gdb`" -gt 0; then
+	local component="$2"
+    fi
     local url="`get_component_url ${component}`"
     local srcdir="`get_component_srcdir ${component}`"
     local builddir="`get_component_builddir ${component}`${2:+-$2}"
+    local version="`basename ${srcdir}`"
 
     local stamp=
-    stamp="`get_stamp_name build ${component} ${2:+$2}`"
+    stamp="`get_stamp_name build ${version} ${2:+$2}`"
 
     # The stamp is in the buildir's parent directory.
     local stampdir="`dirname ${builddir}`"
@@ -512,12 +471,13 @@ make_all()
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
     fi
 
-    # Some components require extra flags to make: we put them at the end so that config files can override
+    # Some components require extra flags to make: we put them at the
+    # end so that config files can override
     local default_makeflags="`get_component_makeflags ${component}`"
 
-    if test x"$2" = x"gdbserver"; then
-       default_makeflags="gdbserver CFLAGS=--sysroot=${sysroots}"
-    fi
+#    if test x"$2" = x"gdbserver"; then
+#       default_makeflags="CFLAGS=--sysroot=${sysroots}"
+#    fi
 
     if test x"${default_makeflags}" !=  x; then
         local make_flags="${make_flags} ${default_makeflags}"
@@ -657,8 +617,6 @@ make_install()
     if test x"${CONFIG_SHELL}" = x; then
         export CONFIG_SHELL=${bash_shell}
     fi
-
-    component_dump ${component}
 
     local default_makeflags= #"`get_component_makeflags ${component}`"
     if test x"${component}" = x"gdb" ; then
