@@ -109,7 +109,7 @@ checkout_all()
     notice "Checkout all took ${SECONDS} seconds"
 
     # Set this to no, since all the sources are now checked out
-    supdate=no-
+    supdate=no
 
     return 0
 }
@@ -265,6 +265,7 @@ checkout()
 	return 1
     fi
 
+    rm -f ${local_builds}/git$$.lock
     return 0
 }
 
