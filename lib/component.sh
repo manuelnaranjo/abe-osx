@@ -428,7 +428,19 @@ collect_data ()
  	return 0
     fi
 
-    source_config ${component}
+    local conf="`find ${local_builds}/${host}/${target} -name ${component}.conf`"
+    if test x"${conf}" != x; then
+	test ${topdir}/config/${component}.conf -nt ${conf}
+	if test $? -gt 0; then
+	    . "${topdir}/config/${component}.conf"
+	else
+	    notice "Local ${component}.conf overriding defaults"
+	    . "${conf}"
+	fi
+    else
+	. "${topdir}/config/${component}.conf"
+    fi
+
     local version="${component}_version"
     local tool="${!version}"
     if test x"${tool}" = x; then
@@ -456,14 +468,12 @@ collect_data ()
 	local dir="`echo ${dir}/${filespec} | sed -e 's:\.tar.*::'`"
     else
 	local gitinfo="${!version}"
-	local branch="`get_git_branch ${version}`"
-	local revision="`get_git_revision ${version}`"
+	local branch="`get_git_branch ${latest}`"
+	local revision="`get_git_revision ${latest}`"
 	local search=
 	case ${component} in
-	    binutils*) search="binutils-gdb.git";;
-	    gdb*) search="binutils-gdb.git" ;;
-	    stage*) search="gcc.git" ;;
-	    *) search="${component}\." ;;
+	    binutils*|gdb*) search="binutils-gdb.git" ;;
+	    *) search="${component}.git" ;;
 	esac
 	local url="`grep ^${search} ${sources_conf} | tr -s ' ' | cut -d ' ' -f 2`"
 	if test x"{$url}" = x; then
@@ -473,9 +483,21 @@ collect_data ()
 	local filespec="`basename ${url}`"
 	local url="`dirname ${url}`"
 	local fixbranch="`echo ${branch} | tr '/' '~'`"
-	local dir=${component}.git${branch:+~${fixbranch}}${revision:+@${revision}}
+	local dir=${search}${branch:+~${fixbranch}}${revision:+@${revision}}
     fi
-    
+
+    # configured and built as a separate way.
+    local builddir="${local_builds}/${host}/${target}/${dir}"
+    case "${component}" in
+	gdbserver)
+	    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
+	    local builddir="${builddir}-gdbserver"
+	    ;;
+	*)
+	    local srcdir="${local_snapshots}/${dir}"
+	    ;;
+    esac
+
     # Extract a few other data variables from the conf file and store them so
     # the conf file only needs to be sourced once.
     local confvars="${static_link:+STATICLINK=${static_link}}"
@@ -486,10 +508,7 @@ collect_data ()
 	confvars="${confvars} ${default_configure_flags:+STAGE2=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
-
-    local builddir="${local_builds}/${host}/${target}/${dir}"
-    local srcdir="${local_snapshots}/${dir}"
-
+    # Gdbserver is built differently, as it's a sub directory within GDB, but has to be
     fixme "TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}"
     component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}
 
