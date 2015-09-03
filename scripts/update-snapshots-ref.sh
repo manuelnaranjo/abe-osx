@@ -62,7 +62,20 @@ generate_snapshots ()
     done
 }
 
+update_git_repos () {
+    for repo in ${snapshots_dir}-new/*.git; do
+	(
+	    cd $repo
+	    # Update and prune local clone
+	    git remote update -p
+	    # Cleanup stale branches
+	    git branch | grep -v \* | xargs -r git branch -D
+	)
+    done
+}
+
 if $generate; then
+    update_git_repos
     generate_snapshots
 
     # Remove checked-out branch directories
@@ -72,15 +85,7 @@ if $generate; then
     rm ${snapshots_dir}-new/md5sums
 fi
 
-
-# Cleanup stale branches
-for repo in $snapshots_dir-new/*.git; do
-    (
-	cd $repo
-	git remote update -p
-	git branch | grep -v \* | xargs -r git branch -D
-    )
-done
+update_git_repos
 
 echo "Snapshots status:"
 du -hs $snapshots_dir-new/*
