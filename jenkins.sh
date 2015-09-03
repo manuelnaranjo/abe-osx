@@ -332,11 +332,6 @@ fi
 (
     flock -s 9
     $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} ${change} --checkout all
-    # Workaround "--checkout all" bug.
-    # See https://bugs.linaro.org/show_bug.cgi?id=1338 .
-    if ! [ -d $user_snapshots/gcc.git ]; then
-	git clone --reference $git_reference/gcc.git http://git.linaro.org/toolchain/gcc.git $user_snapshots/gcc.git
-    fi
 ) 9>${git_reference}.lock
 
 # Also fetch changes from gerrit
