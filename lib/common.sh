@@ -356,23 +356,26 @@ create_release_tag()
     local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     if test "`component_is_tar ${component}`" = no; then
 	local branch="~`get_component_branch ${component}`"
-	local revision="@`get_component_revision ${component}`"
+	local revision="@`get_component_revision ${component} | grep -o '[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]'`"
     fi
+
+    # GCC stores it's version number in BASE-VER, while GLIBC uses version.h
     local srcdir="`get_component_srcdir ${component}`"
-    if test -e ${srcdir}/gcc/BASE-VER; then
+    local version=
+    if test x"${component}" = x"gcc"; then
 	local version="`cat ${srcdir}/gcc/BASE-VER`"
     else
-	local version=
+	if test x"${component}" = x"glibc"; then
+	    local version="`grep VERSION ${srcdir}/version.h | cut -d ' ' -f 3 | tr -d '\"'`"
+	fi
     fi
     local rtag="${component}-linaro-${version}"
 
     if test x"${release}" = x; then
 	local date="`date +%Y%m%d`"
-        # return the version string array
 	local rtag="${rtag}${branch}${revision}-${date}"
     else
 	local rtag="${rtag}-${release}"
-        # For a release, we don't need the .git~ identifier.
 
     fi
 
@@ -380,7 +383,7 @@ create_release_tag()
 	rtag="`echo ${rtag} | sed -e 's:~linaro/gcc-::' -e 's:~linaro-::'`"
     fi
 
-    echo `echo ${rtag} | tr '/' '-'`
+    echo "`echo ${rtag} | tr '/' '-' | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
     return 0
 }
