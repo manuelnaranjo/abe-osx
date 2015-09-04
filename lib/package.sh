@@ -76,30 +76,8 @@ binary_runtime()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	if test x"${gcc_version}" = x; then
-	    local gcc_version="~`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	fi
-	
-	local branch="`get_component_builddir gcc`"
-	local builddir="`get_component_builddir gcc`-stage2"
-	local srcdir="`get_component_srcdir gcc`"
-
-	local date="`date +%Y%m%d`"
-	if test -d ${srcdir}/.gito -o -e ${srcdir}/.gitignore; then
-	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
-	fi
-	local tag="`echo runtime-${version}~${revision}-${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-    else
-	# use an explicit tag for the release name
-	local tag="`echo runtime-linaro-gcc${version}-${release}-${target}`"
-    fi
+    local rtag="`create_release_tag gcc`"
+    local tag="runtime-${rtag}-${target}"
 
     local destdir="${local_builds}/tmp.$$/${tag}"
 
@@ -170,33 +148,12 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
+    local rtag="`create_release_tag gcc`"
 
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	if test x"${gcc_version}" = x; then
-	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	fi
-	local date="`date +%Y%m%d`"
-	local branch="`get_component_branch gcc`"
-	local srcdir="`get_component_srcdir gcc`"
-
-	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-	if test x"${host}" != x"${build}"; then
-	    local tag="`echo gcc-linaro-${version}~${revision}-i686-mingw32_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-	else
-	    local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-	fi
+    if test x"${host}" != x"${build}"; then
+	local tag="${rtag}-i686-mingw32_${target}"
     else
-	# use an explicit tag for the release name
-	if test x"${host}" != x"${build}"; then
-	    local tag="`echo gcc-linaro-${version}-${release}-i686-mingw32_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
-	else
-	    local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
-	fi
-
+	local tag="${rtag}-${build_arch}_${target}"
     fi
 
     local destdir="${local_builds}/tmp.$$/${tag}"
@@ -206,12 +163,9 @@ binary_toolchain()
     # build toolchain.
     dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
 
-#    local installdir="`find ${destdir} -name ${target}-nm`"
-#    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
 
     if test x"${build}" != x"${target}"; then
-	# FIXME: link the sysroot into the toolchain tarball
 	dryrun "ln -sfnT ${sysroots} ${destdir}/${target}/libc"
     fi
 
@@ -248,29 +202,9 @@ binary_sysroot()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
+    local rtag="`create_release_tag glibc`"
+    local tag="sysroot-${rtag}-${target}"
 
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	local srcdir="`get_component_srcdir ${libc_version}`"	
-        # if test "`echo $1 | grep -c '@'`" -gt 0; then
-        # 	local commit="@`echo $1 | cut -d '@' -f 2`"
-        # else
-        # 	local commit=""
-        # fi
-	local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-	date="`date +%Y%m%d`"
-	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	else
-	    revision="${BUILD_NUMBER}"
-	fi
-	local tag="`echo sysroot-${libc_version}-${revision}-${target}-${date}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-    else
-	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
-    fi
-
-#    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="${local_builds}/tmp.$$/${tag}"
     dryrun "mkdir -p ${local_builds}/tmp.$$"
     if test x"${build}" != x"${target}"; then
@@ -278,9 +212,6 @@ binary_sysroot()
     else
 	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
     fi
-
-    # Generate the install script
-#    sysroot_install_script ${destdir}
 
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${tag}"
@@ -304,7 +235,7 @@ manifest()
     fi
 
     if test x"$1" = x; then
-	mtag="`create_release_tag ${gcc_version}`"
+	mtag="`create_release_tag gcc`"
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
     else
 	local outfile=$1
@@ -318,7 +249,7 @@ manifest()
 
 	local filespec="`get_component_filespec ${component}`"
 	local url="`get_component_url ${component} `/${filespec}"
-	echo "${component}_URL=${url}" >> ${outfile}
+	echo "${component}_url=${url}" >> ${outfile}
 
 	local branch="`get_component_branch ${component}`"
 	if test x"${branch}" != x; then
@@ -337,7 +268,6 @@ manifest()
 # Build machine data
 build=${build}
 host=${host}
-target=${target}
 kernel=${kernel}
 hostname=${hostname}
 distribution=${distribution}
@@ -358,12 +288,14 @@ EOF
     fi
 
     for i in gcc binutils ${clibrary}; do
-	echo "--------------------- $i ----------------------" >> ${outfile}
-	local srcdir="`get_component_srcdir $i`"
-	# Invoke in a subshell in order to prevent state-change of the current
-	# working directory after manifest is called.
-	$(cd ${srcdir} && git log -n 1 >> ${outfile})
-	echo "" >> ${outfile}
+	if test "`component_is_tar ${package}`" = no; then
+	    echo "--------------------- $i ----------------------" >> ${outfile}
+	    local srcdir="`get_component_srcdir $i`"
+	    # Invoke in a subshell in order to prevent state-change of the current
+	    # working directory after manifest is called.
+	    $(cd ${srcdir} && git log -n 1 >> ${outfile})
+	    echo "" >> ${outfile}
+	fi
     done
     
     echo ${outfile}
@@ -383,7 +315,6 @@ binutils_src_tarball()
 	local binutils_version="binutils-`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
 
-    local dir="`normalize_path ${binutils_version}`"
     local srcdir="`get_component_srcdir ${binutils_version}`"
     local builddir="`get_component_builddir ${binutils_version} binutils`"
     local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
