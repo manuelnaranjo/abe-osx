@@ -356,7 +356,7 @@ create_release_tag()
     local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     if test "`component_is_tar ${component}`" = no; then
 	local branch="~`get_component_branch ${component}`"
-	local revision="@`get_component_revision ${component} | grep -o '[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]'`"
+	local revision="@`get_component_revision ${component} | grep -o '[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]' | head -1`"
     fi
 
     # GCC stores it's version number in BASE-VER, while GLIBC uses version.h
@@ -373,6 +373,9 @@ create_release_tag()
 
     if test x"${release}" = x; then
 	local date="`date +%Y%m%d`"
+	if test x"${component}" = x"glibc"; then
+	    local branch="~`basename ${branch}`"
+	fi
 	local rtag="${rtag}${branch}${revision}-${date}"
     else
 	local rtag="${rtag}-${release}"
