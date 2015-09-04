@@ -417,7 +417,6 @@ change_branch()
 {
     trace "$*"
 
-    local dir="`normalize_path $1`"
     local version="`basename $1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
 
