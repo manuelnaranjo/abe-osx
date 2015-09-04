@@ -744,15 +744,33 @@ echo "========= create_release_tag() tests ============"
 
 mkdir -p ${local_abe_tmp}/builds/gcc
 echo "5.1.1" > ${local_abe_tmp}/builds/gcc/BASE-VER
-component_init gcc BRANCH="aa" REVISION="12345abcdef" SRCDIR="${local_abe_tmp}/builds"
+component_init gcc BRANCH="aa" REVISION="a1b2c3d4e5f6" SRCDIR="${local_abe_tmp}/builds"
 
-testing="create_release_tag: repository without release string set"
+testing="create_release_tag: GCC repository without release string set"
 date="`date +%Y%m%d`"
 out="`create_release_tag gcc | grep -v TRACE`"
 toolname="`echo ${out} | cut -d '~' -f 1`"
 branch="`echo ${out} | cut -d '~' -f 2 | cut -d '@' -f 1`"
 revision="`echo ${out} | cut -d '@' -f 2`"
-if test x"${out}" = x"gcc-linaro-5.1.1~aa@12345abcdef-${date}"; then
+if test x"${out}" = x"gcc-linaro-5.1.1~aa@a1b2c3d4-${date}"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
+mkdir -p ${local_abe_tmp}/builds
+echo "#define RELEASE \"development\""  > ${local_abe_tmp}/builds/version.h
+echo "#define VERSION \"2.22.90\"" >> ${local_abe_tmp}/builds/version.h
+component_init glibc BRANCH="aa/bb/cc" REVISION="1a2b3c4d5e6f" SRCDIR="${local_abe_tmp}/builds"
+
+testing="create_release_tag: GLIBC repository without release string set"
+date="`date +%Y%m%d`"
+out="`create_release_tag glibc | grep -v TRACE`"
+toolname="`echo ${out} | cut -d '~' -f 1`"
+branch="`echo ${out} | cut -d '~' -f 2 | cut -d '@' -f 1`"
+revision="`echo ${out} | cut -d '@' -f 2`"
+if test x"${out}" = x"glibc-linaro-2.22.90~aa-bb-cc@1a2b3c4d-${date}"; then
     pass "${testing}"
 else
     fail "${testing}"
@@ -760,7 +778,7 @@ else
 fi
 
 release=foobar
-testing="create_release_tag: repository with release string set"
+testing="create_release_tag: GCC repository with release string set"
 out="`create_release_tag gcc | grep -v TRACE`"
 if test x"${out}" = x"gcc-linaro-5.1.1-${release}"; then
     pass "${testing}"
@@ -768,6 +786,7 @@ else
     fail "${testing}"
     fixme "create_release_tag returned ${out}"
 fi
+
 # rm ${local_abe_tmp}/builds/BASE-VER
 
 export release="2015.08-rc1"
