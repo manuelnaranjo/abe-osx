@@ -229,62 +229,6 @@ list_URL()
     return 0
 }
 
-# This takes a URL and turns it into a name suitable for the build
-# directory name.
-# $1 - the path to fixup
-normalize_path()
-{
-# FIXME: ban non-service or tarball inputs.
-
-    local process=
-    if test "`echo $1 | egrep -c "^git://|^http://|^ssh://"`" -lt 1 -a "`echo $1 | grep -c "\.git"`" -gt 0; then
-	# If the input is an identifier (not a service) then process \.git
-	# identifiers as git URLs
-	process="`get_URL $1`"
-    else
-	process=$1
-    fi
-
-    local branch=""
-    case ${process} in
-	git*|http*|ssh*)
-            if test "`echo ${process} | grep -c "\.tar"`" -gt 0 -o "`echo ${process} | grep -c "\.tgz"`" -gt 0; then
-                local node="`basename ${process} | sed -e 's:\.tar.*::' -e 's:\.tgz$::'`"
-	    else
-		local node=
-		node="`get_git_repo ${process}`" || return 1
-
-		local branch=
-		branch="`get_git_branch ${process}`" || return 1
-
-		# Multi-path branches should have forward slashes replaced with dashes.
-		branch="`echo ${branch} | sed 's:/:-:g'`"
-
-		local revision=
-		revision="`get_git_revision ${process}`" || return 1
-	    fi
-	    ;;
-	*.tar.*)
-	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
-	    ;;
-	*)
-	    fixme "normalize_path should only be called with a URL or a tarball name, not a sources.conf identifier."
-	    # FIXME: This shouldn't be handled here.
-	    local node="`echo ${process} | sed -e 's:\.tar.*::' -e 's:\+git:@:' -e 's:\.git/:.git-:'`"
-	    ;;
-    esac
-
-    if test "`echo $1 | grep -c glibc`" -gt 0; then
-	local delim='_'
-    else
-	local delim='@'
-    fi
-
-    echo ${node}${branch:+~${branch}}${revision:+${delim}${revision}}
-
-    return 0
-}
-
 get_config()
 {
     conf="`get_toolname $1`.conf"
@@ -370,54 +314,6 @@ get_toolname()
     return 0
 }
 
-# This look at a remote repository for  source tarball
-#
-# $1 - The file to look for, which should be unique or we get too many results
-#
-# returns ${snapshot}
-find_snapshot()
-{
-    if test x"$1" = x; then
-	error "find_snapshot() called without an argument!"
-	return 1
-   fi
-
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"."; then
-	dir=""
-    fi
-
-    #rm -f ${local_snapshots}/md5sums
-    #fetch_http md5sums
-    #fetch_rsync ${remote_snapshots}/md5sums
-
-    # Search for the snapshot in the md5sum file, and filter out anything we don't want.
-    snapshot="`grep $1 ${local_snapshots}/md5sums | egrep -v "\.asc|\.diff|\.txt|xdelta" | cut -d ' ' -f 3`"
-    if test x"${snapshot}" != x; then
-	if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	    warning "Too many results for $1!"
-	    echo "${snapshot}"
-	    return 1
-	fi
-	echo "${snapshot}"
-	return 0
-    fi
-
-#    snapshot="`grep $1 ${local_snapshots}/${dir}md5sums | cut -d ' ' -f 3`"
-    if test x"${snapshot}" = x; then
-	warning "No results for $1!"
-	return 1
-    fi
-    if test `echo "${snapshot}" | grep -c $1` -gt 1; then
-	warning "Too many results for $1!"
-	echo "${snapshot}"
-	return 1
-    fi
-
-    echo ${snapshot}
-    return 0
-}
-
 # Parse a version string and produce a release version string suitable
 # for the LINARO-VERSION file.
 create_release_version()
@@ -470,38 +366,28 @@ create_release_version()
 # returns "version~branch@revision"
 create_release_tag()
 {
-#    trace "$*"
+    trace "$*"
 
-    local version=$1
-    local branch=
-    local revision=
-
-    local rtag="`get_git_tag $1`" || return 1
-
-    local name="`echo ${version} | cut -d '/' -f 1 | cut -d '~' -f 1 | sed -e 's:\.git:-linaro:' -e 's:\.tar.*::' -e 's:-[-0-9\.]\.[0-9\.\-][-rc0-9\.]*::'`"
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    if test "`component_is_tar ${component}`" = no; then
+	local branch="~`get_component_branch ${component}`"
+	local revision="@`get_component_revision ${component}`"
+    fi
+    local srcdir="`get_component_srcdir ${component}`"
+    if test -e ${srcdir}/gcc/BASE-VER; then
+	local version="`cat ${srcdir}/gcc/BASE-VER`"
+    else
+	local version=
+    fi
+    local rtag="${component}-linaro-${version}"
 
     if test x"${release}" = x; then
-	# extract the branch from the version
-	local srcdir="`get_component_srcdir ${version}`"
-	if test -d "${srcdir}/.git" -o -e "${srcdir}/.gitignore"; then
-	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-	
 	local date="`date +%Y%m%d`"
-	
         # return the version string array
-	local rtag="${rtag}${revision}-${date}"
+	local rtag="${rtag}${branch}${revision}-${date}"
     else
-	# grep -o returns multiple lines. Match only on the first using 'head -1'.
-	local version="`echo $1 | grep -o '\-[0-9\.]*\-' | head -1 | tr -d '-'`"
-	local tool="`get_toolname $1`"
-	if test x"${version}" = x; then
-	    local version="`grep ^latest= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-	    local version="`echo ${version} | sed -e 's:[a-z\./-]*::' -e 's:-branch::'`"
-	fi
-	local rtag="${name}-${version}-${release}"
+	local rtag="${rtag}-${release}"
         # For a release, we don't need the .git~ identifier.
-	local rtag="`echo ${rtag} | sed -e 's:\.git~:-:'`"
 
     fi
 
@@ -510,7 +396,7 @@ create_release_tag()
     fi
 
     echo `echo ${rtag} | tr '/' '-'`
-    
+
     return 0
 }
 
