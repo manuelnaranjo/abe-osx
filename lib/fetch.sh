@@ -272,7 +272,7 @@ fetch_reference()
 
     # Only copy if the source file in the reference dir is newer than
     # that file in the local_snapshots directory (if it exists).
-    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}${dir}/${getfile}* ${local_snapshots}${dir}/"
+    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}${dir}/${getfile}*.tar.* ${local_snapshots}${dir}/"
     if test $? -gt 0; then
 	error "Copying ${getfile} from reference dir to ${local_snapshots}${dir} failed."
 	return 1
