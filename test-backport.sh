@@ -185,10 +185,19 @@ pushd ${topbuild}
 
 $CONFIG_SHELL ${abe_dir}/configure --enable-schroot-test --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${snapshots_ref} --with-fileserver=${fileserver} --with-remote-snapshots=/snapshots-ref
 
+# Initialize the data array
+component="gcc"
+gcc_version="${component}~${branch}"
+collect_data ${component}
+
+builddir="`get_component_builddir ${component}`"
+mkdir -p ${builddir}
+
+srcdir="`get_component_srcdir ${component}`"
+
 # If Gerrit is specifing the two git revisions, don't try to extract them.
 if test x"${gerrit_trigger}" != xyes; then
-    checkout "`get_URL gcc.git`"
-    srcdir="`get_srcdir gcc.git`"
+    checkout ${component}
     
     # Due to update cycles, sometimes the branch isn't in the repository yet.
     exists="`cd ${srcdir} && git branch -a | grep -c "${branch}"`"
@@ -198,8 +207,7 @@ if test x"${gerrit_trigger}" != xyes; then
 	popd
     fi
     
-    checkout "`get_URL gcc.git~${branch}`"
-    srcdir="`get_srcdir gcc.git~${branch}`"
+    checkout ${component}
 
     # Get the last two revisions
     declare -a revisions=(`cd ${srcdir} && git log -n 2 | grep ^commit | cut -d ' ' -f 2`)
@@ -209,7 +217,7 @@ else
 fi
 
 # Don't update any sources, we should be in sync already from the above.
-update="--disable update"
+update=""
 
 # Force GCC to not build the docs
 export BUILD_INFO=""
@@ -297,8 +305,7 @@ if test x"${fileserver}" != x; then
     if test $? -ne 0; then
 	ret=1
     fi
-    ssh ${fileserver} cat ${toplevel}/diff.txt
-
+    ssh ${fileserver} cat ${tmp}/diff.txt
     ssh ${fileserver} rm -fr ${tmp}
 
     echo "### Compared REFERENCE:"
