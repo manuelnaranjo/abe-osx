@@ -64,8 +64,8 @@ rm -rf %{buildroot}
 mkdir -p  %{buildroot}%{installdir}
 cp -a * %{buildroot}%{installdir}/
 mkdir -p %{buildroot}/etc/profile.d/
-echo "PATH=/opt/linaro/${path}/bin:$PATH" > %{buildroot}/etc/profile.d/linaro.sh
-echo "export PATH" >> %{buildroot}/etc/profile.d/linaro.sh
+echo "PATH=/opt/linaro/${path}/bin:$PATH" > %{buildroot}/etc/profile.d/gcc-linaro.sh
+echo "export PATH" >> %{buildroot}/etc/profile.d/gcc-linaro.sh
 
 %check
 
