@@ -18,6 +18,10 @@
 set -e
 set -o pipefail
 
+# Improve debug logs
+PRGNAME=`basename $0`
+PS4='+ $PRGNAME: ${FUNCNAME+"$FUNCNAME : "}$LINENO: '
+
 usage()
 {
     # Format this section with 75 columns.
