@@ -83,6 +83,7 @@ checkout_infrastructure()
 
 	# Hopefully we only download the exact match for each one.  Depending
 	# how vague the user is it might download multiple tarballs.
+	echo DEBUG: `grep /${version} ${local_snapshots}/md5sums`
 	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
 	unset version
     done
