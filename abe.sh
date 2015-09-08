@@ -1317,7 +1317,7 @@ if test ! -z ${do_build}; then
     fi	 
 fi
 
-time="`expr ${SECONDS} / 60`"
+time="`expr ${SECONDS} / 60 || true`"
 if test ! -z ${do_build}; then
     notice "Complete build process took ${time} minutes"
 elif test ! -z ${do_checkout}; then
