@@ -138,8 +138,8 @@ extract()
 
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
-    check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
-    ret=$?
+    ret=0
+    check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force} || ret=$?
     if test $ret -eq 0; then
 	return 0 
     elif test $ret -eq 255; then
