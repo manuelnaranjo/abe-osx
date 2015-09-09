@@ -471,6 +471,10 @@ cat<<EOF > Makefile
 check:
 	${srcdir}/testsuite/test.sh
 	${srcdir}/test.sh
+
+clean:
+	rm -fr builds/* sysroot/*
+
 EOF
 
 # Local Variables:
