@@ -5,6 +5,11 @@ set -e
 set -u
 set -o pipefail
 
+#Belt-and-braces - we do most work in maindir,
+#which has 700 permissions, but this protects
+#us against world-readable temporaries
+umask 077
+
 benchgccpath=
 targets=(${targets})
 tmpdir="`mktemp -dt downloads-XXXXXXX`"
