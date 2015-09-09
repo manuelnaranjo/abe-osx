@@ -259,7 +259,7 @@ fi
 AC_ARG_WITH(fileserver,
   AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
     FILESERVER=${withval},
-    FILESERVER='148.251.136.42')
+    FILESERVER='148.251.136.42/snapshots-ref')
 AC_SUBST(FILESERVER)
 
 AC_ARG_WITH(sources-conf,
@@ -332,6 +332,7 @@ AC_MSG_NOTICE([Downloaded snapshots will be stored in: ${LOCAL_SNAPSHOTS}])
 AC_MSG_NOTICE([My builds will be installed in: ${LOCAL_BUILDS}])
 AC_MSG_NOTICE([Sysroots will be installed in: ${SYSROOTS}])
 AC_MSG_NOTICE([Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}])
+AC_MSG_NOTICE([Using remote fileserver: http://${FILESERVER}])
 echo ""
 
 AC_ARG_WITH(languages,
