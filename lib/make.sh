@@ -828,7 +828,10 @@ make_docs()
             dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
-        *gdb*)
+        *gdbserver)
+            return 0
+            ;;
+        *gdb)
             dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
