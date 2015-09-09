@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Set defaults
-export CONFIG_SHELL="/bin/bash"
+if test x"${debug}" = x"true"; then
+    export CONFIG_SHELL="/bin/bash -x"
+else
+    export CONFIG_SHELL="/bin/bash"
+fi
 target=""
 tarsrc=""
 tarbin=""
