@@ -214,27 +214,6 @@ infrastructure()
 	fi
     done
 
-    # GDB now has python support, for mingw we have to download a
-    # pre-built win2 binary that works with mingw32.
-    if test `echo ${host} | grep -c mingw` -eq 1; then
-	fetch python-2.7.4-mingw32.tar.xz
-	extract python-2.7.4-mingw32.tar.xz
-	# The mingw package of python contains a script used by GDB to
-	# configure itself, this is used to specify that path so we don't
-	# have to modify the GDB configure script.
-	export PYTHON_MINGW=${local_snapshots}/infrastructure/python-2.7.4-mingw32
-	# The Python DLLS need to be in the bin dir where the executables are.
-	rsync -ar ${PYTHON_MINGW}/pylib ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/dll ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/libpython2.7.dll ${local_builds}/destdir/${host}/bin/
-	# Future make check support of python GDB in mingw32 will require these
-	# exports.  Export them now for future reference.
-	export PYTHONHOME=${local_builds}/destdir/${host}/bin/dll
-	warning "You must set PYTHONHOME in your environment to ${PYTHONHOME}"
-	export PYTHONPATH=${local_builds}/destdir/${host}/bin/pylib
-	warning "You must set PYTHONPATH in your environment to ${PYTHONPATH}"
-    fi
-
     # Reset to the stored value
     nodepends=${nodep}
 }
