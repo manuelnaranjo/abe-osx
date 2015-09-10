@@ -255,7 +255,7 @@ binary_toolchain()
 	    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 	else
 	    notice "Making binary toolchain package for Windows, please wait..."
-	    ${local_snapshots}/infrastructure/installjammer/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
+	    ${local_snapshots}/infrastructure/installjammer-1.2.15/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
 	fi
     fi
     
