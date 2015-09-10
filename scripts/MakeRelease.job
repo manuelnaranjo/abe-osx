@@ -10,11 +10,12 @@ target=""
 tarsrc=""
 tarbin=""
 check=""
+ref="=/snapshots-ref"
 nocheck="no"
 fileserver="148.251.136.42"
 user_workspace="${WORKSPACE:-/home/${USER:-buildslave}/workspace}"
 
-OPTS="`getopt -o t:f:d:bs:w:nh -l target:,date:,fileserver:,tarbin:,tarsrc:,workspace:,help`"
+OPTS="`getopt -o r:t:f:d:bs:w:nh -l target:,ref:,date:,fileserver:,tarbin:,tarsrc:,workspace:,help`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
@@ -23,6 +24,7 @@ while test $# -gt 0; do
 	-b|--tarbin) tarbin=yes ;;
 	-t|--target) target=$2 ;;
 	-d|--date) date=$2 ;;
+	-r|--ref) ref=$2 ;;
         -f|--fileserver) fileserver=$2 ;;
 	-n|--nocheck) nocheck=yes ;;
         -h|--help) usage ;;
@@ -67,7 +69,7 @@ cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
   $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
-      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-remote-snapshots=/snapshots-ref
+      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-remote-snapshots=/${ref}
 
 fi
 
