@@ -11,7 +11,8 @@ trap 'exit ${error}' TERM INT HUP QUIT #Signal death can be part of normal contr
 
 #Precondition: the target is in known_hosts
 ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
-host_ip="`hostname -I | cut -f 1 -d ' '`" #hostname -I includes a trailing space
+host_ip="${USER}@`hostname | cut -f 1 -d ' '`" #hostname -I includes a trailing space
+completed_file="`mktemp -dt RUN_COMPLETEXXX`"
 
 tag=
 benchmark=
@@ -201,7 +202,7 @@ fi
      "function phonehome \
       { \
         while test -e ${target_dir}; do \
-          ping -c 1 ${host_ip}; \
+          ssh ${host_ip} 'touch "${completed_file}/RUN_COMPLETE"'; \
           sleep 11; \
         done; \
       }; \
@@ -231,7 +232,7 @@ fi
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
 #'sleep 1' just here because the while loop has to do _something_
-while ! tcpdump -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
+while ! test -e "${completed_file}/RUN_COMPLETE"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine exit code, assuming the worst." 1>&2
