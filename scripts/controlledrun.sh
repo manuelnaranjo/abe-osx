@@ -519,6 +519,11 @@ if test -f /etc/lsb-release; then
   cat /etc/lsb-release | tee -a "${log}"
   echo | tee -a "${log}"
 fi
+if test -f /etc/debian_version; then
+  echo "/etc/debian_version:" | tee "${log}"
+  cat /etc/debian_version | tee -a "${log}"
+  echo | tee -a "${log}"
+fi
 echo "lsb_release -a" | tee -a "${log}"
 lsb_release -a | tee -a "${log}"
 echo | tee -a "${log}"
