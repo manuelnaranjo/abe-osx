@@ -15,6 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
+set -e
+set -o pipefail
 
 # Improve debug logs
 PRGNAME=`basename $0`
@@ -339,10 +341,11 @@ fi
 
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
-$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2)
+ret=0
+$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2) || ret=$?
 
 # If abe returned an error, make jenkins see this as a build failure
-if test $? -gt 0; then
+if test $ret -gt 0; then
     echo "================= TAIL OF LOG: BEGIN ================="
     tail -n 50 build.out
     echo "================= TAIL OF LOG: FINISH ================="
