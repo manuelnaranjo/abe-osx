@@ -111,7 +111,7 @@ if test x"${tarbin}" = x"yes"; then
 	$CONFIG_SHELL ${abe_dir}/abe.sh ${update} --release ${release} ${check} ${gcc} ${binutils} ${platform} --build all ${libc}
 	host="--host i686-w64-mingw32"
 	rm -fr ${local_builds}/${host}/${target}/
-	update="--disable update"
+#	update="--disable update"
     else
 	host=""
     fi
