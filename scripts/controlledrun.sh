@@ -511,7 +511,9 @@ echo | tee -a "${log}"
 echo "** Target Status **" | tee -a "${log}"
 echo "===================" | tee -a "${log}"
 echo "General Information:" | tee -a "${log}"
+echo -n "uname -a: " | tee -a "${log}"
 uname -a | tee -a "${log}"
+echo | tee -a "${log}"
 if test -f /etc/lsb-release; then
   cat /etc/lsb-release | tee -a "${log}"
 fi
