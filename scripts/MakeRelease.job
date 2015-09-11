@@ -10,7 +10,7 @@ target=""
 tarsrc=""
 tarbin=""
 check=""
-ref="=/snapshots-ref"
+ref="snapshots-ref"
 nocheck="no"
 fileserver="148.251.136.42"
 user_workspace="${WORKSPACE:-/home/${USER:-buildslave}/workspace}"
@@ -69,7 +69,7 @@ cd ${user_workspace}/_build
 
 if ! test -e host.conf; then
   $CONFIG_SHELL ${abe_dir}/configure ${chroot} --with-local-snapshots=${user_snapshots} \
-      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-remote-snapshots=/${ref}
+      --with-git-reference-dir=${shared}/snapshots --with-fileserver=${fileserver} --with-remote-snapshots=${ref}
 
 fi
 
