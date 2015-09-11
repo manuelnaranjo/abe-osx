@@ -536,6 +536,11 @@ ${sudo} service --status-all 2>&1 | grep -v '^...-' | tee -a "${log}"
 if test $? -ne 0; then
   echo "*** service unable to list (possibly) running services" | tee -a "${log}"
 fi
+echo "According to systemd:" | tee -a "${log}"
+${sudo} systemctl --all 2>&1 | tee -a "${log}"
+if test $? -ne 0; then
+  echo "*** systemctl unable to list services" | tee -a "${log}"
+fi
 echo | tee -a "${log}"
 echo "** CPUFreq:" | tee -a "${log}"
 ${sudo} cpufreq-info -p | tee -a "${log}"
