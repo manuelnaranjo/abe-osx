@@ -181,6 +181,13 @@ else #cross-build, implies we need remote devices
   fi
 fi
 
+builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+if test $? -ne 0; then
+  echo "Unable to get builddir" 1>&2
+  error=1
+  exit
+fi
+
 if test x"${phases}" != xrunonly; then
   #abe can build the benchmarks just fine
   (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
@@ -189,18 +196,29 @@ if test x"${phases}" != xrunonly; then
     error=1
     exit
   fi
+
+  #Log information about build environment
+  echo "Build Environment" >> "${builddir}/build.log"
+  echo "=================" >> "${builddir}/build.log"
+  env >> "${builddir}/build.log"
+  echo >> "${builddir}/build.log"
+
+  echo "Toolchain" >> "${builddir}/build.log"
+  echo "=========" >> "${builddir}/build.log"
+  ${benchmark_gcc_path} -v >> "${builddir}/build.log" 2>&1
+  ${benchmark_gcc_path} --version >> "${builddir}/build.log" 2>&1
+  echo >> "${builddir}/build.log"
+
+  echo "Sizes" >> "${builddir}/build.log"
+  echo "=====" >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "stat -c '%n %s' `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
 fi
 if test x"${phases}" = xbuildonly; then
   error=0
   exit
 fi
 
-builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
-if test $? -ne 0; then
-  echo "Unable to get builddir" 1>&2
-  error=1
-  exit
-fi
 
 #Compress build to a tmpfile in our top-level working directory
 #This should be good for bandwidth
