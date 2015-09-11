@@ -574,6 +574,9 @@ fi
 echo | tee -a "${log}"
 echo "** Environment:" | tee -a "${log}"
 env | tee -a "${log}"
+echo | tee -a "${log}"
+echo "/proc/sys/kernel/randomize_va_space" | tee -a "${log}"
+cat /proc/sys/kernel/randomize_va_space | tee -a "${log}"
 echo "===================" | tee -a "${log}"
 echo | tee -a "${log}"
 
