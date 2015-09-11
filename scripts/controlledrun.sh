@@ -515,9 +515,10 @@ echo -n "uname -a: " | tee -a "${log}"
 uname -a | tee -a "${log}"
 echo | tee -a "${log}"
 if test -f /etc/lsb-release; then
+  echo "/etc/lsb-release:" | tee "${log}"
   cat /etc/lsb-release | tee -a "${log}"
+  echo | tee -a "${log}"
 fi
-echo | tee -a "${log}"
 #A little research shows that it is unclear how
 #reliable or complete the information from either
 #initctl or service is. So we make a best effort.
