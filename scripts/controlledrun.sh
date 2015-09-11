@@ -577,6 +577,11 @@ env | tee -a "${log}"
 echo | tee -a "${log}"
 echo "/proc/sys/kernel/randomize_va_space" | tee -a "${log}"
 cat /proc/sys/kernel/randomize_va_space | tee -a "${log}"
+echo | tee -a "${log}"
+if test -e /proc/config.gz; then
+  echo "Kernel config: " | tee -a "${log}"
+  zcat /proc/config.gz | tee -a "${log}"
+fi
 echo "===================" | tee -a "${log}"
 echo | tee -a "${log}"
 
