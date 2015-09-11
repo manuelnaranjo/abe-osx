@@ -331,7 +331,7 @@ fi
 # us from looking into an inconsistent state of reference snapshots.
 (
     flock -s 9
-    $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} ${change} --checkout all
+    $CONFIG_SHELL ${abe_dir}/abe.sh ${platform} --checkout all
 ) 9>${git_reference}.lock
 
 # Also fetch changes from gerrit
