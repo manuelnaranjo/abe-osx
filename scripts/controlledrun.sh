@@ -566,6 +566,9 @@ ${sudo} ifconfig | tee -a "${log}"
 if test $? -ne 0; then
   echo "*** Unable to get network info" | tee -a "${log}"
 fi
+echo | tee -a "${log}"
+echo "** Environment:" | tee -a "${log}"
+env | tee -a "${log}"
 echo "===================" | tee -a "${log}"
 echo | tee -a "${log}"
 
