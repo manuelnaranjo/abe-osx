@@ -519,6 +519,9 @@ if test -f /etc/lsb-release; then
   cat /etc/lsb-release | tee -a "${log}"
   echo | tee -a "${log}"
 fi
+echo "lsb_release -a" | tee -a "${log}"
+lsb_release -a | tee -a "${log}"
+echo | tee -a "${log}"
 #A little research shows that it is unclear how
 #reliable or complete the information from either
 #initctl or service is. So we make a best effort.
