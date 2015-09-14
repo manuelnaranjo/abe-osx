@@ -416,9 +416,11 @@ do_aslr=1 #Enabled by default
 do_renice=1 #Enabled by default
 do_env=1 #Enabled by default
 tee_cmd=0
-while getopts Eb:cf:l:np:s:tu flag; do
+while getopts AERb:cf:l:np:s:tu flag; do
   case $flag in
+    A)  do_aslr=0;;
     E)  do_env=0;;
+    R)  do_renice=0;;
     b)  bench_cpu="${OPTARG}";;
     c)  cautiousness=1;;
     f)  freq="${OPTARG}";;
