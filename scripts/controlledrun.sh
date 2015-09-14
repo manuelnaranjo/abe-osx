@@ -416,17 +416,17 @@ do_aslr=1 #Enabled by default
 do_renice=1 #Enabled by default
 do_env=1 #Enabled by default
 tee_cmd=0
-while getopts ts:f:b:p:Ecnul: flag; do
+while getopts Eb:cf:l:np:s:tu flag; do
   case $flag in
     E)  do_env=0;;
-    t)  tee_cmd=1;;
-    s)  services_file="${OPTARG}";;
-    f)  freq="${OPTARG}";;
     b)  bench_cpu="${OPTARG}";;
-    p)  non_bench_cpu="${OPTARG}";;
     c)  cautiousness=1;;
-    n)  do_network=1;;
+    f)  freq="${OPTARG}";;
     l)  log="${OPTARG}";;
+    n)  do_network=1;;
+    p)  non_bench_cpu="${OPTARG}";;
+    s)  services_file="${OPTARG}";;
+    t)  tee_cmd=1;;
     u)  #Set everything to 'uncontrolled', even the controls that default on
         sudo=''
         services_file=''
