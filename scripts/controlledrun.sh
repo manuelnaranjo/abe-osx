@@ -506,6 +506,33 @@ if test ${do_network} -eq 1; then
   fi
 fi
 
+#"setarch `uname -m` -R" would be a tidier way to run our benchmark without ASLR,
+#but doesn't work on our machines (setarch rejects the value of uname -m, and some
+#obvious alternatives, as invalid).
+if test ${do_aslr} -eq 1; then
+  rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
+  ${sudo} bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
+  if test $? -ne 0; then
+    echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
+    if test "${cautiousness}" -eq 1; then
+      exit 1
+    fi
+  fi
+fi
+
+#By setting our own niceness, we don't force the benchmark to run as root
+if test ${do_renice} -eq 1; then
+  #Don't use $sudo, we don't want to break out of chroot here
+  if test "${USER}" = root; then
+         renice -19 $$
+  else
+    sudo renice -19 $$
+  fi
+  if test $? -ne 0; then
+    echo "Failed to set niceness to -19" 1>&2
+  fi
+fi
+
 #Report status of the target
 echo | tee -a "${log}"
 echo "** Target Status **" | tee -a "${log}"
@@ -584,33 +611,6 @@ if test -e /proc/config.gz; then
 fi
 echo "===================" | tee -a "${log}"
 echo | tee -a "${log}"
-
-#"setarch `uname -m` -R" would be a tidier way to run our benchmark without ASLR,
-#but doesn't work on our machines (setarch rejects the value of uname -m, and some
-#obvious alternatives, as invalid).
-if test ${do_aslr} -eq 1; then
-  rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
-  ${sudo} bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
-  if test $? -ne 0; then
-    echo "Error when disabling ASLR" | tee -a /dev/stderr "${log}"
-    if test "${cautiousness}" -eq 1; then
-      exit 1
-    fi
-  fi
-fi
-
-#By setting our own niceness, we don't force the benchmark to run as root
-if test ${do_renice} -eq 1; then
-  #Don't use $sudo, we don't want to break out of chroot here
-  if test "${USER}" = root; then
-         renice -19 $$
-  else
-    sudo renice -19 $$
-  fi
-  if test $? -ne 0; then
-    echo "Failed to set niceness to -19" 1>&2
-  fi
-fi
 
 #Finally, run the command!
 #We don't tee it, just in case it contains any sensitive output
