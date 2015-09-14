@@ -414,9 +414,11 @@ cautiousness=0
 do_network=0
 do_aslr=1 #Enabled by default
 do_renice=1 #Enabled by default
+do_env=1 #Enabled by default
 tee_cmd=0
-while getopts ts:f:b:p:cnul: flag; do
+while getopts ts:f:b:p:Ecnul: flag; do
   case $flag in
+    E)  do_env=0;;
     t)  tee_cmd=1;;
     s)  services_file="${OPTARG}";;
     f)  freq="${OPTARG}";;
@@ -434,6 +436,7 @@ while getopts ts:f:b:p:cnul: flag; do
         do_network=0
         do_aslr=0
         do_renice=0
+        do_env=0
         echo "Uncontrolled (-u) set, no controls enabled" 1>&2
         echo "Individual control flags set after -u will still be respected" 1>&2
     ;;
@@ -610,7 +613,11 @@ if test $? -ne 0; then
   echo "*** Unable to get network info" | tee -a "${log}"
 fi
 echo | tee -a "${log}"
-echo "** Environment:" | tee -a "${log}"
+if test ${do_env} -eq 1; then
+  echo "** Environment (but we will run with env -i):" | tee -a "${log}"
+else
+  echo "** Environment:" | tee -a "${log}"
+fi
 env | tee -a "${log}"
 echo | tee -a "${log}"
 echo "/proc/sys/kernel/randomize_va_space" | tee -a "${log}"
@@ -628,6 +635,9 @@ echo | tee -a "${log}"
 #TODO We expect to be running with stdout & stderr redirected, insert a test for this
 if test x"${bench_cpu:-}" != x; then
   cmd="taskset -c ${bench_cpu} ${cmd}"
+fi
+if test ${do_env} -eq 1; then
+  cmd="env -i ${cmd}"
 fi
 echo "Running ${cmd}"
 if test ${tee_cmd} -ne 0; then
