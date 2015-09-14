@@ -31,7 +31,7 @@ while getopts a:b:cd:e:g:kpt: flag; do
     g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
-    t) buildtar="${OPTARG}";;
+    t) benchbuild="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        error=1
@@ -139,7 +139,7 @@ if test $? -ne 0; then
   error=1
   exit
 fi
-for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
+for thing in "${benchbuild}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
   (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
@@ -188,9 +188,9 @@ fi
       }; \
       trap phonehome EXIT; \
       cd ${target_dir} && \
-      tar xf `basename ${buildtar}` --exclude='*.git/.git/*' && \
-      cd `tar tf ${buildtar} | head -n1` && \
-      rm ../`basename ${buildtar}` && \
+      tar xf `basename ${benchbuild}` --exclude='*.git/.git/*' && \
+      cd `tar tf ${benchbuild} | head -n1` && \
+      rm ../`basename ${benchbuild}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
