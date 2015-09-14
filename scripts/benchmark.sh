@@ -198,7 +198,7 @@ if test x"${phases}" != xrunonly; then
   fi
 
   #Log information about build environment
-  echo "Build Environment" >> "${builddir}/build.log"
+  echo "Build Environment" > "${builddir}/build.log"
   echo "=================" >> "${builddir}/build.log"
   env >> "${builddir}/build.log"
   echo >> "${builddir}/build.log"
