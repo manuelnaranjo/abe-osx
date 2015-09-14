@@ -114,6 +114,8 @@ clean_benchmark()
 
 if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip:-(unknown)}" 1>&2
+  echo "Command was: " 1>&2
+  echo "remote_exec \"${ip}\" true ${ssh_opts}" 1>&2
   error=1
   exit
 fi
