@@ -40,6 +40,7 @@ cleanup()
   local tmp
 
   if test x"${rva_setting:-}" != x; then
+    echo "Restoring prior ASLR setting" | tee -a "${log}"
     ${sudo} bash -c "echo ${rva_setting} > /proc/sys/kernel/randomize_va_space"
     if test $? -ne 0; then
       echo "Failed to restore ASLR setting" | tee -a /dev/stderr "${log}"
@@ -105,6 +106,7 @@ stop_services()
   local service
   local ret=0
   local service_status
+  echo "Stopping services" | tee -a "${log}"
   for service in `cat $1 | grep -v '^[[:blank:]]*#'`; do
     service_status=`${sudo} status "${service}"`
     if test $? -ne 0; then
@@ -138,6 +140,7 @@ start_services()
   if test x"${stopped_services-}" = x; then
     return 0
   fi
+  echo "Starting services" | tee -a "${log}"
   for ((i=${#stopped_services[@]}-1; i>=0; i--)); do
     ${sudo} start "${stopped_services[$i]}" > /dev/null
     if test $? -ne 0; then
@@ -150,6 +153,7 @@ start_services()
 
 set_policy()
 {
+  echo "Setting CPU performance governor" | tee -a "${log}"
   old_policy=(`cpufreq-info -p`) #0 = min freq, 1 = max freq, 2 = governor
   if test $? -ne 0 || \
      test x"${old_policy[0]:-}" = x || \
@@ -172,6 +176,7 @@ restore_policy()
   if test x"${old_policy:-}" = x; then
     return 0
   fi
+  echo "Restoring CPU performance governor" | tee -a "${log}"
   ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}"
   if test $? -ne 0; then
     echo "Unable to restore policy '${old_policy}'" | tee -a /dev/stderr "${log}" > /dev/null
@@ -182,6 +187,7 @@ restore_policy()
 #Note that some processes cannot be bound, for example per-cpu kernel threads.
 bind_processes()
 {
+  echo "Setting process affinity" | tee -a "${log}"
   ${sudo} taskset -a -p -c $1 1 > /dev/null
   if test $? -ne 0; then
     echo "CPU bind not supported" | tee -a /dev/stderr "${log}" > /dev/null
@@ -237,6 +243,7 @@ unbind_processes()
     #Either taskset isn't working, or we didn't change any affinities
     return 0
   fi
+  echo "Setting process affinity" | tee -a "${log}"
 
   local p
   local ret=0
@@ -258,6 +265,7 @@ unbind_processes()
 #We don't stop loopback, that would be madness
 stop_network()
 {
+  echo "Shutting down network interface(s)" | tee -a "${log}"
   #Stop network on crouton (untested)
   if croutonversion > /dev/null 2>&1; then
     #TODO: Rather than sleep 2, we should spin until we see that those services are stopped
@@ -335,6 +343,7 @@ start_network()
   if test x"${downed_interfaces-}" = x; then
     return 0
   fi
+  echo "Bringing back network interface(s)" | tee -a "${log}"
 
   if croutonversion > /dev/null 2>&1; then
     ${sudo} /bin/bash -c 'start wpasupplicant && start shill' && ${sudo} /sbin/iptables -P INPUT ACCEPT
@@ -510,6 +519,7 @@ fi
 #but doesn't work on our machines (setarch rejects the value of uname -m, and some
 #obvious alternatives, as invalid).
 if test ${do_aslr} -eq 1; then
+  echo "Disabling ASLR" | tee -a "${log}"
   rva_setting="`cat /proc/sys/kernel/randomize_va_space`"
   ${sudo} bash -c 'echo 0 > /proc/sys/kernel/randomize_va_space'
   if test $? -ne 0; then
@@ -522,6 +532,7 @@ fi
 
 #By setting our own niceness, we don't force the benchmark to run as root
 if test ${do_renice} -eq 1; then
+  echo "Renicing" | tee -a "${log}"
   #Don't use $sudo, we don't want to break out of chroot here
   if test "${USER}" = root; then
          renice -19 $$
