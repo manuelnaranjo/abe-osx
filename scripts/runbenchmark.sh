@@ -21,13 +21,15 @@ cautious=''
 build_dir=
 run_benchargs=
 post_target_cmd=
-while getopts a:b:cd:e:g:kpt: flag; do
+target_dir=
+while getopts a:b:cd:e:f:g:kpt: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
     c) cautious='-c';;
     d) device="${OPTARG}";;
     e) post_target_cmd="${OPTARG}";;
+    f) target_dir="${OPTARG}";;
     g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
@@ -133,9 +135,13 @@ if test $? -ne 0; then
 fi
 
 #Create and populate working dir on target
-target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
+if test x"${target_dir}" = x; then
+  target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
+else
+  (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "if ! test -d ${target_dir}; then mkdir -p ${target_dir}; fi" ${ssh_opts})
+fi
 if test $? -ne 0; then
-  echo "Unable to get tmpdir on target" 1>&2
+  echo "Unable to find/get/create workdir on target" 1>&2
   error=1
   exit
 fi

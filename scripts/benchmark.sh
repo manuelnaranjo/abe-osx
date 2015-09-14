@@ -92,7 +92,8 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
 target=
 post_target_cmd=
 compress_build=1
-while getopts a:b:cde:f:g:hi:km:ps: flag; do
+target_dir= #if blank, a tmpdir will be created. if not blank, create the specific dir.
+while getopts a:b:cde:f:g:hi:j:km:ps: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -107,6 +108,7 @@ while getopts a:b:cde:f:g:hi:km:ps: flag; do
        exit
     ;;
     i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
+    j) target_dir="${OPTARG}";;
     k)
        if test x"${keep}" = 'x-p'; then
          echo '-k overriding earlier -p'
@@ -249,7 +251,7 @@ if test ${compress_build} -eq 1; then
   fi
 fi
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild:-${builddir}}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild:-${builddir}}" -a "${run_benchargs}" ${target_dir:+-f "${target_dir}"} ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
