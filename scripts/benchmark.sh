@@ -115,11 +115,13 @@ while getopts a:b:cde:f:g:hi:j:km:ps: flag; do
        fi
        keep='-k'
        echo 'Unconditional keep (-k) set: possibly sensitive benchmark data will be left on target, even if run succeeds'
-       echo 'Continue? (y/N)'
-       read answer
-       if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
-         error=0
-         exit
+       if test x"${ABE_BENCH_NO_WARN_ON_KEEP:-}" = x; then
+         echo 'Continue? (y/N)'
+         read answer
+         if ! echo "${answer}" | egrep -i '^(y|yes)[[:blank:]]*$' > /dev/null; then
+           error=0
+           exit
+         fi
        fi
     ;;
     m) make_flags="${OPTARG}";;
