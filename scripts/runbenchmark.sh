@@ -140,6 +140,10 @@ if test $? -ne 0; then
   exit
 fi
 for thing in "${benchbuild}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
+  #if copying a directory, don't create the top-level at the other end
+  if test -d "${thing}"; then
+    thing="${thing}/"
+  fi
   (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
@@ -188,9 +192,12 @@ fi
       }; \
       trap phonehome EXIT; \
       cd ${target_dir} && \
-      tar xf `basename ${benchbuild}` --exclude='*.git/.git/*' && \
-      cd `tar tf ${benchbuild} | head -n1` && \
-      rm ../`basename ${benchbuild}` && \
+      if tar xf `basename ${benchbuild}` --exclude='*.git/.git/*'; then \
+        cd `tar tf ${benchbuild} | head -n1` && \
+        rm ../`basename ${benchbuild}`; \
+      else
+        cd "${benchmark}.git"; \
+      fi && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
      echo \\\${ret} > ${target_dir}/RETCODE && \
