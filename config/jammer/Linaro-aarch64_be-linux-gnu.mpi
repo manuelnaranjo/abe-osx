@@ -15,7 +15,7 @@ AutoRefreshFiles
 {Yes}
 
 BuildFailureAction
-{Fail (recommended)}
+{Continue without including missing files}
 
 CancelledInstallAction
 {Rollback and Stop}
@@ -24,7 +24,7 @@ CleanupCancelledInstall
 {Yes}
 
 CommandLineFailureAction
-{Fail (recommended)}
+{Continue without including missing files}
 
 Company
 {Linaro}
