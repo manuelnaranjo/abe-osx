@@ -281,12 +281,11 @@ build_all()
         # delete temp files from making the release
         dryrun "rm -fr ${local_builds}/linaro.*"
 
-        if test x"${clibrary}" != x"newlib" -a x"${tarbin}" = x"yes"; then
+        if test x"${clibrary}" != x"newlib" -a x"${tarbin}" = x"yes" -a `echo ${host} | grep -c mingw` -eq 0; then
             binary_runtime
         fi
         binary_toolchain
-
-	if test x"${tarbin}" = x"yes"; then
+	if test x"${tarbin}" = x"yes" -a `echo ${host} | grep -c mingw` -eq 0; then
 	    binary_sysroot
         fi
 #        if test "`echo ${with_packages} | grep -c gdb`" -gt 0; then
