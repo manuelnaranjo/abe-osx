@@ -1,0 +1,123 @@
+{
+  "job_name": "cint2006_aarch64-juno_a57_x1",
+  "timeout": 691200,
+  "actions":
+  [
+    {
+      "command": "deploy_linaro_image",
+      "parameters":
+      {
+        "role": "host",
+        "image": "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
+      }
+    },
+    {
+      "command": "deploy_linaro_image",
+      "parameters":
+      {
+        "role": "target_juno-a53",
+        "hwpack": "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz",
+        "rootfs": "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz"
+      }
+    },
+    {
+      "command": "deploy_linaro_image",
+      "parameters":
+      {
+        "role": "target_juno-a57",
+        "hwpack": "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz",
+        "rootfs": "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz"
+      }
+    },
+    {
+      "command": "lava_test_shell",
+      "parameters":
+      {
+        "role": "host",
+        "timeout": 691200,
+        "testdef_repos":
+        [{
+          "git-repo": "https://git.linaro.org/toolchain/abe",
+          "testdef": "config/bench/lava/host-session.yaml",
+          "revision": "benchmarking",
+          "parameters":
+          {
+            "BENCHMARK": "CPU2006",
+            "TOOLCHAIN": "<AARCH64 TOOLCHAIN>",
+            "RUN_FLAGS": "int",
+            "COMPILER_FLAGS": "-mcpu=cortex-a57",
+            "MAKE_FLAGS": "BENCHSET=int",
+            "PREBUILT": "",
+            "BENCH_DEBUG": "1",
+            "PUB_KEY": "<YOUR PUBLIC KEY>"
+          }
+        }]
+      }
+    },
+    {
+      "command": "lava_test_shell",
+      "parameters":
+      {
+        "role": "target_juno-a53",
+        "timeout": 691200,
+        "testdef_repos":
+        [{
+          "git-repo": "https://git.linaro.org/toolchain/abe",
+          "testdef": "config/bench/lava/target-session.yaml",
+          "revision": "benchmarking",
+          "parameters":
+          {
+            "CONFIG": "juno-a53",
+            "PUB_KEY": "<YOUR PUBLIC KEY>"
+          }
+        }]
+      }
+    },
+    {
+      "command": "lava_test_shell",
+      "parameters":
+      {
+        "role": "target_juno-a57",
+        "timeout": 691200,
+        "testdef_repos":
+        [{
+          "git-repo": "https://git.linaro.org/toolchain/abe",
+          "testdef": "config/bench/lava/target-session.yaml",
+          "revision": "benchmarking",
+          "parameters":
+          {
+            "CONFIG": "juno-a57",
+            "PUB_KEY": "<YOUR PUBLIC KEY>"
+          }
+        }]
+      }
+    },
+    {
+      "command": "submit_results",
+      "parameters":
+      {
+        "server": "https://<YOUR LAVA USER NAME>@validation.linaro.org/RPC2/",
+        "stream": "/private/personal/<YOUR LAVA USER NAME>/"
+      }
+    }
+  ],
+  "device_group":
+  [
+    {
+      "count": 1,
+      "device_type": "kvm",
+      "role": "host"
+    },
+    {
+      "count": 1,
+      "device_type": "juno",
+      "role": "target_juno-a53"
+    },
+    {
+      "count": 1,
+      "device_type": "juno",
+      "role": "target_juno-a57"
+    }
+  ]
+}
+
