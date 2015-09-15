@@ -97,6 +97,7 @@ checkout_infrastructure()
 	# have to modify the GDB configure script.
 	export PYTHON_MINGW=${local_snapshots}/infrastructure/python-2.7.4-mingw32
 	# The Python DLLS need to be in the bin dir where the executables are.
+	mkdir -p ${local_builds}/destdir/${host}/bin/
 	rsync -ar ${PYTHON_MINGW}/pylib ${local_builds}/destdir/${host}/bin/
 	rsync -ar ${PYTHON_MINGW}/dll ${local_builds}/destdir/${host}/bin/
 	rsync -ar ${PYTHON_MINGW}/libpython2.7.dll ${local_builds}/destdir/${host}/bin/
