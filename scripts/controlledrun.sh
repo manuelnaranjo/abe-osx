@@ -591,7 +591,7 @@ if test $? -ne 0; then
 fi
 echo | tee -a "${log}"
 echo "** CPUFreq:" | tee -a "${log}"
-${sudo} cpufreq-info -p | tee -a "${log}"
+${sudo} cpufreq-info | tee -a "${log}"
 if test $? -ne 0; then
   echo "*** Unable to get CPUFreq info" | tee -a "${log}"
 fi
