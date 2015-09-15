@@ -170,8 +170,8 @@ fi
 if test x"${servicectl:-}" = xyes; then
   flags+=" -s ${target_dir}/${device}.services"
 fi
-if test x"${freqctl:-}" = xyes; then
-  flags+=" -f"
+if test x"${freq:-}" != x; then
+  flags+=" -f ${freq}"
 fi
 
 #This parameter read from the benchmark conf file earlier in this script
