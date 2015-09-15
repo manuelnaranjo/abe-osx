@@ -173,6 +173,15 @@ fi
 if test x"${freq:-}" != x; then
   flags+=" -f ${freq}"
 fi
+if test x"${aslrctl:-}" = xno; then
+  flags+=" -A"
+fi
+if test x"${envctl:-}" = xno; then
+  flags+=" -E"
+fi
+if test x"${nicectl:-}" = xno; then
+  flags+=" -R"
+fi
 
 #This parameter read from the benchmark conf file earlier in this script
 if test x"${safe_output}" = xyes; then
