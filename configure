@@ -3778,7 +3778,7 @@ fi
 if test "${with_fileserver+set}" = set; then :
   withval=$with_fileserver; FILESERVER=${withval}
 else
-  FILESERVER='148.251.136.42'
+  FILESERVER='148.251.136.42/snapshots-ref'
 fi
 
 
@@ -3875,6 +3875,8 @@ $as_echo "$as_me: My builds will be installed in: ${LOCAL_BUILDS}" >&6;}
 $as_echo "$as_me: Sysroots will be installed in: ${SYSROOTS}" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&5
 $as_echo "$as_me: Remote snapshots will be fetched from: ${REMOTE_SNAPSHOTS}" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Using remote fileserver: http://${FILESERVER}" >&5
+$as_echo "$as_me: Using remote fileserver: http://${FILESERVER}" >&6;}
 echo ""
 
 
