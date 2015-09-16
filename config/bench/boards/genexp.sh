@@ -7,7 +7,7 @@ a57_freq=800MHz
 for y in 0 1 2 3 4 5; do
   for x in base freq net aslr env nice; do
     cat > noise-control-experiment-juno-${y}-${x}.conf << EOF
-$y $x
+#$y $x
 benchcore=$y
 othercore=`if test $y -eq $other; then echo $alt_other; else echo $other; fi`
 freq=`if test $x = freq; then
