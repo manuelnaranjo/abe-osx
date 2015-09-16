@@ -154,7 +154,7 @@ start_services()
 set_policy()
 {
   echo "Setting CPU performance governor" | tee -a "${log}"
-  old_policy=(`cpufreq-info -p`) #0 = min freq, 1 = max freq, 2 = governor
+  old_policy=(`cpufreq-info -p -c "${bench_cpu}"`) #0 = min freq, 1 = max freq, 2 = governor
   if test $? -ne 0 || \
      test x"${old_policy[0]:-}" = x || \
      test x"${old_policy[1]:-}" = x || \
@@ -162,7 +162,7 @@ set_policy()
     echo "Frequency scaling not supported" | tee -a /dev/stderr "${log}" > /dev/null
     return 1
   fi
-  ${sudo} cpufreq-set -g userspace -d "${freq}" -u "${freq}"
+  ${sudo} cpufreq-set -g userspace -d "${freq}" -u "${freq}" -c "${bench_cpu}"
   if test $? -ne 0; then
       old_policy=
       echo "Frequency scaling not supported" | tee -a /dev/stderr "${log}" > /dev/null
@@ -177,7 +177,7 @@ restore_policy()
     return 0
   fi
   echo "Restoring CPU performance governor" | tee -a "${log}"
-  ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}"
+  ${sudo} cpufreq-set -g "${old_policy[2]}" -d "${old_policy[0]}" -u "${old_policy[1]}" -c "${bench_cpu}"
   if test $? -ne 0; then
     echo "Unable to restore policy '${old_policy}'" | tee -a /dev/stderr "${log}" > /dev/null
   fi
