@@ -87,9 +87,15 @@ checkout_infrastructure()
 	unset version
     done
 
-    # GDB now has python support, for mingw we have to download a
-    # pre-built win2 binary that works with mingw32.
     if test `echo ${host} | grep -c mingw` -eq 1; then
+	# GDB now needs expat for XML support.
+	mkdir -p ${local_builds}/destdir/${host}/bin/
+	fetch infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
+	extract infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
+	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/include ${local_builds}/destdir/${host}/usr/
+	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/lib ${local_builds}/destdir/${host}/usr/
+	# GDB now has python support, for mingw we have to download a
+	# pre-built win2 binary that works with mingw32.
 	fetch infrastructure/python-2.7.4-mingw32.tar.xz
 	extract infrastructure/python-2.7.4-mingw32.tar.xz
 	# The mingw package of python contains a script used by GDB to
