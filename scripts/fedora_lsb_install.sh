@@ -56,9 +56,9 @@ TOP="http://ftp.linuxfoundation.org/pub/lsb/repositories/yum/lsb-${LSB_VER}"
 wget --quiet -O /etc/yum.repos.d/LSB-${LSB_VER}-${LSB_ARCH}.repo $TOP/lsb-${LSB_VER}-${LSB_ARCH}.repo
 
 # Update the repo with the new lsb repository but don't force a system update
-yum --assumeyes --quiet makecache
+dnf --assumeyes --quiet makecache
 
 # This will install all of the lsb packages
-yum --assumeyes install lsb-task-dist-testkit lsb-task-app-testkit lsb-task-sdk
+dnf --assumeyes install lsb-task-dist-testkit lsb-task-app-testkit lsb-task-sdk
 
 exit 0
