@@ -592,7 +592,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-cb_commands="--target ${target} eglibc=eglibc.git"
+cb_commands="--target ${target} glibc=eglibc.git"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
