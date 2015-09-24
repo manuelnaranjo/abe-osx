@@ -388,7 +388,7 @@ match="set_package"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-libc="eglibc"
+libc="glibc"
 cb_commands="--target ${target} --set libc=${libc}"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
@@ -414,29 +414,29 @@ test_pass "${cb_commands}" "${match}"
 target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-none-eabi"
@@ -592,7 +592,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-cb_commands="--target ${target} eglibc=eglibc.git"
+cb_commands="--target ${target} glibc=eglibc.git"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
