@@ -87,7 +87,7 @@ case "$target_triplet" in {
 	    default {
 		if { [info exists env(SCHROOT_TEST)]
 		     && $env(SCHROOT_TEST) == "yes" } {
-		    set target_list [linaro_lab qemu]
+		    set target_list [linaro_lab armv8]
 		} else {
 		    global SIM
 		    # CPU and sysroot are set through the environment
