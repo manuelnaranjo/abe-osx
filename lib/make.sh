@@ -738,6 +738,9 @@ make_check()
 	local make_flags
 	case "${target}" in
 	    "$build"|*"-elf"*) make_flags="${make_flags} -j ${cpus}" ;;
+	    # Try to make cross-testing results on the aarch64-linux-gnu
+	    # boards stable: limit to the number of target cpus.
+	    aarch64-linux-gnu) make_flags="${make_flags} -j 8" ;;
 	    # Double parallelization when running tests on remote boards
 	    # to avoid host idling when waiting for the board.
 	    *) make_flags="${make_flags} -j $((2*${cpus}))" ;;
