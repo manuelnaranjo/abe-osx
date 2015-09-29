@@ -112,69 +112,18 @@ match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
-in="gcc-svn-4.8"
-match=''
-test_parser service "${in}" "${match}" "${errmatch}"
-match='gcc-svn-4.8'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='gcc-svn-4.8'
-test_parser url "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
 match=''
 test_parser revision "${in}" "${match}" "${errmatch}"
-# We can't really know this this shouldn't be -svn-4.8
-# without having a service identifier!
-match='gcc-svn-4.8'
-test_parser tool "${in}" "${match}" "${errmatch}"
 
-# Minor variation with a different service
-in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-match="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc'
+match='repo.git'
 test_parser repo "${in}" "${match}" "${errmatch}"
 match=''
 test_parser branch "${in}" "${match}" "${errmatch}"
 match=''
 test_parser revision "${in}" "${match}" "${errmatch}"
-match='gcc'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="lp:cortex-strings"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:cortex-strings'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-in="lp:cortex-strings/foo"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:cortex-strings/foo'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
+match='repo'
 test_parser tool "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
@@ -1017,49 +966,6 @@ errmatch=0
 in="http://abe.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
 match='gdb'
 test_parser repo "${in}" "${match}" "${errmatch}"
-
-# This is just goofy, and if the system doesn't know the service it's
-# just going to guess.
-in="gcc-linaro-4.6"
-match=''
-test_parser service "${in}" "${match}" "${errmatch}"
-match='gcc-linaro-4.6'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc-linaro-4.6'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-
-in="lp:gcc-linaro/4.6"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:gcc-linaro/4.6'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc-linaro'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='gcc'
-test_parser tool "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='4.6'
-test_parser branch "${in}" "${match}" "${errmatch}"
-
-
-in="http://llvm.org/svn/llvm-project/cfe/trunk"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='http://llvm.org/svn/llvm-project/cfe/trunk'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cfe'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='cfe'
-test_parser tool "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
 
 for transport in git ssh http; do
   in="${transport}://git.linaro.org/toolchain/binutils-gdb.git~linaro_binutils-2_24-branch"

@@ -243,13 +243,3 @@ else
     fail "${testing}"
     fixme "get_srcdir returned ${out}"
 fi
-
-testing="get_srcdir: launchpad URL." 
-in="lp:cortex-strings"
-out="`get_srcdir $in`"
-if test x"${out}" = x"${local_snapshots}/cortex-strings"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_srcdir returned ${out}"
-fi
