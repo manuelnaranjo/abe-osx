@@ -128,7 +128,7 @@ if ! "${ABE_DIR}"/scripts/Benchmark.job; then
   exit
 fi
 
-echo "*** RESULTS READY"
+echo "*** RESULTS READY: ${ip_addr}"
 echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab"
 echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab 'touch ~/data/resultsgone'"
 while ! test -e ~/data/resultsgone; do
