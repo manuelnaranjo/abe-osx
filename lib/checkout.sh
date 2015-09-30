@@ -24,231 +24,56 @@
 # but we also want to work with the native source code control system.
 usegit=no
 
-# This is used by abe.sh --checkout all but not by --build
-checkout_infrastructure()
-{
-    trace "$*"
-
-    if test x"${supdate}" = xno; then
-	warning "checkout_infrastructure called with --disable update. Checkout of infrastructure files will be skipped."
-	return 0
-    fi
-
-    source_config infrastructure
-
-    if test x"${depends}" = x; then
-	error "No dependencies listed for infrastructure libraries!"
-	return 1
-    fi
-
-    # This shouldn't happen, but it's nice for regression verification.
-    if test ! -e ${local_snapshots}/md5sums; then
-	error "Missing ${local_snapshots}/md5sums file needed for infrastructure libraries."
-	return 1
-    fi
-
-    # We have to grep each dependency separately to preserve the order, as
-    # some libraries depend on other libraries being bult first. Egrep
-    # unfortunately sorts the files, which screws up the order.
-    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
-
-    local version=
-    for i in ${depends}; do
-	case $i in
-	    linux) version=${linux_version} ;;
-	    mpfr) version=${mpfr_version} ;;
-	    mpc) version=${mpc_version} ;;
-	    gmp) version=${gmp_version} ;;
-	    dejagnu) version=${dejagnu_version} ;;
-	    *)
-		error "config/infrastructure.conf contains an unknown dependency: $i"
-		return 1
-		;;
-	esac
-
-	# If the user didn't set it, check the <component>.conf files for
-	# 'latest'.
-	if test "${version:+set}" != "set"; then
-	    version="`grep ^latest= ${topdir}/config/${i}.conf | cut -d '\"' -f 2`"
-	    # Sometimes config/${i}.conf uses <component>-version and sometimes
-	    # it just uses 'version'.  Regardless, searching the md5sums file requires
-	    # that we include the component name.
-	    version=${i}-${version#${i}-}
-	fi
-
-	if test "${version:+found}" != "found"; then
-	    error "Can't find a version for component \"$i\" in ${i}.conf"
-	    return 1
-	fi
-
-	# Hopefully we only download the exact match for each one.  Depending
-	# how vague the user is it might download multiple tarballs.
-	files="${files} `grep /${version} ${local_snapshots}/md5sums | cut -d ' ' -f3 | uniq`"
-	unset version
-    done
-
-    if test `echo ${host} | grep -c mingw` -eq 1; then
-	# GDB now needs expat for XML support.
-	mkdir -p ${local_builds}/destdir/${host}/bin/
-	fetch infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
-	extract infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
-	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/include ${local_builds}/destdir/${host}/usr/
-	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/lib ${local_builds}/destdir/${host}/usr/
-	# GDB now has python support, for mingw we have to download a
-	# pre-built win2 binary that works with mingw32.
-	fetch infrastructure/python-2.7.4-mingw32.tar.xz
-	extract infrastructure/python-2.7.4-mingw32.tar.xz
-	# The mingw package of python contains a script used by GDB to
-	# configure itself, this is used to specify that path so we don't
-	# have to modify the GDB configure script.
-	export PYTHON_MINGW=${local_snapshots}/infrastructure/python-2.7.4-mingw32
-	# The Python DLLS need to be in the bin dir where the executables are.
-	rsync -ar ${PYTHON_MINGW}/pylib ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/dll ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/libpython2.7.dll ${local_builds}/destdir/${host}/bin/
-	# Future make check support of python GDB in mingw32 will require these
-	# exports.  Export them now for future reference.
-	export PYTHONHOME=${local_builds}/destdir/${host}/bin/dll
-	warning "You must set PYTHONHOME in your environment to ${PYTHONHOME}"
-	export PYTHONPATH=${local_builds}/destdir/${host}/bin/pylib
-	warning "You must set PYTHONPATH in your environment to ${PYTHONPATH}"
-    fi
-
-    # Reset to the stored value
-    if test `echo ${host} | grep -c mingw` -eq 1 -a x"${tarbin}" = xyes; then
-	files="${files} installjammer-1.2.15.tar.gz"
-    fi
-
-    for i in ${files}; do
-	local name="`echo $i | sed -e 's:\.tar\..*::' -e 's:infrastructure/::'  -e 's:testcode/::'`"
-        local gitinfo=
-	gitinfo="`get_source ${name}`"
-	if test -z "${gitinfo}"; then
-	    error "No matching source found for \"${name}\"."
-	    return 1
-	fi
-
-	# Some infrastructure packages (like dejagnu) come from a git repo.
-	local service=
-	service="`get_git_service ${gitinfo}`" || return 1
-	if test x"${service}" != x; then
-	    local checkout_ret=
-	    checkout ${gitinfo}
-	    checkout_ret=$?
-	    if test ${checkout_ret} -gt 0; then
-		error "Failed checkout out of ${name}."
-		return 1
-	    fi
-	else
-	    fetch ${gitinfo}
-	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
-		return 1
-	    fi
-	    extract ${gitinfo}
-	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
-		return 1
-	    fi
-	fi
-    done
-
-    return 0
-}
-
 # This is similar to make_all except it _just_ gathers sources trees and does
 # nothing else.
 checkout_all()
 {
-    local packages=
-    packages="binutils libc gcc gdb"
+    trace "$*"
 
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-	gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${binutils_version}" = x; then
-	binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${eglibc_version}" = x; then
-	eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${newlib_version}" = x; then
-	newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${glibc_version}" = x; then
-	glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${gdb_version}" = x; then
-	gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-    fi
-
-    checkout_infrastructure
-    if test $? -gt 0; then
-	return 1
-    fi
+    local packages="$*"
 
     for i in ${packages}; do
-	local package=
-	case $i in
-	    gdb)
-		package=${gdb_version}
-		;;
-	    binutils)
-		package=${binutils_version}
-		;;
-	    gcc)
-		package=${gcc_version}
-		;;
-	    libc)
-		if test x"${clibrary}" = x"eglibc"; then
-		    package=${eglibc_version}
-		elif  test x"${clibrary}" = x"glibc"; then
-		    package=${glibc_version}
-		elif test x"${clibrary}" = x"newlib"; then
-		    package=${newlib_version}
-		else
-		    error "\${clibrary}=${clibrary} not supported."
-		    return 1
-		fi
-		;;
-	    *)
-		;;
-	esac
-
-    	local gitinfo="`get_source ${package}`"
-	if test -z "${gitinfo}"; then
-	    error "No matching source found for \"${name}\"."
-	    return 1
+	local package=$i
+	if test x"$i" = x"libc"; then
+	    package="${clibrary}"
 	fi
+	if test x"${package}" = x"stage1" -o x"${package}" = x"stage2"; then
+	    package="gcc"
+	fi
+	collect_data ${package}
 
-	# If it doesn't have a service it's probably a tarball that we need to
-	# fetch, especially likely if passed in on the command line.
-	local service=
-	service="`get_git_service ${gitinfo}`"
-	if test x"${service}" != x; then
-	    local checkout_ret=
-	    checkout ${gitinfo}
+	local filespec="`get_component_filespec ${package}`"
+	if test "`component_is_tar ${package}`" = no; then
+ 	    local checkout_ret=
+	    checkout ${package}
 	    checkout_ret=$?
 	    if test ${checkout_ret} -gt 0; then
 		error "Failed checkout out of ${name}."
 		return 1
 	    fi
 	else
-	    fetch ${gitinfo}
+	    fetch ${package}
 	    if test $? -gt 0; then
-		error "Couldn't fetch tarball ${gitinfo}"
+		error "Couldn't fetch tarball ${package}"
 		return 1
 	    fi
-	    extract ${gitinfo}
+	    extract ${package}
 	    if test $? -gt 0; then
-		error "Couldn't extract tarball ${gitinfo}"
+		error "Couldn't extract tarball ${package}"
 		return 1
 	    fi
+	fi
+
+	if test $? -gt 0; then
+	    error "Failed checkout out of ${package}."
+	    return 1
 	fi
     done
     
     notice "Checkout all took ${SECONDS} seconds"
+
+    # Set this to no, since all the sources are now checked out
+    supdate=no
 
     return 0
 }
@@ -273,42 +98,47 @@ checkout()
 {
     trace "$*"
 
-    if test x"$1" = x; then
-	error "No URL given!"
-	return 1
-    fi
+    local component="$1"
 
-    local service=
-    service="`get_git_service $1`" || return 1
-    if test x"${service}" = x ; then
-	error "Unable to parse service from '$1'. You have either a bad URL, or an identifier that should be passed to get_URL."
-	return 1
-    fi
+    # None of the following should be able to fail with the code as it is
+    # written today (and failures are therefore untestable) but propagate
+    # errors anyway, in case that situation changes.
+    local url="`get_component_url ${component}`" || return 1
+    local branch="`get_component_branch ${component}`" || return 1
+    local srcdir="`get_component_srcdir ${component}`" || return 1
+    local repo="`get_component_filespec ${component}`"
+    local protocol="`echo ${url} | cut -d ':' -f 1`"    
 
-    local repo=
-    repo="`get_git_repo $1`" || return 1
-
-    #None of the following should be able to fail with the code as it is
-    #written today (and failures are therefore untestable) but propagate
-    #errors anyway, in case that situation changes.
-    local tool=
-    tool="`get_toolname $1`" || return 1
-    local url=
-    url="`get_git_url $1`" || return 1
-    local branch=
-    branch="`get_git_branch $1`" || return 1
-    local revision=
-    revision="`get_git_revision $1`" || return 1
-    local srcdir=
-    srcdir="`get_srcdir $1`" || return 1
-
-    case $1 in
+    case ${protocol} in
+	svn*)
+	    local trunk="`echo $1 |grep -c trunk`"
+	    if test ${trunk} -gt 0; then
+		local dir="`dirname $1`"
+		local dir="`basename ${dir}`/trunk"
+	    fi
+	    if test x"${force}" =  xyes; then
+		#rm -fr ${local_snapshots}/${dir}
+		echo "Removing existing sources for ${srcdir}"
+	    fi
+	    if test x"${usegit}" =  xyes; then
+		local out="`git svn clone $1 ${srcdir}`"
+	    else
+		if test -e ${srcdir}/.svn; then
+		    (cd ${srcdir} && svn update)
+		    # Extract the revision number from the update message
+		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
+		else
+		    svn checkout $1 ${srcdir}
+                    if test $? -gt 0; then
+                        error "Failed to check out $1 to ${srcdir}"
+                        return 1
+                    fi
+		fi
+	    fi
+	    ;;
 	git*|http*|ssh*)
-            #FIXME: We deliberately ignored error returns from get_git_url,
-            #       because any path with an '@' in will result in errors.
-            #       Jenkins is wont to create such paths.
-            local repodir="`get_git_url ssh://${srcdir} | sed 's#^ssh://##'`"
-
+            local repodir="${url}/${repo}"
+#	    local revision= `echo ${gcc_version} | grep -o "[~@][0-9a-z]*\$" | tr -d '~@'`"
 	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
 		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
 		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
@@ -316,16 +146,15 @@ checkout()
 
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
-	    if test ! -d ${repodir}; then
-		local git_reference_opt
-		if [ x"$git_reference_dir" != x"" -a \
-		    -d "$git_reference_dir/$(basename $repodir)" ]; then
-		    local git_reference_opt="--reference $git_reference_dir/$(basename $repodir)"
+	    if test ! -d ${local_snapshots}/${repo}; then
+		local git_reference_opt=
+		if test -d "${git_reference_dir}/${repo}"; then
+		    local git_reference_opt="--reference ${git_reference_dir}/${repo}"
 		fi
 		notice "Cloning $1 in ${srcdir}"
-		dryrun "git_robust clone $git_reference_opt ${url} ${repodir}"
+		dryrun "git_robust clone ${git_reference_opt} ${repodir} ${local_snapshots}/${repo}"
 		if test $? -gt 0; then
-		    error "Failed to clone master branch from ${url} to ${repodir}"
+		    error "Failed to clone master branch from ${url} to ${url}"
 		    return 1
 		fi
 	    fi
@@ -335,7 +164,7 @@ checkout()
 		# branch AND a commit is redundant and potentially contradictory.  For this
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
-		    notice "Checking out revision for ${tool} in ${srcdir}"
+		    notice "Checking out revision for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
 			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
 			flock ${local_builds}/git$$.lock --command "${cmd}"
@@ -349,7 +178,7 @@ checkout()
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
 	        else
-		    notice "Checking out branch ${branch} for ${tool} in ${srcdir}"
+		    notice "Checking out branch ${branch} for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
 			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
 			flock ${local_builds}/git$$.lock --command "${cmd}"
@@ -364,10 +193,10 @@ checkout()
 	    elif test x"${supdate}" = xyes; then
 		# Some packages allow the build to modify the source directory and
 		# that might screw up abe's state so we restore a pristine branch.
-		notice "Updating sources for ${tool} in ${srcdir}"
-		dryrun "(cd ${repodir} && git stash --all)"
-		dryrun "(cd ${repodir} && git reset --hard)"
-		dryrun "(cd ${repodir} && git_robust pull)"
+		notice "Updating sources for ${component} in ${srcdir}"
+		dryrun "(cd ${rsrcdir} && git stash --all)"
+		dryrun "(cd ${srcdir} && git reset --hard)"
+		dryrun "(cd ${srcdir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
 		dryrun "(cd ${srcdir} && git stash --all)"
@@ -384,6 +213,12 @@ checkout()
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
+
+	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
+	    if test x"${revision}" != x"${newrev}" -a x"${revision}" != x; then
+		error "SHA1s don't match for ${component}!, now is ${newrev}, was ${revision}"
+	    fi
+	    set_component_revision ${component} ${newrev}
 	    ;;
 	*)
 	    ;;
@@ -394,6 +229,7 @@ checkout()
 	return 1
     fi
 
+    rm -f ${local_builds}/git$$.lock
     return 0
 }
 
@@ -499,11 +335,10 @@ change_branch()
 {
     trace "$*"
 
-    local dir="`normalize_path $1`"
     local version="`basename $1`"
     local branch="`echo $1 | cut -d '/' -f 2`"
 
-    local srcdir="`get_srcdir $1`"
+    local srcdir="`get_component_srcdir $1`"
     if test "`echo $1 | grep -c '@'`" -gt 0; then
 	local revision="`echo $1 | cut -d '@' -f 2`"
     else

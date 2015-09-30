@@ -28,7 +28,7 @@ usage()
              [--excludecheck {all|glibc|gcc|gdb|binutils}]
              [--fetch <url>] [--force] [--help] [--host <host_triple>]
              [--infrastructure] [--interactive]
-             [--list] [--manifest <manifest_file>]
+             [--manifest <manifest_file>]
              [--space <space needed>]
              [--parallel] [--prefix] [--release <release_version_string>]
              [--set {arch|cpu|tune}=XXX]
@@ -211,8 +211,6 @@ OPTIONS
   --infrastructure Download and install the infrastructure libraries.
 
   --interactive Interactively select packages from the snapshots file.
-
-  --list	List the available snapshots or configured repositories.
 
   --manifest <manifest_file>
 
@@ -425,6 +423,9 @@ abe="`basename $0`"
 
 # this is used to launch builds of dependant components
 command_line_arguments=$*
+
+# Initialie an entry in the data array for components
+collect_data abe
 
 #
 # These functions actually do something
@@ -653,33 +654,6 @@ check_optional_directive()
     return 0
 }
 
-# This gets a list from a remote server of the available tarballs. We use HTTP
-# instead of SSH so it's more accessible to those behind nasty firewalls.
-# base - already checkout out source trees
-# snapshots - tarballs of various source snapshots
-# prebuilt - prebuilt executables
-get_list()
-{
-    echo "Get version list for $1..."
-
-    # http://abe.validation.linaro.org/snapshots
-    case $1 in
-	testcode|t*)
-	    testcode="`grep testcode ${local_snapshots}/testcode/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${testcode}"
-	    ;;
-	snapshots|s*)
-	    snapshots="`egrep -v "\.asc|\.diff|\.txt|xdelta|base|infrastructure|testcode" ${local_snapshots}/md5sums | cut -d ' ' -f 3`"
-	    echo "${snapshots}"
-	    ;;
-	infrastructure|i*)
-	    infrastructure="`grep infrastructure ${local_snapshots}/md5sums | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-	    echo "${infrastructure}"
-	    ;;
-    esac
-	    return 0
-}
-
 # Get some info on the build system
 # $1 - If specified, it's the hostname of the remote system
 get_build_machine_info()
@@ -900,10 +874,6 @@ while test $# -gt 0; do
 	--interactive|-i)
 	    interactive=yes
 	    ;;
-	--list|-l)
-            get_list $2
-	    shift
-            ;;
 	--nodepends|-n)		# nodepends
 	    nodepends=yes
 	    ;;
@@ -1195,12 +1165,6 @@ if test x"${force}" = xyes -a x"$supdate" = xno; then
     echo "         Using \"--force\" overrides \"--disable update\".  Sources will be redownloaded."
 fi
 
-timeout_save=${wget_timeout}
-wget_timeout=10
-# Get the md5sums file, which is used later to get the URL for remote files
-fetch_md5sums
-wget_timeout=${timeout_save}
-
 if test ! -z "${do_makecheck}"; then
     # If we encounter 'all' in ${do_makecheck} anywhere we just overwrite
     # runtests with ${all_unit_tests} and ignore the rest.
@@ -1260,13 +1224,7 @@ fi
 
 if test ! -z ${do_checkout}; then
     if test x"${do_checkout}" != x"all"; then
-	url="`get_source ${do_checkout}`"
-	if test $? -gt 0; then
-	    error "Couldn't find the source for ${do_checkout}"
-	    build_failure
-	fi
-
-	checkout ${url}
+	checkout ${do_checkout}
 	if test $? -gt 0; then
 	    error "--checkout ${url} failed."
 	    build_failure
@@ -1283,7 +1241,7 @@ fi
 if test ! -z ${do_build}; then
     if test x"${do_build}" != x"all"; then
 	buildingall=no
-	gitinfo="`get_source ${do_build}`"
+	gitinfo="${do_build}"
 	if test x"${gitinfo}" = x; then
 	    error "Couldn't find the source for ${do_build}"
 	    build_failure

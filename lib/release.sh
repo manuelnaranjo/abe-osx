@@ -70,8 +70,8 @@ release_binutils_src()
 	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
 
-    local srcdir="`get_srcdir ${binutils_version}`"
-    local builddir="`get_builddir ${binutils_version} binutils`"
+    local srcdir="`get_component_srcdir ${binutils_version}`"
+    local builddir="`get_component_builddir ${binutils_version}`-binutils"
     # The new combined repository for binutils has GDB too, so we strip that off.
     local tag="`create_release_tag ${binutils_version} | sed -e 's:-gdb::' -e 's:-binutils::'`"
 
@@ -126,8 +126,8 @@ release_gcc_src()
     if test x"${gcc_version}" = x; then
 	local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local builddir="`get_builddir ${gcc_version} stage2`"
+    local srcdir="`get_component_srcdir ${gcc_version}`"
+    local builddir="`get_component_builddir ${gcc_version}`-stage2"
     local tag="`create_release_tag ${gcc_version} | sed -e 's:[-~]linaro-::' | tr '~' '-'`"
     local destdir="${local_builds}/linaro.$$/${tag}"
 
@@ -272,7 +272,7 @@ release_gdb_src()
     if test x"${gdb_version}" = x; then
 	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2` | tr -d '\"'"
     fi
-    local srcdir="`get_srcdir ${gdb_version}`"
+    local srcdir="`get_component_srcdir ${gdb_version}`"
     # The new combined repository for GDB has Binutils too, so we strip that off.
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
     local destdir="/tmp/linaro.$$/${tag}"

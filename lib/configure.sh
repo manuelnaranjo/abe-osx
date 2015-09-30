@@ -23,28 +23,25 @@ configure_build()
 {
     trace "$*"
 
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+ 
     flock --wait 100 ${local_builds}/git$$.lock --command echo
     if test $? -gt 0; then
 	error "Timed out waiting for a git checkout to complete."
 	return 1
     fi
-    local gitinfo="`get_source $1`"
-
-    local tool="`get_toolname ${gitinfo}`"
 
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to configure.
-    if test x"${tool}" = x"linux"; then
+    if test x"${component}" = x"linux"; then
 	return 0
     fi
     # The git parser functions shall return valid results for all
     # services, especially once we have a URL.
-
-    local url="`get_git_url ${gitinfo}`" || return 1
-    local tag="`get_git_tag ${gitinfo}`" || return 1
-    local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
-    local stamp="`get_stamp_name configure ${gitinfo} ${2:+$2}`"
-    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
+    local srcdir="`get_component_srcdir ${component}`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
+    local version="`basename ${srcdir}`"
+    local stamp="`get_stamp_name configure ${version} ${2:+$2}`"
 
     # Don't look for the stamp in the builddir because it's in builddir's
     # parent directory.
@@ -70,18 +67,7 @@ configure_build()
 #	fi
     fi
 
-    # Since Binutils and GDB have a shared git repository, this confuses the logic
-    # of loading the right config file. If Binutils is already configured, then 
-    # assume GDB.
-    if test x"${2}" = x"gdb" -o x"${2}" = x"binutils"; then
-	local tool="${2}"
-    fi
-    
-    local configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
-    if test x"${configure}" = x; then
-      configure="yes"
-    fi
-    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes" -a x"${configure}" != xno; then
+    if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
 	warning "No configure script in ${srcdir}!"
         # not all packages commit their configure script, so if it has autogen,
         # then run that to create the configure script.
@@ -111,7 +97,7 @@ configure_build()
     if test x"$2" = x"gdbserver"; then
 	local toolname="gdbserver"
     else
-	local toolname="${tool}"
+	local toolname="${component}"
     fi
     if test -e "${topdir}/config/${toolname}.conf"; then
 	. "${topdir}/config/${toolname}.conf"
@@ -146,9 +132,9 @@ configure_build()
 
 
     # Force static linking unless dynamic linking is specified
-    local static="`grep ^static_link= ${topdir}/config/${tool}.conf | cut -d '=' -f 2 | tr  -d '\"'`"
+    local static="`get_component_staticlink ${component}`"
     if test x"${static}" = x"yes"; then
-	if test "`echo ${tool} | grep -c glibc`" -eq 0; then
+	if test "`echo ${component} | grep -c glibc`" -eq 0; then
 	    local opts="--disable-shared --enable-static"
 	fi
     fi
@@ -166,13 +152,13 @@ configure_build()
 	local date="${release}"
     fi
 
-    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
+    if test x"${override_cflags}" != x -a x"${component}" != x"eglibc"; then
 	local opts="${opts} CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\""
     fi
 
     # GCC and the binutils are the only toolchain components that need the
     # --target option set, as they generate code for the target, not the host.
-    case ${tool} in
+    case ${component} in
 	# zlib)
 	#     # zlib doesn't support most standard configure options
 	#     local opts="--prefix=${sysroots}/usr"
@@ -217,7 +203,6 @@ configure_build()
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
-			    local srcdir="${srcdir}/gdbserver"
 			    ;;
 			bootstrap*)
 			    notice "Building bootstrapped GCC"
@@ -254,14 +239,14 @@ configure_build()
 	    fi
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
-	gdb*)
+	gdb)
  	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
-	    if test x"$2" = x"gdbserver"; then
-		local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
-		local srcdir="${srcdir}/gdb/gdbserver"
-	    else
-		local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
-	    fi
+	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
+	    dryrun "mkdir -p ${builddir}"
+	    ;;
+	gdbserver)
+ 	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
+	    local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
 	# These are only built for the host
@@ -272,6 +257,8 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
     esac
+
+    local flags="`get_component_configure ${component}`"
 
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
@@ -295,21 +282,12 @@ configure_build()
 #	if test x"${tool}" = x"zlib"; then
 #	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
 #	else
-        if test x"${configure}" = xyes; then
-	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
-	    if test $? -gt 0; then
-	        error "Configure of $1 failed."
-	        return $?
-	    fi
-        else
-            dryrun "rsync -a --exclude=.git/ ${srcdir}/ ${builddir}"
-	    if test $? -gt 0; then
-	        error "Copy of $1 failed (rsync -a ${srcdir} ${builddir})"
-	        return $?
-	    fi
-        fi
-#       fi
-
+	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
+	if test $? -gt 0; then
+	    error "Configure of $1 failed."
+	    return $?
+	fi
+	
 	# unset this to avoid problems later
 	unset default_configure_flags
 	unset opts
@@ -317,9 +295,8 @@ configure_build()
 	unset stage2_flags
     fi
 
-    notice "Done configuring ${gitinfo}"
+    notice "Done configuring ${component}"
 
-    #touch ${stampdir}/${stamp}
     create_stamp "${stampdir}" "${stamp}"
 
     return 0
