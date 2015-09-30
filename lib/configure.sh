@@ -185,8 +185,15 @@ configure_build()
 	    # defaults to lib64/ for aarch64.  We need to override this.
 	    # There's no need to install anything into lib64/ since we don't
 	    # have biarch systems.
-	    echo libdir=/lib > ${builddir}/configparms
-	    echo slibdir=/usr/lib > ${builddir}/configparms
+
+	    # libdir is where static libraries and linker scripts are installed,
+	    # like libc.so, libc_nonshared.a, and libc.a.
+	    echo libdir=/usr/lib > ${builddir}/configparms
+
+	    # slibdir is where shared objects are installed.
+	    echo slibdir=/lib >> ${builddir}/configparms
+
+	    # rtlddir is where the dynamic-linker is installed.
 	    echo rtlddir=/lib >> ${builddir}/configparms
 	    local opts="${opts} --build=${build} --host=${target} --target=${target} --prefix=/usr"
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
