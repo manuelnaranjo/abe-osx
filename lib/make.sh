@@ -357,6 +357,18 @@ build()
             if test $? -gt 0; then
                 warning "Sources not updated, network error!"
             fi
+	    # Before building GCC, call contrib/gcc_update such that
+	    # time stamps are as expected. Otherwise, we could have
+	    # false failures in the testsuite (such as
+	    # gcc.dg/cpp/_Pragma3.c see
+	    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=28123)
+	    case ${tool} in
+		gcc)
+		    (cd ${srcdir} ; ./contrib/gcc_update --touch)
+		    ;;
+		*)
+		    ;;
+	    esac
         else
             # Don't update the compiler sources between stage1 and stage2 builds if this
             # is a cross build.
