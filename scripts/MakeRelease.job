@@ -85,7 +85,7 @@ if test x"${date}" != x; then
 fi
 
 if test "`echo ${target} | grep -c linux`" -gt 0; then
-    if test "`echo ${gcc_src} | grep -c 5\.1`" -gt 0; then
+    if test "`echo ${gcc_src} | grep -c -- '-[56][[:digit:]\.]*'`" -gt 0; then
 	libc="--set libc=glibc"
     else
 	libc="--set libc=eglibc"
