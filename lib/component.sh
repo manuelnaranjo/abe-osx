@@ -420,6 +420,9 @@ collect_data ()
 	pushd ${abe_path}
 	local revision="`git log --format=format:%H -n 1`"
 	local branch="`git branch | grep "^\*" | cut -d ' ' -f 2`"
+	if test "`echo ${branch} | grep -c detached`" -gt -0; then
+	    local branch=
+	fi
 	local url="`git config --get remote.origin.url`"
 	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
 	local filespec="abe.git"
