@@ -505,9 +505,12 @@ cb_commands="--dryrun --build gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
+set -x
 cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
-match="Couldn't find the source for"
+match="find the source for"
+echo "FIXME: $match"
 test_failure "${cb_commands}" "${match}"
+set +x
 
 # This tests that --build can go before --target and --target is still processed correctly.
 cb_commands="--dryrun --build all --target arm-linux-gnueabihf --dump"

@@ -149,7 +149,9 @@ import_manifest()
 	if test x"${ltarget}" != x; then
 	    target=${ltarget}
 	fi
-	sysroots=${sysroots}/${target}
+	if test "`echo ${sysroots} | grep -c ${target}`" -eq 0; then
+	    sysroots=${sysroots}/${target}
+	fi
 
 	local variables=
 	local i=0

@@ -72,7 +72,6 @@ component_init ()
     done
 
     toolchain=(${toolchain[@]} ${component})
-
     return 0
 }
 
@@ -494,7 +493,7 @@ collect_data ()
 	local revision="`git log --format=format:%H -n 1`"
 	local abbrev="`git log --format=format:%h -n 1`"
 	local branch="`git branch | grep "^\*" | cut -d ' ' -f 2`"
-	if test "`echo ${branch} | grep -c detached`" -gt -0; then
+	if test "`echo ${branch} | egrep -c "detached|^\(no"`" -gt -0; then
 	    local branch=
 	fi
 	local url="`git config --get remote.origin.url`"
