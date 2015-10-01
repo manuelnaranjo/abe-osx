@@ -367,6 +367,17 @@ checkout()
 		notice "Updating sources for ${tool} in ${srcdir}"
 		dryrun "(cd ${repodir} && git stash --all)"
 		dryrun "(cd ${repodir} && git reset --hard)"
+
+		# This is required due to the following scenario:  A git
+		# reference dir is populated with a git clone on day X.  On day
+		# Y a developer removes a branch and then replaces the same
+		# branch with a new branch of the same name.  On day Z ABE is
+		# executed against the reference dir copy and the git pull fails
+		# due to error: 'refs/remotes/origin/<branch>' exists; cannot
+		# create 'refs/remotes/origin/<branch>'.  You have to remove the
+		# stale branches before pulling the new ones.
+		dryrun "(cd ${repodir} && git remote prune origin)"
+
 		dryrun "(cd ${repodir} && git_robust pull)"
 		# Update branch directory (which maybe the same as repo
 		# directory)
