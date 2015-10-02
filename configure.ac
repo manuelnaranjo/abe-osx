@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -128,6 +128,18 @@ AC_PATH_PROG(QEMU_AARCH64, qemu-aarch64)
 if test x"${QEMU_AARCH64}" = x; then
    AC_MSG_WARN([You need 'qemu-aaarch64' to run test the toolchain properly!])
 #   missing="${missing} qemu"
+fi
+
+AC_PATH_PROG(FAKEROOT, fakeroot)
+if test x"${FAKEROOT}" = x; then
+   AC_MSG_WARN([You need 'fakeroot' to build binary Deb packages !])
+#   missing="${missing} fakeroot"
+fi
+
+AC_PATH_PROG(ALIEN, alien)
+if test x"${ALIEN}" = x; then
+   AC_MSG_WARN([You need 'alien' to build binary Deb packages !])
+#   missing="${missing} alien"
 fi
 
 dnl Building GDB requires ncurses and termcap
