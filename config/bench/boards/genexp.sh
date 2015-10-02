@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ue -o pipefail
+
 other=0
 alt_other=5
 a53_freq=700MHz
