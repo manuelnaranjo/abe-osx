@@ -4,8 +4,6 @@ set -ue -o pipefail
 
 other=0
 alt_other=5
-a53_freq=700MHz
-a57_freq=800MHz
 for y in 0 1 2 3 4 5; do
   for x in base freq net aslr env nice; do
     cat > noise-control-experiment-juno-${y}-${x}.conf << EOF
