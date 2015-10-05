@@ -31,7 +31,9 @@ build_rpm()
 
     local infile="${abe_path}/packaging/redhat/tcwg.spec.in"
     local arch="`echo ${target} | tr '-' '_'`"
-    local version="`echo ${gcc_version} | cut -d '~' -f 2 | grep -o "[4-6][\._][0-9\.]*" | tr '_' '.'`"
+
+    local srcdir="`get_component_srcdir gcc`"
+    local version="`cat ${srcdir}/gcc/BASE-VER`"
 
     rm -f /tmp/tcwg$$.spec
     sed -e "s:%global triplet.*:%global triplet ${arch}:" \
@@ -180,7 +182,7 @@ binary_toolchain()
 	build_rpm ${destdir}
     fi
     if test x"${tarbin}" = x"yes"; then
-#	if test `echo ${host} | grep -c mingw` -eq 0; then
+	if test `echo ${host} | grep -c mingw` -eq 0; then
 	    # make the tarball from the tree we just created.
 	    notice "Making binary tarball for toolchain, please wait..."
 	    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
@@ -189,7 +191,7 @@ binary_toolchain()
 	    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 #	else
 #	    notice "Making binary toolchain package for Windows, please wait..."
-#	    ${local_snapshots}/infrastructure/installjammer-1.2.15/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
+#	    ${local_snapshots}/infrastructure/installjammer/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
 #	fi
     fi
     
@@ -241,14 +243,29 @@ manifest()
 	local outfile=$1
     fi
 
-    rm -f ${outfile}
+    if test -e ${outfile}; then
+	mv -f ${outfile} ${outfile}.bak
+    fi
+    echo "# manifest format: ${manifest_version:-1.0}" >> ${outfile}
+    echo "" >> ${outfile}
+    
+    local seen=0
     for i in ${toolchain[*]}; do
 	local component="$i"
 
+	if test ${seen} -eq 1 -a x"${component}" = x"gcc"; then
+	    notice "Not writing GCC a second time, already done."
+	    continue
+	else
+	    if test x"${component}" = x"gcc"; then
+		local seen=1
+	    fi
+	fi
+	
 	echo "# Component data for ${component}" >> ${outfile}
 
 	local filespec="`get_component_filespec ${component}`"
-	local url="`get_component_url ${component} `/${filespec}"
+	local url="`get_component_url ${component}`"
 	echo "${component}_url=${url}" >> ${outfile}
 
 	local branch="`get_component_branch ${component}`"
@@ -261,10 +278,45 @@ manifest()
 	    echo "${component}_revision=${revision}" >> ${outfile}
 	fi
 
+	local filespec="`get_component_filespec ${component}`"
+	if test x"${filespec}" != x; then
+	    echo "${component}_filespec=${filespec}" >> ${outfile}
+	fi
+
+	local makeflags="`get_component_makeflags ${component}`"
+	if test x"${makeflags}" != x; then
+	    echo "${component}_makeflags=\"${makeflags}\"" >> ${outfile}
+	fi
+
+	local configure="`get_component_configure ${component}`"
+	if test x"${configure}" != x; then
+	    echo "${component}_configure=\"${configure}\"" >> ${outfile}
+	fi
+
+	if test x"${component}" = x"gcc"; then
+	    echo "gcc_stage1_flags=\"${gcc[STAGE1]}\"" >> ${outfile}
+	    echo "gcc_stage2_flags=\"${gcc[STAGE2]}\"" >> ${outfile}
+	fi
+
 	echo "" >> ${outfile}
     done
 
+    # Gerrit info, if triggered
+    if test x"${gerrit_trigger}" = xyes; then
+	cat >> ${outfile} <<EOF
+gerrit_branch=${gerrit_branch}
+gerrit_revision=${gerrit_revision}
+EOF
+    fi
+    
     cat >> ${outfile} <<EOF
+
+clibrary=${clibrary}
+
+ ##############################################################################
+ # Everything below this line is only for informational purposes for developers
+ ##############################################################################
+
 # Build machine data
 build=${build}
 host=${host}
@@ -273,22 +325,10 @@ hostname=${hostname}
 distribution=${distribution}
 host_gcc=${host_gcc_version}
 
-# Kernel
-linux_version=${linux_version}
-
 EOF
-
-    # Gerrit info, if triggered
-    if test x"${gerrit_trigger}" = xyes; then
-	cat >> ${outfile} <<EOF
-gerrit_branch=${gerrit_branch}
-gerrit_revision=${gerrit_revision}
-
-EOF
-    fi
 
     for i in gcc binutils ${clibrary}; do
-	if test "`component_is_tar ${package}`" = no; then
+	if test "`component_is_tar ${i}`" = no; then
 	    echo "--------------------- $i ----------------------" >> ${outfile}
 	    local srcdir="`get_component_srcdir $i`"
 	    # Invoke in a subshell in order to prevent state-change of the current
@@ -298,7 +338,16 @@ EOF
 	fi
     done
     
+    if test x"${manifest}" != x; then
+	if test "`diff -u ${manifest} ${outfile} | grep -c differ`" -gt 0; then
+	    warning "Manifest files are different!"
+	else
+	    notice "Manifest files match"
+	fi
+    fi
+
     echo ${outfile}
+
     return 0
 }
 
