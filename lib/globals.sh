@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,6 +54,10 @@ wget_progress_style=
 
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no
+
+#
+launchpad_id=
+svn_id=
 
 # config values for the build machine
 libc_version=
@@ -130,3 +134,77 @@ if test -e ~/.aberc; then
     . ~/.aberc
 fi
 
+#
+#
+#
+import_manifest()
+{
+    trace "$*"
+
+    manifest=$1
+    if test -f ${manifest} ; then
+	local components="`grep "Component data for " ${manifest} | cut -d ' ' -f 5`"
+
+	clibrary="`grep "clibrary=" ${manifest} | cut -d '=' -f 2`"
+
+	local variables=
+	local i=0
+	for i in ${components}; do
+	    if test x"${i}" = x"abe"; then
+		continue
+	    fi
+	    local url="`grep "${i}_url" ${manifest} | cut -d '=' -f 2`"
+	    local branch="`grep "${i}_branch" ${manifest} | cut -d '=' -f 2`"
+	    local filespec="`grep "${i}_filespec" ${manifest} | cut -d '=' -f 2`"
+	    # Any embedded spaces in the value have to be converted to a '%'
+	    # character. for component_init().
+	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    local revision="`grep "${i}_revision" ${manifest} | cut -d '=' -f 2`"
+    
+	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
+		local version="`echo ${filespec} | sed -e 's:\.tar\..*$::'`"
+		local dir=${version}
+	    else
+		local fixbranch="`echo ${branch} | tr '/@' '_'`"
+		local dir=${i}.git~${fixbranch}${revision:+@${revision}}
+	    fi
+	    local srcdir="${local_snapshots}/${dir}"
+	    local builddir="${local_builds}/${host}/${target}/${dir}"
+	    case "${i}" in
+		gdb|binutils)
+		    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
+		    local srcdir=${local_snapshots}/${dir}
+		    local builddir="${local_builds}/${host}/${target}/${dir}"
+		    ;;
+		gdbserver)
+		    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
+		    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
+		    local builddir="${builddir}-gdbserver"
+		    ;;
+		*glibc)		    
+		    # Glibc builds will fail if there is an @ in the path. This is
+		    # unfortunately, as @ is used to deliminate the revision string.
+		    local srcdir="${local_snapshots}/${dir}"
+		    local builddir="`echo ${local_builds}/${host}/${target}/${dir} | tr '@' '_'`"
+		    ;;
+		gcc)
+		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+		    ;;
+		*)
+		    ;;
+	    esac
+
+	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"}
+
+	    toolchain=(${toolchain[@]} $i)
+	done
+    else
+	error "Manifest file '${file}' not found"
+	build_failure
+	return 1
+    fi
+   
+    return 0
+}
