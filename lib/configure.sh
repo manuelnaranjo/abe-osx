@@ -36,8 +36,6 @@ configure_build()
     if test x"${component}" = x"linux"; then
 	return 0
     fi
-    # The git parser functions shall return valid results for all
-    # services, especially once we have a URL.
     local srcdir="`get_component_srcdir ${component}`"
     local builddir="`get_component_builddir ${component}`${2:+-$2}"
     local version="`basename ${srcdir}`"
@@ -59,12 +57,7 @@ configure_build()
 
     if test ! -d "${builddir}"; then
 	notice "The build directory '${builddir}' doesn't exist, so creating it"
-	# Zlib has to be built in it's source directory.
-#	if test x"${tool}" = x"zlib"; then
-#	    dryrun "ln -s ${srcdir} ${builddir}"
-#	else
-	    dryrun "mkdir -p \"${builddir}\""
-#	fi
+	dryrun "mkdir -p \"${builddir}\""
     fi
 
     if test ! -f "${srcdir}/configure" -a x"${dryrun}" != x"yes"; then
