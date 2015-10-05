@@ -812,13 +812,8 @@ while test $# -gt 0; do
 	    ;;
 	--manifest*|-m*)
 	    check_directive $1 manifest "m" $2
-	    # source a manifest file if there is one
-	    if test -f $2 ; then
-		egrep "_revision=|_version=|_branch=|clibrary=" $2 > /tmp/rev$$.txt
-		source /tmp/rev$$.txt
-		rm  /tmp/rev$$.txt
-	    else
-		error "Manifest file '$2' not found"
+	    import_manifest $2
+	    if test $? -gt 0; then
 		build_failure
 	    fi
 	    shift
