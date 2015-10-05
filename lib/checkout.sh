@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -136,42 +136,22 @@ checkout()
 
     local component="$1"
 
+    # gdbserver is already checked out in the GDB source tree.
+    if test x"${coponent}" = x"gdbserver}"; then
+	return 0
+    fi
+
     # None of the following should be able to fail with the code as it is
     # written today (and failures are therefore untestable) but propagate
     # errors anyway, in case that situation changes.
     local url="`get_component_url ${component}`" || return 1
     local branch="`get_component_branch ${component}`" || return 1
+    local revision="`get_component_revision ${component}`" || return 1
     local srcdir="`get_component_srcdir ${component}`" || return 1
-    local repo="`get_component_filespec ${component}`"
+    local repo="`get_component_filespec ${component}`" || return 1
     local protocol="`echo ${url} | cut -d ':' -f 1`"    
 
     case ${protocol} in
-	svn*)
-	    local trunk="`echo $1 |grep -c trunk`"
-	    if test ${trunk} -gt 0; then
-		local dir="`dirname $1`"
-		local dir="`basename ${dir}`/trunk"
-	    fi
-	    if test x"${force}" =  xyes; then
-		#rm -fr ${local_snapshots}/${dir}
-		echo "Removing existing sources for ${srcdir}"
-	    fi
-	    if test x"${usegit}" =  xyes; then
-		local out="`git svn clone $1 ${srcdir}`"
-	    else
-		if test -e ${srcdir}/.svn; then
-		    (cd ${srcdir} && svn update)
-		    # Extract the revision number from the update message
-		    local revision="`echo ${out} | sed -e 's:.*At revision ::' -e 's:\.::'`"
-		else
-		    svn checkout $1 ${srcdir}
-                    if test $? -gt 0; then
-                        error "Failed to check out $1 to ${srcdir}"
-                        return 1
-                    fi
-		fi
-	    fi
-	    ;;
 	git*|http*|ssh*)
             local repodir="${url}/${repo}"
 #	    local revision= `echo ${gcc_version} | grep -o "[~@][0-9a-z]*\$" | tr -d '~@'`"
@@ -191,6 +171,7 @@ checkout()
 		dryrun "git_robust clone ${git_reference_opt} ${repodir} ${local_snapshots}/${repo}"
 		if test $? -gt 0; then
 		    error "Failed to clone master branch from ${url} to ${url}"
+		    rm -f ${local_builds}/git$$.lock
 		    return 1
 		fi
 	    fi
@@ -206,7 +187,8 @@ checkout()
 			flock ${local_builds}/git$$.lock --command "${cmd}"
 			if test $? -gt 0; then
 			    error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
-				return 1
+			     rm -f ${local_builds}/git$$.lock
+			     return 1
 			fi
 		    fi
 		    # git checkout of a commit leaves the head in detached state so we need to
@@ -220,6 +202,7 @@ checkout()
 			flock ${local_builds}/git$$.lock --command "${cmd}"
 			if test $? -gt 0; then
 			    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+			    rm -f ${local_builds}/git$$.lock
 			    return 1
 			fi
 		    fi
@@ -230,22 +213,25 @@ checkout()
 		# Some packages allow the build to modify the source directory and
 		# that might screw up abe's state so we restore a pristine branch.
 		notice "Updating sources for ${component} in ${srcdir}"
-		dryrun "(cd ${rsrcdir} && git stash --all)"
-		dryrun "(cd ${srcdir} && git reset --hard)"
-		dryrun "(cd ${srcdir} && git_robust pull)"
-		# Update branch directory (which maybe the same as repo
-		# directory)
-		dryrun "(cd ${srcdir} && git stash --all)"
-		dryrun "(cd ${srcdir} && git reset --hard)"
+		local current_branch="`cd ${srcdir} && git branch`"
+		if test "`echo ${current_branch} | grep -c local_`" -eq 0; then
+		    dryrun "(cd ${srcdir} && git stash --all)"
+		    dryrun "(cd ${srcdir} && git reset --hard)"
+		    dryrun "(cd ${srcdir} && git_robust pull)"
+		    # Update branch directory (which maybe the same as repo
+		    # directory)
+		    dryrun "(cd ${srcdir} && git stash --all)"
+		    dryrun "(cd ${srcdir} && git reset --hard)"
+		fi
 		if test x"${revision}" != x""; then
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
 		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${revision})"
 		else
 		    # Make sure we are on the correct branch.
-		    # If ${branch} is empty we set it to HEAD and checkout HEAD.
-		    : ${branch:=HEAD}
-		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${branch} origin/${branch})"
+		    # This is a no-op if $branch is empty and it
+		    # just gets master.
+		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
@@ -262,6 +248,7 @@ checkout()
 
     if test $? -gt 0; then
 	error "Couldn't checkout $1 !"
+	rm -f ${local_builds}/git$$.lock
 	return 1
     fi
 
