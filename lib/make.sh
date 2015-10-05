@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ build_all()
                 build_all_ret=$?
                 ;;
             stage1)
-                build ${gcc_version} stage1
+                build gcc stage1
                 build_all_ret=$?
                 # Don't create the sysroot if the clibrary build didn't succeed.
                 if test ${build_all_ret} -lt 1; then
@@ -100,7 +100,7 @@ build_all()
 		    sed -i -e 's/typedef __caddr_t caddr_t/\/\/ FIXME: typedef __caddr_t caddr_t/' ${sysroots}/usr/include/sys/types.h
 		fi
 
-                build ${gcc_version} stage2
+                build gcc stage2
                 build_all_ret=$?
 		# Reverse the ugly hack
 		if test `echo ${host} | grep -c mingw` -eq 1; then
