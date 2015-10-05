@@ -38,20 +38,26 @@ declare -ag toolchain
 # Initialize the associative array
 # parameters:
 #	$ - Any parameter without a '=' sign becomes the name of the the array.
+#           Any embedded spaces in the value have been converted to a '%'
+#           character.  
 #	    
 component_init ()
 {
     trace "$*"
 
     local component="$1"
+
     local index=
     for index in $*; do
 	if test "`echo ${index} | grep -c '='`" -gt 0; then
 	    name="`echo ${index} | cut -d '=' -f 1`"
-	    value="`echo ${index} | sed -e 's:^[a-zA-Z]*=::' | tr '%' ' '`"
-	    eval ${component}[${name}]="${value}"
-	    if test $? -gt 0; then
-		return 1
+	    value="`echo ${index} | cut -d '=' -f2-20 | sed -e 's:^[a-zA-Z]*=::' | tr '%' ' '`"
+	    eval "local ifset=\${${component}[${name}]:-notset}"
+	    if test x"${ifset}" = x"notset"; then
+		eval "${component}[${name}]="${value}""
+		if test $? -gt 0; then
+		    return 1
+		fi
 	    fi
 	else
 	    component="`echo ${index} | sed -e 's:-[0-9a-z\.\-]*::'`"
@@ -175,9 +181,41 @@ set_component_branch ()
     return 0
 }
 
+set_component_makeflags ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    declare -p ${component} 2>&1 > /dev/null
+    if test $? -gt 0; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval ${component}[MAKEFLAGS]="$2"
+    fi
+
+    return 0
+}
+
+set_component_configure ()
+{
+#    trace "$*"
+
+    local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+    declare -p ${component} 2>&1 > /dev/null
+    if test $? -gt 0; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval ${component}[CONFIGURE]="$2"
+    fi
+
+    return 0
+}
+
 # BRANCH is parsed from the config file for each component, but can be redefined
 # on the command line at runtime.
-# BRANCH
+#
 # These next few fields are also from the config file for each component, but as
 # defaults, they aren't changed from the command line, so don't have set_component_*
 # functions.
@@ -345,9 +383,11 @@ get_component_runtestflags ()
     return 0
 }
 
+# Determine if the component is a tarfile, or git repository.
+# $1 - The component name.
 component_is_tar ()
 {
-#    trace "$*"
+    trace "$*"
 
     local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
     if test "${component:+set}" != "set"; then
@@ -415,15 +455,22 @@ collect_data ()
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
+    if test x"${manifest}" != x; then
+	warning "Reading data from Manifest file."
+	return 0
+    fi
+
     # ABE's data is extracted differently tan the rest.
     if test x"${component}" = x"abe"; then
 	pushd ${abe_path}
 	local revision="`git log --format=format:%H -n 1`"
+	local abbrev="`git log --format=format:%h -n 1`"
 	local branch="`git branch | grep "^\*" | cut -d ' ' -f 2`"
 	if test "`echo ${branch} | grep -c detached`" -gt -0; then
 	    local branch=
 	fi
 	local url="`git config --get remote.origin.url`"
+	local url="`dirname ${url}`"
 	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
 	local filespec="abe.git"
 	popd
@@ -431,7 +478,7 @@ collect_data ()
  	return 0
     fi
 
-    local conf="`find ${local_builds}/${host}/${target} -name ${component}.conf`"
+    local conf="`find ${local_builds}/${host}/${target} -name ${component}.conf | head -1`"
     if test x"${conf}" != x; then
 	test ${topdir}/config/${component}.conf -nt ${conf}
 	if test $? -gt 0; then
@@ -462,17 +509,13 @@ collect_data ()
 	    local filespec="`basename ${latest}`"
 	fi
 
-	if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	    local dir="/infrastructure"
-	else
-	    local dir=""
-	fi
-#	local filespec="${component}-${latest}"
-	local dir="`echo ${dir}/${filespec} | sed -e 's:\.tar.*::'`"
+	local dir="`echo ${filespec} | sed -e 's:\.tar.*::'`"
     else
+	# If a manifest file has been imported, use those values
+	local filespec="`get_component_filespec ${component}`"
 	local gitinfo="${!version}"
-	local branch="`get_git_branch ${latest}`"
-	local revision="`get_git_revision ${latest}`"
+	local branch="`get_git_branch ${gitinfo}`"
+	local revision="`get_git_revision ${gitinfo}`"
 	local search=
 	case ${component} in
 	    binutils*|gdb*) search="binutils-gdb.git" ;;
@@ -491,13 +534,22 @@ collect_data ()
 
     # configured and built as a separate way.
     local builddir="${local_builds}/${host}/${target}/${dir}"
+    local srcdir=${local_snapshots}/${dir}
     case "${component}" in
+	gdb|binutils)
+	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
+	    local srcdir=${local_snapshots}/${dir}
+	    ;;
 	gdbserver)
+	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 	    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
-	    local builddir="${builddir}-gdbserver"
+	    ;;
+	*glibc)
+	    # Glibc builds will fail if there is an @ in the path. This is
+	    # unfortunately, as @ is used to deliminate the revision string.
+	    local builddir="`echo ${builddir} | tr '/@' '_'`"
 	    ;;
 	*)
-	    local srcdir="${local_snapshots}/${dir}"
 	    ;;
     esac
 
@@ -507,12 +559,12 @@ collect_data ()
     confvars="${confvars} ${default_makeflags:+MAKEFLAGS=\"`echo ${default_makeflags} | tr ' ' '%'`\"}"
     confvars="${confvars} ${default_configure_flags:+CONFIGURE=\"`echo ${default_configure_flags} | tr ' ' '%'`\"}"
     if test x"${component}" = "xgcc"; then
-	confvars="${confvars} ${default_configure_flags:+STAGE1=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
-	confvars="${confvars} ${default_configure_flags:+STAGE2=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage1_flags:+STAGE1=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage2_flags:+STAGE2=\"`echo ${stage2_flags} | tr ' ' '%'`\"}"
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
-    # Gdbserver is built differently, as it's a sub directory within GDB, but has to be
-    fixme "TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}"
+    # Gdbserver is built differently, as it's a sub directory within GDB, but
+    # has to be built separetly.
     component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}
 
     default_makeflags=
