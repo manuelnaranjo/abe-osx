@@ -192,7 +192,7 @@ binary_toolchain()
 #	else
 #	    notice "Making binary toolchain package for Windows, please wait..."
 #	    ${local_snapshots}/infrastructure/installjammer/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
-#	fi
+	fi
     fi
     
     rm -fr ${local_builds}/tmp.$$
