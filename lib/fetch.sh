@@ -32,11 +32,11 @@ fetch()
     local url="`get_component_url ${component}`"
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure"
-    else
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure"
+#    else
 	local dir=""
-    fi
+#    fi
 
     # Forcing trumps ${supdate} and always results in sources being updated.
     if test x"${force}" != xyes; then
@@ -90,11 +90,11 @@ extract()
     local component=$1
 
     local url="`get_component_url ${component}`"
-    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure/"
-    else
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
 	local dir=""
-    fi
+#    fi
     local file="`get_component_filespec ${component}`"
     local srcdir="`get_component_srcdir ${component}`"
     local version="`basename ${srcdir}`"
@@ -179,16 +179,25 @@ fetch_http()
 {
     trace "$*"
 
-    local tool=$1
-    local getfile="`get_component_filespec ${tool}`"
-    local url="`get_component_url ${tool}`/${getfile}"
+    local component=$1
+    local getfile="`get_component_filespec ${component}`"
+    if test x"${getfile}" = x; then
+	error "No filespec specified for ${component} !"
+	return 1
+    fi
+    local url="`get_component_url ${component}`/${getfile}"
+
+    if test x"${url}" = x; then
+	error "No URL specified for ${component} !"
+	return 1
+    fi
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure"
-    else
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure"
+#    else
 	local dir=""
-    fi
+#    fi
     if test ! -d ${local_snapshots}${dir}; then
 	mkdir -p ${local_snapshots}${dir}
     fi
@@ -218,6 +227,9 @@ fetch_http()
     # remote host. This is to improve performance when offline, or
     # the remote host is offline.
     dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url} ${overwrite_or_timestamp}"
+    if test $?; then
+	error "${url} doesn't exist on the remote machine !"
+    fi
     if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}; then
        warning "downloaded file ${getfile} has zero data!"
        return 1
@@ -249,11 +261,11 @@ fetch_reference()
     fi
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure/"
-    else
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
 	local dir=""
-    fi
+#    fi
     if test x"${dir}" = x"./"; then
 	local dir=""
     else
@@ -292,11 +304,11 @@ check_md5sum()
     local file="`get_component_filespec ${tool}`.asc"
     local url="`get_component_url ${tool}`"
 
-    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
-	local dir="/infrastructure/"
-    else
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
 	local dir=""
-    fi
+#    fi
 
     if test ! -e "${local_snapshots}${dir}/${file}"; then
         error "No md5sum file for ${tool}!"
