@@ -140,116 +140,6 @@ notice()
     fi
 }
 
-# Get the URL to checkout out development sources.
-#
-# $1 - The toolchain component identifier.
-#
-# Returns a string that represents the full URL for a git service
-# that matches the identifier in the sources.conf file.
-# 
-# [Optional] Return a branch and revision number for git if tagged
-# onto the identifier. e.g., get_URL repo.git~multi/slash/branch@12345
-# will return a matching url in sources.conf such as:
-#
-# http://staging.linaro.org/git/toolchain/repo.git~multi/slash/branch@12345
-#
-# If get_URL is passed an identifier that already contains a URL it will fail.
-#
-get_URL()
-{
-#    trace "$*"
-
-    if test "`echo $1 | grep -c "\.tar.*$"`" -gt 0; then
-	error "not supported for .tar.* files."
-	return 1
-    fi
-
-    # It makes no sense to call get_URL if you already have the URL.
-    local service=
-    service="`get_git_service $1`" || return 1
-    if test x"${service}" != x; then
-	error "Input already contains a url."
-	return 1
-    fi
-
-    # Use the git parser functions to retrieve information about the
-    # input parameters.  The git parser will always return the 'repo'
-    # for an identifier as long as it follows some semblance of sanity.
-    local node=
-    node="`get_git_repo $1`" || return 1
-
-    # Optional elements for git repositories.
-    local branch=
-    branch="`get_git_branch $1`" || return 1
-    local revision=
-    revision="`get_git_revision $1`" || return 1
-   
-    local srcs="${sources_conf}"
-    if test -e ${srcs}; then
-	# We don't want to match on partial matches
-	# (hence looking for a trailing space or \t).
-	local node="`echo ${node} | sed -e 's:-[0-9a-z\.\-]*::'`"
-	if test "`grep -c "^${node} " ${srcs}`" -lt 1 -a "`grep -c "^${node}.git" ${srcs}`" -lt 1; then
-	    error "Component \"${node}\" not found in ${srcs} file!"
-	    return 1
-	fi
-	local url="`grep "^${node}" ${srcs} | sed -e 's:^.*[ \t]::'`"
-	echo "${url}${branch:+~${branch}}${revision:+@${revision}}"
-
-	return 0
-    else
-	error "No config file for repository sources!"
-    fi
-
-    return 1
-}
-
-# display a list of matching URLS we know about. This is how you can see the
-# correct name to pass to get_URL().
-#
-# $1 - The name of the toolchain component, partial strings ok
-list_URL()
-{
-#    trace "$*"
-
-    local srcs="${sources_conf}"    
-    if test -e ${srcs}; then
-	notice "Supported source repositories for $1 are:"
-#	sed -e 's:\t.*::' -e 's: .*::' -e 's:^:\t:' ${srcs} | grep $1
-	local url="`grep $1 ${srcs} | tr -s ' ' | cut -d ' ' -f 2`"
-	for i in ${url}; do
-	    echo "	$i" 1>&2
-	done
-	return 0
-    else
-	error "No config file for sources!"
-	return 1
-    fi
-
-    return 0
-}
-
-get_config()
-{
-    conf="`get_toolname $1`.conf"
-    if test $? -gt 0; then
-	return 1
-    fi
-    if test -e ${topdir}/config/${conf}; then
-	echo "${topdir}/config/${conf}"
-	return 0
-    else
-	tool="`echo ${tool} | sed -e 's:-linaro::'`"
-	if test -e ${topdir}/config/${conf}; then
-	    echo "${topdir}/config/${conf}"
-	    return 0
-	fi
-    fi
-    error "Couldn't find ${topdir}/config/${conf}"
-
-    return 1
-}
-
 # Extract the name of the toolchain component being built
 
 # Source a bourne shell config file so we can access its variables.
@@ -274,17 +164,6 @@ source_config()
     else
         return 1
     fi
-}
-
-read_config()
-{
-    local conf="${topdir}/config/$1.conf"
-    local value="`export ${2}= && . ${conf} && set -o posix && set | grep \"^${2}=\" | sed \"s:^[^=]\+=\(.*\):\1:\" | sed \"s:^'\(.*\)'$:\1:\"`"
-    local retval=$?
-    unset ${2}
-    echo "${value}"
-
-    return ${retval}
 }
 
 # Extract the name of the toolchain component being built
@@ -357,7 +236,6 @@ create_release_version()
     return 0
 }
 
-
 # Parse a version string and produce the proper output fields. This is
 # used when naming releases for both directories, tarballs, and
 # internal version numbers. The version string looks like
@@ -402,18 +280,6 @@ create_release_tag()
 
     echo "`echo ${rtag} | tr '/' '-' | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
 
-    return 0
-}
-
-# Get the SHA-1 for the latest commit to the git repository
-srcdir_revision()
-{
-#    trace "$*"
-    
-    local srcdir=$1
-    local revision="`cd ${srcdir} && git log -n 1 | head -1 | cut -d ' ' -f 2`"
-    
-    echo ${revision}
     return 0
 }
 
