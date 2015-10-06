@@ -1225,7 +1225,9 @@ if test ! -z ${do_checkout}; then
 	    build_failure
 	fi
     else
-	checkout_all
+	local infrastructure="`grep ^depends ${topdir}/config/infrastructure.conf | tr -d '\"' | sed -e 's:^depends=::'`"
+	builds="${infrastructure} binutils gcc gdb libc"
+	checkout_all ${builds}
 	if test $? -gt 0; then
 	    error "--checkout all failed."
 	    build_failure
