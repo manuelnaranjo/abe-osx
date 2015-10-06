@@ -74,7 +74,17 @@ checkout_all()
 	    return 1
         fi
 	if test x"${package}" = x"stage1" -o x"${package}" = x"stage2"; then
+
+    for i in ${packages}; do
+	local package=$i
+	if test x"$i" = x"libc"; then
+	    package="${clibrary}"
+	fi
+	if test x"${package}" = x"stage1"; then
 	    package="gcc"
+	    if test x"${package}" = x"stage2"; then
+		continue
+	    fi
 	fi
 	collect_data ${package}
 
