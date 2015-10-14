@@ -58,9 +58,6 @@ gcc_branch="latest"
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
 
-# Server to wget snapshots from.
-fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
-
 # Server to store results on.
 logserver=""
 
@@ -92,7 +89,7 @@ excludecheck=
 # --logname gcc-<sha1>
 rebuild=true
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) gcc_branch=$2; shift ;;
@@ -102,7 +99,6 @@ while test $# -gt 0; do
 	-t|--target) target=$2; shift ;;
         -w|--workspace) user_workspace=$2; shift ;;
         -o|--options) user_options=$2; shift ;;
-        -f|--fileserver) fileserver=$2; shift ;;
         --logserver) logserver=$2; shift ;;
         --logname) logname=$2; shift ;;
         -l|--languages) languages=$2; shift ;;
@@ -295,7 +291,7 @@ if test x"${debug}" = x"true"; then
     export CONFIG_SHELL="/bin/bash -x"
 fi
 
-$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
+$CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test
 
 # Double parallelism for tcwg-ex40-* machines to compensate for really-remote
 # target execution.  GCC testsuites will run with -j 32.

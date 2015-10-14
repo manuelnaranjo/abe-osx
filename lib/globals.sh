@@ -125,7 +125,6 @@ gerrit_change_number=""
 gerrit_event_type=""
 jenkins_job_name=""
 jenkins_job_url=""
-fileserver="${fileserver:-148.251.136.42}"
 sources_conf="${sources_conf:-${abe_path}/config/sources.conf}"
 
 # source a user specific config file for commonly used configure options.
