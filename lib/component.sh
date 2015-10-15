@@ -547,7 +547,7 @@ collect_data ()
 	*glibc)
 	    # Glibc builds will fail if there is an @ in the path. This is
 	    # unfortunately, as @ is used to deliminate the revision string.
-	    local builddir="`echo ${builddir} | tr '/@' '_'`"
+	    local builddir="`echo ${builddir} | tr '@' '_'`"
 	    ;;
 	*)
 	    ;;
