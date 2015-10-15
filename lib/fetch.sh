@@ -227,8 +227,9 @@ fetch_http()
     # remote host. This is to improve performance when offline, or
     # the remote host is offline.
     dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url} ${overwrite_or_timestamp}"
-    if test $?; then
-	error "${url} doesn't exist on the remote machine !"
+    if test $? gt 0; then
+       error "${url} doesn't exist on the remote machine !"
+       return 1
     fi
     if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}; then
        warning "downloaded file ${getfile} has zero data!"
