@@ -745,6 +745,9 @@ while test $# -gt 0; do
     # URL can be either for a source tarball, or a checkout via svn, bzr,
     # or git
     case "$1" in
+        --fileserver)
+            warning "The --fileserver option has been depreciated, so ignoring it."
+	    ;;
 	--bu*|-bu*)			# build
 	    check_directive $1 build bu $2
    
