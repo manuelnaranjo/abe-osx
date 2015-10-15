@@ -78,11 +78,13 @@
     {
       "count": 1,
       "device_type": "kvm",
+      "tags": [ "tcwg" ],
       "role": "host"
     },
     {
       "count": 1,
       "device_type": "juno",
+      "tags": [ "tcwg" ],
       "role": "target"
     }
   ]

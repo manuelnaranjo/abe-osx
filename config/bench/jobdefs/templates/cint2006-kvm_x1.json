@@ -1,5 +1,5 @@
 {
-  "job_name": "cint2006-kvm_x2",
+  "job_name": "cint2006-kvm_x1",
   "timeout": 691200,
   "actions":
   [
@@ -77,11 +77,13 @@
     {
       "count": 1,
       "device_type": "kvm",
+      "tags": [ "tcwg" ],
       "role": "host"
     },
     {
-      "count": 2,
+      "count": 1,
       "device_type": "kvm",
+      "tags": [ "tcwg" ],
       "role": "target"
     }
   ]
