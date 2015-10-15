@@ -97,9 +97,14 @@ if [ -d "$1" -a -d "$2" ] ; then
 	cmnsums=`cat $lst5 | wc -l`
 	echo "# Comparing $cmnsums common sum files:"
 	cat $lst5
-	( for fname in `cat $lst5`; do xzcat $1/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum1
-	( for fname in `cat $lst5`; do xzcat $2/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum2
-	# At some point, we'll add --no-unstable --unstable-test=${my_path}/unstable-tests.txt
+	( for fname in `cat $lst5`; do
+	    bname=`basename $fname .sum.xz`
+	    xzcat $1/$fname | sed -e "s/^\([A-Z]*: \)/\1 $bname:/" | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'
+	  done ) >$sum1
+	( for fname in `cat $lst5`; do
+	    bname=`basename $fname .sum.xz`
+	    xzcat $2/$fname | sed -e "s/^\([A-Z]*: \)/\1 $bname:/" | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'
+	  done ) >$sum2
 	if [ "x${target}" != "x" ] ; then
 	    unstable_target="--unstable-marker ${target}"
 	fi
