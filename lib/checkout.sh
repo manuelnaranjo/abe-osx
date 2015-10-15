@@ -37,11 +37,11 @@ checkout_all()
 	if test x"$i" = x"libc"; then
 	    package="${clibrary}"
 	fi
+	if test x"${package}" = x"stage2"; then
+	    continue
+	fi
 	if test x"${package}" = x"stage1"; then
 	    package="gcc"
-	    if test x"${package}" = x"stage2"; then
-		continue
-	    fi
 	fi
 	collect_data ${package}
 
@@ -104,7 +104,7 @@ checkout()
     local component="$1"
 
     # gdbserver is already checked out in the GDB source tree.
-    if test x"${coponent}" = x"gdbserver}"; then
+    if test x"${component}" = x"gdbserver}"; then
 	return 0
     fi
 
@@ -137,7 +137,7 @@ checkout()
 		notice "Cloning $1 in ${srcdir}"
 		dryrun "git_robust clone ${git_reference_opt} ${repodir} ${local_snapshots}/${repo}"
 		if test $? -gt 0; then
-		    error "Failed to clone master branch from ${url} to ${url}"
+		    error "Failed to clone master branch from ${url} to ${srcdir}"
 		    rm -f ${local_builds}/git$$.lock
 		    return 1
 		fi
@@ -206,6 +206,7 @@ checkout()
 	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
 	    if test x"${revision}" != x"${newrev}" -a x"${revision}" != x; then
 		error "SHA1s don't match for ${component}!, now is ${newrev}, was ${revision}"
+		return 1
 	    fi
 	    set_component_revision ${component} ${newrev}
 	    ;;
