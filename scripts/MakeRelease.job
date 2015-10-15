@@ -169,7 +169,7 @@ if test x"${tarbin}" = xyes; then
     scp ${manifest} ${fileserver}:${binaries}/
     tarballs="`find ${user_snapshots} -name \*${release}\*.xz -o -name \*${release}\*.asc`"
     scp ${tarballs} ${fileserver}:${binaries}/
-#    rm -f ${user_snapshots}/*.xz ${user_snapshots}/*.asc
+    rm -f ${tarballs}
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
 	logs="`find ${user_workspace} -name \*.log`"
