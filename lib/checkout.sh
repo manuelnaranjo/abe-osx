@@ -37,10 +37,10 @@ checkout_all()
 	if test x"$i" = x"libc"; then
 	    package="${clibrary}"
 	fi
-	if test x"${package}" = x"stage2"; then
+        if test "`echo ${host} | grep -c mingw`" -eq 0 -a x"${package}" = x"stage2"; then
 	    continue
 	fi
-	if test x"${package}" = x"stage1"; then
+	if test x"${package}" = x"stage1" -o x"${package}" = x"stage2"; then
 	    package="gcc"
 	fi
 	collect_data ${package}
