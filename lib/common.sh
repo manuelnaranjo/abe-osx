@@ -263,7 +263,6 @@ create_release_tag()
 	fi
     fi
     local rtag="${component}-linaro-${version}"
-
     if test x"${release}" = x; then
 	local date="`date +%Y%m%d`"
 	if test x"${component}" = x"glibc"; then

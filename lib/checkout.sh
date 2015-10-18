@@ -32,49 +32,6 @@ checkout_all()
 
     local packages="$*"
 
-    if test `echo ${host} | grep -c mingw` -eq 1; then
-	# GDB now needs expat for XML support.
-	mkdir -p ${local_builds}/destdir/${host}/bin/
-	fetch infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
-	extract infrastructure/expat-2.1.0-1-mingw32-dev.tar.xz
-	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/include ${local_builds}/destdir/${host}/usr/
-	rsync -ar ${local_snapshots}/infrastructure/expat-2.1.0-1/lib ${local_builds}/destdir/${host}/usr/
-	# GDB now has python support, for mingw we have to download a
-	# pre-built win2 binary that works with mingw32.
-	fetch infrastructure/python-2.7.4-mingw32.tar.xz
-	extract infrastructure/python-2.7.4-mingw32.tar.xz
-	# The mingw package of python contains a script used by GDB to
-	# configure itself, this is used to specify that path so we don't
-	# have to modify the GDB configure script.
-	export PYTHON_MINGW=${local_snapshots}/infrastructure/python-2.7.4-mingw32
-	# The Python DLLS need to be in the bin dir where the executables are.
-	rsync -ar ${PYTHON_MINGW}/pylib ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/dll ${local_builds}/destdir/${host}/bin/
-	rsync -ar ${PYTHON_MINGW}/libpython2.7.dll ${local_builds}/destdir/${host}/bin/
-	# Future make check support of python GDB in mingw32 will require these
-	# exports.  Export them now for future reference.
-	export PYTHONHOME=${local_builds}/destdir/${host}/bin/dll
-	warning "You must set PYTHONHOME in your environment to ${PYTHONHOME}"
-	export PYTHONPATH=${local_builds}/destdir/${host}/bin/pylib
-	warning "You must set PYTHONPATH in your environment to ${PYTHONPATH}"
-    fi
-
-    # Reset to the stored value
-    if test `echo ${host} | grep -c mingw` -eq 1 -a x"${tarbin}" = xyes; then
-	files="${files} installjammer-1.2.15.tar.gz"
-    fi
-
-    for j in ${files}; do
-	local name="`echo $j | sed -e 's:\.tar\..*::' -e 's:-[0-9a-z\.]*::' -e 's:\.git.*::'`"
-	collect_data $j
-
-        local gitinfo="`get_component_url $j`/$j"
-	if test -z "${gitinfo}"; then
-	    error "No matching source found for \"${name}\"."
-	    return 1
-        fi
-	if test x"${package}" = x"stage1" -o x"${package}" = x"stage2"; then
-
     for i in ${packages}; do
 	local package=$i
 	if test x"$i" = x"libc"; then
@@ -116,6 +73,40 @@ checkout_all()
 	fi
     done
     
+    if test `echo ${host} | grep -c mingw` -eq 1; then
+	# GDB now needs expat for XML support.
+	mkdir -p ${local_builds}/destdir/${host}/bin/
+	collect_data expat
+	fetch expat
+	extract expat
+	rsync -ar ${local_snapshots}/expat-2.1.0-1/include ${local_builds}/destdir/${host}/usr/
+	rsync -ar ${local_snapshots}/expat-2.1.0-1/lib ${local_builds}/destdir/${host}/usr/
+	# GDB now has python support, for mingw we have to download a
+	# pre-built win2 binary that works with mingw32.
+	collect_data python
+	fetch python
+	extract python
+	# The mingw package of python contains a script used by GDB to
+	# configure itself, this is used to specify that path so we don't
+	# have to modify the GDB configure script.
+	export PYTHON_MINGW=${local_snapshots}/python-2.7.4-mingw32
+	# The Python DLLS need to be in the bin dir where the executables are.
+	rsync -ar ${PYTHON_MINGW}/pylib ${local_builds}/destdir/${host}/bin/
+	rsync -ar ${PYTHON_MINGW}/dll ${local_builds}/destdir/${host}/bin/
+	rsync -ar ${PYTHON_MINGW}/libpython2.7.dll ${local_builds}/destdir/${host}/bin/
+	# Future make check support of python GDB in mingw32 will require these
+	# exports.  Export them now for future reference.
+	export PYTHONHOME=${local_builds}/destdir/${host}/bin/dll
+	warning "You must set PYTHONHOME in your environment to ${PYTHONHOME}"
+	export PYTHONPATH=${local_builds}/destdir/${host}/bin/pylib
+	warning "You must set PYTHONPATH in your environment to ${PYTHONPATH}"
+    fi
+
+    # Reset to the stored value
+    if test `echo ${host} | grep -c mingw` -eq 1 -a x"${tarbin}" = xyes; then
+	files="${files} installjammer-1.2.15.tar.gz"
+    fi
+
     notice "Checkout all took ${SECONDS} seconds"
 
     # Set this to no, since all the sources are now checked out
