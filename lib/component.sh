@@ -509,7 +509,7 @@ collect_data ()
 	    local filespec="`basename ${latest}`"
 	fi
 
-	local dir="`echo ${filespec} | sed -e 's:\.tar.*::'`"
+	local dir="`echo ${filespec} | sed -e 's:\.tar.*::'| tr -d '@' '_'`"
     else
 	# If a manifest file has been imported, use those values
 	local filespec="`get_component_filespec ${component}`"
@@ -528,7 +528,10 @@ collect_data ()
 	fi
 	local filespec="`basename ${url}`"
 	local url="`dirname ${url}`"
-	local fixbranch="`echo ${branch} | tr '/' '~'`"
+	# Builds will fail if there is an @ in the build directory path.
+	# This is unfortunately, as @ is used to deliminate the revision
+	# string.
+	local fixbranch="`echo ${branch} | tr '/' '~' | tr -d '@' '_'`"
 	local dir=${search}${branch:+~${fixbranch}}${revision:+@${revision}}
     fi
 
@@ -544,11 +547,6 @@ collect_data ()
 	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 	    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
 	    ;;
-	*glibc)
-	    # Glibc builds will fail if there is an @ in the path. This is
-	    # unfortunately, as @ is used to deliminate the revision string.
-	    local builddir="`echo ${builddir} | tr '@' '_'`"
-	    ;;
 	*)
 	    ;;
     esac
@@ -559,8 +557,8 @@ collect_data ()
     confvars="${confvars} ${default_makeflags:+MAKEFLAGS=\"`echo ${default_makeflags} | tr ' ' '%'`\"}"
     confvars="${confvars} ${default_configure_flags:+CONFIGURE=\"`echo ${default_configure_flags} | tr ' ' '%'`\"}"
     if test x"${component}" = "xgcc"; then
-	confvars="${confvars} ${stage1_flags:+STAGE1=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
-	confvars="${confvars} ${stage2_flags:+STAGE2=\"`echo ${stage2_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage1_flags:+STAGE1=`echo ${stage1_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage2_flags:+STAGE2=`echo ${stage2_flags} | tr ' ' '%'`\"}"
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
     # Gdbserver is built differently, as it's a sub directory within GDB, but
