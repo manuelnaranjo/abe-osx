@@ -318,6 +318,7 @@ clibrary=${clibrary}
  ##############################################################################
 
 # Build machine data
+target=${target}
 build=${build}
 host=${host}
 kernel=${kernel}
