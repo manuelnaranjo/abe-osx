@@ -145,6 +145,8 @@ import_manifest()
 	local components="`grep "Component data for " ${manifest} | cut -d ' ' -f 5`"
 
 	clibrary="`grep "clibrary=" ${manifest} | cut -d '=' -f 2`"
+	target="`grep target= ${manifest}  | cut -d '=' -f 2`"
+	sysroots=${sysroots}/${target}
 
 	local variables=
 	local i=0
@@ -158,7 +160,7 @@ import_manifest()
 	    # Any embedded spaces in the value have to be converted to a '%'
 	    # character. for component_init().
 	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
-	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"' ''`"
 	    local revision="`grep "${i}_revision" ${manifest} | cut -d '=' -f 2`"
     
 	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
@@ -188,8 +190,8 @@ import_manifest()
 		    local builddir="`echo ${local_builds}/${host}/${target}/${dir} | tr '@' '_'`"
 		    ;;
 		gcc)
-		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
-		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"' ''`"
+		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"' ''`"
 		    ;;
 		*)
 		    ;;
