@@ -89,7 +89,7 @@ excludecheck=
 # --logname gcc-<sha1>
 rebuild=true
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild,fileserver: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) gcc_branch=$2; shift ;;
@@ -105,6 +105,7 @@ while test $# -gt 0; do
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
 	--excludecheck) excludecheck=$2; shift ;;
+	--fileserver) shift ;;
 	--norebuild) rebuild=false ;;
 	-h|--help) usage ;;
     esac
