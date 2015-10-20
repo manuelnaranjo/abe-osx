@@ -478,7 +478,11 @@ collect_data ()
  	return 0
     fi
 
-    local conf="`find ${local_builds}/${host}/${target} -name ${component}.conf | head -1`"
+    if test -d ${local_builds}/${host}/${target}; then
+	local conf="`find ${local_builds}/${host}/${target} -name ${component}.conf | head -1`"
+    else
+	local conf=
+    fi
     if test x"${conf}" != x; then
 	test ${topdir}/config/${component}.conf -nt ${conf}
 	if test $? -gt 0; then
@@ -509,7 +513,7 @@ collect_data ()
 	    local filespec="`basename ${latest}`"
 	fi
 
-	local dir="`echo ${filespec} | sed -e 's:\.tar.*::'| tr -d '@' '_'`"
+	local dir="`echo ${filespec} | sed -e 's:\.tar.*::'| tr '@' '_'`"
     else
 	# If a manifest file has been imported, use those values
 	local filespec="`get_component_filespec ${component}`"
@@ -531,7 +535,7 @@ collect_data ()
 	# Builds will fail if there is an @ in the build directory path.
 	# This is unfortunately, as @ is used to deliminate the revision
 	# string.
-	local fixbranch="`echo ${branch} | tr '/' '~' | tr -d '@' '_'`"
+	local fixbranch="`echo ${branch} | tr '/' '~' | tr '@' '_'`"
 	local dir=${search}${branch:+~${fixbranch}}${revision:+@${revision}}
     fi
 
