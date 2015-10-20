@@ -145,7 +145,10 @@ import_manifest()
 	local components="`grep "Component data for " ${manifest} | cut -d ' ' -f 5`"
 
 	clibrary="`grep "clibrary=" ${manifest} | cut -d '=' -f 2`"
-	target="`grep target= ${manifest}  | cut -d '=' -f 2`"
+	local ltarget="`grep target= ${manifest}  | cut -d '=' -f 2`"
+	if test x"${ltarget}" != x; then
+	    target=${ltarget}
+	fi
 	sysroots=${sysroots}/${target}
 
 	local variables=
