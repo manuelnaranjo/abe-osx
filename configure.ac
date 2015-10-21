@@ -159,7 +159,7 @@ result=$?
 if test ${result} -eq 0; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
-       packages="${packages} gcc-multilib g++-multilib libncurses5-dev libpython2.7-dev"
+       packages="${packages} libncurses5-dev libpython2.7-dev"
     fi
     for i in ${packages}; do
     AC_MSG_CHECKING([if $i is installed])
