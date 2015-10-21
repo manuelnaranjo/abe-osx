@@ -28,7 +28,8 @@ build_all()
 
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
-	if test "`echo ${host} | grep -c mingw`" -gt 0; then
+        # Build a cross compiler
+	if test "`echo ${host} | grep -c mingw`" -eq 1; then
 	    # As Mingw32 requires a cross compiler to be already built, so we don't need
 	    # to rebuilt the sysroot.
             local builds="${infrastructure} binutils libc stage2 gdb"
@@ -389,6 +390,7 @@ build()
 	
 	create_stamp "${stampdir}" "${stamp}"
 	
+	local tag="`create_release_tag ${component}`"
 	notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
 	
 	# For cross testing, we need to build a C library with our freshly built
