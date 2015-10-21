@@ -246,7 +246,7 @@ manifest()
     if test -e ${outfile}; then
 	mv -f ${outfile} ${outfile}.bak
     fi
-    echo "# manifest format: ${manifest_version:-1.0}" >> ${outfile}
+    echo "manifest_format=${manifest_version:-1.0}" >> ${outfile}
     echo "" >> ${outfile}
     
     local seen=0

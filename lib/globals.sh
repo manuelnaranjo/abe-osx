@@ -21,7 +21,7 @@
 
 # Start by assuming it's a native build
 build="${build}"
-host="${build}"
+host="${host}"
 target="${host}"
 
 gcc="`which gcc`"
@@ -39,7 +39,7 @@ override_arch=
 override_cpu=
 override_tune=
 
-manifest=
+manifest_version=1.0
 
 # The prefix for installing the toolchain
 prefix=
