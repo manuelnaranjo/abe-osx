@@ -460,7 +460,7 @@ collect_data ()
 	return 0
     fi
 
-    # ABE's data is extracted differently tan the rest.
+    # ABE's data is extracted differently than the rest.
     if test x"${component}" = x"abe"; then
 	pushd ${abe_path}
 	local revision="`git log --format=format:%H -n 1`"
