@@ -21,7 +21,7 @@
 
 # Start by assuming it's a native build
 build="${build}"
-host="${host:+${build}}"
+host="${host:-${build}}"
 target="${host}"
 
 gcc="`which gcc`"
