@@ -747,6 +747,7 @@ while test $# -gt 0; do
     case "$1" in
         --fileserver)
             warning "The --fileserver option has been depreciated, so ignoring it."
+	    continue
 	    ;;
 	--bu*|-bu*)			# build
 	    check_directive $1 build bu $2
