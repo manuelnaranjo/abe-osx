@@ -1,0 +1,14 @@
+metadata:
+  name: bench-session
+  format: "Lava-Test-Shell Test Definition 1.0"
+  description: "Benchmarking Session"
+  version: 1.0
+
+params:
+    PUB_KEY: None
+    CONFIG: None
+
+run:
+    steps:
+        - ./config/bench/lava/setup "$PUB_KEY"
+        - ./config/bench/lava/target-session "$CONFIG"
