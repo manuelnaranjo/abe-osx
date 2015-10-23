@@ -79,6 +79,7 @@
     {
       "count": 1,
       "device_type": "kvm",
+      "tags": [ "tcwg" ],
       "role": "host"
     },
     {
