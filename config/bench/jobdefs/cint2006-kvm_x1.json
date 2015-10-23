@@ -77,13 +77,11 @@
     {
       "count": 1,
       "device_type": "kvm",
-      "tags": [ "tcwg" ],
       "role": "host"
     },
     {
       "count": 1,
       "device_type": "kvm",
-      "tags": [ "tcwg" ],
       "role": "target"
     }
   ]
