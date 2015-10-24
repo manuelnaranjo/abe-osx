@@ -561,8 +561,8 @@ collect_data ()
     confvars="${confvars} ${default_makeflags:+MAKEFLAGS=\"`echo ${default_makeflags} | tr ' ' '%'`\"}"
     confvars="${confvars} ${default_configure_flags:+CONFIGURE=\"`echo ${default_configure_flags} | tr ' ' '%'`\"}"
     if test x"${component}" = "xgcc"; then
-	confvars="${confvars} ${stage1_flags:+STAGE1=`echo ${stage1_flags} | tr ' ' '%'`\"}"
-	confvars="${confvars} ${stage2_flags:+STAGE2=`echo ${stage2_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage1_flags:+STAGE1=\"`echo ${stage1_flags} | tr ' ' '%'`\"}"
+	confvars="${confvars} ${stage2_flags:+STAGE2=\"`echo ${stage2_flags} | tr ' ' '%'`\"}"
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
     # Gdbserver is built differently, as it's a sub directory within GDB, but
