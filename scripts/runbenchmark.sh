@@ -124,7 +124,7 @@ logdir="${abe_top}/${benchmark}-log/${device}_${ip}_`date -u +%F_%T.%N`"
 if test -e "${logdir}"; then
   echo "Log output directory ${logdir} already exists" 1>&2
 fi
-mkdir -p "${logdir}/${benchmark}.git"
+mkdir -p "${logdir}/${benchmark}"
 if test $? -ne 0; then
   echo "Failed to create dir ${logdir}" 1>&2
   error=1
@@ -222,7 +222,7 @@ if test x"${error}" = x || test ${error} -ne 0; then
 fi
 
 for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
-  mkdir -p "${logdir}/${benchmark}.git/`dirname ${log}`"
+  mkdir -p "${logdir}/${benchmark}/`dirname ${log}`"
   (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
   if test $? -ne 0; then
     echo "Error while getting log ${log}: will try to get others" 1>&2
