@@ -214,7 +214,7 @@ if test $? -ne 0; then
   error=1
 fi
 
-if test ${error} -ne 0; then
+if test x"${error}" = x || test ${error} -ne 0; then
   echo "Command failed: will try to get logs" 1>&2
   echo "Target: ${ip}:${target_dir}" 1>&2
   error=1
