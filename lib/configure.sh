@@ -73,45 +73,15 @@ configure_build()
 	fi
     fi
 
-    # If a target architecture isn't specified, then it's a native build
-#    if test x"${target}" = x; then
-#	target=${build}
-#	host=${build}
-#    else
-	# FIXME: this won't work yet when doing a Canadian Cross.
-#	host=${build}
-#    fi
-
-    # Load the default config file for this component if it exists.
-    local default_configure_flags=""
-    local stage1_flags=""
-    local stage2_flags=""
     local opts=""
     if test x"$2" = x"gdbserver"; then
 	local toolname="gdbserver"
     else
 	local toolname="${component}"
     fi
-    if test -e "${topdir}/config/${toolname}.conf"; then
-	. "${topdir}/config/${toolname}.conf"
-	# if there is a local config file in the build directory, allow
-	# it to override the default settings
-	# unset these two variables to avoid problems later
-	if test -e "${builddir}/${toolname}.conf" -a ${builddir}/${toolname}.conf -nt ${topdir}/config/${toolname}.conf; then
-	    . "${builddir}/${toolname}.conf"
-	    notice "Local ${toolname}.conf overriding defaults"
-	else
-	    # Since there is no local config file, make one using the
-	    # default, and then add the target architecture so it doesn't
-	    # have to be supplied for future reconfigures.
-	    echo "target=${target}" > ${builddir}/${toolname}.conf
-	    cat ${topdir}/config/${toolname}.conf >> ${builddir}/${toolname}.conf
-	fi
-    else
-	error "No ${topdir}/config/${tool}.conf file for ${tool}."
-	exit 1
-    fi
   
+#    local default_configure_flags="`get_component_configure ${component} $2`"
+    local opts="`get_component_configure ${component} $2`"
 
     # See if this component depends on other components. They then need to be
     # built first.
@@ -171,23 +141,14 @@ configure_build()
 	    dryrun "(mkdir -p ${sysroots}/usr/lib)"
 	    ;;
 	gcc*)
-	    # Force a complete reconfigure, as we changed the flags. We could do a
-	    # make distclean, but this builds faster, as not all files have to be
-	    # recompiled.
-#	    find ${builddir} -name Makefile -o -name config.status -o -name config.cache -exec rm {} \;
-#	    if test -e ${builddir}/Makefile; then
-#		make ${make_flags} -C ${builddir} distclean -i -k
-#	    fi
 	    if test x"${build}" != x"${target}"; then
 		if test x"$2" != x; then
 		    case $2 in
 			stage1*)
 			    notice "Building stage 1 of GCC"
-			    local opts="${opts} ${stage1_flags}"
 			    ;;
 			stage2*)
 			    notice "Building stage 2 of GCC"
-			    local opts="${opts} ${stage2_flags}"
 			    # Only add the Linaro bug and version strings for
 			    # Linaro branches.
 			    if test "`echo ${gcc_version} | grep -ic linaro`" -gt 0; then
@@ -250,8 +211,6 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
     esac
-
-    local flags="`get_component_configure ${component}`"
 
     if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
