@@ -200,7 +200,7 @@ import_manifest()
 		    ;;
 	    esac
 
-	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"}
+	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"}
 
 	    toolchain=(${toolchain[@]} $i)
 	done
