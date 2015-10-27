@@ -22,6 +22,7 @@ build_dir=
 run_benchargs=
 post_target_cmd=
 buildtar=
+buildtartopdir=
 while getopts a:b:cd:e:g:kpt: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
@@ -45,6 +46,9 @@ if test $# -ne 0; then
   echo "Surplus arguments: $@" 1>&2
   error=1
   exit
+fi
+if test x"${buildtar}" != x; then
+  buildtartopdir="`tar tf ${buildtar} | head -n1`"
 fi
 
 tee_output=/dev/null
@@ -124,7 +128,7 @@ logdir="${abe_top}/${benchmark}-log/${device}_${ip}_`date -u +%F_%T.%N`"
 if test -e "${logdir}"; then
   echo "Log output directory ${logdir} already exists" 1>&2
 fi
-mkdir -p "${logdir}/${benchmark}"
+mkdir -p "${logdir}/${buildtartopdir}"
 if test $? -ne 0; then
   echo "Failed to create dir ${logdir}" 1>&2
   error=1
@@ -188,7 +192,7 @@ fi
       trap phonehome EXIT; \
       cd ${target_dir} && \
       tar xf `basename ${buildtar}` --exclude='*.git/.git/*' && \
-      cd `tar tf ${buildtar} | head -n1` && \
+      cd ${buildtartopdir} && \
       rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      ret=\\\$?; \
@@ -222,8 +226,8 @@ if test x"${error}" = x || test ${error} -ne 0; then
 fi
 
 for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
-  mkdir -p "${logdir}/${benchmark}/`dirname ${log}`"
-  (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${benchmark}.git/${log}" "${logdir}/${benchmark}.git/${log}" ${ssh_opts})
+  mkdir -p "${logdir}/${buildtartopdir}/`dirname ${log}`"
+  (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${buildtartopdir}/${log}" "${logdir}/${buildtartopdir}/${log}" ${ssh_opts})
   if test $? -ne 0; then
     echo "Error while getting log ${log}: will try to get others" 1>&2
     error=1
