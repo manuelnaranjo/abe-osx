@@ -21,6 +21,7 @@ cautious=''
 build_dir=
 run_benchargs=
 post_target_cmd=
+buildtar=
 while getopts a:b:cd:e:g:kpt: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
