@@ -342,12 +342,20 @@ get_component_configure ()
 {
 #    trace "$*"
 
+    local sopts=""
     local component="`echo $1 | sed -e 's:-[0-9a-z\.\-]*::' -e 's:\.git.*::'`"
+
+    # Only GCC has parameters for two stages.
+    if test x"${component}" = x"gcc"; then
+	local stage="`echo $2 | tr "[:lower:]" "[:upper:]"`"
+	local sopts="${gcc[${stage}]}"
+    fi
+
     if test "${component:+set}" != "set"; then
 	echo "WARNING: ${component} does not exist!"
 	return 1
     else
-	eval "echo \${${component}[CONFIGURE]}"
+	eval "echo \${${component}[CONFIGURE]} ${sopts}"
     fi
 
     return 0
@@ -378,6 +386,24 @@ get_component_runtestflags ()
 	return 1
     else
 	eval "echo \${${component}[RUNTESTFLAGS]}"
+    fi
+
+    return 0
+}
+
+# Note that this function is GCC specific.
+get_component_stage ()
+{
+#    trace "$*"
+
+    local stage="`echo $1 | tr "[:lower:]" "[:upper:]"`"
+    local component="gcc"
+
+    if test "${component:+set}" != "set"; then
+	echo "WARNING: ${component} does not exist!"
+	return 1
+    else
+	eval "echo \${${component}[${stage}]}"
     fi
 
     return 0
