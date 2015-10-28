@@ -98,7 +98,7 @@ configure_build()
     local static="`get_component_staticlink ${component}`"
     if test x"${static}" = x"yes"; then
 	if test "`echo ${component} | grep -c glibc`" -eq 0; then
-	    local opts="--disable-shared --enable-static"
+	    local opts="${opts} --disable-shared --enable-static"
 	fi
     fi
 
