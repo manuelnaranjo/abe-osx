@@ -159,6 +159,12 @@ AC_CHECK_LIB(z, gzread)
 #   AC_MSG_WARN([Make 4.0 is missing, which is required])
 #fi
 
+# Figure out which packaging system is in use. Since it's possible to
+# install both on a system.
+rpm="`uname -a | grep -ic '\.fc[[0-9]].\.'`"
+deb="`uname -a | grep -ic 'ubuntu'`"
+deb=$(($deb + `uname -a | grep -ic 'debian'`))
+
 dnl Look for packages that do not have executables, so we are forced
 dnl to ask the packaging system if they are installed. This is more
 dnl reliable and portble than using pkg-config.
@@ -166,9 +172,7 @@ dnl reliable and portble than using pkg-config.
 packages="texinfo gawk"
 
 ### Debian packages ###
-dpkg="`which dpkg 2> /dev/null`"
-result=$?
-if test ${result} -eq 0; then
+if test ${deb} -ge 1; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
        packages="${packages} gcc-multilib g++-multilib libncurses5-dev libpython2.7-dev"
@@ -187,9 +191,7 @@ if test ${result} -eq 0; then
 
 ### RPM Packages ###
 else
-yum="`which yum 2> /dev/null`"
-result=$?
-if test ${result} -eq 0; then
+if test ${rpm} -eq 1; then
     packages="${packages} ncurses-devel python-devel"
     for i in ${packages}; do
         AC_MSG_CHECKING([if $i is installed])
@@ -197,7 +199,7 @@ if test ${result} -eq 0; then
 	# can't be searched on meta-package name, so strip off any trailing
 	# information when searching the rpm database.
         exists="`rpm -q -a ${i//.*/}| grep -c ${i//.*/}`"
-        if test ${exists} -eq 0; then
+        if test ${exists:-0} -eq 0; then
            AC_MSG_RESULT([no, install $i])
            missing="${missing} $i"
         else
