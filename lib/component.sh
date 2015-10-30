@@ -347,8 +347,10 @@ get_component_configure ()
 
     # Only GCC has parameters for two stages.
     if test x"${component}" = x"gcc"; then
-	local stage="`echo $2 | tr "[:lower:]" "[:upper:]"`"
-	local sopts="${gcc[${stage}]}"
+	if test x"$2" != x; then
+	    local stage="`echo $2 | tr "[:lower:]" "[:upper:]"`"
+	    local sopts="${gcc[${stage}]}"
+	fi
     fi
 
     if test "${component:+set}" != "set"; then
