@@ -20,15 +20,6 @@ else
     fixme "${in} returned ${out}"
 fi
 
-in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-out="`get_builddir ${in}`"
-if test ${out} = "${local_builds}/${build}/x86_64-linux-gnu/gcc-4_7-branch"; then
-    pass "get_builddir: svn branch"
-else
-    fail "get_builddir: svn branch"
-    fixme "${in} returned ${out}"
-fi
-
 in="git://git.linaro.org/toolchain/binutils.git"
 out="`get_builddir ${in}~binutils-2_18-branch@654321`"
 match="${local_builds}/${build}/x86_64-linux-gnu/binutils.git~binutils-2_18-branch@654321"
