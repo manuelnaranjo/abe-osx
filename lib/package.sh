@@ -283,19 +283,22 @@ manifest()
 	    echo "${component}_filespec=${filespec}" >> ${outfile}
 	fi
 
-	local makeflags="`get_component_makeflags ${component}`"
+	local makeflags="`get_component_makeflags ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
 	if test x"${makeflags}" != x; then
 	    echo "${component}_makeflags=\"${makeflags}\"" >> ${outfile}
 	fi
 
-	local configure="`get_component_configure ${component}`"
+	# Drop any local build paths and replaced with variables to be more portable.
+	local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
 	if test x"${configure}" != x; then
 	    echo "${component}_configure=\"${configure}\"" >> ${outfile}
 	fi
 
 	if test x"${component}" = x"gcc"; then
-	    echo "gcc_stage1_flags=\"${gcc[STAGE1]}\"" >> ${outfile}
-	    echo "gcc_stage2_flags=\"${gcc[STAGE2]}\"" >> ${outfile}
+	    local stage1="`get_component_configure gcc stage1 | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "gcc_stage1_flags=\"${stage1}\"" >> ${outfile}
+	    local stage2="`get_component_configure gcc stage2 | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "gcc_stage2_flags=\"${stage2}\"" >> ${outfile}
 	fi
 
 	echo "" >> ${outfile}
@@ -312,23 +315,29 @@ EOF
     cat >> ${outfile} <<EOF
 
 clibrary=${clibrary}
+target=${target}
 
  ##############################################################################
  # Everything below this line is only for informational purposes for developers
  ##############################################################################
 
 # Build machine data
-target=${target}
-build=${build}
-host=${host}
-kernel=${kernel}
-hostname=${hostname}
-distribution=${distribution}
-host_gcc=${host_gcc_version}
+build: ${build}
+host: ${host}
+kernel: ${kernel}
+hostname: ${hostname}
+distribution: ${distribution}
+host_gcc: ${host_gcc_version}
+
+# These aren't used in the repeat build. just a sanity check for developers
+build directory: ${local_builds}
+sysroot directory: ${sysroots}
+snapshots directory: ${local_snapshots}
+git reference directory: ${git_reference_dir}
 
 EOF
 
-    for i in gcc binutils ${clibrary}; do
+    for i in gcc binutils ${clibrary} abe; do
 	if test "`component_is_tar ${i}`" = no; then
 	    echo "--------------------- $i ----------------------" >> ${outfile}
 	    local srcdir="`get_component_srcdir $i`"

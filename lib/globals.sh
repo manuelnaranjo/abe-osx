@@ -163,9 +163,10 @@ import_manifest()
 	    # Any embedded spaces in the value have to be converted to a '%'
 	    # character. for component_init().
 	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    eval "makeflags=${makeflags}"
 	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"'`"
+	    eval "configure=${configure}"
 	    local revision="`grep "${i}_revision" ${manifest} | cut -d '=' -f 2`"
-    
 	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
 		local version="`echo ${filespec} | sed -e 's:\.tar\..*$::'`"
 		local dir=${version}
@@ -194,7 +195,9 @@ import_manifest()
 		    ;;
 		gcc)
 		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    eval "stage1_flags=${stage1_flags}"
 		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    eval "stage2_flags=${stage2_flags}"
 		    ;;
 		*)
 		    ;;
