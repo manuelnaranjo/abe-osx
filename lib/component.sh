@@ -501,8 +501,9 @@ collect_data ()
 	local url="`dirname ${url}`"
 	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
 	local filespec="abe.git"
+	local srcdir="${abe_path}"
 	popd
-	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}}
+	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}} ${srcdir:+SRCDIR=${srcdir}}
  	return 0
     fi
 
