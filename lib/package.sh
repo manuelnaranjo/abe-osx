@@ -236,6 +236,7 @@ manifest()
 	return 0;
     fi
 
+    mkdir -p ${local_builds}/${host}/${target}
     if test x"$1" = x; then
 	mtag="`create_release_tag gcc`"
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
@@ -246,7 +247,7 @@ manifest()
     if test -e ${outfile}; then
 	mv -f ${outfile} ${outfile}.bak
     fi
-    echo "manifest_format=${manifest_version:-1.0}" >> ${outfile}
+    echo "manifest_format=${manifest_version:-1.0}" > ${outfile}
     echo "" >> ${outfile}
     
     local seen=0
