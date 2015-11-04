@@ -162,7 +162,7 @@ binary_toolchain()
     dryrun "mkdir -p ${local_builds}/tmp.$$"
 
     # The manifest file records the versions of all of the components used to
-    # build toolchain.
+    # build toolcghain.
     dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
 
     dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
@@ -239,6 +239,7 @@ manifest()
     mkdir -p ${local_builds}/${host}/${target}
     if test x"$1" = x; then
 	mtag="`create_release_tag gcc`"
+	mkdir -p ${local_builds}/${host}/${target}
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
     else
 	local outfile=$1

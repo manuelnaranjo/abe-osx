@@ -57,6 +57,15 @@ build_all()
         return 1;
     fi
 
+    if test x"${manifest}" = x"create"; then
+	notice "Exiting after creating"
+	local exitflag=true
+    fi
+    manifest="`manifest`"
+    if test x"${exitflag}" = xtrue; then
+	exit 0
+    fi
+
     # build each component
     for i in ${builds}; do
         notice "Building all, current component $i"
@@ -119,8 +128,6 @@ build_all()
             return 1
         fi
     done
-
-    manifest="`manifest`"
 
     # Notify that the build completed successfully
     build_success
