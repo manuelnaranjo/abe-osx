@@ -25,8 +25,8 @@ trap exitfunc EXIT
 abe_branch="$1"
 
 #these parameters used by Benchmark.job
-export benchmark="${2:?Must set a benchmark}"
-export toolchain="${3:?Must set a toolchain}"
+export benchmark="${2}"
+export toolchain="${3}"
 if test x"$4" = xNone; then
   export run_flags=
 else
