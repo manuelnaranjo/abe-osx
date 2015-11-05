@@ -47,10 +47,17 @@ if test x"$7" = xNone; then
 else
   export prebuilt="$7"
 fi
+if test x"$8" = xNone; then
+  trusted=0
+elif test x"$8" = xTrusted; then
+  trusted=1
+else
+  echo "Bad value '$8' for TRUST" >&2
+  exit 1
+fi
 
 #Non-parameters that we need to pass to Benchmark.job
 export ABE_DIR
-export post_build_cmd="rm ${HOME}/data/socket"
 export post_target_cmd="cat /root/sleeper | xargs kill"
 export maindir="/${HOME}/bench"
 mkdir "${maindir}" || exit 1
@@ -60,32 +67,43 @@ chmod 700 "${maindir}" || exit 1
 ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
 chmod 755 /usr/local/bin/git-new-workdir
 
-#Generate one-time key
-if ! ssh-keygen -P '' -f ~/.ssh/id_rsa > /dev/null < /dev/null; then
-  exit 1
-fi
-
-#Create directory for communication with other hosts
-mkdir ~/data || exit 1
-
-#Need to be able to ssh to dev-private
-echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
-#Permit scping of toolchains/built benchmarks from this machine
-echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> ~/.ssh/known_hosts
-
 #Generate config file for each target in multinode job
 lava-network broadcast eth0 #Required with the lava-network, due to BZ1704
 lava-network collect eth0
 ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{print $1}'` ipv4)"
 
-#Request agent just before we need it
-#This would be two keys in one agent if we wanted one for source, one for job
-echo "*** WAITING FOR AGENT: ${ip_addr}"
-echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A root@${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
-while ! test -e ~/data/socket; do
-  inotifywait -e create ~/data
-done
-export SSH_AUTH_SOCK=~/data/socket
+if test ${trusted} -eq 0; then
+  #Jobs runnning outside of the TCWG uinstance (or similar environment)
+  #1) Live in an untrusted world
+  #2) Rely on external forwarding of authentication tokens
+  #3) Have no built-in knowledge of the systems they work with
+
+  #Generate one-time key, so that external forwarding isn't need throughout run
+  if ! ssh-keygen -P '' -f ~/.ssh/id_rsa > /dev/null < /dev/null; then
+    exit 1
+  fi
+
+  #Create directory for communication with other hosts
+  mkdir ~/data || exit 1
+
+  #Direct Benchmark.job to drop the external authentication when we don't need it
+  export post_build_cmd="rm ${HOME}/data/socket"
+
+  #Set up known_hosts
+  #Need to be able to ssh to dev-private
+  echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
+  #Permit scping of toolchains/built benchmarks from this machine
+  echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> ~/.ssh/known_hosts
+
+  #Request agent just before we need it
+  #This would be two keys in one agent if we wanted one for source, one for job
+  echo "*** WAITING FOR AGENT: ${ip_addr}"
+  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A root@${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
+  while ! test -e ~/data/socket; do
+    inotifywait -e create ~/data
+  done
+  export SSH_AUTH_SOCK=~/data/socket
+fi
 
 target_names=()
 for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; do
@@ -93,11 +111,18 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   if test $? -ne 0; then echo "Failed to find IP for ${lava_name}"; exit 1; fi
   if test -z "${target_ip}"; then echo "Failed to find IP for ${lava_name}"; exit 1; fi
 
-  #Check that target is accessible, add it to our known_hosts,
-  #add our one-time key to its authorized_keys
-  if ! cat ~/.ssh/id_rsa.pub | ssh -o StrictHostKeyChecking=no "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
-    echo "Could not access target ${target_ip} (${lava_name})" >&2
-    exit 1
+  #Check that target is accessible, add it to our known_hosts
+  if ! ssh -o StrictHostKeyChecking=no "${target_ip}" true; then
+     echo "Could not access target ${target_ip} (${lava_name})" >&2
+     exit 1
+  fi
+
+  if test ${trusted} -eq 0; then
+    #add our one-time key to its authorized_keys
+    if ! cat ~/.ssh/id_rsa.pub | ssh "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
+      echo "Could not install one-time (public) key on target" >&2
+      exit 1
+    fi
   fi
 
   #Generate configuration files for target
@@ -130,12 +155,18 @@ if ! "${ABE_DIR}"/scripts/Benchmark.job; then
   exit
 fi
 
-echo "*** RESULTS READY: ${ip_addr}"
-echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab"
-echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab 'touch ~/data/resultsgone'"
-while ! test -e ~/data/resultsgone; do
-  inotifywait -e create ~/data
-done
+if test ${trusted} -eq 0; then
+  #We are in an untrusted environment, so we cannot use bundle streams
+  echo "*** RESULTS READY: ${ip_addr}"
+  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab"
+  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab 'touch ~/data/resultsgone'"
+  while ! test -e ~/data/resultsgone; do
+    inotifywait -e create ~/data
+  done
+else
+  #We are in a trusted environment, so we can use bundle streams
+  echo "Do some bundle stream magic"
+fi
 
 error=0
 exit

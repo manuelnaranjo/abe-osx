@@ -13,6 +13,7 @@ params:
     MAKE_FLAGS: None
     PREBUILT: None
     BENCH_DEBUG: None
+    TRUST: None
 
 install:
     deps:
@@ -39,4 +40,4 @@ install:
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
-        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT"
+        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST"
