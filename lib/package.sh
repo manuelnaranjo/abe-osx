@@ -295,6 +295,11 @@ manifest()
 	    echo "${component}_configure=\"${configure}\"" >> ${outfile}
 	fi
 
+	local static="`get_component_staticlink ${component}`"
+	if test "`echo ${component} | grep -c glibc`" -eq 0; then
+	    echo "${component}_staticlink=\"${static}\"" >> ${outfile}
+	fi
+
 	if test x"${component}" = x"gcc"; then
 	    local stage1="`get_component_configure gcc stage1 | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
 	    echo "gcc_stage1_flags=\"${stage1}\"" >> ${outfile}
