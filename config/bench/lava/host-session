@@ -107,8 +107,10 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   sed "s/^ip=.*/ip=${target_ip}/" "${ABE_DIR}/config/bench/boards/${config}.conf" > "${ABE_DIR}/config/bench/boards/${lava_name}.conf"
   if test $? -ne 0; then echo "Failed to generate config file for target ${lava_name}"; exit 1; fi
 
-  cp "${ABE_DIR}/config/bench/boards/${config}.services" "${ABE_DIR}/config/bench/boards/${lava_name}.services"
-  if test $? -ne 0; then echo "Failed to generate services file for target ${lava_name}"; exit 1; fi
+  if test -e "${ABE_DIR}/config/bench/boards/${config}.services"; then
+    cp "${ABE_DIR}/config/bench/boards/${config}.services" "${ABE_DIR}/config/bench/boards/${lava_name}.services"
+    if test $? -ne 0; then echo "Failed to generate services file for target ${lava_name}"; exit 1; fi
+  fi
 
   #Add target to list for Benchmark.job
   if test "${#target_names[@]}" -eq 0; then

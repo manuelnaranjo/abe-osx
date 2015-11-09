@@ -142,7 +142,7 @@ if test $? -ne 0; then
   error=1
   exit
 fi
-for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh" "${confdir}/${device}.services"; do
+for thing in "${buildtar}" "${topdir}/scripts/controlledrun.sh"; do
   (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${thing}" "${target_dir}/`basename ${thing}`" ${ssh_opts})
   if test $? -ne 0; then
     echo "Unable to copy ${thing}" to "${ip}:${target_dir}/${thing}" 1>&2
@@ -162,6 +162,12 @@ if test x"${netctl:-}" = xyes; then
 fi
 if test x"${servicectl:-}" = xyes; then
   flags+=" -s ${target_dir}/${device}.services"
+  (. "${topdir}"/lib/common.sh; remote_upload -r 3 "${ip}" "${confdir}/${device}.services" "${target_dir}" ${ssh_opts})
+  if test $? -ne 0; then
+    echo "Unable to copy ${confdir}/${device}.services" to "${ip}:${target_dir}/${device}.services" 1>&2
+    error=1
+    exit
+  fi
 fi
 if test x"${freqctl:-}" = xyes; then
   flags+=" -f"
