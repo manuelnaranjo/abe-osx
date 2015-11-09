@@ -231,7 +231,8 @@ if test x"${error}" = x || test ${error} -ne 0; then
   error=1
 fi
 
-for log in ../stdout ../stderr linarobenchlog ${benchlog}; do
+for log in ../RETCODE ../stdout ../stderr linarobenchlog ${benchlog}; do
+  log="`echo ${log} | sed 's#/*$##'`"
   mkdir -p "${logdir}/${buildtartopdir}/`dirname ${log}`"
   (. "${topdir}"/lib/common.sh; remote_download -r 3 "${ip}" "${target_dir}/${buildtartopdir}/${log}" "${logdir}/${buildtartopdir}/${log}" ${ssh_opts})
   if test $? -ne 0; then
