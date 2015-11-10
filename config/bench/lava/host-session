@@ -1,10 +1,12 @@
 #!/bin/bash
-set -u
+
+#Initialization - get us to defined exit func before we do anything else
+set -ue
 set -o pipefail
 
 error=1
 if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
-  export BENCH_DEBUG=
+  BENCH_DEBUG=
 fi
 
 function exitfunc {
@@ -20,36 +22,59 @@ function exitfunc {
       sleep infinity
     fi
   fi
+  if test x"${tmpdir:-}" != x; then
+    if test -e "${tmpdir}"; then
+      rm -rf "${tmpdir}"
+    fi
+  fi
   rm -rf ~/*
   exit ${error}
 }
 
 trap exitfunc EXIT
 
-abe_branch="$1"
+#Now we can exit cleanly, do remaining initialization
 
-#these parameters used by Benchmark.job
-export benchmark="${2}"
-export toolchain="${3}"
-if test x"$4" = xNone; then
-  export run_flags=
-else
-  export run_flags="$4"
+#Belt-and-braces - we do most work in maindir,
+#which has 700 permissions, but this protects
+#us against world-readable temporaries
+umask 077
+
+function get_thing {
+  local thing="$1"
+  pushd "${tmpdir}" > /dev/null
+  if echo x"${thing}" | grep -q '^xhttp'; then
+    wget -q "${thing}"
+  else
+    local server="${thing%%:*}"
+    thing="${thing#*:}"
+    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    if ! test -e "`basename ${thing}`"; then #TODO HACK set -e fails to apply to above incantation
+      echo "Download of ${server}:${thing} failed" >&2
+      exit 1
+    fi
+  fi
+  popd > /dev/null
+  echo "${tmpdir}/`basename ${thing}`"
+}
+
+benchgccpath=
+tmpdir="`mktemp -dt downloads-XXXXXXX`"
+
+abe_branch="$1"
+benchmark="${2}"
+toolchain="${3}"
+if test x"$4" != xNone; then
+  run_flags="$4"
 fi
-if test x"$5" = xNone; then
-  export compiler_flags=
-else
-  export compiler_flags="$5"
+if test x"$5" != xNone; then
+  compiler_flags="$5"
 fi
-if test x"$6" = xNone; then
-  export make_flags=
-else
-  export make_flags="$6"
+if test x"$6" != xNone; then
+  make_flags="$6"
 fi
-if test x"$7" = xNone; then
-  export prebuilt=
-else
-  export prebuilt="$7"
+if test x"$7" != xNone; then
+  prebuilt="$7"
 fi
 if test x"$8" = xNone; then
   trusted=0
@@ -60,12 +85,11 @@ else
   exit 1
 fi
 
-#Non-parameters that we need to pass to Benchmark.job
-export ABE_DIR
-export post_target_cmd="cat /root/sleeper | xargs kill"
-export maindir="/${HOME}/bench"
+maindir="/${HOME}/bench"
+echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
 mkdir "${maindir}" || exit 1
 chmod 700 "${maindir}" || exit 1
+cd "${maindir}"
 
 #Initialize git-new-workdir - sadly not just an apt-get call
 ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
@@ -89,9 +113,6 @@ if test ${trusted} -eq 0; then
 
   #Create directory for communication with other hosts
   mkdir ~/data || exit 1
-
-  #Direct Benchmark.job to drop the external authentication when we don't need it
-  export post_build_cmd="rm ${HOME}/data/socket"
 
   #Set up known_hosts
   #Need to be able to ssh to dev-private
@@ -141,7 +162,6 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
     if test $? -ne 0; then echo "Failed to generate services file for target ${lava_name}"; exit 1; fi
   fi
 
-  #Add target to list for Benchmark.job
   if test "${#target_names[@]}" -eq 0; then
     target_names=("${lava_name}")
   else
@@ -149,14 +169,70 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   fi
 done
 
-export targets="${target_names[@]}"
+#Configure
+#Must have run configure before first call to get_thing
+echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+     "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
-echo "Running benchmark... I may be some time"
-if ! "${ABE_DIR}"/scripts/Benchmark.job; then
-  echo "Benchmark run failed" >&2
-  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null ${ip_addr}.lab"
-  error=1
-  exit
+#Install toolchain and build benchmark, or download prebuilt tarball
+if test x"${prebuilt:-}" = x; then
+  mkdir bin
+  if test x"${toolchain:0:1}" = x/; then
+    echo "Toolchain assumed to be path on builder"
+    benchgccpath="${toolchain}"
+  else
+    tarball="`get_thing ${toolchain}`"
+    tar xf "${tarball}" -C bin
+    benchgccpath="`ls ${PWD}/bin/*/bin/*gcc`"
+    rm "${tarball}"
+  fi
+
+  if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
+    echo "Should be exactly one GCC path" 1>&2
+    echo "Got: ${benchgccpath}" 1>&2
+    exit 1
+  fi
+  if test x"${benchgccpath}" != x; then
+    if ! test -x "${benchgccpath}"; then
+      echo "GCC binary '${benchgccpath}' does not exist or is not executable" 1>&2
+      exit 1
+    fi
+  fi
+
+  echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${make_flags:+-m \"${make_flags}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${target_names[@]}"
+       "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${make_flags:+-m  "${make_flags}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${target_names[@]}"
+else
+  benchtar="`get_thing ${prebuilt}`"
+fi
+
+#If we are relying on an external auth socket, we can delete it now
+if test ${trusted} -eq 0; then
+  rm "${HOME}/data/socket"
+fi
+
+#Run
+if test x"${BENCH_DEBUG:-}" = x; then
+  politeness='-p'
+else
+  politeness=
+fi
+
+post_target_cmd="cat /root/sleeper | xargs kill"
+if test x"${prebuilt:-}" = x; then
+  echo "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${target_names[@]}"
+       "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${target_names[@]}"
+else
+  for target in "${target_names[@]}"; do
+    echo  "${ABE_DIR}"/scripts/runbenchmark.sh ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} -b \"${benchmark}\" -d \"${target}\" -t "${benchtar}" -c
+    (if ! "${ABE_DIR}"/scripts/runbenchmark.sh ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  -b  "${benchmark}"  -d  "${target}"  -t "${benchtar}" -c; then
+       touch "${tmpdir}"/ERROR
+     fi)&
+  done
+  wait
+  if test -e "${tmpdir}"/ERROR; then
+    echo "At least one benchmark failed"
+    exit 1
+  fi
 fi
 
 if test ${trusted} -eq 0; then
