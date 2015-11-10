@@ -12,7 +12,11 @@ function exitfunc {
     if test x"${BENCH_DEBUG}" != x; then
       echo "Trapped exit with error ${error}"
       echo "Sleeping for debug"
-      echo "ssh -o ControlMaster=no -o ControlPath=/dev/null `hostname -I | tr -d '[[:blank:]]'`.lab"
+      if test x"${ip_addr:-}" = x; then
+        echo "ssh -o ControlMaster=no -o ControlPath=/dev/null `hostname -I | tr -d '[[:blank:]]'`.lab"
+      else
+        echo "ssh -o ControlMaster=no -o ControlPath=/dev/null ${ip_addr}.lab"
+      fi
       sleep infinity
     fi
   fi
