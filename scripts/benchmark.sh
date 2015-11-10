@@ -128,10 +128,20 @@ while getopts a:b:ce:f:g:hi:km:ps: flag; do
     ;;
     s)
        phases="${OPTARG}"
-       if test x"${phases}" != xrunonly && test x"${phases}" != xbuildonly && test x"${phases}" != xboth; then
-         echo "-s takes 'runonly', 'buildonly' or 'both'" 1>&2
+       if test x"${OPTARG}" = x; then
+         echo "-s takes 'runonly', 'buildonly', 'both' or a tarball" 1>&2
          error=1
          exit
+       fi
+       if test x"${phases}" != xrunonly && test x"${phases}" != xbuildonly && test x"${phases}" != xboth; then
+         if test -e "${phases}"; then
+           cmpbuild="${phases}"
+           phases='runonly'
+         else
+           echo "-s takes 'runonly', 'buildonly', 'both' or a tarball" 1>&2
+           error=1
+           exit
+         fi
        fi
     ;;
     *)
@@ -229,21 +239,24 @@ if test x"${phases}" = xbuildonly; then
   exit
 fi
 
+#If the user did not supply a tarball then compress our build
+if test x"${cmpbuild:-}" = x; then
+  #Compress build to a tmpfile in our top-level working directory
+  #This should be good for bandwidth
+  #By keeping file at top level, we make sure that everything sensitive is in one place
+  cmpbuild="`mktemp -p ${abe_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
+  if test $? -ne 0; then
+    echo "Unable to create temporary file for compressed build output" 1>&2
+    error=1
+    exit
+  fi
+  if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
+    echo "Unable to compress ${builddir} to ${cmpbuild}" 1>&2
+    error=1
+    exit
+  fi
+fi
 
-#Compress build to a tmpfile in our top-level working directory
-#This should be good for bandwidth
-#By keeping file at top level, we make sure that everything sensitive is in one place
-cmpbuild="`mktemp -p ${abe_top} -t ${benchmark}_XXXXXXX.tar.bz2`"
-if test $? -ne 0; then
-  echo "Unable to create temporary file for compressed build output" 1>&2
-  error=1
-  exit
-fi
-if ! tar cjf "${cmpbuild}" -C "${builddir}/.." "`basename ${builddir}`"; then
-  echo "Unable to compress ${builddir} to ${cmpbuild}" 1>&2
-  error=1
-  exit
-fi
 for device in "${devices[@]}"; do
   "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
