@@ -104,8 +104,13 @@ chmod 700 "${maindir}" || exit 1
 cd "${maindir}"
 
 #Initialize git-new-workdir - sadly not just an apt-get call
+#Needed before we run ${ABE_DIR}/configure
 ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
 chmod 755 /usr/local/bin/git-new-workdir
+
+#Configure
+#Must have run configure before first use of abe functions, may as well do it early
+"${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
 #Generate config file for each target in multinode job
 lava-network broadcast eth0 #Required with the lava-network, due to BZ1704
@@ -160,6 +165,14 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
       echo "Could not install one-time (public) key on target" >&2
       exit 1
     fi
+  else #upload gather script so we can submit results to bundle stream
+       #MUST be uploaded conditionally on ${trusted} --
+       #target side will run gather.sh if it exists and thus dump data in results bundle
+    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "${ABE_DIR}/config/bench/gather/${benchmark}.sh" 'gather.sh')
+    if test $? -ne 0; then
+      echo "Upload of ${ABE_DIR}/config/bench/gather/${benchmark}.sh to ${target_ip}:gather.sh failed" >&2
+      exit 1
+    fi
   fi
 
   #Generate configuration files for target
@@ -180,10 +193,6 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
     target_names=("${target_names[@]}" "${lava_name}")
   fi
 done
-
-#Configure
-#Must have run configure before first call to get_thing
-"${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
 #Install toolchain and build benchmark, or download prebuilt tarball
 if test x"${prebuilt:-}" = x; then
@@ -217,8 +226,10 @@ if test x"${prebuilt:-}" = x; then
     -i "${benchgccpath}" \
     -b "${benchmark}" \
     "${target_names[@]}"
+  resultsdir="${benchmark}.git"
 else
   benchtar="`get_thing ${prebuilt}`"
+  resultsdir="`tar xf ${benchtar} | head -n1`"
 fi
 
 #If we are relying on an external auth socket, we can delete it now
@@ -233,26 +244,25 @@ else
   politeness=
 fi
 
+#Note - env vars in -r line are evaluated on target
 "${ABE_DIR}"/scripts/benchmark.sh \
   -s ${benchtar:-runonly} \
   ${politeness} \
-  -e 'cat /root/sleeper | xargs kill' \
+  -e 'cat /root/post-target | xargs kill' \
   ${run_flags:+-a "${run_flags}"} \
   ${benchgccpath:+-i "${benchgccpath}"} \
   -b "${benchmark}" \
+  -r 'if echo \${PWD} > \${HOME}/resultsdir;then cat /root/post-run | xargs kill; else false; fi' \
   "${target_names[@]}"
 
 if test ${trusted} -eq 0; then
-  #We are in an untrusted environment, so we cannot use bundle streams
+  #We are in an untrusted environment, so we have not directed that the target will send to bundle stream
   echo "*** RESULTS READY: ${ip_addr}"
   echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab"
   echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab 'touch ~/data/resultsgone'"
   while ! test -e ~/data/resultsgone; do
     inotifywait -e create ~/data
   done
-else
-  #We are in a trusted environment, so we can use bundle streams
-  echo "Do some bundle stream magic"
 fi
 
 error=0
