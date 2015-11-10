@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Initialization - get us to defined exit func before we do anything else
-set -ue
+set -xue
 set -o pipefail
 
 error=1
@@ -183,8 +183,7 @@ done
 
 #Configure
 #Must have run configure before first call to get_thing
-echo "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
-     "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
+"${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
 #Install toolchain and build benchmark, or download prebuilt tarball
 if test x"${prebuilt:-}" = x; then
@@ -211,8 +210,13 @@ if test x"${prebuilt:-}" = x; then
     fi
   fi
 
-  echo "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f \"${compiler_flags//\"/\\\"}\"} ${make_flags:+-m \"${make_flags}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${target_names[@]}"
-       "${ABE_DIR}"/scripts/benchmark.sh -s buildonly ${compiler_flags:+-f  "${compiler_flags//\"/\\\"}"}  ${make_flags:+-m  "${make_flags}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${target_names[@]}"
+  "${ABE_DIR}"/scripts/benchmark.sh \
+    -s buildonly \
+    ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} \
+    ${make_flags:+-m "${make_flags}"} \
+    -i "${benchgccpath}" \
+    -b "${benchmark}" \
+    "${target_names[@]}"
 else
   benchtar="`get_thing ${prebuilt}`"
 fi
@@ -229,23 +233,14 @@ else
   politeness=
 fi
 
-post_target_cmd="cat /root/sleeper | xargs kill"
-if test x"${prebuilt:-}" = x; then
-  echo "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} ${benchgccpath:+-i \"${benchgccpath}\"} -b \"${benchmark}\" "${target_names[@]}"
-       "${ABE_DIR}"/scripts/benchmark.sh -s runonly ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  ${benchgccpath:+-i  "${benchgccpath}"}  -b  "${benchmark}"  "${target_names[@]}"
-else
-  for target in "${target_names[@]}"; do
-    echo  "${ABE_DIR}"/scripts/runbenchmark.sh ${politeness:-} ${post_target_cmd:+-e \"${post_target_cmd}\"} ${run_flags:+-a \"${run_flags//\"/\\\"}\"} -b \"${benchmark}\" -d \"${target}\" -t "${benchtar}" -c
-    (if ! "${ABE_DIR}"/scripts/runbenchmark.sh ${politeness:-} ${post_target_cmd:+-e  "${post_target_cmd}"}  ${run_flags:+-a  "${run_flags//\"/\\\"}"}  -b  "${benchmark}"  -d  "${target}"  -t "${benchtar}" -c; then
-       touch "${tmpdir}"/ERROR
-     fi)&
-  done
-  wait
-  if test -e "${tmpdir}"/ERROR; then
-    echo "At least one benchmark failed"
-    exit 1
-  fi
-fi
+"${ABE_DIR}"/scripts/benchmark.sh \
+  -s ${benchtar:-runonly} \
+  ${politeness} \
+  -e 'cat /root/sleeper | xargs kill' \
+  ${run_flags:+-a "${run_flags}"} \
+  ${benchgccpath:+-i "${benchgccpath}"} \
+  -b "${benchmark}" \
+  "${target_names[@]}"
 
 if test ${trusted} -eq 0; then
   #We are in an untrusted environment, so we cannot use bundle streams
