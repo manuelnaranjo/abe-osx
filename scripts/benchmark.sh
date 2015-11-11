@@ -90,8 +90,9 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
       #''   (default) - clean up and release target unless there is an error
       #'-k' (keep)    - unconditionally keep target-side data and target
 target=
+post_run_cmd=
 post_target_cmd=
-while getopts a:b:ce:f:g:hi:km:ps: flag; do
+while getopts a:b:ce:f:g:hi:km:pr:s: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -126,6 +127,7 @@ while getopts a:b:ce:f:g:hi:km:ps: flag; do
        keep='-p'
        echo 'Unconditional release (-p) set: data will be scrubbed and target released, even if run fails'
     ;;
+    r) post_run_cmd="${OPTARG}";;
     s)
        phases="${OPTARG}"
        if test x"${OPTARG}" = x; then
@@ -258,7 +260,7 @@ if test x"${cmpbuild:-}" = x; then
 fi
 
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 

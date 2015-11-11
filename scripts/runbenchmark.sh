@@ -20,10 +20,11 @@ keep=
 cautious=''
 build_dir=
 run_benchargs=
+post_run_cmd=
 post_target_cmd=
 buildtar=
 buildtartopdir=
-while getopts a:b:cd:e:g:kpt: flag; do
+while getopts a:b:cd:e:g:kpr:t: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -33,6 +34,7 @@ while getopts a:b:cd:e:g:kpt: flag; do
     g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
+    r) post_run_cmd="${OPTARG}";;
     t) buildtar="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
@@ -187,6 +189,9 @@ if test x"${uncontrolled:-}" = xyes; then
   flags="-u"
 fi
 
+#Note that return code from post_run_cmd does not get evaluated, because this
+#is an asynchronous ssh invocation, and we cache the return code of the
+#benchmark run only.
 (
    . "${topdir}"/lib/common.sh
    remote_exec_async \
@@ -204,9 +209,9 @@ fi
       cd ${buildtartopdir} && \
       rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
-     ret=\\\$?; \
-     echo \\\${ret} > ${target_dir}/RETCODE && \
-     exit \\\${ret}" \
+     echo \\\$? > ${target_dir}/RETCODE && \
+     ${post_run_cmd:-echo > /dev/null}; \
+     exit \\\$?" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
    if test $? -ne 0; then
