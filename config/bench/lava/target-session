@@ -1,4 +1,7 @@
 #!/bin/bash
+set -uex
+set -o pipefail
+
 lava-network broadcast eth0
 lava-send "config_`lava-self`" "config=${1}"
 
@@ -7,7 +10,10 @@ echo $! > /root/post-target
 sleep infinity&
 echo $! > /root/post-run
 
+set +e
 wait `cat /root/post-run`
+set -e
+
 if test -e "${HOME}"/gather.sh; then
   if ! test -e "${HOME}"/resultsdir; then
     echo "No resultsdir given" >&2
@@ -16,5 +22,8 @@ if test -e "${HOME}"/gather.sh; then
   "${HOME}"/gather.sh `cat "${HOME}"/resultsdir`
 fi
 
+set +e
 wait `cat /root/post-target`
+set -e
+
 exit 0
