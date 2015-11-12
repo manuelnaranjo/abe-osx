@@ -47,9 +47,12 @@ if test $# -ne 0; then
   error=1
   exit
 fi
-if test x"${buildtar}" != x; then
-  buildtartopdir="`tar tf ${buildtar} | head -n1`"
+if test x"${buildtar}" = x; then
+  echo "No tarball given" 1>&2
+  error=1
+  exit
 fi
+buildtartopdir="`tar tf ${buildtar} | head -n1`"
 
 tee_output=/dev/null
 
