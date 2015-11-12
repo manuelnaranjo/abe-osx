@@ -159,16 +159,17 @@ binary_toolchain()
     fi
 
     local destdir="${local_builds}/tmp.$$/${tag}"
-    dryrun "mkdir -p ${local_builds}/tmp.$$"
+    dryrun "mkdir -p ${destdir}"
 
     # The manifest file records the versions of all of the components used to
     # build toolcghain.
     dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
-
-    dryrun "ln -sfnT ${local_builds}/destdir/${host} ${destdir}"
+    dryrun "rsync -avr ${local_builds}/destdir/${host}/* ${destdir}/"
 
     if test x"${build}" != x"${target}"; then
-	dryrun "ln -sfnT ${sysroots} ${destdir}/${target}/libc"
+	# FIXME: link the sysroot into the toolchain tarball
+	dryrun "mkdir -p  ${destdir}/${target}/libc/"
+	dryrun "rsync -avr ${sysroots} ${destdir}/${target}/libc/"
     fi
 
     # Some mingw packages have a runtime dependency on libwinpthread-1.dll, so a copy
@@ -185,7 +186,7 @@ binary_toolchain()
 	if test `echo ${host} | grep -c mingw` -eq 0; then
 	    # make the tarball from the tree we just created.
 	    notice "Making binary tarball for toolchain, please wait..."
-	    dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
+	    dryrun "tar Jcf ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
 
 	    rm -f ${local_snapshots}/${tag}.tar.xz.asc
 	    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
