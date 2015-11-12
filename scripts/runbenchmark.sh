@@ -210,8 +210,7 @@ fi
       rm ../`basename ${buildtar}` && \
      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
      echo \\\$? > ${target_dir}/RETCODE && \
-     ${post_run_cmd:-echo > /dev/null}; \
-     exit \\\$?" \
+     ${post_run_cmd:-echo > /dev/null}" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
    if test $? -ne 0; then
