@@ -44,4 +44,15 @@ fi
 report "${resultsdir}/tallyman1" bananas
 report "${resultsdir}/tallyman2" tarantulas
 
+#Change to top dir, so that paths reported for attachments look sane
+cd "$1/.."
+'lava-test-case' output --result pass
+'lava-test-case-attach' output "RETCODE"
+'lava-test-case-attach' output "stdout"
+'lava-test-case-attach' output "stderr"
+'lava-test-case-attach' output "`basename $1`/linarobenchlog"
+for x in `find "$(basename $1)/fake/fakeresults" -type f`; do
+  'lava-test-case-attach' output "$x"
+done
+
 error=0
