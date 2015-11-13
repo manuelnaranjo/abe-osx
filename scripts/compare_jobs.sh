@@ -35,6 +35,23 @@ function xml_report_print_row
 EOF
 }
 
+function html_report_print_row
+{
+    local target=${1?}
+    local failed=${2?}
+    local log_url=diff-${target}.txt
+    local color='#00FF00'
+    $failed && color='#FF0000'
+    local message=PASSED
+    $failed && message=FAILED
+    cat <<EOF
+  <tr>
+    <td>${target}</td>
+    <td style="background-color:$color"><a href="$log_url"><b>${message}</b></a></td>
+  </tr>
+EOF
+}
+
 function xml_report_print_header
 {
     cat <<EOF
@@ -47,10 +64,29 @@ function xml_report_print_header
 EOF
 }
 
+function html_report_print_header
+{
+    cat <<EOF
+<h1>Results comparison ${ref_logs} vs ${new_logs}</h1>
+<table border="1">
+  <tr>
+    <td><b>Target</b></td>
+    <td><b>Status</b></td>
+  </tr>
+EOF
+}
+
 function xml_report_print_footer
 {
     cat <<EOF
 </table></section>
+EOF
+}
+
+function html_report_print_footer
+{
+    cat <<EOF
+</table>
 EOF
 }
 
@@ -68,6 +104,18 @@ cat <<EOF
 EOF
 }
 
+function html_log_print_field
+{
+    local target=${1?}
+    local log=${2?}
+    cat <<EOF
+  <p>${target}</p>
+EOF
+cat $log
+cat <<EOF
+EOF
+}
+
 function xml_log_print_header
 {
     cat <<EOF
@@ -75,10 +123,23 @@ function xml_log_print_header
 EOF
 }
 
+function html_log_print_header
+{
+    cat <<EOF
+<h1>Logs</h1>
+EOF
+}
+
 function xml_log_print_footer
 {
     cat <<EOF
 </section>
+EOF
+}
+
+function html_log_print_footer
+{
+    cat <<EOF
 EOF
 }
 
@@ -105,12 +166,18 @@ fi
 rm -f ${tmptargets}
 
 XML_REPORT=${mydir}/report0.xml
+HTML_REPORT=${mydir}/report0.html
 rm -f ${XML_REPORT} ${XML_REPORT}.part
+rm -f ${HTML_REPORT} ${HTML_REPORT}.part
 XML_LOG=${mydir}/report1.xml
+HTML_LOG=${mydir}/report1.html
 rm -f ${XML_LOG} ${XML_LOG}.part
+rm -f ${HTML_LOG} ${HTML_LOG}.part
 
 xml_report_print_header > ${XML_REPORT}.part
+html_report_print_header > ${HTML_REPORT}.part
 xml_log_print_header > ${XML_LOG}.part
+html_log_print_header > ${HTML_LOG}.part
 
 for buildtarget in ${buildtargets}
 do
@@ -129,12 +196,18 @@ do
 
     ${failed} && status=1
     xml_report_print_row "${buildtarget}" "${failed}" >> $XML_REPORT.part
+    html_report_print_row "${buildtarget}" "${failed}" >> $HTML_REPORT.part
     xml_log_print_field "${buildtarget}" ${mylog} >> $XML_LOG.part
+    html_log_print_field "${buildtarget}" ${mylog} >> $HTML_LOG.part
 done
 
 xml_report_print_footer >> ${XML_REPORT}.part
+html_report_print_footer >> ${HTML_REPORT}.part
 xml_log_print_footer >> ${XML_LOG}.part
+html_log_print_footer >> ${HTML_LOG}.part
 mv ${XML_REPORT}.part ${XML_REPORT}
+mv ${HTML_REPORT}.part ${HTML_REPORT}
 mv ${XML_LOG}.part ${XML_LOG}
+mv ${HTML_LOG}.part ${HTML_LOG}
 
 exit ${status}
