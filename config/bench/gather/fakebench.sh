@@ -61,6 +61,8 @@ fi
 #Produce results
 report "${resultsdir}/tallyman1" bananas
 report "${resultsdir}/tallyman2" tarantulas
+'lava-test-case-metadata' VALID --shell echo valid=1
+'lava-test-case-metadata' CPUINFO --shell cat /proc/cpuinfo
 
 #Attach raw output
 'lava-test-case' output --result pass
