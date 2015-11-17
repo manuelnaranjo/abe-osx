@@ -149,17 +149,21 @@ import_manifest()
 	if test x"${ltarget}" != x; then
 	    target=${ltarget}
 	fi
-	sysroots=${sysroots}/${target}
+	if test "`echo ${sysroots} | grep -c ${target}`" -eq 0; then
+	    sysroots=${sysroots}/${target}
+	fi
 
+	local manifest_format="`grep "manifest_format" ${manifest} | cut -d '=' -f 2`"
+	if test ${manifest_version} != ${manifest_format}; then
+	    warning "Imported manifest isn't the current supported format!"
+	fi
 	local variables=
 	local i=0
 	for i in ${components}; do
-	    if test x"${i}" = x"abe"; then
-		continue
-	    fi
 	    local url="`grep "${i}_url" ${manifest} | cut -d '=' -f 2`"
 	    local branch="`grep "${i}_branch" ${manifest} | cut -d '=' -f 2`"
 	    local filespec="`grep "${i}_filespec" ${manifest} | cut -d '=' -f 2`"
+	    local static="`grep "${i}_staticlink" ${manifest} | cut -d '=' -f 2`"
 	    # Any embedded spaces in the value have to be converted to a '%'
 	    # character. for component_init().
 	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
@@ -203,9 +207,7 @@ import_manifest()
 		    ;;
 	    esac
 
-	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"}
-
-	    toolchain=(${toolchain[@]} $i)
+	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"} ${static:+STATICLINK=${static}}
 	done
     else
 	error "Manifest file '${file}' not found"

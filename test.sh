@@ -388,7 +388,7 @@ match="set_package"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-libc="eglibc"
+libc="glibc"
 cb_commands="--target ${target} --set libc=${libc}"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
@@ -414,29 +414,29 @@ test_pass "${cb_commands}" "${match}"
 target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabihf"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-linux-gnueabi"
 # A baremetal target should pick the right clibrary (newlib)
 cb_commands="--target ${target} --dump"
-match='eglibc'
+match='glibc'
 test_pass "${cb_commands}" "${match}"
 
 target="armeb-none-eabi"
@@ -505,9 +505,12 @@ cb_commands="--dryrun --build gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
+set -x
 cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
-match="Couldn't find the source for"
+match="find the source for"
+echo "FIXME: $match"
 test_failure "${cb_commands}" "${match}"
+set +x
 
 # This tests that --build can go before --target and --target is still processed correctly.
 cb_commands="--dryrun --build all --target arm-linux-gnueabihf --dump"
@@ -592,7 +595,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-cb_commands="--target ${target} eglibc=eglibc.git"
+cb_commands="--target ${target} glibc=eglibc.git"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 

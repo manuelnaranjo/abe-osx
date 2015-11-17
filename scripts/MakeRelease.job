@@ -85,7 +85,7 @@ if test x"${date}" != x; then
 fi
 
 if test "`echo ${target} | grep -c linux`" -gt 0; then
-    if test "`echo ${gcc_src} | grep -c 5\.1`" -gt 0; then
+    if test "`echo ${gcc_src} | grep -c -- '-[56][[:digit:]\.]*'`" -gt 0; then
 	libc="--set libc=glibc"
     else
 	libc="--set libc=eglibc"
@@ -169,7 +169,7 @@ if test x"${tarbin}" = xyes; then
     scp ${manifest} ${fileserver}:${binaries}/
     tarballs="`find ${user_snapshots} -name \*${release}\*.xz -o -name \*${release}\*.asc`"
     scp ${tarballs} ${fileserver}:${binaries}/
-#    rm -f ${user_snapshots}/*.xz ${user_snapshots}/*.asc
+    rm -f ${tarballs}
     if test x"${check}" != x; then
 	sums="`find ${user_workspace} -name \*.sum`"
 	logs="`find ${user_workspace} -name \*.log`"

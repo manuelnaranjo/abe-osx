@@ -250,11 +250,20 @@ manifest()
     fi
     echo "manifest_format=${manifest_version:-1.0}" > ${outfile}
     echo "" >> ${outfile}
+    echo "# Note that for ABE, these parameters are not used" >> ${outfile}
     
     local seen=0
+    local saved_ofile=""
     for i in ${toolchain[*]}; do
 	local component="$i"
-
+	# ABE build data goes in the documentation sxection
+	if test x"${component}" = x"abe"; then
+	    local saved_ofile="${outfile}"
+	    local outfile="/tmp/mani$$.txt"
+	    touch ${outfile}
+	else
+	    local outfile="${saved_ofile}"
+	fi
 	if test ${seen} -eq 1 -a x"${component}" = x"gcc"; then
 	    notice "Not writing GCC a second time, already done."
 	    continue
@@ -266,7 +275,6 @@ manifest()
 	
 	echo "# Component data for ${component}" >> ${outfile}
 
-	local filespec="`get_component_filespec ${component}`"
 	local url="`get_component_url ${component}`"
 	echo "${component}_url=${url}" >> ${outfile}
 
@@ -294,6 +302,11 @@ manifest()
 	local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
 	if test x"${configure}" != x; then
 	    echo "${component}_configure=\"${configure}\"" >> ${outfile}
+	fi
+
+	local static="`get_component_staticlink ${component}`"
+	if test "`echo ${component} | grep -c glibc`" -eq 0; then
+	    echo "${component}_staticlink=\"${static}\"" >> ${outfile}
 	fi
 
 	if test x"${component}" = x"gcc"; then
@@ -338,7 +351,10 @@ snapshots directory: ${local_snapshots}
 git reference directory: ${git_reference_dir}
 
 EOF
-
+    # Add the section for ABE.
+    cat "/tmp/mani$$.txt" >> ${outfile}
+    rm "/tmp/mani$$.txt"
+    
     for i in gcc binutils ${clibrary} abe; do
 	if test "`component_is_tar ${i}`" = no; then
 	    echo "--------------------- $i ----------------------" >> ${outfile}

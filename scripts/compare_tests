@@ -97,9 +97,14 @@ if [ -d "$1" -a -d "$2" ] ; then
 	cmnsums=`cat $lst5 | wc -l`
 	echo "# Comparing $cmnsums common sum files:"
 	cat $lst5
-	( for fname in `cat $lst5`; do xzcat $1/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum1
-	( for fname in `cat $lst5`; do xzcat $2/$fname | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'; done ) >$sum2
-	# At some point, we'll add --no-unstable --unstable-test=${my_path}/unstable-tests.txt
+	( for fname in `cat $lst5`; do
+	    bname=`basename $fname .sum.xz`
+	    xzcat $1/$fname | sed -e "s/^\([A-Z]*: \)/\1 $bname:/" | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'
+	  done ) >$sum1
+	( for fname in `cat $lst5`; do
+	    bname=`basename $fname .sum.xz`
+	    xzcat $2/$fname | sed -e "s/^\([A-Z]*: \)/\1 $bname:/" | sed -r 's:of file /home.*/gcc/:of file :;s:==[0-9]+==:==X==:;s/output pattern test,.*$/output pattern XXX/'
+	  done ) >$sum2
 	if [ "x${target}" != "x" ] ; then
 	    unstable_target="--unstable-marker ${target}"
 	fi
@@ -109,7 +114,9 @@ if [ -d "$1" -a -d "$2" ] ; then
 		unstable_target="$unstable_target --unstable-marker $board"
 	    fi
 	done
-	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l --unstable-test=${my_path}/unstable-tests.txt ${unstable_target} $sum1 $sum2
+	rm -rf ${my_path}/gcc-unstable-tests
+	git clone http://git.linaro.org/toolchain/gcc-unstable-tests.git ${my_path}/gcc-unstable-tests || exit 1
+	${CONFIG_SHELL-/usr/bin/perl} ${my_path}/compare_dg_tests.pl -l --unstable-test=${my_path}/gcc-unstable-tests/unstable-tests.txt ${unstable_target} $sum1 $sum2
 	ret=$?
 	if [ $ret -eq 2 ]; then
 		exit_status=`expr $exit_status + 1`

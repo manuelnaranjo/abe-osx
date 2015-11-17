@@ -72,7 +72,6 @@ component_init ()
     done
 
     toolchain=(${toolchain[@]} ${component})
-
     return 0
 }
 
@@ -494,7 +493,7 @@ collect_data ()
 	local revision="`git log --format=format:%H -n 1`"
 	local abbrev="`git log --format=format:%h -n 1`"
 	local branch="`git branch | grep "^\*" | cut -d ' ' -f 2`"
-	if test "`echo ${branch} | grep -c detached`" -gt -0; then
+	if test "`echo ${branch} | egrep -c "detached|^\(no"`" -gt -0; then
 	    local branch=
 	fi
 	local url="`git config --get remote.origin.url`"
@@ -502,8 +501,9 @@ collect_data ()
 	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
 	local filespec="abe.git"
 	local srcdir="${abe_path}"
+	local configure="`grep ${srcdir}/configure ${abe_top}/config.log | tr -s ' ' | cut -d ' ' -f 4-10| tr ' ' '%'`"
 	popd
-	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}} ${srcdir:+SRCDIR=${srcdir}}
+	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}} ${srcdir:+SRCDIR=${srcdir}} ${configure:+CONFIGURE=${configure}}
  	return 0
     fi
 
