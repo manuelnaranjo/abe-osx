@@ -19,39 +19,56 @@ trap exit_handler EXIT
 function report {
   if test -e $1; then
     #The funky quoting is to stop test-case from confusing syntax highlighting
-    'lava-test-case' "`basename $1`" --result "${result}" --measurement "`cat $1`" --units $2
+    'lava-test-case' "`basename $1`" --result "${result}" \
+                      --measurement "`cat $1`" --units $2
   else
     'lava-test-case' "`basename $1`" --result fail
     failed=1
   fi
 }
 
-resultsdir="$1/fake/fakeresults"
-if ! test -d "${resultsdir}"; then
-  echo "No such directory as ${resultsdir}" >&2
+#dirname/basename remove trailing slashes, too
+topdir="`dirname $1`"
+handle="`basename $1`" #name of repository in sources.conf, or top
+                       #dir of tarball for prebuilt benchmarks
+resultsdir="${handle}/fake/fakeresults" #relative path from topdir
+
+if ! test -d "${topdir}"; then
+  echo "No such directory as ${topdir}"
   exit
 fi
-if ! test -e "$1/../RETCODE"; then
+
+cd "${topdir}" #do everything in context of topdir - simpler, and results in
+               #LAVA reporting sane paths for attachments
+
+if ! test -d "${resultsdir}"; then
+  echo "No such directory as ${topdir}/${resultsdir}" >&2
+  exit
+fi
+
+#Report pass or fail, based on RETCODE
+if ! test -e "RETCODE"; then
   echo "No RETCODE file" >&2
   exit
 fi
-if test x"`cat $1/../RETCODE`" = x0; then
+if test x"`cat RETCODE`" = x0; then
   result='pass'
 else
   result='fail'
   failed=1
 fi
+
+#Produce results
 report "${resultsdir}/tallyman1" bananas
 report "${resultsdir}/tallyman2" tarantulas
 
-#Change to top dir, so that paths reported for attachments look sane
-cd "$1/.."
+#Attach raw output
 'lava-test-case' output --result pass
 'lava-test-case-attach' output "RETCODE"
 'lava-test-case-attach' output "stdout"
 'lava-test-case-attach' output "stderr"
-'lava-test-case-attach' output "`basename $1`/linarobenchlog"
-for x in `find "$(basename $1)/fake/fakeresults" -type f`; do
+'lava-test-case-attach' output "${handle}/linarobenchlog"
+for x in `find "${handle}/fake/fakeresults" -type f`; do
   'lava-test-case-attach' output "$x"
 done
 
