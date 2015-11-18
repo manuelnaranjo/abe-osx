@@ -349,7 +349,7 @@ build()
     # container one. To build in a 32bit container on a 64bit build machine, we have to force
     # it or configure gets confused.
     if test x"${host}" != x"${build}" \
-	    -a "`echo ${host} | grep -c '-i[3456]86-'`" -gt 0 \
+	    -a "`echo ${host} | grep -c i[3456]86-`" -gt 0 \
 	    -a "`echo ${host} | grep -c 'mingw'`" -eq 0; then
 	setarch i386
     fi
