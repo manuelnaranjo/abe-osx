@@ -57,8 +57,13 @@ LIBC="`getconf GNU_LIBC_VERSION`"
 AC_SUBST(LIBC)
 KERNEL="`uname -r`"
 AC_SUBST(KERNEL)
-BUILDHOST="`${srcdir}/config.guess`"
-BUILD_ARCH="`uname -m`"
+if test x"${CC}" != x; then
+    BUILDHOST="`gcc -dumpmachine`"
+    BUILD_ARCH="`echo ${BUILDHOST} | cut -d '-' -f 1`"
+else
+   BUILDHOST="`${srcdir}/config.guess`"
+   BUILD_ARCH="`uname -m`"
+fi
 AC_SUBST(BUILD_ARCH)
 AC_SUBST(BUILDHOST)
 HOSTNAME="`uname -n`"

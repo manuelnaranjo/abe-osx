@@ -345,6 +345,15 @@ build()
 
     notice "Building ${tag}${2:+ $2}"
     
+    # When running ABE in a container, uname returns the host architecture, and not the
+    # container one. To build in a 32bit container on a 64bit build machine, we have to force
+    # it or configure gets confused.
+    if test x"${host}" != x"${build}" \
+	    -a "`echo ${host} | grep -c '-i[3456]86-'`" -gt 0 \
+	    -a "`echo ${host} | grep -c 'mingw'`" -eq 0; then
+	setarch i386
+    fi
+
     # If this is a native build, we always checkout/fetch.  If it is a 
     # cross-build we only checkout/fetch if this is stage1
     if test x"${target}" = x"${build}" \
