@@ -20,7 +20,7 @@
 # command line options.
 
 # Start by assuming it's a native build
-build="${build-`gcc -dumpmachine`}"
+build="${build:-`gcc -dumpmachine`}"
 host="${host:-${build}"
 target="${host}"
 
