@@ -63,9 +63,9 @@ generate_snapshots ()
 }
 
 update_git_repos () {
-    for repo in ${snapshots_dir}-new/*.git; do
+    for repo in `ls ${snapshots_dir}-new/ | grep "\.git\$"`; do
 	(
-	    cd $repo
+	    cd ${snapshots_dir}-new/$repo
 	    # Update and prune local clone
 	    git remote update -p
 	    # Cleanup stale branches
@@ -75,6 +75,7 @@ update_git_repos () {
 }
 
 if $generate; then
+    mkdir -p ${snapshots_dir}-new
     update_git_repos
     generate_snapshots
 
