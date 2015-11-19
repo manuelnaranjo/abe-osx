@@ -236,7 +236,6 @@ manifest()
 	return 0;
     fi
 
-    mkdir -p ${local_builds}/${host}/${target}
     if test x"$1" = x; then
 	mtag="`create_release_tag gcc`"
 	mkdir -p ${local_builds}/${host}/${target}
@@ -253,16 +252,19 @@ manifest()
     echo "# Note that for ABE, these parameters are not used" >> ${outfile}
     
     local seen=0
-    local saved_ofile=""
+    local tmpfile="/tmp/mani$$.txt"
     for i in ${toolchain[*]}; do
 	local component="$i"
 	# ABE build data goes in the documentation sxection
 	if test x"${component}" = x"abe"; then
-	    local saved_ofile="${outfile}"
-	    local outfile="/tmp/mani$$.txt"
-	    touch ${outfile}
-	else
-	    local outfile="${saved_ofile}"
+	    echo "${component}_url=`get_component_url ${component}`" > ${tmpfile}
+	    echo "${component}_branch=branch=`get_component_branch ${component}`" >> ${tmpfile}
+	    echo "${component}_revision=`get_component_revision ${component}`" >> ${tmpfile}
+	    echo "${component}_filespec=`get_component_filespec ${component}`" >> ${tmpfile}
+	    local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "${component}_configure=\"${configure}\"" >> ${tmpfile}
+	    echo "" >> ${tmpfile}
+	    continue
 	fi
 	if test ${seen} -eq 1 -a x"${component}" = x"gcc"; then
 	    notice "Not writing GCC a second time, already done."
@@ -351,10 +353,13 @@ snapshots directory: ${local_snapshots}
 git reference directory: ${git_reference_dir}
 
 EOF
-    # Add the section for ABE.
-    cat "/tmp/mani$$.txt" >> ${outfile}
-    rm "/tmp/mani$$.txt"
     
+    # Add the section for ABE.
+    if test -e ${tmpfile}; then
+	cat "${tmpfile}" >> ${outfile}
+	rm "${tmpfile}"
+    fi
+
     for i in gcc binutils ${clibrary} abe; do
 	if test "`component_is_tar ${i}`" = no; then
 	    echo "--------------------- $i ----------------------" >> ${outfile}
