@@ -302,7 +302,7 @@ manifest()
 
 	# Drop any local build paths and replaced with variables to be more portable.
 	local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
-	if test x"${configure}" != x; then
+	if test x"${configure}" != x -a x"${component}" != x"gcc"; then
 	    echo "${component}_configure=\"${configure}\"" >> ${outfile}
 	fi
 
