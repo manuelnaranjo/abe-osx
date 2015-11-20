@@ -198,6 +198,7 @@ import_manifest()
 		    local builddir="`echo ${local_builds}/${host}/${target}/${dir} | tr '@' '_'`"
 		    ;;
 		gcc)
+		    local configure=
 		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
 		    eval "stage1_flags=${stage1_flags}"
 		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
