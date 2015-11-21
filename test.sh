@@ -505,12 +505,9 @@ cb_commands="--dryrun --build gcc.git"
 match=''
 test_pass "${cb_commands}" "${match}"
 
-set -x
 cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
-match="find the source for"
-echo "FIXME: $match"
+match="Malformed input. No url found"
 test_failure "${cb_commands}" "${match}"
-set +x
 
 # This tests that --build can go before --target and --target is still processed correctly.
 cb_commands="--dryrun --build all --target arm-linux-gnueabihf --dump"
@@ -595,7 +592,7 @@ match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
 target="aarch64-none-elf"
-cb_commands="--target ${target} glibc=eglibc.git"
+cb_commands="--target ${target} eglibc=eglibc.git"
 match="crosscheck_clibrary_target"
 test_failure "${cb_commands}" "${match}"
 
