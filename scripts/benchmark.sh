@@ -3,9 +3,6 @@
 #implementation that will avoid wheel re-invention. Let's not
 #sink too much time into making this script beautiful.
 
-#TODO Convert as much as possible into a function, so that we don't share global namespace with abe except where we mean to
-#     Better - confine abe to a subshell
-
 set -o pipefail
 set -o nounset
 
