@@ -156,11 +156,6 @@ configure_build()
 			    ;;
 			stage2*)
 			    notice "Building stage 2 of GCC"
-			    # Only add the Linaro bug and version strings for
-			    # Linaro branches.
-			    if test "`echo ${gcc_version} | grep -ic linaro`" -gt 0; then
-				local opts="${opts} --with-bugurl=\"https://bugs.linaro.org\""
-			    fi
 			    ;;
 			gdbserver)
 			    notice "Building gdbserver for the target"
@@ -201,12 +196,10 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gdb)
- 	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
 	gdbserver)
- 	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
 	    local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 	    dryrun "mkdir -p ${builddir}"
 	    ;;
@@ -227,20 +220,6 @@ configure_build()
 	if test x"${CONFIG_SHELL}" = x; then
 	    export CONFIG_SHELL=${bash_shell}
 	fi
-       # In release mode, use default pkgversion for GCC.
-#	if test x"${release}" != x;then
-#            case ${tool} in
-#		gcc*)
-#                    default_configure_flags=`echo "${default_configure_flags}" | sed -e 's/--with-pkgversion=.* //'`
-#                    ;;
-#            esac
-#	fi
-
-	# zlib can only be configured in the source tree, and doesn't like any of the
-	# stadard GNU configure options
-#	if test x"${tool}" = x"zlib"; then
-#	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
-#	else
 	dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
 	if test $? -gt 0; then
 	    error "Configure of $1 failed."
