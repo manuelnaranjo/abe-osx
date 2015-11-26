@@ -24,6 +24,7 @@ build="${build}"
 host="${host:-${build}}"
 target="${host}"
 
+date="`date "+%Y.%m.%d"`"
 gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
