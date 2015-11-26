@@ -1,0 +1,62 @@
+job_name: '${JOB_NAME}'
+timeout: ${TIMEOUT}
+actions:
+  - command: deploy_linaro_image
+    parameters:
+      role: host
+      image: '${HOST_IMAGE}'
+  - command: deploy_linaro_image
+    parameters:
+      role: target
+      image: '${TARGET_IMAGE}'
+    metadata:
+      bogden-test: true
+  - command: lava_test_shell
+    parameters:
+      role: host
+      timeout: ${TIMEOUT}
+      testdef_repos:
+        - git-repo: '${ABE_REPO}'
+          revision: '${ABE_REVISION}'
+          testdef: '${HOST_SESSION}'
+          parameters:
+            BENCHMARK: '${BENCHMARK}'
+            TOOLCHAIN: '${TOOLCHAIN}'
+            RUN_FLAGS: '${RUN_FLAGS}'
+            COMPILER_FLAGS: '${COMPILER_FLAGS}'
+            MAKE_FLAGS: '${MAKE_FLAGS}'
+            PREBUILT: '${PREBUILT}'
+            BENCH_DEBUG: 1
+            TRUST: 'None'
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD'
+  - command: lava_test_shell
+    parameters:
+      role: target
+      timeout: ${TIMEOUT}
+      testdef_repos:
+        - git-repo: '${ABE_REPO}'
+          revision: '${ABE_REVISION}'
+          testdef: '${TARGET_SESSION}'
+          parameters:
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD'
+            CONFIG: '${TARGET_CONFIG}'
+  - command: submit_results
+    parameters:
+      server: '${BUNDLE_SERVER}'
+      stream: '${BUNDLE_STREAM_NAME}'
+device_group:
+  - count: 1
+    device_type: kvm
+    role: host
+    tags:
+      - tcwg #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
+             #Otherwise they can land on machine that we cannot forward sockets to.
+  - count: 1
+    device_type: '${TARGET_DEVICE_TYPE}'
+    role: target
+    tags:
+      - armv8 #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
+              #Otherwise they can land on machine that we cannot forward sockets to.
+              #Here we have picked a tag that just happens not to used on any restricted machines.
+              #We cannot reuse tcwg, as there is only one tcwg kvm.
+              #This also means that this template cannot work with non-kvm targets.
