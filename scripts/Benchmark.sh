@@ -18,9 +18,6 @@ else
   TARGET_SESSION="${TARGET_SESSION}.yaml"
 fi
 
-#TODO Change to uinstance server and 'safe benchmarks' user, when they exist
-lava_server=https://validation.linaro.org/RPC2/
-
 #TODO Add consistency tests
 #For example, setting compiler/make flags makes no sense if prebuilt is set
 
@@ -39,8 +36,8 @@ echo TARGET_SESSION="${TARGET_SESSION}"
 echo TARGET_IMAGE="http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
 echo TARGET_CONFIG="${TARGET_CONFIG}"
 echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
-#TODO Change to uinstance server/user/stream, when they exist
-echo BUNDLE_SERVER="${lava_server}"
+echo BUNDLE_SERVER="https://${LAVA_SERVER}"
+#TODO Change to uinstance user/stream, when they exist
 echo BUNDLE_STREAM_NAME="/anonymous/bogden/"
 echo ABE_REPO="https://git.linaro.org/toolchain/abe"
 #TODO Fix this to appropriate branch when we have the uinstance
