@@ -8,7 +8,9 @@ actions:
   - command: deploy_linaro_image
     parameters:
       role: target
-      image: '${TARGET_IMAGE}'
+      #TODO: This is horrid, but will have to do for now
+      ${TARGET_IMAGE_1}
+      ${TARGET_IMAGE_2}
     metadata:
       bogden-test: true
   - command: lava_test_shell
@@ -48,12 +50,16 @@ device_group:
   - count: 1
     device_type: kvm
     role: host
+    #TODO Remove these tags (or turn into a substitution) once this template
+    #     gets used for the uinstance.
     tags:
       - tcwg #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
              #Otherwise they can land on machine that we cannot forward sockets to.
   - count: 1
     device_type: '${TARGET_DEVICE_TYPE}'
     role: target
+    #TODO Remove these tags (or turn into a substitution) once this template
+    #     gets used for the uinstance.
     tags:
       - armv8 #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
               #Otherwise they can land on machine that we cannot forward sockets to.
