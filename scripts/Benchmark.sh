@@ -41,9 +41,9 @@ echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
 echo BUNDLE_SERVER="https://${LAVA_SERVER}"
 #TODO Change to uinstance user/stream, when they exist
 echo BUNDLE_STREAM_NAME="/anonymous/${LAVA_USER}/"
-echo ABE_REPO="https://git.linaro.org/toolchain/abe"
+echo TESTDEF_REPO="https://git.linaro.org/toolchain/abe"
 #TODO Fix this to appropriate branch when we have the uinstance
-echo ABE_REVISION="${ABE_REVISION:-bernie/benchmarking-uinstance}"
+echo TESTDEF_REVISION="${TESTDEF_REVISION:-bernie/benchmarking-uinstance}"
 #TODO Map this? Depend on benchmark and target.
 echo TIMEOUT=1800
 #End of parameters to substitute into template
