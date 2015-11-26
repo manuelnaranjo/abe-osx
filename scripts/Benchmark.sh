@@ -24,11 +24,11 @@ lava_server=https://validation.linaro.org/RPC2/
 #Parameters to be substituted into template
 echo JOB_NAME=${BENCHMARK}
 echo BENCHMARK=${BENCHMARK}
-echo TOOLCHAIN=${TOOLCHAIN}
-echo RUN_FLAGS=${RUN_FLAGS}
-echo COMPILER_FLAGS=${COMPILER_FLAGS}
-echo MAKE_FLAGS=${MAKE_FLAGS}
-echo PREBUILT=${PREBUILT}
+echo TOOLCHAIN=${TOOLCHAIN:-}
+echo RUN_FLAGS=${RUN_FLAGS:-}
+echo COMPILER_FLAGS=${COMPILER_FLAGS:-}
+echo MAKE_FLAGS=${MAKE_FLAGS:-}
+echo PREBUILT=${PREBUILT:-}
 echo HOST_SESSION=config/bench/lava/trusted-host-session.yaml
 echo HOST_IMAGE=http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz
 echo TARGET_SESSION=${target_session}
