@@ -46,4 +46,5 @@ echo TESTDEF_REPO="https://git.linaro.org/toolchain/abe"
 echo TESTDEF_REVISION="${TESTDEF_REVISION:-bernie/benchmarking-uinstance}"
 #TODO Map this? Depend on benchmark and target.
 echo TIMEOUT=1800
+echo PUBLIC_KEY="${PUBLIC_KEY:-}"
 #End of parameters to substitute into template
