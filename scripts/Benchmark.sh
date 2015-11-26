@@ -3,47 +3,48 @@ set -eu
 set -o pipefail
 
 if test x"${TARGET_CONFIG%%-*}" = xjuno; then
-  target_device_type=juno
+  TARGET_DEVICE_TYPE=juno
 else
-  target_device_type="${TARGET_CONFIG}"
+  TARGET_DEVICE_TYPE="${TARGET_CONFIG}"
 fi
 
 #TODO Benchmarking-specific builds will eliminate these special cases
-target_session=config/bench/lava/target-session
+TARGET_SESSION=config/bench/lava/target-session
 if test x"${TARGET_CONFIG}" = xkvm; then
-  target_session="${target_session}-kvm.yaml"
+  TARGET_SESSION="${TARGET_SESSION}-kvm.yaml"
 elif test x"${TARGET_CONFIG}" = xmustang; then
-  target_session="${target_session}-mustang.yaml"
+  TARGET_SESSION="${TARGET_SESSION}-mustang.yaml"
 else
-  target_session="${target_session}.yaml"
+  TARGET_SESSION="${TARGET_SESSION}.yaml"
 fi
 
 #TODO Change to uinstance server and 'safe benchmarks' user, when they exist
 lava_server=https://validation.linaro.org/RPC2/
 
+#TODO Add consistency tests
+#For example, setting compiler/make flags makes no sense if prebuilt is set
+
 #Parameters to be substituted into template
-echo JOB_NAME=${BENCHMARK}
-echo BENCHMARK=${BENCHMARK}
-echo TOOLCHAIN=${TOOLCHAIN:-}
-echo RUN_FLAGS=${RUN_FLAGS:-}
-echo COMPILER_FLAGS=${COMPILER_FLAGS:-}
-echo MAKE_FLAGS=${MAKE_FLAGS:-}
-echo PREBUILT=${PREBUILT:-}
-echo HOST_SESSION=config/bench/lava/host-session.yaml
-echo HOST_IMAGE=http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz
-echo TARGET_SESSION=${target_session}
+echo JOB_NAME="${BENCHMARK}"
+echo BENCHMARK="${BENCHMARK}"
+echo TOOLCHAIN="${TOOLCHAIN:-}"
+echo RUN_FLAGS="${RUN_FLAGS:-}"
+echo COMPILER_FLAGS="${COMPILER_FLAGS:-}"
+echo MAKE_FLAGS="${MAKE_FLAGS:-}"
+echo PREBUILT="${PREBUILT:-}"
+echo HOST_SESSION="config/bench/lava/host-session.yaml"
+echo HOST_IMAGE="http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
+echo TARGET_SESSION="${TARGET_SESSION}"
 #TODO Map from target types to specific images
-echo TARGET_IMAGE=http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz
-echo TARGET_CONFIG=${TARGET_CONFIG}
-echo TARGET_DEVICE_TYPE=${target_device_type}
-
+echo TARGET_IMAGE="http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
+echo TARGET_CONFIG="${TARGET_CONFIG}"
+echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
 #TODO Change to uinstance server/user/stream, when they exist
-echo BUNDLE_SERVER=${lava_server}
-echo BUNDLE_STREAM_NAME=/anonymous/bogden/
-
-echo ABE_REPO=https://git.linaro.org/toolchain/abe
+echo BUNDLE_SERVER="${lava_server}"
+echo BUNDLE_STREAM_NAME="/anonymous/bogden/"
+echo ABE_REPO="https://git.linaro.org/toolchain/abe"
 #TODO Fix this to appropriate branch when we have the uinstance
-echo ABE_REVISION=${ABE_REVISION:-bernie/benchmarking-uinstance}
-
+echo ABE_REVISION="${ABE_REVISION:-bernie/benchmarking-uinstance}"
+#TODO Map this? Depend on benchmark and target.
 echo TIMEOUT=1800
 #End of parameters to substitute into template
