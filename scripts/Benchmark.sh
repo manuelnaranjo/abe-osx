@@ -59,10 +59,8 @@ echo TARGET_IMAGE_2="${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
 echo TARGET_CONFIG="${TARGET_CONFIG}"
 echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
 echo BUNDLE_SERVER="https://${LAVA_SERVER}"
-#TODO Change to uinstance user/stream, when they exist
 echo BUNDLE_STREAM_NAME="/anonymous/${LAVA_USER}/"
 echo TESTDEF_REPO="https://git.linaro.org/toolchain/abe"
-#TODO Fix this to appropriate branch when we have the uinstance
 echo TESTDEF_REVISION="${TESTDEF_REVISION:-bernie/benchmarking-uinstance}"
 #TODO Map this? Depend on benchmark and target.
 echo TIMEOUT=1800
