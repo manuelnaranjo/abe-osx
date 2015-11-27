@@ -61,7 +61,7 @@ echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
 echo BUNDLE_SERVER="https://${LAVA_SERVER}"
 echo BUNDLE_STREAM_NAME="/anonymous/${LAVA_USER}/"
 echo TESTDEF_REPO="https://git.linaro.org/toolchain/abe"
-echo TESTDEF_REVISION="${TESTDEF_REVISION:-bernie/benchmarking-uinstance}"
+echo TESTDEF_REVISION="${TESTDEF_REVISION:-benchmarking}"
 #TODO Map this? Depend on benchmark and target.
 echo TIMEOUT=1800
 echo PUBLIC_KEY="${PUBLIC_KEY:-}"
