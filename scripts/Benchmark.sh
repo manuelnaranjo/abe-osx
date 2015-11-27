@@ -59,7 +59,7 @@ echo TARGET_IMAGE_2="${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
 echo TARGET_CONFIG="${TARGET_CONFIG}"
 echo TARGET_DEVICE_TYPE="${TARGET_DEVICE_TYPE}"
 echo BUNDLE_SERVER="https://${LAVA_SERVER}"
-echo BUNDLE_STREAM_NAME="/anonymous/${LAVA_USER}/"
+echo BUNDLE_STREAM_NAME="${BUNDLE_STREAM_NAME:-/anonymous/${LAVA_USER}/}"
 echo TESTDEF_REPO="https://git.linaro.org/toolchain/abe"
 echo TESTDEF_REVISION="${TESTDEF_REVISION:-benchmarking}"
 #TODO Map this? Depend on benchmark and target.
