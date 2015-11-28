@@ -405,6 +405,12 @@ checkout()
 	return 1
     fi
 
+    if test -e ${srcdir}/contrib/gcc_update; then
+	# Touch GCC's auto-generated files to avoid non-deterministic
+	# build behavior.
+	dryrun "(cd ${srcdir} && ./contrib/gcc_update --touch)"
+    fi
+
     return 0
 }
 
