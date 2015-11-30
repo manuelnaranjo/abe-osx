@@ -575,10 +575,12 @@ collect_data ()
 	gdb|binutils)
 	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 	    local srcdir=${local_snapshots}/${dir}
+	    local builddir="${local_builds}/${host}/${target}/${dir}"
 	    ;;
 	gdbserver)
 	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
-	    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
+	    local srcdir=${srcdir}/gdb/gdbserver
+ 	    local builddir="${local_builds}/${host}/${target}/${dir}-gdbserver"
 	    ;;
 	*)
 	    ;;
@@ -594,8 +596,6 @@ collect_data ()
 	confvars="${confvars} ${stage2_flags:+STAGE2=\"`echo ${stage2_flags} | tr ' ' '%'`\"}"
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
-    # Gdbserver is built differently, as it's a sub directory within GDB, but
-    # has to be built separetly.
     component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}
 
     default_makeflags=

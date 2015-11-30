@@ -190,7 +190,7 @@ import_manifest()
 		gdbserver)
 		    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 		    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
-		    local builddir="${builddir}-gdbserver"
+ 		    local builddir="${local_builds}/${host}/${target}/${dir}-gdbserver"
 		    ;;
 		*glibc)		    
 		    # Glibc builds will fail if there is an @ in the path. This is
@@ -210,6 +210,14 @@ import_manifest()
 	    esac
 
 	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"} ${static:+STATICLINK=${static}}
+	    unset stage1_flags
+	    unset stage2_flags
+	    unset url
+	    unset branch
+	    unset filespec
+	    unset static
+	    unset makeflags
+	    unset configure
 	done
     else
 	error "Manifest file '${file}' not found"
