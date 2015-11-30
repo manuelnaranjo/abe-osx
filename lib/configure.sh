@@ -97,7 +97,7 @@ configure_build()
     # Force static linking unless dynamic linking is specified
     local static="`get_component_staticlink ${component}`"
     if test x"${static}" = x"yes"; then
-	if test "`echo ${component} | grep -c glibc`" -eq 0; then
+	if test "`echo ${component} | grep -c glibc`" -eq 0 -a "`echo ${component} | grep -c gdbserver`" -eq 0; then
 	    local opts="${opts} --disable-shared --enable-static"
 	fi
     fi
@@ -212,7 +212,7 @@ configure_build()
 	    ;;
     esac
 
-    if test -e ${builddir}/config.status -a x"${tool}" != x"gcc" -a x"${force}" = xno; then
+    if test -e ${builddir}/config.status -a x"${component}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
 	export PATH="${local_builds}/${host}/bin:$PATH"
