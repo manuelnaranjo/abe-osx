@@ -16,6 +16,10 @@ function exit_handler {
 
 trap exit_handler EXIT
 
+#Make sure we can see what this thing is doing
+exec 1>/dev/console
+exec 2>&1
+
 function report {
   if test -e $1; then
     #The funky quoting is to stop test-case from confusing syntax highlighting
