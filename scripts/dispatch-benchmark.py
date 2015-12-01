@@ -176,6 +176,8 @@ def main():
 
   config=yaml_to_json(args['template'], substitutions)
   if args['dry_run']:
+    print
+    print "--dry-run given, exiting without dispatch"
     sys.exit(0)
 
   dispatch(config)
