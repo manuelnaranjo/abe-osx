@@ -142,8 +142,7 @@ def main():
       (args['lava_user'], args['lava_server'])
     sys.exit(1)
 
-  #TODO Check for incompatibilities, e.g. giving both prebuilt and compiler flags
-
+  #All of these values will be empty string if not explicitly set
   var_generator_inputs = {k.upper(): args[k] or '' for k in [
     'lava_server',
     'lava_user',
@@ -173,6 +172,18 @@ def main():
            add_sub(line, substitutions)
     else:
       add_sub(override, substitutions)
+
+  #Validate inputs
+  if (not substitutions['TOOLCHAIN'] and not substitutions['PREBUILT']):
+    print >> sys.stderr, 'Must give exactly one of --toolchain and --prebuilt.'
+    sys.exit(1)
+  if substitutions['PREBUILT']:
+    bad_flags = filter(lambda x: substitutions[x], \
+                       ('TOOLCHAIN', 'COMPILER_FLAGS', 'MAKE_FLAGS'))
+    if bad_flags:
+      for flag in bad_flags:
+        print >> sys.stderr, 'Must not specify %s with --prebuilt' % flag
+      sys.exit(1)
 
   config=yaml_to_json(args['template'], substitutions)
   if args['dry_run']:
