@@ -55,8 +55,6 @@ def yaml_to_json(yaml_file, substitutions):
 
   if args['dry_run']:
     print config
-    sys.exit(0)
-
   return config
 
 def dispatch(config):
@@ -176,7 +174,11 @@ def main():
     else:
       add_sub(override, substitutions)
 
-  dispatch(yaml_to_json(args['template'], substitutions))
+  config=yaml_to_json(args['template'], substitutions)
+  if args['dry_run']:
+    sys.exit(0)
+
+  dispatch(config)
 
 if __name__ == '__main__':
   main()
