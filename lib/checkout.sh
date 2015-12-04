@@ -224,9 +224,9 @@ checkout()
 		    # due to error: 'refs/remotes/origin/<branch>' exists; cannot
 		    # create 'refs/remotes/origin/<branch>'.  You have to remove the
 		    # stale branches before pulling the new ones.
-		    dryrun "(cd ${repodir} && git remote prune origin)"
+		    dryrun "(cd ${srcdir} && git remote prune origin)"
 		    
-		    dryrun "(cd ${repodir} && git_robust pull)"
+		    dryrun "(cd ${srcdir} && git_robust pull)"
 		    # Update branch directory (which maybe the same as repo
 		    # directory)
 		    dryrun "(cd ${srcdir} && git stash --all)"
