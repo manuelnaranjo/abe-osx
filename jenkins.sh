@@ -253,6 +253,19 @@ fi
 
 # if runtests is true, then run make check after the build completes
 if test x"${runtests}" = xtrue; then
+    # check that expect is working, and dump some debug info then exit if not
+    if ! echo "spawn true" | /usr/bin/expect -f - >/dev/null; then
+        echo "expect cannot spawn processes. Aborting make check."
+        echo "some debug info follows..."
+        echo "running: ls -l /dev/ptmx"
+        ls -l /dev/ptmx
+        echo "running: ls -l /dev/pts"
+        ls -l /dev/pts
+        echo "running: grep devpts /proc/mounts"
+        grep devpts /proc/mounts
+        exit 1
+    fi
+ 
     check="--check all"
     check="${check}${excludecheck:+ --excludecheck ${excludecheck}}"
 fi
