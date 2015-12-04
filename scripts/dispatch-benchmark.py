@@ -125,6 +125,8 @@ def main():
                       help='Prebuilt tarball of benchmark.')
   parser.add_argument('--toolchain',
                       help='Toolchain to build benchmark with.')
+  parser.add_argument('--sysroot',
+                      help='Sysroot to build benchmark with.')
   parser.add_argument('--compiler-flags',
                       help='Flags to pass to toolchain at build time.')
   parser.add_argument('--make-flags',
@@ -159,6 +161,7 @@ def main():
     'target_config',
     'prebuilt',
     'toolchain',
+    'sysroot',
     'compiler_flags',
     'make_flags',
     'run_flags',
@@ -193,6 +196,9 @@ def main():
       for flag in bad_flags:
         print >> sys.stderr, 'Must not specify %s with --prebuilt' % flag
       sys.exit(1)
+  if substitutions['SYSROOT'] and not substitutions['TOOLCHAIN']:
+    print >> sys.stderr, '--sysroot only makes sense with --toolchain'
+    sys.exit(1)
 
   config=yaml_to_json(args['template'], substitutions)
   if args['dry_run']:
