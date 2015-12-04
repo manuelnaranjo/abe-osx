@@ -90,6 +90,13 @@ for bset in fp int; do
   exec 1>&${STDOUT}
 done
 
+echo 'lava-test-run-attach RETCODE' >> testing/golden
+echo 'lava-test-run-attach stdout' >> testing/golden
+echo 'lava-test-run-attach stderr' >> testing/golden
+echo 'lava-test-run-attach linarobenchlog' >> testing/golden
+echo 'lava-test-run-attach CFP2006.1.test.csv' >> testing/golden
+echo 'lava-test-run-attach CINT2006.1.test.csv' >> testing/golden
+
 TESTING=1 ./CPU2006.sh testing/input > testing/output
 
 if diff testing/{golden,output}; then

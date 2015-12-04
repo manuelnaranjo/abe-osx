@@ -10,6 +10,11 @@ function ltc {
   ${TESTING:+echo} 'lava-test-case' "$@"
 }
 
+function ltra {
+  #Funky quoting to help out syntax highlighters
+  ${TESTING:+echo} 'lava-test-run-attach' "$@"
+}
+
 function exit_handler {
   exit ${error}
 }
@@ -176,6 +181,19 @@ for csv in `ls ${run}/result/C{INT,FP}2006.*.*.csv 2>/dev/null`; do
     ltc "${run_set} base score" --result pass \
       --measurement "${score}" --units 'base score (geomean of selected ratios)'
   fi
+done
+
+#Attach raw output
+pushd "${run}/.." > /dev/null
+ltra "RETCODE"
+ltra "stdout"
+ltra "stderr"
+popd > /dev/null
+cd "${run}"
+ltra "linarobenchlog"
+cd result
+for x in `find -type f | sed s/^..// | sort`; do
+  ltra "$x"
 done
 
 error=0
