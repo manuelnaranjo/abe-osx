@@ -8,6 +8,7 @@ params:
     PUB_KEY: None
     BENCHMARK: fakebench
     TOOLCHAIN: https://releases.linaro.org/14.11/components/toolchain/binaries/arm-linux-gnueabihf/gcc-linaro-4.9-2014.11-x86_64_arm-linux-gnueabihf.tar.xz
+    SYSROOT: None
     RUN_FLAGS: None
     COMPILER_FLAGS: None
     MAKE_FLAGS: None
@@ -40,4 +41,4 @@ install:
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
-        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST"
+        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$ABE_BRANCH" "$BENCHMARK" "$TOOLCHAIN" "$SYSROOT" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST"

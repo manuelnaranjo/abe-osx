@@ -65,23 +65,26 @@ abe_branch="$1"
 benchmark="${2}"
 toolchain="${3}"
 if test x"$4" != xNone; then
-  run_flags="$4"
+  sysroot="${4}"
 fi
 if test x"$5" != xNone; then
-  compiler_flags="$5"
+  run_flags="$5"
 fi
 if test x"$6" != xNone; then
-  make_flags="$6"
+  compiler_flags="$6"
 fi
 if test x"$7" != xNone; then
-  prebuilt="$7"
+  make_flags="$7"
 fi
-if test x"$8" = xNone; then
+if test x"$8" != xNone; then
+  prebuilt="$8"
+fi
+if test x"$9" = xNone; then
   trusted=0
-elif test x"$8" = xTrusted; then
+elif test x"$9" = xTrusted; then
   trusted=1
 else
-  echo "Bad value '$8' for TRUST" >&2
+  echo "Bad value '$9' for TRUST" >&2
   exit 1
 fi
 
@@ -207,6 +210,16 @@ if test x"${prebuilt:-}" = x; then
     fi
   fi
 
+  if test x"${sysroot:-}" != x; then
+    tarball="`get_thing ${sysroot}`"
+    tar xf "${tarball}" -C bin
+    sysroot="`ls -d ${PWD}/bin/`/`tar tf "${tarball}" | sed -n 1p`" #head -n1 is faster, but breaks the pipe with error
+    rm "${tarball}"
+  fi
+
+  if test x"${sysroot:-}" != x; then
+    compiler_flags="${sysroot:+--sysroot ${sysroot//\"/\\\"} }${compiler_flags:+${compiler_flags//\"/\\\"}}"
+  fi
   "${ABE_DIR}"/scripts/benchmark.sh \
     -s buildonly \
     ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} \

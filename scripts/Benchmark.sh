@@ -52,6 +52,7 @@ function output_param {
 output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
 output_param BENCHMARK "${BENCHMARK}"
 output_param TOOLCHAIN "${TOOLCHAIN:-}"
+output_param SYSROOT "${SYSROOT:-}"
 output_param RUN_FLAGS "${RUN_FLAGS:-}"
 output_param COMPILER_FLAGS "${COMPILER_FLAGS:-}"
 output_param MAKE_FLAGS "${MAKE_FLAGS:-}"
