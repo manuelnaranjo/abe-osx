@@ -12,7 +12,7 @@ actions:
       ${TARGET_IMAGE_1}
       ${TARGET_IMAGE_2}
     metadata:
-      bogden-test: true
+      bogden-test: 'true'
   - command: lava_test_shell
     parameters:
       role: host
