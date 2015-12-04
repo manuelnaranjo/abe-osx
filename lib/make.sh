@@ -709,6 +709,15 @@ make_check()
     local tool="`get_toolname $1`"
     local builddir="`get_builddir $1 ${2:+$2}`"
 
+    # check that expect is working, and dump some debug info if not
+    if ! echo "spawn true" | /usr/bin/expect -f - >/dev/null; then
+        error "expect cannot span processes. Aborting make check."
+        ls -l /dev/ptmx
+        ls -l /dev/pts
+        grep devpts /proc/mounts
+        return 1
+    fi
+
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
     local ignore="dejagnu gmp mpc mpfr make eglibc linux"
