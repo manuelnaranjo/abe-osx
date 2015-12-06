@@ -80,7 +80,7 @@ user_options=""
 status=0
 
 # Whether to exclude some component from 'make check'
-excludecheck=
+excludecheck_opt=""
 
 # Whether to rebuild the toolchain even if logs are already present.
 # Note that the check is done on logserver/logname pair, so logname should not
@@ -104,8 +104,8 @@ while test $# -gt 0; do
         -l|--languages) languages=$2; shift ;;
         -r|--runtests) runtests="true" ;;
         -b|--bootstrap) try_bootstrap="true" ;;
-	--excludecheck) excludecheck=$2; shift ;;
 	--fileserver) shift ;;
+	--excludecheck) excludecheck_opt="$excludecheck_opt --excludecheck $2"; shift ;;
 	--norebuild) rebuild=false ;;
 	-h|--help) usage ;;
     esac
@@ -264,7 +264,7 @@ if test x"${runtests}" = xtrue; then
     fi
  
     check="--check all"
-    check="${check}${excludecheck:+ --excludecheck ${excludecheck}}"
+    check="${check}${excludecheck_opt}"
 fi
 
 if test x"${target}" != x"native" -a x"${target}" != x; then
