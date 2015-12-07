@@ -175,7 +175,10 @@ packages="texinfo gawk"
 if test ${deb} -ge 1; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
-       packages="${packages} gcc-multilib g++-multilib libncurses5-dev libpython2.7-dev"
+       packages="${packages} libncurses5-dev libpython2.7-dev"
+       if test x"${BUILD_ARCH}" = x"x86_64"; then
+           packages="${packages} gcc-multilib g++-multilib"
+       fi
     fi
     for i in ${packages}; do
     AC_MSG_CHECKING([if $i is installed])
