@@ -3753,6 +3753,9 @@ if test ${deb} -ge 1; then
     # add Ubuntu specific packages
     if test x"${BUILD_ARCH}" != xaarch64; then
        packages="${packages} libncurses5-dev libpython2.7-dev"
+       if test x"${BUILD_ARCH}" = x"x86_64"; then
+           packages="${packages} gcc-multilib g++-multilib"
+       fi
     fi
     for i in ${packages}; do
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $i is installed" >&5
