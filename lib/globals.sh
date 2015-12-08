@@ -81,8 +81,8 @@ fi
 # (ie... x86 on x86_64) then we need to forcibly set the architecture or
 # configure gets the wrong architecture.
 setarch=""
-if test `uname -m` != ${BUILD_ARCH}; then
-   setarch="setarch ${BUILD_ARCH}"
+if test `uname -m` != ${build_arch}; then
+   setarch="setarch ${build_arch}"
 fi
 
 clobber=no
