@@ -303,7 +303,7 @@ configure_build()
 #	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ./configure --prefix=${prefix})"
 #	else
         if test x"${configure}" = xyes; then
-	    dryrun "(cd ${builddir} && ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
+	    dryrun "(cd ${builddir} && ${setarch} ${CONFIG_SHELL} ${srcdir}/configure SHELL=${bash_shell} ${default_configure_flags} ${opts})"
 	    if test $? -gt 0; then
 	        error "Configure of $1 failed."
 	        return $?

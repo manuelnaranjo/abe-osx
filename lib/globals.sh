@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 # command line options.
 
 # Start by assuming it's a native build
-build="${build}"
-host="${build}"
+build="${build:-`gcc -dumpmachine`}"
+host="${host:-${build}}"
 target="${host}"
 
 gcc="`which gcc`"
@@ -74,6 +74,15 @@ if test x"${ABE_DBUSER}" != x; then
 fi
 if test x"${ABE_DBPASSWD}" != x; then
     dbpasswd="${ABE_DBPASSWD}"
+fi
+
+# When building in a container, uname returns the host archicture of the
+# machine the container is running on. If we're in a foreign container
+# (ie... x86 on x86_64) then we need to forcibly set the architecture or
+# configure gets the wrong architecture.
+setarch=""
+if test `uname -m` != ${BUILD_ARCH}; then
+   setarch="setarch ${BUILD_ARCH}"
 fi
 
 clobber=no

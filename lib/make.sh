@@ -546,7 +546,7 @@ make_all()
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
     local logfile="${builddir}/make-${tool}${2:+-$2}.log"
-    dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
+    dryrun "${setarch} make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
     
 #    local errors="`dryrun \"egrep '[Ff]atal error:|configure: error:|Error' ${logfile}\"`"
@@ -606,13 +606,13 @@ make_install()
     if test x"${tool}" = x"linux"; then
         local srcdir="`get_srcdir $1 ${2:+$2}`"
         if test `echo ${target} | grep -c aarch64` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
+            dryrun "${setarch} make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
         elif test `echo ${target} | grep -c i.86` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=i386 INSTALL_HDR_PATH=${sysroots}/usr"
+            dryrun "${setarch} make ${make_opts} -C ${srcdir} headers_install ARCH=i386 INSTALL_HDR_PATH=${sysroots}/usr"
         elif test `echo ${target} | grep -c x86_64` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
+            dryrun "${setarch} make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
         elif test `echo ${target} | grep -c arm` -gt 0; then
-            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+            dryrun "${setarch} make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
         else
             warning "Unknown arch for make headers_install!"
             return 1
@@ -677,12 +677,12 @@ make_install()
     local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
     if test x"${tool}" = x"gdb" ; then
 	if test x"$2" != x"gdbserver" ; then
-            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "${setarch} make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
         else
-            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "${setarch} make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
         fi
     else
-	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "${setarch} make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
     fi
     if test $? != "0"; then
         warning "Make install failed!"
@@ -875,20 +875,20 @@ make_docs()
         *binutils*)
             # the diststuff target isn't supported by all the subdirectories,
             # so we build both all targets and ignore the error.
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/bfd diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/ld diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/gas diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/gprof diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/bfd diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/ld diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/gas diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir}/gprof diststuff install-man install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
         *gdb*)
-            dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
         *gcc*)
             #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
         *linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*|*make*)
@@ -896,11 +896,11 @@ make_docs()
             ;;
         *libc*) # including eglibc
             #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info dvi pdf html 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info html 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info html 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
         *)
-            dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "${setarch} make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} info man 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
     esac
