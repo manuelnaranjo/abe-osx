@@ -398,7 +398,7 @@ fi
 
 echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
 
-manifest="`find ${user_workspace} -name \*manifest.txt`"
+manifest="`find ${user_workspace}/_build/builds/ -name destdir -prune -o -name \*manifest.txt -print`"
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
