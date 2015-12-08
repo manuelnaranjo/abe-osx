@@ -3111,8 +3111,13 @@ LIBC="`getconf GNU_LIBC_VERSION`"
 
 KERNEL="`uname -r`"
 
-BUILDHOST="`${srcdir}/config.guess`"
-BUILD_ARCH="`uname -m`"
+if test x"${CC}" != x; then
+    BUILDHOST="`gcc -dumpmachine`"
+    BUILD_ARCH="`echo ${BUILDHOST} | cut -d '-' -f 1`"
+else
+   BUILDHOST="`${srcdir}/config.guess`"
+   BUILD_ARCH="`uname -m`"
+fi
 
 
 HOSTNAME="`uname -n`"
