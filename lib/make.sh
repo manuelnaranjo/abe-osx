@@ -845,7 +845,7 @@ make_docs()
             ;;
         *gcc*)
             #dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} doc html info man 2>&1 | tee -a ${builddir}/makedoc.log"
-            dryrun "make MAKEINFOFLAGS=--force SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
+            dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
         *linux*|*dejagnu*|*gmp*|*mpc*|*mpfr*|*newlib*|*make*)
