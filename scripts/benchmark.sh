@@ -199,6 +199,9 @@ fi
 
 if test x"${phases}" != xrunonly; then
   #abe can build the benchmarks just fine
+  #echo PATH="`dirname ${benchmark_gcc_path}`":${PATH}
+  #echo COMPILER_FLAGS=${compiler_flags}
+  #echo "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"}
   (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
