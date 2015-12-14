@@ -220,13 +220,13 @@ if test x"${phases}" != xrunonly; then
 
   echo "Sizes" >> "${builddir}/build.log"
   echo "=====" >> "${builddir}/build.log"
-  (cd "${builddir}" && eval "stat -c '%n %s' `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${benchmark_gcc_triple}\" != x; then target=\"${benchmark_gcc_triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
     exit
   fi
-  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${benchmark_gcc_triple}\" != x; then target=\"${benchmark_gcc_triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
