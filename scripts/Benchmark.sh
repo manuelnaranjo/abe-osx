@@ -64,7 +64,7 @@ output_param TARGET_IMAGE_2 "${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
 output_param TARGET_CONFIG "${TARGET_CONFIG}"
 output_param TARGET_DEVICE_TYPE "${TARGET_DEVICE_TYPE}"
 output_param BUNDLE_SERVER "https://${LAVA_SERVER}"
-output_param BUNDLE_STREAM_NAME "${BUNDLE_STREAM_NAME:-/anonymous/${LAVA_USER}/}"
+output_param BUNDLE_STREAM_NAME "${BUNDLE_STREAM_NAME:-/private/personal/${LAVA_USER}/}"
 output_param TESTDEF_REPO "https://git.linaro.org/toolchain/abe"
 output_param TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
 #TODO Map this? Depend on benchmark and target.
