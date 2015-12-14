@@ -112,6 +112,8 @@ def main():
                       help='LAVA server to dispatch to. Defaults to main Linaro instance.')
   parser.add_argument('--lava-user', default=os.environ['USER'],
                       help='LAVA user to dispatch as. Defaults to $USER.')
+  parser.add_argument('--bundle-stream',
+                      help='LAVA bundle stream to submit to. Defaults to /private/personal/<lava-user>')
   parser.add_argument('--benchmark', required=True,
                       choices=['CPU2000', 'CPU2006', 'EEMBC', 'fakebench'],
                       help="Benchmark to build/run")
@@ -142,10 +144,15 @@ def main():
       (args['lava_user'], args['lava_server'])
     sys.exit(1)
 
+  #Set post-parse defaults
+  if not args['bundle_stream']:
+    args['bundle_stream'] = '/private/personal/%s/' % args['lava_user']
+
   #All of these values will be empty string if not explicitly set
   var_generator_inputs = {k.upper(): args[k] or '' for k in [
     'lava_server',
     'lava_user',
+    'bundle_stream',
     'benchmark',
     'target_config',
     'prebuilt',
