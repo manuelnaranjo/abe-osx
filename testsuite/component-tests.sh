@@ -9,7 +9,7 @@ echo "============= component_init() tests ================"
 # FIXME: Note these following test cases only PASS if you have the source
 # directories created already.
 
-component_init ld BRANCH="aa" URL="http://cc" gas FILESPEC="bb"
+component_init ld BRANCH="aa" URL="http://cc" REVISION="12345abcdef" gas FILESPEC="bb"
 if test $? -eq 0; then
     pass "component_init() two data structures"
     init="yes"

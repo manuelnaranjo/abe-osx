@@ -18,7 +18,7 @@ else
     . "${topdir}/lib/common.sh" || exit 1
     warning "no host.conf file!  Synthesizing a framework for testing."
 
-    remote_snapshots="${remote_snapshots:-/snapshots-ref}"
+    remote_snapshots="${remote_snapshots:-/snapshots}"
     wget_bin=/usr/bin/wget
     NEWWORKDIR=/usr/local/bin/git-new-workdir
     sources_conf=${topdir}/testsuite/test_sources.conf
@@ -223,71 +223,72 @@ fi
 # ----------------------------------------------------------------------------------
 echo "============= fetch_http() tests ================"
 
+mkdir -p ${local_abe_tmp}/builds/README
+component_init README SRCDIR="${local_abe_tmp}/builds" URL=http://148.251.136.42/snapshots-ref FILESPEC=README.tar.xz
+component_init READMEi SRCDIR="${local_abe_tmp}/builds" URL=http://148.251.136.42/snapshots-ref/infrastructure FILESPEC=READMEi.tar.xz
+
 # Download the first time without force.
-out="`fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz; then
-    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz"
+#out="`fetch_http gmp 2>/dev/null`"
+out="`fetch_http README`"
+if test $? -eq 0 -a -e ${local_snapshots}/README.tar.xz; then
+    pass "fetch_http README"
 else
-    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz"
+    fail "fetch_http README"
 fi
 
 # Get the timestamp of the file.
-gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
+readme1=`stat -c %X ${local_snapshots}/README.tar.xz`
 
 # Download it again
-out="`fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+out="`fetch_http README 2>/dev/null`"
 ret=$?
 
 # Get the timestamp of the file after another fetch.
-gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
+readme2=`stat -c %X ${local_snapshots}/README.tar.xz`
 
 # They should be the same timestamp.
-if test $ret -eq 0 -a ${gmp_stamp1} -eq ${gmp_stamp2}; then
-    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz didn't update as expected (force=no)"
+if test $ret -eq 0 -a ${readme1} -eq ${readme2}; then
+    pass "fetch_http README didn't update as expected (force=no)"
 else
-    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz updated unexpectedly (force=no)"
+    fail "fetch_http README updated unexpectedly (force=no)"
 fi
 
-# If the two operations happen within the same second then their timestamps will
-# be equivalent.  This sleep operation forces the timestamps apart.
-sleep 2s
-
 # Now try it with force on
-out="`force=yes fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+out="`force=yes fetch_http README 2>/dev/null`"
 if test $? -gt 0; then
-    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes when source exists"
+    fail "fetch_http README with \${force}=yes when source exists"
 else
-    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes when source exists"
+    pass "fetch_http README with \${force}=yes when source exists"
 fi
 
 # Get the timestamp of the file after another fetch.
-gmp_stamp3=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
+readme_stamp3=`stat -c %X ${local_snapshots}/README.tar.xz`
 
-if test ${gmp_stamp1} -eq ${gmp_stamp3}; then
-    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes has unexpected matching timestamps"
+if test ${readme_stamp1} -eq ${readme_stamp3}; then
+    fail "fetch_http README with \${force}=yes has unexpected matching timestamps"
 else
-    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes has unmatching timestamps as expected."
+    pass "fetch_http README with \${force}=yes has unmatching timestamps as expected."
 fi
 
 # Make sure force doesn't get in the way of a clean download.
-rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
+rm ${local_snapshots}/README.tar.xz
 
 # force should override supdate and this should download for the first time.
-out="`force=yes fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+out="`force=yes fetch_http README 2>/dev/null`"
 if test $? -gt 0; then
-    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes and sources don't exist"
+    fail "fetch_http README with \${force}=yes and sources don't exist"
 else
-    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes and sources don't exist"
+    pass "fetch_http README with \${force}=yes and sources don't exist"
 fi
 
 # Test the case where wget_bin isn't set.
-rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
+#rm ${local_snapshots}/README.tar.xz
 
-out="`unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+out="`unset wget_bin; fetch_http README 2>/dev/null`"
 if test $? -gt 0; then
-    pass "unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz should fail."
+    pass "unset wget_bin; fetch_http README should fail."
 else
-    fail "unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz should fail."
+    fail "unset wget_bin; fetch_http README should fail."
 fi
 
 # Verify that '1' is returned when a non-existent file is requested.
@@ -308,156 +309,147 @@ else
     fail "fetch <with no filename should error>"
 fi
 
-# Test fetch from server with a partial name.
-rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
-out="`fetch "infrastructure/gmp-5.1" 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    fail "fetch infrastructure/gmp-5.1 (with partial name) from server failed unexpectedly."
+rm ${local_snapshots}/READMEi* &>/dev/null
+out="`fetch "READMEi" 2>/dev/null`"
+if test $? -gt 0 -o ! -e "${local_snapshots}/READMEi.tar.xz"; then
+    fail "fetch READMEi from server failed unexpectedly."
 else
-    pass "fetch infrastructure/gmp-5.1 (with partial name) from server passed as expected."
+    pass "fetch READMEi from server passed as expected."
 fi
 
 # Create a git_reference_dir
 local_refdir="${local_snapshots}/../refdir"
-mkdir -p ${local_refdir}/infrastructure
 # We need a way to differentiate the refdir version.
-cp ${local_snapshots}/infrastructure/gmp-5.1* ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
-rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
+cp ${local_snapshots}/READMEi* ${local_refdir}
+rm ${local_snapshots}/READMEi* &>/dev/null
 
 # Use fetch that goes to a reference dir using a shortname
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    fail "fetch infrastructure/gmp-5.1 (with partial name) from reference dir failed unexpectedly."
+out="`git_reference_dir=${local_refdir} fetch READMEi >/dev/null`"
+if test $? -gt 0 -o ! -e "${local_snapshots}/READMEi.tar.xz"; then
+    fail "fetch READMEi from reference dir failed unexpectedly."
 else
-    pass "fetch infrastructure/gmp-5.1 (with partial name) from reference dir passed as expected."
+    pass "fetch READMEi from reference dir passed as expected."
 fi
 
-rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
+rm ${local_snapshots}/READMEi* &>/dev/null
 # Use fetch that goes to a reference dir using a longname
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    fail "fetch infrastructure/gmp-5.1 (with full name) from reference dir failed unexpectedly."
+out="`git_reference_dir=${local_refdir} fetch READMEi >/dev/null`"
+if test $? -gt 0 -o ! -e "${local_snapshots}/READMEi.tar.xz"; then
+    fail "fetch READMEi (with full name) from reference dir failed unexpectedly."
 else
-    pass "fetch infrastructure/gmp-5.1 (with full name) from reference dir passed as expected."
+    pass "fetch READMEi (with full name) from reference dir passed as expected."
 fi
 
-rm ${local_snapshots}/infrastructure/gmp-5.1*
+rm ${local_snapshots}/READMEi*
 
 # Replace with a marked version so we can tell if it's copied the reference
 # versions erroneously.
-rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
-echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
+rm ${local_refdir}/infrastructure/README.tar.xz
+echo "DEADBEEF" > ${local_refdir}/READMEi.tar.xz
 
 # Use fetch that finds a git reference dir but is forced to use the server.
-out="`force=yes git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+out="`force=yes git_reference_dir=${local_refdir} fetch READMEi >/dev/null`"
 if test $? -gt 0; then
-    fail "fetch infrastructure/gmp-5.1 (with full name) from reference dir failed unexpectedly."
-elif test x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz)" != x""; then
-    fail "fetch infrastructure/gmp-5.1 pulled from reference dir instead of server."
+    fail "fetch READMEi (with full name) from reference dir failed unexpectedly."
+elif test x"$(grep DEADBEEF ${local_snapshots}/infrastructure/README.tar.xz)" != x""; then
+    fail "fetch READMEi pulled from reference dir instead of server."
 else
-    pass "fetch infrastructure/gmp-5.1 (with full name) from reference dir passed as expected."
+    pass "fetch READMEi (with full name) from reference dir passed as expected."
 fi
 
 # The next test makes sure that the failure is due to a file md5sum mismatch.
-rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
-echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -gt 0 -a x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz)" != x""; then
-    pass "fetch infrastructure/gmp-5.1 --force=yes git_reference_dir=foo failed because md5sum doesn't match."
+rm ${local_refdir}/READMEi.tar.xz
+echo "DEADBEEF" > ${local_refdir}/infrastructure/README.tar.xz
+out="`git_reference_dir=${local_refdir} fetch READMEi >/dev/null`"
+if test $? -gt 0 -a x"$(grep DEADBEEF ${local_snapshots}/READMEi.tar.xz)" != x""; then
+    pass "fetch READMEi --force=yes git_reference_dir=foo failed because md5sum doesn't match."
 else
-    fail "fetch infrastructure/gmp-5.1 --force=yes git_reference_dir=foo unexpectedly passed."
+    fail "fetch READMEi --force=yes git_reference_dir=foo unexpectedly passed."
 fi
 
 # Make sure supdate=no where source doesn't exist fails
-rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
-rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
-out="`supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+rm ${local_snapshots}/READMEi.tar.xz
+rm ${local_refdir}/READMEi.tar.xz
+out="`supdate=no fetch README2>/dev/null`"
 if test $? -gt 0; then
-    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no failed as expected when there's no source downloaded."
+    pass "fetch README2 --supdate=no failed as expected when there's no source downloaded."
 else
-    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no passed unexpectedly when there's no source downloaded."
+    fail "fetch README2 --supdate=no passed unexpectedly when there's no source downloaded."
 fi
 
 # Make sure supdate=no --force=yes where source doesn't exist passes by forcing
 # a download
-rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz &>/dev/null
-rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz &>/dev/null
-out="`force=yes supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes passed as expected when there's no source downloaded."
+rm ${local_snapshots}/READMEi.tar.* &>/dev/null
+rm ${local_refdir}/READMEi.tar.* &>/dev/null
+# out="`force=yes supdate=no fetchREADME2>/dev/null`"
+out="`force=yes supdate=no fetch READMEi`"
+if test $? -eq 0 -a -e "${local_snapshots}/READMEi.tar.xz"; then
+    pass "fetch READMEi.tar.xz --supdate=no --force=yes passed as expected when there's no source downloaded."
 else
-    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes failed unexpectedly when there's no source downloaded."
+    fail "fetch READMEi.tar.xz --supdate=no --force=yes failed unexpectedly when there's no source downloaded."
 fi
 
 # Make sure supdate=no where source does exist passes
-out="`supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes passed as expected because the source already exists."
+out="`supdate=no fetch README2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/READMEi.tar.xz"; then
+    pass "fetch READMEi --supdate=no --force=yes passed as expected because the source already exists."
 else
-    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes failed unexpectedly when the source exists."
+    fail "fetch READMEi --supdate=no --force=yes failed unexpectedly when the source exists."
 fi
 
-cp ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz ${local_refdir}/infrastructure/ &>/dev/null
+cp ${local_snapshots}/READMEi.tar.xz ${local_refdir}/infrastructure/ &>/dev/null
 
 # Test to make sure the fetch_reference creates the infrastructure directory.
 rm -rf ${local_snapshots}/infrastructure &>/dev/null
-out="`git_reference_dir=${local_refdir} fetch_reference infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    pass "fetch_reference infrastructure/gmp-6.0.0a.tar.xz  passed as expected because the infrastructure/ directory was created."
+out="`git_reference_dir=${local_refdir} fetch_reference READMEi.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/READMEi.tar.xz"; then
+    pass "fetch_reference READMEi.tar.xz  passed as expected because the infrastructure/ directory was created."
 else
-    fail "fetch_reference infrastructure/gmp-6.0.0a.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+    fail "fetch_reference READMEi.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
 fi
 
 # Test the same, but through the fetch() function.
 rm -rf ${local_snapshots}/infrastructure &>/dev/null
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
-    pass "git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz passed as expected because the infrastructure/ directory was created."
+out="`git_reference_dir=${local_refdir} fetch READMEi >/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/READMEi.tar.xz"; then
+    pass "git_reference_dir=${local_refdir} fetch READMEi passed as expected because the infrastructure/ directory was created."
 else
-    fail "git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+    fail "git_reference_dir=${local_refdir} fetch READMEi fail unexpectedly because the infrastructure/ directory was not created."
 fi
 
 # Download a clean/new copy for the check_md5sum tests
-rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz* &>/dev/null
-fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null
+rm ${local_snapshots}/READMEi.tar.xz* &>/dev/null
+fetch_http READMEi 2>/dev/null
 
-out="`check_md5sum 'infrastructure/gmp-6.0.0a.tar.xz' 2>/dev/null`"
+out="`check_md5sum 'READMEi' 2>/dev/null`"
 if test $? -gt 0; then
-    fail "check_md5sum failed for 'infrastructure/gmp-6.0.0a.tar.xz"
+    fail "check_md5sum failed for 'READMEi.tar.xz"
 else
-    pass "check_md5sum passed for 'infrastructure/gmp-6.0.0a.tar.xz"
+    pass "check_md5sum passed for 'READMEi.tar.xz"
 fi
 
 # Test with a non-infrastructure file
-out="`check_md5sum 'infrastructure/foo.tar.xz' 2>/dev/null`"
+out="`check_md5sum 'README1' 2>/dev/null`"
 if test $? -gt 0; then
     pass "check_md5sum failed as expected for 'infrastructure/foo.tar.xz"
 else
     fail "check_md5sum passed as expected for 'infrastructure/foo.tar.xz"
 fi
 
-mv ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz.back
-echo "empty file" > ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
+mv ${local_snapshots}/READMEi.tar.xz ${local_snapshots}/READMEi.tar.xz.back
+echo "empty file" > ${local_snapshots}/READMEi.tar.xz
 
 # Test an expected failure case.
-out="`check_md5sum 'infrastructure/gmp-6.0.0a.tar.xz' 2>/dev/null`"
+out="`check_md5sum 'READMEi.tar.xz' 2>/dev/null`"
 if test $? -gt 0; then
-    pass "check_md5sum failed as expected for nonmatching 'infrastructure/gmp-6.0.0a.tar.xz file"
+    pass "check_md5sum failed as expected for nonmatching 'READMEi'"
 else
-    fail "check_md5sum passed unexpectedly for nonmatching 'infrastructure/gmp-6.0.0a.tar.xz file"
+    fail "check_md5sum passed unexpectedly for nonmatching 'READMEi'"
 fi
 
-mv ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz.back ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
+mv ${local_snapshots}/READMEi.tar.xz.back ${local_snapshots}/READMEi.tar.xz
 
-# ----------------------------------------------------------------------------------
-#
-# Test package building
-
-# dryrun=yes
-# #gcc_version=linaro-4.8-2013.09
-# gcc_version=git://git.linaro.org/toolchain/gcc.git/fsf-gcc-4_8-branch
-
-# out="`binary_toolchain 2>&1 | tee xx |grep "DRYRUN:.*Jcvf"`"
+exit 				# HACK ALERT!
 
 # ----------------------------------------------------------------------------------
 
@@ -508,37 +500,16 @@ else
     fixme "create_release_tag returned ${out}"
 fi
 
+testing="create_release_tag: GLIBC repository with release string set"
+out="`create_release_tag glibc | grep -v TRACE`"
+if test x"${out}" = x"glibc-linaro-2.22.90-foobar"; then
+    pass "${testing}"
+else
+    fail "${testing}"
+    fixme "create_release_tag returned ${out}"
+fi
+
 # rm ${local_abe_tmp}/builds/BASE-VER
-
-export release="2015.08-rc1"
-testing="create_release_tag: release candidate tarball with release"
-in="gcc-linaro-5.1-2015.08-rc1.tar.xz"
-out="`create_release_tag ${in} | grep -v TRACE`"
-toolname="`echo ${out} | cut -d ' ' -f 1`"
-branch="`echo ${out} | cut -d ' ' -f 2`"
-revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc-linaro-5.1-2015.08-rc1"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "create_release_tag returned ${out}"
-fi
-
-export release="2015.08-2-rc1"
-testing="create_release_tag: release candidate tarball with release"
-in="gcc-linaro-5.1-2015.08-2-rc1.tar.xz"
-out="`create_release_tag ${in} | grep -v TRACE`"
-toolname="`echo ${out} | cut -d ' ' -f 1`"
-branch="`echo ${out} | cut -d ' ' -f 2`"
-revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc-linaro-5.1-2015.08-2-rc1"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "create_release_tag returned ${out}"
-fi
-
-
 
 # ----------------------------------------------------------------------------------
 echo "============= checkout () tests ================"
@@ -576,7 +547,7 @@ for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
   if test $? -eq 0; then
     fail "${testing}"
   else
-    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_component_url\\.)$"; then
+    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_URL\\.)$"; then
       pass "${testing}"
     else
       fail "${testing}"
@@ -587,7 +558,7 @@ done
 #confirm that checkout fails with bad repo - abe is so forgiving that I can only find one suitable input
 rm -rf "${local_snapshots}"/*.git*
 in="http://"
-testing="checkout: ${in} should fail with 'Malformed input' message."
+testing="checkout: ${in} should fail with 'cannot parse repo' message."
 if test x"${debug}" = xyes; then
   out="`cd ${local_snapshots} && checkout ${in} 2> >(tee /dev/stderr)`"
 else
@@ -596,7 +567,7 @@ fi
 if test $? -eq 0; then
   fail "${testing}"
 else
-  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: get_git_repo (Malformed input \"http://\")$"; then
+  if echo "${out}" | tail -n1 | grep -q "^ERROR.*: git_parser (Malformed input\\. No repo found\\.)$"; then
     pass "${testing}"
   else
     fail "${testing}"
@@ -616,11 +587,10 @@ test_checkout ()
     in="${package}${branch:+~${branch}}${revision:+@${revision}}"
 
     local gitinfo=
-    gitinfo="`sources_conf=${test_sources_conf} get_component_url ${in}`"
+    gitinfo="`sources_conf=${test_sources_conf} get_URL ${in}`"
 
     local tag=
     tag="`sources_conf=${test_sources_conf} get_git_url ${gitinfo}`"
-    tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
 
     # We also support / designated branches, but want to move to ~ mostly.
     #tag="${tag}${branch:+~${branch}}${revision:+@${revision}}"
@@ -642,6 +612,20 @@ test_checkout ()
         else
 	    out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag} 2>&1)`"
         fi
+    fi
+
+    local srcdir=
+    srcdir="`sources_conf=${test_sources_conf} get_component_srcdir "abe"`"
+
+    local branch_test=
+    if test ! -d ${srcdir}; then
+	branch_test=0
+    elif test x"${branch}" = x -a x"${revision}" = x; then
+	branch_test=`(cd ${srcdir} && git branch | grep -c "^\* master$")`
+    elif test x"${revision}" = x; then
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch}$")`
+    else
+        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* local_${revision}$")`
     fi
 
     #Make sure we leave no hanging state
@@ -775,33 +759,13 @@ depends=
 default_configure_flags=
 static_link=
 
-testing="postfix make args (make_install)"
-cmp_makeflags="`echo ${cmp_makeflags} | sed -e 's:\ball-:install-:g'`"
-if test x"${cmp_makeflags}" = x; then
-  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
-else
-  out="`. ${topdir}/config/${tool}.conf && make_install ${tool}.git 2>&1`"
-  if test x"${debug}" = x"yes"; then
-    echo "${out}"
-  fi
-  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
-  if test $? -eq 0; then
-    pass "${testing}"
-  else
-    fail "${testing}"
-  fi
-fi
-cmp_makeflags=
-
-set +x
-
 testing="configure"
 tool="dejagnu"
 configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
 if test x"${configure}" = xno; then
   untested "${testing}"
 else
-  out=`configure_build ${tool}.git 2>&1`
+  out=`configure_build ${t_htool}.git 2>&1`
   if test x"${debug}" = x"yes"; then
     echo "${out}"
   fi
@@ -813,7 +777,7 @@ else
   fi
 fi
 testing="copy instead of configure"
-tool="eembc"
+tool="gmp"
 configure="`grep ^configure= ${topdir}/config/${tool}.conf | cut -d '\"' -f 2`"
 if test \! x"${configure}" = xno; then
   untested "${testing}" #implies that the tool's config no longer contains configure, or that it has a wrong value

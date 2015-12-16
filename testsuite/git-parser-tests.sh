@@ -68,20 +68,6 @@ test_parser()
 echo "============= git_parser() tests ================"
 
 errmatch=0
-in="linaro-gcc-2015.08-rc1.tar.xz"
-match='linaro-gcc'
-test_parser tag "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-
-errmatch=0
-in="linaro-gcc-2015.08-2-rc1.tar.xz"
-match='linaro-gcc'
-test_parser tag "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-
-errmatch=0
 in="gcc.git/linaro-4.8-branch"
 match='linaro-4.8-branch'
 test_parser branch "${in}" "${match}" "${errmatch}"
@@ -112,84 +98,6 @@ match='git'
 test_parser service "${in}" "${match}" "${errmatch}"
 
 # Minor variation with a different service
-in="gcc-svn-4.8"
-match=''
-test_parser service "${in}" "${match}" "${errmatch}"
-match='gcc-svn-4.8'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='gcc-svn-4.8'
-test_parser url "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-# We can't really know this this shouldn't be -svn-4.8
-# without having a service identifier!
-match='gcc-svn-4.8'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-match="svn://gcc.gnu.org/svn/gcc/branches/gcc-4_7-branch"
-test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='gcc'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="lp:cortex-strings"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:cortex-strings'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-in="lp:cortex-strings/foo"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:cortex-strings/foo'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='foo'
-test_parser branch "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser tool "${in}" "${match}" "${errmatch}"
-
-# Minor variation with a different service
-in="cortex-strings"
-match=''
-test_parser service "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cortex-strings'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-
 for transport in git ssh http https; do
   errmatch=0
   in="${transport}://address.com/directory/repo.git/branch"
@@ -1027,35 +935,6 @@ match='gcc-linaro-4.6'
 test_parser url "${in}" "${match}" "${errmatch}"
 match='gcc-linaro-4.6'
 test_parser repo "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match=''
-test_parser branch "${in}" "${match}" "${errmatch}"
-
-in="lp:gcc-linaro/4.6"
-match='lp'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='lp:gcc-linaro/4.6'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='gcc-linaro'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='gcc'
-test_parser tool "${in}" "${match}" "${errmatch}"
-match=''
-test_parser revision "${in}" "${match}" "${errmatch}"
-match='4.6'
-test_parser branch "${in}" "${match}" "${errmatch}"
-
-
-in="http://llvm.org/svn/llvm-project/cfe/trunk"
-match='svn'
-test_parser service "${in}" "${match}" "${errmatch}"
-match='http://llvm.org/svn/llvm-project/cfe/trunk'
-test_parser url "${in}" "${match}" "${errmatch}"
-match='cfe'
-test_parser repo "${in}" "${match}" "${errmatch}"
-match='cfe'
-test_parser tool "${in}" "${match}" "${errmatch}"
 match=''
 test_parser revision "${in}" "${match}" "${errmatch}"
 match=''
