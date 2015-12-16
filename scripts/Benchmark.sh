@@ -52,11 +52,16 @@ function output_param {
 output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
 output_param BENCHMARK "${BENCHMARK}"
 output_param TOOLCHAIN "${TOOLCHAIN:-}"
-output_param SYSROOT "${SYSROOT:-}"
-output_param RUN_FLAGS "${RUN_FLAGS:-}"
-output_param COMPILER_FLAGS "${COMPILER_FLAGS:-}"
-output_param MAKE_FLAGS "${MAKE_FLAGS:-}"
-output_param PREBUILT "${PREBUILT:-}"
+
+#By the time these parameters reach LAVA, None means unset
+#Unset is not necessarily the same as empty string - for example,
+#COMPILER_FLAGS="" may result in overriding default flags in makefiles
+output_param SYSROOT "${SYSROOT:-None}"
+output_param RUN_FLAGS "${RUN_FLAGS:-None}"
+output_param COMPILER_FLAGS "${COMPILER_FLAGS:-None}"
+output_param MAKE_FLAGS "${MAKE_FLAGS:-None}"
+output_param PREBUILT "${PREBUILT:-None}"
+
 output_param HOST_SESSION "config/bench/lava/trusted-host-session.yaml"
 output_param HOST_IMAGE "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
 output_param TARGET_SESSION "${TARGET_SESSION}"

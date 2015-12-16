@@ -185,17 +185,17 @@ def main():
       add_sub(override, substitutions)
 
   #Validate inputs
-  if (not substitutions['TOOLCHAIN'] and not substitutions['PREBUILT']):
+  if (not substitutions['TOOLCHAIN'] and substitutions['PREBUILT'] == 'None'):
     print >> sys.stderr, 'Must give exactly one of --toolchain and --prebuilt.'
     sys.exit(1)
-  if substitutions['PREBUILT']:
-    bad_flags = filter(lambda x: substitutions[x], \
+  if substitutions['PREBUILT'] != 'None':
+    bad_flags = filter(lambda x: substitutions[x] and substitutions[x] != 'None', \
                        ('TOOLCHAIN', 'COMPILER_FLAGS', 'MAKE_FLAGS'))
     if bad_flags:
       for flag in bad_flags:
         print >> sys.stderr, 'Must not specify %s with --prebuilt' % flag
       sys.exit(1)
-  if substitutions['SYSROOT'] and not substitutions['TOOLCHAIN']:
+  if substitutions['SYSROOT'] != 'None' and not substitutions['TOOLCHAIN']:
     print >> sys.stderr, '--sysroot only makes sense with --toolchain'
     sys.exit(1)
 
