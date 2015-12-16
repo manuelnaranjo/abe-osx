@@ -122,6 +122,9 @@ def main():
                       choices=['arndale', 'mustang', 'panda-es', 'juno-a53',
                                'juno-a57', 'kvm'],
                       help="Target config with which to run benchmark.")
+  parser.add_argument('--host-device-type', default='kvm',
+                      choices=['arndale', 'mustang', 'panda-es', 'juno', 'kvm'],
+                      help="Host to build/dispatch benchmark")
   parser.add_argument('--prebuilt',
                       help='Prebuilt tarball of benchmark.')
   parser.add_argument('--toolchain',
@@ -163,6 +166,7 @@ def main():
     'bundle_stream',
     'benchmark',
     'target_config',
+    'host_device_type',
     'prebuilt',
     'toolchain',
     'triple',

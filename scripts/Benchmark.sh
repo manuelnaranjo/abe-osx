@@ -23,6 +23,27 @@ image_map_3=(
 )
 
 echo ${TARGET_CONFIG:?TARGET_CONFIG must be set} > /dev/null
+HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-kvm}"
+if test x"${HOST_SESSION:-}" = x; then
+  HOST_SESSION=config/bench/lava/host-session
+  if test x"${HOST_DEVICE_TYPE}" = xjuno ||
+     test x"${HOST_DEVICE_TYPE}" = xarndale ||
+     test x"${HOST_DEVICE_TYPE}" = xpanda-es; then
+    HOST_SESSION="${HOST_SESSION}-no-multilib.yaml"
+    HOST_DEPLOY_ACTION="${HOST_DEPLOY_ACTION:-deploy_linaro_image}"
+  elif test x"${HOST_DEVICE_TYPE}" = xmustang; then
+    HOST_SESSION="${HOST_SESSION}.yaml"
+    HOST_DEPLOY_ACTION="${HOST_DEPLOY_ACTION:-deploy_linaro_kernel}"
+  elif test x"${HOST_DEVICE_TYPE}" = xkvm; then
+    HOST_SESSION="${HOST_SESSION}-multilib.yaml"
+    HOST_DEPLOY_ACTION="${HOST_DEPLOY_ACTION:-deploy_linaro_image}"
+  else
+    echo "Unable to determine HOST_SESSION for ${HOST_DEVICE_TYPE}" >&2
+    exit 1
+  fi
+fi
+#guarantee that HOST_DEPLOY_ACTION is set
+HOST_DEPLOY_ACTION="${HOST_DEPLOY_ACTION:-deploy_linaro_image}"
 
 if test x"${TARGET_CONFIG%%-*}" = xjuno; then
   TARGET_DEVICE_TYPE=juno
@@ -73,8 +94,12 @@ output_param COMPILER_FLAGS "${COMPILER_FLAGS:-None}"
 output_param MAKE_FLAGS "${MAKE_FLAGS:-None}"
 output_param PREBUILT "${PREBUILT:-None}"
 
-output_param HOST_SESSION "config/bench/lava/host-session-multilib.yaml"
-output_param HOST_IMAGE "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
+output_param HOST_SESSION "${HOST_SESSION}"
+output_param HOST_DEPLOY_ACTION "${HOST_DEPLOY_ACTION}"
+output_param HOST_IMAGE_1 "${image_map_1[${HOST_DEVICE_TYPE}]}"
+output_param HOST_IMAGE_2 "${image_map_2[${HOST_DEVICE_TYPE}]:-}"
+output_param HOST_IMAGE_3 "${image_map_3[${HOST_DEVICE_TYPE}]:-}"
+output_param HOST_DEVICE_TYPE "${HOST_DEVICE_TYPE}"
 output_param TARGET_SESSION "${TARGET_SESSION}"
 output_param TARGET_DEPLOY_ACTION "${TARGET_DEPLOY_ACTION}"
 output_param TARGET_IMAGE_1 "${image_map_1[${TARGET_DEVICE_TYPE}]}"

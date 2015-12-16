@@ -1,10 +1,12 @@
 job_name: '${JOB_NAME}'
 timeout: ${TIMEOUT}
 actions:
-  - command: deploy_linaro_image
+  - command: ${HOST_DEPLOY_ACTION}
     parameters:
       role: host
-      image: '${HOST_IMAGE}'
+      ${HOST_IMAGE_1}
+      ${HOST_IMAGE_2}
+      ${HOST_IMAGE_3}
   - command: ${TARGET_DEPLOY_ACTION}
     parameters:
       role: target
@@ -51,7 +53,7 @@ actions:
       stream: '${BUNDLE_STREAM}'
 device_group:
   - count: 1
-    device_type: kvm
+    device_type: '${HOST_DEVICE_TYPE}'
     role: host
     #TODO Remove these tags (or turn into a substitution) once this template
     #     gets used for the uinstance.
