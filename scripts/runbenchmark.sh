@@ -24,13 +24,15 @@ post_run_cmd=
 post_target_cmd=
 buildtar=
 buildtartopdir=
-while getopts a:b:cd:e:g:kpr:t: flag; do
+triple=
+while getopts a:b:cd:e:f:g:kpr:t: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
     c) cautious='-c';;
     d) device="${OPTARG}";;
     e) post_target_cmd="${OPTARG}";;
+    f) triple="${OPTARG}";;
     g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
@@ -68,13 +70,13 @@ else
 fi
 topdir="${abe_path}" #abe global, but this should be the right value for abe
 confdir="${topdir}/config/bench/boards"
-benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git benchlog`"
+benchlog="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${triple}" != x; then target=${triple}; fi && read_config ${benchmark}.git benchlog`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   error=1
   exit
 fi
-safe_output="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && read_config ${benchmark}.git safe_output`"
+safe_output="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${triple}" != x; then target=${triple}; fi && read_config ${benchmark}.git safe_output`"
 if test $? -ne 0; then
   echo "Unable to read benchmark config file for ${benchmark}" 1>&2
   error=1
