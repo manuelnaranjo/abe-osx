@@ -575,12 +575,11 @@ collect_data ()
 	gdb|binutils)
 	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 	    local srcdir=${local_snapshots}/${dir}
-	    local builddir="${local_builds}/${host}/${target}/${dir}"
 	    ;;
 	gdbserver)
 	    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
 	    local srcdir=${srcdir}/gdb/gdbserver
- 	    local builddir="${local_builds}/${host}/${target}/${dir}-gdbserver"
+	    local builddir="${builddir}-gdbserver"
 	    ;;
 	*)
 	    ;;
