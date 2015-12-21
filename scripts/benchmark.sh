@@ -81,7 +81,7 @@ tag=""
 compiler_flags=""
 run_benchargs=""
 phases="both"
-benchmark_gcc_path=
+toolchain_path=
 cautious='-c'
 keep= #'-p' (polite)  - clean up and release target even if there is an error
       #''   (default) - clean up and release target unless there is an error
@@ -102,7 +102,7 @@ while getopts a:b:ce:f:g:hi:km:pr:s: flag; do
        error=0
        exit
     ;;
-    i) benchmark_gcc_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
+    i) toolchain_path="`cd \`dirname ${OPTARG}\` && echo $PWD/\`basename ${OPTARG}\``";;
     k)
        if test x"${keep}" = 'x-p'; then
          echo '-k overriding earlier -p'
@@ -159,20 +159,20 @@ if test x"${benchmark:-}" = x; then
   error=1
   exit
 fi
-if test x"${benchmark_gcc_path:-}" = x; then
-  echo "No GCC given (-i)" 1>&2
+if test x"${toolchain_path:-}" = x; then
+  echo "No toolchain given (-i)" 1>&2
   error=1
   exit
 fi
 if test x"${phases}" != xrunonly; then
-  if ! test -x "${benchmark_gcc_path}"; then
-    echo "GCC '${benchmark_gcc_path}' does not exist or is not executable" 1>&2
+  if ! test -x "${toolchain_path}"; then
+    echo "Toolchain '${toolchain_path}' does not exist or is not executable" 1>&2
     error=1
     exit
   fi
 fi
-if test x"`basename ${benchmark_gcc_path%-*}`" = x"`basename ${benchmark_gcc_path}`"; then #native build
-  benchmark_gcc_triple=
+if test x"`basename ${toolchain_path%-*}`" = x"`basename ${toolchain_path}`"; then #native build
+  triple=
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
                           #localhost. This could be fixed if anyone _really_
@@ -184,15 +184,15 @@ if test x"`basename ${benchmark_gcc_path%-*}`" = x"`basename ${benchmark_gcc_pat
   #       check for a device list composed of localhost plus other targets
   fi
 else #cross-build, implies we need remote devices
-  benchmark_gcc_triple="`basename ${benchmark_gcc_path%-*}`"
+  triple="`basename ${toolchain_path%-*}`"
   if test ${#devices[@]} -eq 0; then
-    echo "Cross-compiling gcc '${benchmark_gcc_path} given, but no devices given for run" 1>&2
+    echo "Cross-compiling toolchain '${toolchain_path} given, but no devices given for run" 1>&2
     error=1
     exit
   fi
 fi
 
-builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${benchmark_gcc_triple}" != x; then target="${benchmark_gcc_triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
+builddir="`. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x"${triple}" != x; then target="${triple}"; fi && get_builddir $(get_URL ${benchmark}.git)`"
 if test $? -ne 0; then
   echo "Unable to get builddir" 1>&2
   error=1
@@ -201,10 +201,10 @@ fi
 
 if test x"${phases}" != xrunonly; then
   #abe can build the benchmarks just fine
-  #echo PATH="`dirname ${benchmark_gcc_path}`":${PATH}
+  #echo PATH="`dirname ${toolchain_path}`":${PATH}
   #echo COMPILER_FLAGS=${compiler_flags}
-  #echo "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"}
-  (PATH="`dirname ${benchmark_gcc_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${benchmark_gcc_triple:+--target "${benchmark_gcc_triple}"})
+  #echo "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${triple:+--target "${triple}"}
+  (PATH="`dirname ${toolchain_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${triple:+--target "${triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
     error=1
@@ -219,19 +219,19 @@ if test x"${phases}" != xrunonly; then
 
   echo "Toolchain" >> "${builddir}/build.log"
   echo "=========" >> "${builddir}/build.log"
-  ${benchmark_gcc_path} -v >> "${builddir}/build.log" 2>&1
-  ${benchmark_gcc_path} --version >> "${builddir}/build.log" 2>&1
+  ${toolchain_path} -v >> "${builddir}/build.log" 2>&1
+  ${toolchain_path} --version >> "${builddir}/build.log" 2>&1
   echo >> "${builddir}/build.log"
 
   echo "Sizes" >> "${builddir}/build.log"
   echo "=====" >> "${builddir}/build.log"
-  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${benchmark_gcc_triple}\" != x; then target=\"${benchmark_gcc_triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${triple}\" != x; then target=\"${triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
     exit
   fi
-  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${benchmark_gcc_triple}\" != x; then target=\"${benchmark_gcc_triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
+  (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${triple}\" != x; then target=\"${triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
@@ -262,7 +262,7 @@ if test x"${cmpbuild:-}" = x; then
 fi
 
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${benchmark_gcc_triple}" ${keep} ${cautious} < /dev/null &
+  "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${triple}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
