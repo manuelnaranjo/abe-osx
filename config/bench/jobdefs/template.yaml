@@ -51,19 +51,6 @@ device_group:
   - count: 1
     device_type: kvm
     role: host
-    #TODO Remove these tags (or turn into a substitution) once this template
-    #     gets used for the uinstance.
-    tags:
-      - tcwg #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
-             #Otherwise they can land on machine that we cannot forward sockets to.
   - count: 1
     device_type: '${TARGET_DEVICE_TYPE}'
     role: target
-    #TODO Remove these tags (or turn into a substitution) once this template
-    #     gets used for the uinstance.
-    tags:
-      - armv8 #IMPORTANT - ciadmin can submit anywhere, so main instance jobs really need this tag
-              #Otherwise they can land on machine that we cannot forward sockets to.
-              #Here we have picked a tag that just happens not to used on any restricted machines.
-              #We cannot reuse tcwg, as there is only one tcwg kvm.
-              #This also means that this template cannot work with non-kvm targets.
