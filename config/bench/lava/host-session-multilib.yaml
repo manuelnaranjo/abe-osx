@@ -37,6 +37,7 @@ install:
         - make
         - openssh-server
         - rsync
+        - tcpdump
         - texinfo
         - wget
         - xz-utils
