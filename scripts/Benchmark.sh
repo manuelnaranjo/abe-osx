@@ -18,6 +18,8 @@ image_map_2=(
 [panda-es]='rootfs: "http://releases.linaro.org/14.05/ubuntu/panda/linaro-trusty-developer-20140522-661.tar.gz"'
 )
 
+echo ${TARGET_CONFIG:?TARGET_CONFIG must be set} > /dev/null
+
 if test x"${TARGET_CONFIG%%-*}" = xjuno; then
   TARGET_DEVICE_TYPE=juno
 else
@@ -50,8 +52,8 @@ function output_param {
 
 #Parameters to be substituted into template
 output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
-output_param BENCHMARK "${BENCHMARK}"
-output_param TOOLCHAIN "${TOOLCHAIN:-}"
+output_param BENCHMARK "${BENCHMARK:?BENCHMARK must be set}"
+output_param TOOLCHAIN "${TOOLCHAIN:?TOOLCHAIN must be set}"
 
 #By the time these parameters reach LAVA, None means unset
 #Unset is not necessarily the same as empty string - for example,

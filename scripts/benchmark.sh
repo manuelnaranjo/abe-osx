@@ -164,12 +164,14 @@ if test x"${benchmark_gcc_path:-}" = x; then
   error=1
   exit
 fi
-if ! test -x "${benchmark_gcc_path}"; then
-  echo "GCC '${benchmark_gcc_path}' does not exist or is not executable" 1>&2
-  error=1
-  exit
+if test x"${phases}" != xrunonly; then
+  if ! test -x "${benchmark_gcc_path}"; then
+    echo "GCC '${benchmark_gcc_path}' does not exist or is not executable" 1>&2
+    error=1
+    exit
+  fi
 fi
-if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
+if test x"`basename ${benchmark_gcc_path%-*}`" = x"`basename ${benchmark_gcc_path}`"; then #native build
   benchmark_gcc_triple=
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
@@ -182,7 +184,7 @@ if test x"`basename ${benchmark_gcc_path}`" = xgcc; then #native build
   #       check for a device list composed of localhost plus other targets
   fi
 else #cross-build, implies we need remote devices
-  benchmark_gcc_triple="`basename ${benchmark_gcc_path%-gcc}`"
+  benchmark_gcc_triple="`basename ${benchmark_gcc_path%-*}`"
   if test ${#devices[@]} -eq 0; then
     echo "Cross-compiling gcc '${benchmark_gcc_path} given, but no devices given for run" 1>&2
     error=1
