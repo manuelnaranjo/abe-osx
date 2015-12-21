@@ -62,8 +62,20 @@ benchgccpath=
 tmpdir="`mktemp -dt downloads-XXXXXXX`"
 
 abe_branch="$1"
+if x"${abe_branch}" = xNone; then
+  echo "Must give abe branch" >&2
+  exit 1
+fi
 benchmark="${2}"
+if x"${benchmark}" = xNone; then
+  echo "Must give benchmark" >&2
+  exit 1
+fi
 toolchain="${3}"
+if x"${toolchain}" = xNone; then
+  echo "Must give toolchain" >&2
+  exit 1
+fi
 if test x"$4" != xNone; then
   sysroot="${4}"
 fi
@@ -244,6 +256,7 @@ if test x"${prebuilt:-}" = x; then
 else
   benchtar="`get_thing ${prebuilt}`"
   resultsdir="`tar xf ${benchtar} | head -n1`"
+  benchgccpath="${toolchain}"
 fi
 
 #If we are relying on an external auth socket, we can delete it now
