@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,44 +24,25 @@ build_all()
     # Turn off dependency checking, as everything is handled here
     nodepends=yes
     
+    local infrastructure="`grep ^depends ${topdir}/config/infrastructure.conf | tr -d '"' | sed -e 's:^depends=::'`"
+
     # Specify the components, in order to get a full toolchain build
     if test x"${target}" != x"${build}"; then
+        # Build a cross compiler
 	if test "`echo ${host} | grep -c mingw`" -gt 0; then
 	    # As Mingw32 requires a cross compiler to be already built, so we don't need
 	    # to rebuilt the sysroot.
-            local builds="infrastructure binutils libc stage2 gdb"
+            local builds="${infrastructure} binutils libc stage2 gdb"
 	else
-            local builds="infrastructure binutils stage1 libc stage2 gdb"
+            local builds="${infrastructure} binutils stage1 libc stage2 gdb"
 	fi
 	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
 	    local builds="${builds} gdbserver"
 	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
-        local builds="infrastructure binutils stage2 libc gdb" # native build
+        local builds="${infrastructure} binutils stage2 libc gdb" # native build
         notice "Buildall: Building \"${builds}\" for native target ${target}."
-    fi
-    
-    # See if specific component versions were specified at runtime
-    if test x"${gcc_version}" = x; then
-        gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${binutils_version}" = x; then
-        binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${eglibc_version}" = x; then
-        eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${newlib_version}" = x; then
-        newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-        libgloss_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-    fi
-    if test x"${glibc_version}" = x; then
-        glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-    fi
-
-    if test x"${gdb_version}" = x; then
-        gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
     fi
     
     # cross builds need to build a minimal C compiler, which after compiling
@@ -70,10 +51,19 @@ build_all()
     local build_all_ret=
 
     # Checkout all the sources
-    checkout_all
+    checkout_all ${builds}
     if test $? -ne 0; then
         error "checkout_all failed"
         return 1;
+    fi
+
+    if test x"${manifest}" = x"create"; then
+	notice "Exiting after creating"
+	local exitflag=true
+    fi
+    manifest="`manifest`"
+    if test x"${exitflag}" = xtrue; then
+	exit 0
     fi
 
     # build each component
@@ -86,28 +76,14 @@ build_all()
             read answer
         fi
         case $i in
-            infrastructure)
-                infrastructure
-                build_all_ret=$?
-                ;;
             # Build stage 1 of GCC, which is a limited C compiler used to compile
             # the C library.
             libc)
-                if test x"${clibrary}" = x"eglibc"; then
-                    build ${eglibc_version}
-                elif  test x"${clibrary}" = x"glibc"; then
-                    build ${glibc_version}
-                elif test x"${clibrary}" = x"newlib"; then
-                    build ${newlib_version}
-                    build ${newlib_version} libgloss
-                else
-                    error "\${clibrary}=${clibrary} not supported."
-                    return 1
-                fi
+                build ${clibrary}
                 build_all_ret=$?
                 ;;
             stage1)
-                build ${gcc_version} stage1
+                build gcc stage1
                 build_all_ret=$?
                 # Don't create the sysroot if the clibrary build didn't succeed.
                 if test ${build_all_ret} -lt 1; then
@@ -116,7 +92,6 @@ build_all()
 		    if test x"${dryrun}" != xyes; then
 			local sysroot="`${target}-gcc -print-sysroot`"
 			if test ! -d ${sysroot}; then
-			    dryrun "mkdir -p /opt/linaro"
 			    dryrun "ln -sfnT ${abe_top}/sysroots/${target} ${sysroot}"
 			fi
 		    fi
@@ -134,24 +109,15 @@ build_all()
 		    sed -i -e 's/typedef __caddr_t caddr_t/\/\/ FIXME: typedef __caddr_t caddr_t/' ${sysroots}/usr/include/sys/types.h
 		fi
 
-                build ${gcc_version} stage2
+                build gcc stage2
                 build_all_ret=$?
 		# Reverse the ugly hack
 		if test `echo ${host} | grep -c mingw` -eq 1; then
 		    sed -i -e 's/.*FIXME: //' ${sysroots}/usr/include/sys/types.h
 		fi
                 ;;
-            gdb)
-                build ${gdb_version} gdb
-                build_all_ret=$?
-                ;;
-            gdbserver)
-                build ${gdb_version} gdbserver
-                build_all_ret=$?
-                ;;
-            # Build anything not GCC or infrastructure
             *)
-                build ${binutils_version} binutils
+		build $i
                 build_all_ret=$?
                 ;;
         esac
@@ -161,8 +127,6 @@ build_all()
             return 1
         fi
     done
-
-    manifest="`manifest`"
 
     # Notify that the build completed successfully
     build_success
@@ -312,65 +276,56 @@ build()
 {
     trace "$*"
 
-    # gitinfo contains the service://url~branch@revision
-    local gitinfo="`get_source $1`"
-    if test -z "${gitinfo}"; then
-        error "No matching source found for \"$1\"."
-        return 1
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+ 
+    if test "`echo $2 | grep -c gdb`" -gt 0; then
+	local component="$2"
     fi
-
-    # The git parser functions shall return valid results for all
-    # services, especially once we have a URL.
-
-    # tag is a sanitized string that's only used for naming and information
-    # because it can't be reparsed by the parser (since '/' characters are
-    # converted to '-' characters in branch names.
-    local tag=
-    tag="`get_git_tag ${gitinfo}`" || return 1
-
-    local srcdir="`get_srcdir ${gitinfo} ${2:+$2}`"
-
-    # We have to use get_toolname because binutils-gdb use the same
-    # repository and get_toolname needs to parse the branchname to
-    # determine the tool.
-    local tool="`get_toolname ${srcdir}`"
+    local url="`get_component_url ${component}`"
+    local srcdir="`get_component_srcdir ${component}`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
+    local version="`basename ${srcdir}`"
 
     local stamp=
-    stamp="`get_stamp_name build ${gitinfo} ${2:+$2}`"
-
-    local builddir="`get_builddir ${gitinfo} ${2:+$2}`"
+    stamp="`get_stamp_name build ${version} ${2:+$2}`"
 
     # The stamp is in the buildir's parent directory.
     local stampdir="`dirname ${builddir}`"
 
-    notice "Building ${tag}${2:+ $2}"
+    notice "Building ${component} ${2:+$2}"
     
     # If this is a native build, we always checkout/fetch.  If it is a 
     # cross-build we only checkout/fetch if this is stage1
     if test x"${target}" = x"${build}" \
         -o x"${target}" != x"${build}" -a x"$2" != x"stage2"; then
-        if test `echo ${gitinfo} | egrep -c "^git|^ssh|^http|^git|\.git"` -gt 0; then
-            # Don't update the compiler sources between stage1 and stage2 builds if this
-            # is a cross build.
-            notice "Checking out ${tag}${2:+ $2}"
-            checkout ${gitinfo} ${2:+$2}
+	# Don't attempt to get sources if updating is disabled. If checkout_all()
+	# has been called, (build_all() does), then there is no need to keep
+	# updating.
+	if test x"${supdate}" = xyes; then
+            component_is_tar ${component}
             if test $? -gt 0; then
-                warning "Sources not updated, network error!"
+-		# Don't update the compiler sources between stage1 and stage2 builds if this
+		# is a cross build.
+		notice "Checking out ${component} ${2:+$2}"
+		checkout ${component}
+		if test $? -gt 0; then
+                    warning "Sources not updated, network error!"
+		fi
+            else
+		# Don't update the compiler sources between stage1 and stage2 builds if this
+		# is a cross build.
+		fetch ${component}
+		if test $? -gt 0; then
+                    error "Couldn't fetch tarball ${component}"
+                    return 1
+		fi
+		extract ${component}
+		if test $? -gt 0; then
+                    error "Couldn't extract tarball ${component}"
+                    return 1
+		fi
             fi
-        else
-            # Don't update the compiler sources between stage1 and stage2 builds if this
-            # is a cross build.
-            fetch ${gitinfo}
-            if test $? -gt 0; then
-                error "Couldn't fetch tarball ${gitinfo}"
-                return 1
-            fi
-            extract ${gitinfo}
-            if test $? -gt 0; then
-                error "Couldn't extract tarball ${gitinfo}"
-                return 1
-            fi
-        fi
+	fi
     fi
 
     # We don't need to build if the srcdir has not changed!  We check the
@@ -387,8 +342,8 @@ build()
    fi
 
     if test x"${building}" != xno; then
-	notice "Configuring ${tag}${2:+ $2}"
-	configure_build ${gitinfo} $2
+	notice "Configuring ${component} ${2:+$2}"
+	configure_build ${component} ${2:+$2}
 	if test $? -gt 0; then
             error "Configure of $1 failed!"
             return $?
@@ -396,21 +351,21 @@ build()
 	
 	# Clean the build directories when forced
 	if test x"${force}" = xyes; then
-            make_clean ${gitinfo} $2
+            make_clean ${component} ${2:+$2}
             if test $? -gt 0; then
 		return 1
             fi
 	fi
 	
 	# Finally compile and install the libaries
-	make_all ${gitinfo} $2
+	make_all ${component} ${2:+$2}
 	if test $? -gt 0; then
             return 1
 	fi
 	
 	# Build the documentation, unless it has been disabled at the command line.
 	if test x"${make_docs}" = xyes; then
-            make_docs ${gitinfo} $2
+            make_docs ${component} ${2:+$2}
             if test $? -gt 0; then
 		return 1
             fi
@@ -420,7 +375,7 @@ build()
 	
 	# Install, unless it has been disabled at the command line.
 	if test x"${install}" = xyes; then
-            make_install ${gitinfo} $2
+            make_install ${component} ${2:+$2}
             if test $? -gt 0; then
 		return 1
             fi
@@ -441,6 +396,7 @@ build()
 	
 	create_stamp "${stampdir}" "${stamp}"
 	
+	local tag="`create_release_tag ${component}`"
 	notice "Done building ${tag}${2:+ $2}, took ${SECONDS} seconds"
 	
 	# For cross testing, we need to build a C library with our freshly built
@@ -479,24 +435,23 @@ make_all()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to compile.
-    if test x"${tool}" = x"linux"; then
+    if test x"${component}" = x"linux"; then
         return 0
     fi
 
-    # FIXME: This should be a URL 
-    local builddir="`get_builddir $1 ${2:+$2}`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
     notice "Making all in ${builddir}"
 
-    if test x"${parallel}" = x"yes" -a "`echo ${tool} | grep -c glibc`" -eq 0; then
+    if test x"${parallel}" = x"yes" -a "`echo ${component} | grep -c glibc`" -eq 0; then
 	local make_flags="${make_flags} -j ${cpus}"
     fi
 
     # Enable an errata fix for aarch64 that effects the linker
-    if test "`echo ${tool} | grep -c glibc`" -gt 0 -a `echo ${target} | grep -c aarch64` -gt 0; then
+    if test "`echo ${component} | grep -c glibc`" -gt 0 -a `echo ${target} | grep -c aarch64` -gt 0; then
 	local make_flags="${make_flags} LDFLAGS=\"-Wl,--fix-cortex-a53-843419\" "
     fi
 
@@ -505,7 +460,7 @@ make_all()
     fi
 
     # Use pipes instead of /tmp for temporary files.
-    if test x"${override_cflags}" != x -a x"${tool}" != x"eglibc"; then
+    if test x"${override_cflags}" != x -a x"${component}" != x"eglibc"; then
 	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CFLAGS=\"${override_cflags}\" CXXFLAGS=\"${override_cflags}\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
     else
 	local make_flags="${make_flags} CFLAGS_FOR_BUILD=\"-pipe -g -O2\" CXXFLAGS_FOR_BUILD=\"-pipe -g -O2\""
@@ -524,12 +479,13 @@ make_all()
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"-static-libgcc\" -C ${builddir}"
     fi
 
-    # Some components require extra flags to make: we put them at the end so that config files can override
-    local default_makeflags="`read_config $1 default_makeflags`"
+    # Some components require extra flags to make: we put them at the
+    # end so that config files can override
+    local default_makeflags="`get_component_makeflags ${component}`"
 
-    if test x"${tool}" = x"gdb" -a x"$2" == x"gdbserver"; then
-       default_makeflags="gdbserver CFLAGS=--sysroot=${sysroots}"
-    fi
+#    if test x"$2" = x"gdbserver"; then
+#       default_makeflags="CFLAGS=--sysroot=${sysroots}"
+#    fi
 
     if test x"${default_makeflags}" !=  x; then
         local make_flags="${make_flags} ${default_makeflags}"
@@ -545,7 +501,7 @@ make_all()
     local makeret=
     # GDB and Binutils share the same top level files, so we have to explicitly build
     # one or the other, or we get duplicates.
-    local logfile="${builddir}/make-${tool}${2:+-$2}.log"
+    local logfile="${builddir}/make-${component}${2:+-$2}.log"
     dryrun "make SHELL=${bash_shell} -w -C ${builddir} ${make_flags} 2>&1 | tee ${logfile}"
     local makeret=$?
     
@@ -598,13 +554,14 @@ make_install()
 {
     trace "$*"
 
-    if test x"${parallel}" = x"yes" -a "`echo ${tool} | grep -c glibc`" -eq 0; then
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+
+    if test x"${parallel}" = x"yes" -a "`echo ${component} | grep -c glibc`" -eq 0; then
         local make_flags="${make_flags} -j $((2*${cpus}))"
     fi
 
-    local tool="`get_toolname $1`"
-    if test x"${tool}" = x"linux"; then
-        local srcdir="`get_srcdir $1 ${2:+$2}`"
+    if test x"${component}" = x"linux"; then
+        local srcdir="`get_component_srcdir ${component}` ${2:+$2}"
         if test `echo ${target} | grep -c aarch64` -gt 0; then
             dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm64 INSTALL_HDR_PATH=${sysroots}/usr"
         elif test `echo ${target} | grep -c i.86` -gt 0; then
@@ -637,10 +594,10 @@ make_install()
 	esac
     fi
 
-    local builddir="`get_builddir $1 ${2:+$2}`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
     notice "Making install in ${builddir}"
 
-    if test "`echo ${tool} | grep -c glibc`" -gt 0; then
+    if test "`echo ${component} | grep -c glibc`" -gt 0; then
         local make_flags=" install_root=${sysroots} ${make_flags} LDFLAGS=-static-libgcc PARALLELMFLAGS=\"-j ${cpus}\""
     fi
 
@@ -651,17 +608,12 @@ make_install()
     # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
     # like parallel jobs. We also change tooldir, so the headers and libraries
     # get install in the right place in our non-multilib'd sysroot.
-    if test x"${tool}" = x"newlib"; then
+    if test x"${component}" = x"newlib"; then
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
         local make_flags=" tooldir=${sysroots}/usr/"
         if test x"$2" = x"libgloss"; then
-            local make_flags="${make_flags} install-rdimon"
-            if test `echo ${target} | grep -c aarch64` -gt 0; then  
-                local builddir="${builddir}/aarch64"
-            else
-                local builddir="${builddir}/arm"
-            fi
+            local make_flags="${make_flags}"
         fi
     fi
 
@@ -674,25 +626,26 @@ make_install()
         export CONFIG_SHELL=${bash_shell}
     fi
 
-    local default_makeflags="`read_config $1 default_makeflags | sed -e 's:\ball-:install-:g'`"
-    if test x"${tool}" = x"gdb" ; then
+    local default_makeflags= #"`get_component_makeflags ${component}`"
+    if test x"${component}" = x"gdb" ; then
+	local log="`dirname ${builddir}`/install.log"
 	if test x"$2" != x"gdbserver" ; then
-            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "make install-gdb ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
         else
-            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+            dryrun "make install ${make_flags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
         fi
     else
-	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${builddir}/install.log"
+	dryrun "make install ${make_flags} ${default_makeflags} -i -k -w -C ${builddir} 2>&1 | tee ${log}"
     fi
     if test $? != "0"; then
         warning "Make install failed!"
         return 1
     fi
 
-    if test x"${tool}" = x"gcc"; then
+    if test x"${component}" = x"gcc"; then
 	dryrun "copy_gcc_libs_to_sysroot \"${local_builds}/destdir/${host}/bin/${target}-gcc --sysroot=${sysroots}\""
 	if test  `echo ${host} | grep -c mingw` -eq 1 -a -e /usr/${host}/lib/libwinpthread-1.dll; then
-	    local builddir="`get_builddir ${gcc_version}`-stage2"
+	    local builddir="`get_component_builddir ${gcc_version}`-stage2"
 	    cp /usr/${host}/lib/libwinpthread-1.dll ${builddir}/gcc
 	fi
     fi
@@ -706,8 +659,8 @@ make_check()
 {
     trace "$*"
 
-    local tool="`get_toolname $1`"
-    local builddir="`get_builddir $1 ${2:+$2}`"
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
@@ -748,7 +701,7 @@ make_check()
     export DEJAGNU=${topdir}/config/linaro.exp
 
     # Run tests
-    local checklog="${builddir}/check-${tool}.log"
+    local checklog="${builddir}/check-${component}.log"
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
 	# Overwrite ${checklog} in order to provide a clean log file
 	# if make check has been run more than once on a build tree.
@@ -794,7 +747,7 @@ make_check()
 	    fi
 	fi
 
-	case ${tool} in
+	case ${component} in
 	    binutils)
 		local dirs="/binutils /ld /gas"
 		local check_targets="check-DEJAGNU"
@@ -808,7 +761,7 @@ make_check()
 		local check_targets="check"
 		;;
 	esac
-	if test x"${tool}" = x"gcc"; then
+	if test x"${component}" = x"gcc"; then
             touch ${sysroots}/etc/ld.so.cache
             chmod 700 ${sysroots}/etc/ld.so.cache
 	fi
@@ -835,7 +788,7 @@ make_check()
 	stop_schroot_sessions
 	unset SCHROOT_TEST
        
-        if test x"${tool}" = x"gcc"; then
+        if test x"${component}" = x"gcc"; then
             rm -rf ${sysroots}/etc/ld.so.cache
 	fi
     fi
@@ -847,7 +800,7 @@ make_clean()
 {
     trace "$*"
 
-    builddir="`get_builddir $1 ${2:+$2}`"
+    builddir="`get_component_builddir $1 ${2:+$2}`"
     notice "Making clean in ${builddir}"
 
     if test x"$2" = "dist"; then
@@ -867,7 +820,8 @@ make_docs()
 {
     trace "$*"
 
-    local builddir="`get_builddir $1 ${2:+$2}`"
+    local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
 
     notice "Making docs in ${builddir}"
 
@@ -882,7 +836,10 @@ make_docs()
             dryrun "make SHELL=${bash_shell} ${make_flags} -w -C ${builddir} install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;
-        *gdb*)
+        *gdbserver)
+            return 0
+            ;;
+        *gdb)
             dryrun "make SHELL=${bash_shell} ${make_flags} -i -k -w -C ${builddir}/gdb diststuff install-html install-info 2>&1 | tee -a ${builddir}/makedoc.log"
             return $?
             ;;

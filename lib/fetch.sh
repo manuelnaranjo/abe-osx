@@ -16,62 +16,32 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# The fetch_md5sums() function is special because the md5sums file is used by
-# ABE for knowing where to fetch other files, i.e. it's used by fetch(). This
-# function should only be called once at the start of every ABE run.  This
-# function does not respect supdate=no.  It is harmless to download new versions
-# of md5sums.
-fetch_md5sums()
-{
-    # The fetch_http function will always attempt to fetch the remote file
-    # if the version on the server is newer than the local version.
-    # Note, we don't want to fetch md5sums from $git_reference_dir because
-    # it is not versioned in the filename like other gmp-* or linux-* files
-    # are.  $git_reference_dir is a caching mechanism serving fast access to
-    # git/file content, but it doesn't provide any master copies of content.
-    fetch_http md5sums
-
-    # If the fetch_*() fails we might have a previous version of md5sums in
-    # ${local_snapshots}.  Use that, otherwise we have no choice but to fail.
-    if test ! -s ${local_snapshots}/md5sums; then
-	return 1
-    fi
-    return 0
-}
-
 # Fetch a file from a remote machine.  All decision logic should be in this
 # function, not in the fetch_<protocol> functions to avoid redundancy.
 fetch()
 {
-#    trace "$*"
+    trace "$*"
+
     if test x"$1" = x; then
 	error "No file name specified to fetch!"
 	return 1
     fi
 
-    # Peel off 'infrastructure/'
-    local file="`basename $1`"
+    local component=$1
+    local getfile="`get_component_filespec ${component}`"
+    local url="`get_component_url ${component}`"
 
-    # The md5sums file should have been downloaded before fetch() was
-    # ever called.
-    if test ! -e "${local_snapshots}/md5sums"; then
-	error "${local_snapshots}/md5sums is missing."
-	return 1
-    fi
-
-    # We can grab the full file name by searching for it in the md5sums file.
-    # Match on the first hit.  This might be prepended with the
-    # 'infrastructure/' directory name if it's an infrastructure file.
-    local getfile="$(grep ${file} -m 1 ${local_snapshots}/md5sums | cut -d ' ' -f 3)"
-    if test x"${getfile}" = x; then
-	error "${file} not in md5sum!"
-	return 1
-    fi
+    # This provides the infrastructure/ directory if ${getfile} contains it.
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure"
+#    else
+	local dir=""
+#    fi
 
     # Forcing trumps ${supdate} and always results in sources being updated.
     if test x"${force}" != xyes; then
 	if test x"${supdate}" = xno; then
-	    if test -e "${local_snapshots}/${getfile}"; then
+	    if test -e "${local_snapshots}${dir}/${getfile}"; then
 		notice "${getfile} already exists and updating has been disabled."
 		return 0
 	    fi
@@ -84,7 +54,7 @@ fetch()
 
     # If the user has specified a git_reference_dir, then we'll use it if the
     # file exists in the reference dir.
-    if test -e "${git_reference_dir}/${getfile}" -a x"${force}" != xyes; then
+    if test -e "${git_reference_dir}${dir}/${getfile}" -a x"${force}" != xyes; then
 	# This will always fetch if the version in the reference dir is newer.
 	local protocol=reference
     else
@@ -93,14 +63,14 @@ fetch()
     fi
 
     # download from the file server or copy the file from the reference dir
-    fetch_${protocol} ${getfile}
+    fetch_${protocol} ${component}
     if test $? -gt 0; then
 	return 1
     fi
 
     # Fetch only supports fetching files which have an entry in the md5sums file.
     # An unlisted file should never get this far anyway.
-    dryrun "check_md5sum ${getfile}"
+    dryrun "check_md5sum ${component}"
     if test $? -gt 0 -a x"${force}" != xyes; then
 	error "md5sums don't match!"
 	return 1
@@ -113,64 +83,64 @@ fetch()
 # decompress and untar a fetched tarball
 extract()
 {
-#    trace "$*"
+    trace "$*"
 
     local extractor=
     local taropt=
+    local component=$1
 
-    if test `echo $1 | egrep -c "\.gz|\.bz2|\.xz"` -eq 0; then	
-	local file="`grep $1 ${local_snapshots}/md5sums | egrep -v  "\.asc|\.txt" | cut -d ' ' -f 3 | cut -d '/' -f 2`"
-    else
-	local file="`echo $1 | cut -d '/' -f 2`"
-    fi
-
-    local srcdir=
-    srcdir="`get_srcdir $1`"
+    local url="`get_component_url ${component}`"
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
+	local dir=""
+#    fi
+    local file="`get_component_filespec ${component}`"
+    local srcdir="`get_component_srcdir ${component}`"
+    local version="`basename ${srcdir}`"
 
     local stamp=
-    stamp="`get_stamp_name extract $1`"
+    stamp="`get_stamp_name extract ${version}`"
 
     # Extract stamps go into srcdir
-    local stampdir="`dirname ${srcdir}`"
+    local stampdir="${local_snapshots}${dir}"
 
     # Name of the downloaded tarball.
-    local tarball="`dirname ${srcdir}`/${file}"
+    local tarball="${local_snapshots}${dir}/${file}"
+
+    # Initialize component data structures
+    local builddir="`get_component_builddir ${component}`"
 
     local ret=
     # If the tarball hasn't changed, then we don't need to extract anything.
     check_stamp "${stampdir}" ${stamp} ${tarball} extract ${force}
     ret=$?
     if test $ret -eq 0; then
-	return 0 
+    	return 0 
     elif test $ret -eq 255; then
-	# the ${tarball} isn't present.
-	return 1
+    	# the ${tarball} isn't present.
+    	return 1
     fi
 
     # Figure out how to decompress a tarball
     case "${file}" in
-	*.xz)
-	    local extractor="xz -d "
-	    local taropt="J"
-	    ;;
-	*.bz*)
-	    local extractor="bzip2 -d "
-	    local taropt="j"
-	    ;;
-	*.gz)
-	    local extractor="gunzip "
-	    local taropt="x"
-	    ;;
-	*) ;;
+    	*.xz)
+    	    local extractor="xz -d "
+    	    local taropt="J"
+    	    ;;
+    	*.bz*)
+    	    local extractor="bzip2 -d "
+    	    local taropt="j"
+    	    ;;
+    	*.gz)
+    	    local extractor="gunzip "
+    	    local taropt="x"
+    	    ;;
+    	*) ;;
     esac
 
-    if test -d ${srcdir} -a x"${force}" = xno; then
-	notice "${srcdir} already exists. Removing to extract newer version!"
-	dryrun "rm -rf ${srcdir}"
-    fi
-
     local taropts="${taropt}xf"
-    notice "Extracting ${srcdir} from ${tarball}."
+    notice "Extracting from ${tarball}."
     dryrun "tar ${taropts} ${tarball} -C `dirname ${srcdir}`"
 
     # FIXME: this is hopefully a temporary hack for tarballs where the
@@ -181,18 +151,18 @@ extract()
     # dryrun has to skip this step otherwise execution will always drop into
     # this leg.
     if test x"${dryrun}" != xyes -a ! -d ${srcdir}; then
-	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
-	if test ! -d ${srcdir}; then
-	    dir2="`dirname ${srcdir}`/${dir2}"
-	    warning "${tarball} didn't extract to ${srcdir} as expected!"
-	    notice "Making a symbolic link from ${dir2} to ${srcdir}!"
-	    dryrun "ln -sf ${dir2} ${srcdir}"
-	else
-	    error "${srcdir} already exists!"
-	    return 1
-	fi
+    	local dir2="`echo ${name} | sed -e 's:-linaro::' -e 's:-201[0-9\.\-]*::'`"
+    	if test ! -d ${srcdir}; then
+    	    dir2="${srcdir}/${dir2}"
+    	    warning "${tarball} didn't extract to ${srcdir} as expected!"
+    	    notice "Making a symbolic link from ${dir2} to ${srcdir}!"
+    	    dryrun "ln -sf ${dir2} ${srcdir}"
+    	else
+    	    error "${srcdir} already exists!"
+    	    return 1
+    	fi
     fi
-
+    
     create_stamp "${stampdir}" "${stamp}"
     return 0
 }
@@ -207,18 +177,29 @@ extract()
 # on the server is newer than the destination file.
 fetch_http()
 {
-#    trace "$*"
+    trace "$*"
 
-    local getfile=$1
+    local component=$1
+    local getfile="`get_component_filespec ${component}`"
+    if test x"${getfile}" = x; then
+	error "No filespec specified for ${component} !"
+	return 1
+    fi
+    local url="`get_component_url ${component}`/${getfile}"
+
+    if test x"${url}" = x; then
+	error "No URL specified for ${component} !"
+	return 1
+    fi
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    local dir="`dirname $1`/"
-    if test x"${dir}" = x"./"; then
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure"
+#    else
 	local dir=""
-    else
-	if test ! -d ${local_snapshots}/${dir}; then
-	    mkdir -p ${local_snapshots}/${dir}
-	fi
+#    fi
+    if test ! -d ${local_snapshots}${dir}; then
+	mkdir -p ${local_snapshots}${dir}
     fi
 
     # You MUST have " " around ${wget_bin} or test ! -x will
@@ -245,10 +226,18 @@ fetch_http()
     # NOTE: the timeout is short, and we only try twice to access the
     # remote host. This is to improve performance when offline, or
     # the remote host is offline.
-    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} http://${fileserver}/${remote_snapshots}/${getfile} ${overwrite_or_timestamp}"
-    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}/${getfile}; then
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url} ${overwrite_or_timestamp}"
+    if test $? -gt 0; then
+       error "${url} doesn't exist on the remote machine !"
+       return 1
+    fi
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}; then
        warning "downloaded file ${getfile} has zero data!"
        return 1
+    fi
+    dryrun "${wget_bin} ${wget_quiet:+-q} --timeout=${wget_timeout}${wget_progress_style:+ --progress=${wget_progress_style}} --tries=2 --directory-prefix=${local_snapshots}/${dir} ${url}.asc ${overwrite_or_timestamp}"
+    if test x"${dryrun}" != xyes -a ! -s ${local_snapshots}${dir}/${getfile}.asc; then
+       warning "downloaded file ${getfile}.asc has zero data!"
     fi
 
     return 0
@@ -261,8 +250,10 @@ fetch_http()
 # whether it is newer or not.
 fetch_reference()
 {
-#    trace "$*"
+    trace "$*"
+
     local getfile=$1
+    local url="`get_component_url ${getfile}`"
 
     # Prevent error with empty variable-expansion.
     if test x"${getfile}" = x""; then
@@ -271,7 +262,11 @@ fetch_reference()
     fi
 
     # This provides the infrastructure/ directory if ${getfile} contains it.
-    local dir="`dirname $getfile`/"
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
+	local dir=""
+#    fi
     if test x"${dir}" = x"./"; then
 	local dir=""
     else
@@ -290,9 +285,9 @@ fetch_reference()
 
     # Only copy if the source file in the reference dir is newer than
     # that file in the local_snapshots directory (if it exists).
-    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}/${getfile} ${local_snapshots}/${getfile}"
+    dryrun "cp${update_on_change:+ ${update_on_change}} ${git_reference_dir}${dir}/${getfile}*.tar.* ${local_snapshots}${dir}/"
     if test $? -gt 0; then
-	error "Copying ${getfile} from reference dir to ${local_snapshots} failed."
+	error "Copying ${getfile} from reference dir to ${local_snapshots}${dir} failed."
 	return 1
     fi
     return 0
@@ -303,25 +298,28 @@ fetch_reference()
 # the actual file's downloaded md5sum.
 check_md5sum()
 {
-#    trace "$*"
+    trace "$*"
 
-    # ${local_snapshots}/md5sums is a pre-requisite.
-    if test ! -e ${local_snapshots}/md5sums; then
-        error "${local_snapshots}/md5sums is missing."
-        return 1
-    fi
+    local tool="`basename $1`"
+    
+    local file="`get_component_filespec ${tool}`.asc"
+    local url="`get_component_url ${tool}`"
 
-    local entry=
-    entry=$(grep "${1}" ${local_snapshots}/md5sums)
-    if test x"${entry}" = x; then
-        error "No md5sum entry for $1!"
+#    if test "`echo ${url} | grep -c infrastructure`" -gt 0; then
+#	local dir="/infrastructure/"
+#    else
+	local dir=""
+#    fi
+
+    if test ! -e "${local_snapshots}${dir}/${file}"; then
+        error "No md5sum file for ${tool}!"
         return 1
     fi
 
     # Ask md5sum to verify the md5sum of the downloaded file against the hash in
     # the index.  md5sum must be executed from the snapshots directory.
-    pushd ${local_snapshots} &>/dev/null
-    dryrun "echo \"${entry}\" | md5sum --status --check -"
+    pushd ${local_snapshots}${dir} &>/dev/null
+    dryrun "md5sum --status --check ${file}"
     md5sum_ret=$?
     popd &>/dev/null
 

@@ -225,7 +225,7 @@ gerrit_build_status()
 {
     trace "$*"
     
-    local srcdir="`get_srcdir $1`"
+    local srcdir="`get_component_srcdir $1`"
     local status="$2"
     local resultsfile="${3:-}"
     local revision="`get_git_revision ${srcdir}`" || return 1
@@ -319,7 +319,7 @@ gerrit_fetch_patch()
 	warning "Gerrit support not specified, will try anyway"
     fi
 
-    local srcdir="`get_srcdir gcc.git~${gerrit['BRANCH']}`"
+    local srcdir="`get_component_srcdir gcc`"
 
     rm -f /tmp/gerrit$$.patch
     (cd ${srcdir} && git fetch ssh://gerrit['USERNAME']@${gerrit['REVIEW_HOST']}:${gerrit['PORT']}/${gerrit['PROJECT']} ${gerrit['REFSPEC']} && git format-patch -1 --stdout FETCH_HEAD > /tmp/gerrit$$.patch)
