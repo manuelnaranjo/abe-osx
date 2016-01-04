@@ -142,6 +142,8 @@ def main():
   if not args['lava_token']:
     print >> sys.stderr, 'No token in keyring for %s on %s' % \
       (args['lava_user'], args['lava_server'])
+    print >> sys.stderr, 'Expected to find token for %s on lava-tool-https://%s' % \
+      (args['lava_user'], args['lava_server'])
     sys.exit(1)
 
   #Set post-parse defaults
