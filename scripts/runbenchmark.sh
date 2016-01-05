@@ -227,7 +227,17 @@ fi
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
 #'sleep 1' just here because the while loop has to do _something_
-while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${ip} > ${host_ip}"; do sleep 1; done
+trgt_resolved_ip="`dig +short hosts ${ip}      | head -n 1`"
+if test $? -ne 0; then
+  echo "Failed to resolve target IP" >&2
+  exit 1
+fi
+host_resolved_ip="`dig +short hosts ${host_ip} | head -n 1`"
+if test $? -ne 0; then
+  echo "Failed to resolve host IP" >&2
+  exit 1
+fi
+while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_resolved_ip}"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine exit code, assuming the worst." 1>&2
