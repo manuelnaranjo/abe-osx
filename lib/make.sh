@@ -660,7 +660,7 @@ make_check()
     trace "$*"
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
-    local builddir="`get_component_builddir ${component}`${2:+-$2}"
+    local builddir="`get_component_builddir ${component}`"
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
