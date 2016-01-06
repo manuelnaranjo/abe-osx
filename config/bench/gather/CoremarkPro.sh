@@ -129,6 +129,28 @@ function report_marks {
 #Metadata
 
 run="$1"
+
+#Attach raw output - do this first so that we have something to debug if
+#later code that scrapes the raw output should fail.
+pushd . > /dev/null
+cd "${run}"/..
+ltra RETCODE
+ltra stdout
+ltra stderr
+cd - > /dev/null
+cd "${run}"
+ltra linarobenchlog
+cd builds
+if test -e */*/cert; then
+  for x in `find */*/cert -type f | sort`; do
+    ltra "$x"
+  done
+fi
+for x in `find */*/logs -type f | sort`; do
+  ltra "$x"
+done
+popd > /dev/null
+
 for target in `cd "${run}/builds"; ls`; do
   for toolchain in `cd "${run}/builds/${target}"; ls`; do
     log="${run}/builds/${target}/${toolchain}/logs/${target}.${toolchain}.log"
@@ -185,22 +207,5 @@ for target in `cd "${run}/builds"; ls`; do
   done
 done
 
-#Attach raw output
-pushd "${run}"/.. > /dev/null
-ltra RETCODE
-ltra stdout
-ltra stderr
-popd > /dev/null
-cd "${run}"
-ltra linarobenchlog
-cd builds
-if test -e */*/cert; then
-  for x in `find */*/cert -type f | sort`; do
-    ltra "$x"
-  done
-fi
-for x in `find */*/logs -type f | sort`; do
-  ltra "$x"
-done
 error=0
 

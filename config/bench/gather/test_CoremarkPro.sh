@@ -160,9 +160,6 @@ touch testing/input/builds/TARGET/TOOLCHAIN/cert/DATE/{best,single}/TARGET.TOOLC
 
 exec 1>testing/golden
 #Generate golden comparison file
-for x in "${testcase[@]:1}"; do
-  echo "$x"
-done
 echo 'lava-test-run-attach RETCODE'
 echo 'lava-test-run-attach stdout'
 echo 'lava-test-run-attach stderr'
@@ -182,6 +179,9 @@ done
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/progress.log'
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log'
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark'
+for x in "${testcase[@]:1}"; do
+  echo "$x"
+done
 
 exec 1>&${STDOUT}
 
@@ -210,9 +210,6 @@ done
 
 exec 1>testing/golden
 #Generate golden comparison file
-for x in "${testcase[@]:1}"; do
-  echo "$x"
-done
 echo 'lava-test-run-attach RETCODE'
 echo 'lava-test-run-attach stdout'
 echo 'lava-test-run-attach stderr'
@@ -226,6 +223,9 @@ echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log'
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark'
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.run.log'
 echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.size.log'
+for x in "${testcase[@]:1}"; do
+  echo "$x"
+done
 
 exec 1>&${STDOUT}
 
