@@ -116,7 +116,7 @@ def main():
                       help='LAVA bundle stream to submit to. Defaults to /private/personal/<lava-user>')
   parser.add_argument('--benchmark', required=True,
                       choices=['CPU2000', 'CPU2006', 'EEMBC', 'CoremarkPro',
-                          'fakebench'],
+                          'CoremarkPro-clang', 'fakebench'],
                       help="Benchmark to build/run")
   parser.add_argument('--target-config', required=True,
                       choices=['arndale', 'mustang', 'panda-es', 'juno-a53',
