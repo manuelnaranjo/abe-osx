@@ -235,17 +235,17 @@ diff testing/{golden,output}
 
 #TODO: Error cases?
 exec 1>/dev/null
-TESTING=1 ./CoremarkPro.sh && false #should fail with no args
+TESTING=1 ./CoremarkPro.sh 2>&1 && false #should fail with no args
 
 #should fail if *mark has other than 2 lines
 echo > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark
-TESTING=1 ./CoremarkPro.sh testing/input && false 
+TESTING=1 ./CoremarkPro.sh 2>&1 testing/input && false
 echo > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark
-TESTING=1 ./CoremarkPro.sh testing/input && false
+TESTING=1 ./CoremarkPro.sh 2>&1 testing/input && false
 
 #should fail with bad log file
 echo > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input && false
+TESTING=1 ./CoremarkPro.sh 2>&1 testing/input && false
 
 exec 1>&${STDOUT}
 error=0
