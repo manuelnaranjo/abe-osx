@@ -233,7 +233,6 @@ TESTING=1 ./CoremarkPro.sh testing/input > testing/output
 
 diff testing/{golden,output}
 
-#TODO: Error cases?
 exec 1>/dev/null
 TESTING=1 ./CoremarkPro.sh 2>&1 && false #should fail with no args
 

@@ -203,7 +203,6 @@ for target in `cd "${run}/builds"; ls`; do
     if test -e "${markslog}"; then
       report_marks "${markslog}"
     fi
-
   done
 done
 
