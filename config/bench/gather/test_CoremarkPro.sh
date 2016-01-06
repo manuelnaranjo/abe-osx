@@ -92,11 +92,11 @@ function do_performance {
     _do_run ${name} ${iterations}
     all_times="${all_times} ${last_time}"
     testcase=("${testcase[@]}" \
-      "`printf 'lava-test-case %s[%i] --result pass --units seconds --measurement %f' \
+      "`printf 'lava-test-case %s[%i] time --result pass --units seconds --measurement %f' \
       ${name} \
       ${run} \
       ${last_time}`" \
-      "`printf 'lava-test-case %s[%i] --result pass --units it/s --measurement %f' \
+      "`printf 'lava-test-case %s[%i] rate --result pass --units it/s --measurement %f' \
       ${name} \
       ${run} \
       ${last_ratio}`")
@@ -114,10 +114,10 @@ function do_performance {
     ${codesize[${name}]} \
     ${datasize[${name}]}
   testcase=("${testcase[@]}" \
-    "`printf 'lava-test-case %s[median] --result pass --units seconds --measurement %f' \
+    "`printf 'lava-test-case %s[median] time --result pass --units seconds --measurement %f' \
     ${name} \
     ${median_time}`" \
-    "`printf 'lava-test-case %s[median] --result pass --units it/s --measurement %f' \
+    "`printf 'lava-test-case %s[median] rate --result pass --units it/s --measurement %f' \
     ${name} \
     ${median_ratio}`")
 }

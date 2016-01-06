@@ -95,8 +95,8 @@ function report_measured {
   if pass "$@"; then
     runtime="`runtime $@`"
     it_p_s="`it_per_sec $@`"
-    ltc "${name}[${it}]" --result pass --units seconds --measurement "${runtime}"
-    ltc "${name}[${it}]" --result pass --units "it/s" --measurement "${it_p_s}"
+    ltc "${name}[${it}] time" --result pass --units seconds --measurement "${runtime}"
+    ltc "${name}[${it}] rate" --result pass --units "it/s" --measurement "${it_p_s}"
   else
     ltc "${name}[${it}]" --result fail
   fi
