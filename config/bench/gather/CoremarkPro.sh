@@ -1,4 +1,8 @@
 #!/bin/bash
+#Be aware that LAVA likes TEST_CASE_ID (the first parameter to ltc) to have no
+#spaces. ltc passes the first hurdle for handling spaces, but the LAVA UI seems
+#to truncate at the first space. And who knows what might be getting mixed up
+#elsewhere in the system if we put spaces in the ID.
 
 set -eu
 set -o pipefail
@@ -63,7 +67,7 @@ function pass {
 }
 
 function name {
-  echo $3
+  echo "$3" | tr ' ' _
 }
 
 function runtime {
@@ -95,15 +99,15 @@ function report_measured {
   if pass "$@"; then
     runtime="`runtime $@`"
     it_p_s="`it_per_sec $@`"
-    ltc "${name}[${it}] time" --result pass --units seconds --measurement "${runtime}"
-    ltc "${name}[${it}] rate" --result pass --units "it/s" --measurement "${it_p_s}"
+    ltc "${name}[${it}][time]" --result pass --units seconds --measurement "${runtime}"
+    ltc "${name}[${it}][rate]" --result pass --units "it/s" --measurement "${it_p_s}"
   else
     ltc "${name}[${it}]" --result fail
   fi
 }
 
 function marks_name {
-  echo $1
+  echo "$1" | tr ' ' _
 }
 
 function marks_score {
@@ -174,14 +178,14 @@ for target in `cd "${run}/builds"; ls`; do
         i=$((i+1))
         name="`name ${line[$i]}`"
         if pass ${line[$i]}; then
-          ltc "${name} verification" --result pass
+          ltc "${name}[verification]" --result pass
         else
-          ltc "${name} verification" --result fail
+          ltc "${name}[verification]" --result fail
         fi
 
         #Log sizes off the verification runs, too, as these should only be run once
-        ltc "${name} code size" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
-        ltc "${name} data+bss size" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
+        ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
+        ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
       elif performance ${line[$i]}; then
         iteration=1
         while ! comment ${line[$((i+1))]}; do
