@@ -174,9 +174,9 @@ for target in `cd "${run}/builds"; ls`; do
         i=$((i+1))
         name="`name ${line[$i]}`"
         if pass ${line[$i]}; then
-          ltc "${name}[verification]" --result pass
+          ltc "${name} verification" --result pass
         else
-          ltc "${name}[verification]" --result fail
+          ltc "${name} verification" --result fail
         fi
 
         #Log sizes off the verification runs, too, as these should only be run once
