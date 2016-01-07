@@ -74,10 +74,10 @@ function do_verification {
   _do_run $1 1
   testcase=("${testcase[@]}" \
     "`printf 'lava-test-case %s[verification] --result pass' ${name}`" \
-    "`printf "lava-test-case %s --result pass --units Code Size --measurement %i" \
+    "`printf "lava-test-case %s code size --result pass --units bytes --measurement %i" \
       ${name} \
       ${codesize[${name}]}`" \
-    "`printf "lava-test-case %s --result pass --units Data Size --measurement %i" \
+    "`printf "lava-test-case %s data+bss size --result pass --units bytes --measurement %i" \
       ${name} \
       ${datasize[${name}]}`"
   )

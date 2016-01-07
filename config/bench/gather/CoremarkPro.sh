@@ -180,8 +180,8 @@ for target in `cd "${run}/builds"; ls`; do
         fi
 
         #Log sizes off the verification runs, too, as these should only be run once
-        ltc "${name}" --result pass --units 'Code Size' --measurement "`code_size ${line[$i]}`"
-        ltc "${name}" --result pass --units 'Data Size' --measurement "`data_size ${line[$i]}`"
+        ltc "${name} code size" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
+        ltc "${name} data+bss size" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
       elif performance ${line[$i]}; then
         iteration=1
         while ! comment ${line[$((i+1))]}; do
