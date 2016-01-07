@@ -94,12 +94,12 @@ function data_size {
 
 function report_measured {
   local name it runtime it_ps
-  it="$1"
-  shift
+  name="$1"
+  it="$2"
+  shift 2
   #echo report
   #echo "$@"
   #for x in "$@"; do echo $x; done
-  name="`name $@`"
   if pass "$@"; then
     runtime="`runtime $@`"
     it_p_s="`it_per_sec $@`"
@@ -198,13 +198,13 @@ for target in `cd "${run}/builds"; ls`; do
           i=$((i+1))
           name="`name ${line[$i]}`"
           performanceCount["${name}"]=$((${performanceCount["${name}"]:-0} + 1))
-          report_measured "iteration[${performanceCount["${name}"]}]" ${line[$i]}
+          report_measured "${name}" "iteration[${performanceCount["${name}"]}]" ${line[$i]}
         done
       elif median ${line[$i]}; then
         i=$((i+1))
         name="`name ${line[$i]}`"
         medianCount["${name}"]=$((${medianCount["${name}"]:-0} + 1))
-        report_measured "median[${medianCount[${name}]}]" ${line[$i]}
+        report_measured "${name}" "median[${medianCount[${name}]}]" ${line[$i]}
       fi
     done
 
