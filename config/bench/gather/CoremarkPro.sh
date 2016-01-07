@@ -97,9 +97,6 @@ function report_measured {
   name="$1"
   it="$2"
   shift 2
-  #echo report
-  #echo "$@"
-  #for x in "$@"; do echo $x; done
   if pass "$@"; then
     runtime="`runtime $@`"
     it_p_s="`it_per_sec $@`"
