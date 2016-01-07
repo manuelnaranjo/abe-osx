@@ -99,8 +99,8 @@ function report_measured {
   if pass "$@"; then
     runtime="`runtime $@`"
     it_p_s="`it_per_sec $@`"
-    ltc "${name}[${it}][time]" --result pass --units seconds --measurement "${runtime}"
-    ltc "${name}[${it}][rate]" --result pass --units "it/s" --measurement "${it_p_s}"
+    ltc "${name}[${it}]:time" --result pass --units seconds --measurement "${runtime}"
+    ltc "${name}[${it}]:rate" --result pass --units "it/s" --measurement "${it_p_s}"
   else
     ltc "${name}[${it}]" --result fail
   fi
@@ -190,7 +190,7 @@ for target in `cd "${run}/builds"; ls`; do
         iteration=1
         while ! comment ${line[$((i+1))]}; do
           i=$((i+1))
-          report_measured ${iteration} ${line[$i]}
+          report_measured "iteration[${iteration}]" ${line[$i]}
           iteration=$((iteration + 1))
         done
       elif median ${line[$i]}; then
