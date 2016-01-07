@@ -71,22 +71,28 @@ function _do_run {
 }
 
 function do_verification {
-  _do_run $1 1
+  runset=$1
+  _do_run $2 1
   testcase=("${testcase[@]}" \
-    "`printf 'lava-test-case %s[verification] --result pass' ${name}`" \
-    "`printf "lava-test-case %s[code_size] --result pass --units bytes --measurement %i" \
-      ${name} \
-      ${codesize[${name}]}`" \
-    "`printf "lava-test-case %s[data+bss_size] --result pass --units bytes --measurement %i" \
-      ${name} \
-      ${datasize[${name}]}`"
+    "`printf 'lava-test-case %s[verification[%i]] --result pass' ${name} $((runset + 1))`" \
   )
+  if test ${runset} -eq 0; then
+    testcase=("${testcase[@]}" \
+      "`printf "lava-test-case %s[code_size] --result pass --units bytes --measurement %i" \
+        ${name} \
+        ${codesize[${name}]}`" \
+      "`printf "lava-test-case %s[data+bss_size] --result pass --units bytes --measurement %i" \
+        ${name} \
+        ${datasize[${name}]}`" \
+    )
+  fi
 }
 
 function do_performance {
-  local name=$1
-  local iterations=$2
-  local runs=$3
+  local runset=$1
+  local name=$2
+  local iterations=$3
+  local runs=$4
   local all_times=
   for run in `seq 1 "${runs}"`; do
     _do_run ${name} ${iterations}
@@ -94,11 +100,11 @@ function do_performance {
     testcase=("${testcase[@]}" \
       "`printf 'lava-test-case %s[iteration[%i]]:time --result pass --units seconds --measurement %f' \
       ${name} \
-      ${run} \
+      $((run + runset * runs)) \
       ${last_time}`" \
       "`printf 'lava-test-case %s[iteration[%i]]:rate --result pass --units it/s --measurement %f' \
       ${name} \
-      ${run} \
+      $((run + runset * runs)) \
       ${last_ratio}`")
   done
   local middle=`echo ${all_times} | wc -w`
@@ -114,25 +120,26 @@ function do_performance {
     ${codesize[${name}]} \
     ${datasize[${name}]}
   testcase=("${testcase[@]}" \
-    "`printf 'lava-test-case %s[median]:time --result pass --units seconds --measurement %f' \
+    "`printf 'lava-test-case %s[median[%i]]:time --result pass --units seconds --measurement %f' \
     ${name} \
+    $((runset + 1)) \
     ${median_time}`" \
-    "`printf 'lava-test-case %s[median]:rate --result pass --units it/s --measurement %f' \
+    "`printf 'lava-test-case %s[median[%i]]:rate --result pass --units it/s --measurement %f' \
     ${name} \
+    $((runset + 1)) \
     ${median_ratio}`")
 }
 
 function primary_runs {
-  exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-  echo 'UID     Suite   Name    Contexts        Workers Item Fails      Time(secs)      Iterations      It/s    Codesize        Datasize        Variance        Standard Deviation'
-  for name in ${workloads}; do
-    echo '#Results for verification run started at 15350:15:33:03 XCMD='
-    do_verification "${name}"
-    echo '#Results for performance runs started at 15350:15:33:03 XCMD='
-    iterations=$((RANDOM % 100 + 1))
-    do_performance $name $((iterations * 10)) 9 #i.e. will report 10 - 1000 iterations, will be a multiple of 10
+  for x in `seq 0 $(($1 - 1))`; do
+    for name in ${workloads}; do
+      echo '#Results for verification run started at 15350:15:33:03 XCMD='
+      do_verification $x "${name}"
+      echo '#Results for performance runs started at 15350:15:33:03 XCMD='
+      iterations=$((RANDOM % 100 + 1))
+      do_performance $x $name $((iterations * 10)) 9 #i.e. will report 10 - 1000 iterations, will be a multiple of 10
+    done
   done
-  exec 1>&${STDOUT}
 }
 
 
@@ -141,7 +148,9 @@ mkdir -p testing/input/builds/TARGET/TOOLCHAIN/logs
 mkdir -p testing/input/builds/TARGET/TOOLCHAIN/cert/DATE/{best,single}/perf/logs
 
 #First test - certify-all run
-primary_runs
+exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+echo 'UID     Suite   Name    Contexts        Workers Item Fails      Time(secs)      Iterations      It/s    Codesize        Datasize        Variance        Standard Deviation'
+primary_runs 2
 
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark
 echo 'Mark,Performance,Scale,Comments'
@@ -189,13 +198,14 @@ TESTING=1 ./CoremarkPro.sh testing/input > testing/output
 
 diff testing/{golden,output}
 
-
 #Second test - quickrun
 rm -rf testing
 mkdir -p testing/input/builds/TARGET/TOOLCHAIN/logs
 testcase=('')
 
-primary_runs
+exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+echo 'UID     Suite   Name    Contexts        Workers Item Fails      Time(secs)      Iterations      It/s    Codesize        Datasize        Variance        Standard Deviation'
+primary_runs 1
 
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark
 echo 'Mark,Performance,Scale,Comments'

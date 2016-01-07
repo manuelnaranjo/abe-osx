@@ -7,6 +7,10 @@
 set -eu
 set -o pipefail
 
+declare -A verificationCount
+declare -A performanceCount
+declare -A medianCount
+
 error=1
 
 function ltc {
@@ -177,25 +181,30 @@ for target in `cd "${run}/builds"; ls`; do
       elif verification ${line[$i]}; then
         i=$((i+1))
         name="`name ${line[$i]}`"
+        verificationCount["${name}"]=$((${verificationCount["${name}"]:-0} + 1))
         if pass ${line[$i]}; then
-          ltc "${name}[verification]" --result pass
+          ltc "${name}[verification[${verificationCount[${name}]}]]" --result pass
         else
-          ltc "${name}[verification]" --result fail
+          ltc "${name}[verification[${verificationCount[${name}]}]]" --result fail
         fi
 
-        #Log sizes off the verification runs, too, as these should only be run once
-        ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
-        ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
+        #Log sizes off the first verification run, as these should only be constant
+        if test ${verificationCount["${name}"]} -eq 1; then
+          ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
+          ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
+        fi
       elif performance ${line[$i]}; then
-        iteration=1
         while ! comment ${line[$((i+1))]}; do
           i=$((i+1))
-          report_measured "iteration[${iteration}]" ${line[$i]}
-          iteration=$((iteration + 1))
+          name="`name ${line[$i]}`"
+          performanceCount["${name}"]=$((${performanceCount["${name}"]:-0} + 1))
+          report_measured "iteration[${performanceCount["${name}"]}]" ${line[$i]}
         done
       elif median ${line[$i]}; then
         i=$((i+1))
-        report_measured median ${line[$i]}
+        name="`name ${line[$i]}`"
+        medianCount["${name}"]=$((${medianCount["${name}"]:-0} + 1))
+        report_measured "median[${medianCount[${name}]}]" ${line[$i]}
       fi
     done
 
