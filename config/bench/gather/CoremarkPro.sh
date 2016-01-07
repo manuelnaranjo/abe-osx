@@ -93,7 +93,7 @@ function data_size {
 }
 
 function report_measured {
-  local name runtime it_ps
+  local name it runtime it_ps
   it="$1"
   shift
   #echo report
