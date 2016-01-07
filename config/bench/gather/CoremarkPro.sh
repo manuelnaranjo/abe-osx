@@ -201,16 +201,17 @@ while test $i -lt ${line_max}; do
     i=$((i+1))
     name="`name ${line[$i]}`"
     verificationCount["${name}"]=$((${verificationCount["${name}"]:-0} + 1))
-    if pass ${line[$i]}; then
-      ltc "${name}[verification[${verificationCount[${name}]}]]" --result pass
-    else
-      ltc "${name}[verification[${verificationCount[${name}]}]]" --result fail
-    fi
 
     #Log sizes off the first verification run, as these should only be constant
     if test ${verificationCount["${name}"]} -eq 1; then
       ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
       ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
+    fi
+
+    if pass ${line[$i]}; then
+      ltc "${name}[verification[${verificationCount[${name}]}]]" --result pass
+    else
+      ltc "${name}[verification[${verificationCount[${name}]}]]" --result fail
     fi
   elif performance ${line[$i]}; then
     while ! comment ${line[$((i+1))]}; do

@@ -73,9 +73,6 @@ function _do_run {
 function do_verification {
   runset=$1
   _do_run $2 1
-  testcase=("${testcase[@]}" \
-    "`printf 'lava-test-case %s[verification[%i]] --result pass' ${name} $((runset + 1))`" \
-  )
   if test ${runset} -eq 0; then
     testcase=("${testcase[@]}" \
       "`printf "lava-test-case %s[code_size] --result pass --units bytes --measurement %i" \
@@ -86,6 +83,9 @@ function do_verification {
         ${datasize[${name}]}`" \
     )
   fi
+  testcase=("${testcase[@]}" \
+    "`printf 'lava-test-case %s[verification[%i]] --result pass' ${name} $((runset + 1))`" \
+  )
 }
 
 function do_performance {
