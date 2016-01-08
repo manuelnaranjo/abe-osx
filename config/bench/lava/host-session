@@ -50,7 +50,19 @@ fi
 if test x"$8" = xNone; then
   trusted=0
 elif test x"$8" = xTrusted; then
-  trusted=1
+  trusted=0
+  for i in 1 2 3 4 5; do
+    if ping -q -c 1 -t 1 lava.tcwglab; then
+      trusted=1
+      break
+    fi
+  done
+  if test ${trusted} -eq 0; then
+    echo "Trusted set in YAML but either:" >&2
+    echo "lava.tcwglab is more than 1 hop away" >&2
+    echo "lava.tcwglab could not be found in 5 pings" >&2
+    exit 1
+  fi
 else
   echo "Bad value '$8' for TRUST" >&2
   exit 1
