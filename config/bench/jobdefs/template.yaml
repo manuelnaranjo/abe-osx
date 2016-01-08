@@ -24,6 +24,7 @@ actions:
           parameters:
             BENCHMARK: '${BENCHMARK}'
             TOOLCHAIN: '${TOOLCHAIN}'
+            TRIPLE: '${TRIPLE}'
             SYSROOT: '${SYSROOT}'
             RUN_FLAGS: '${RUN_FLAGS}'
             COMPILER_FLAGS: '${COMPILER_FLAGS}'

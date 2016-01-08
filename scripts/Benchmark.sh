@@ -53,11 +53,12 @@ function output_param {
 #Parameters to be substituted into template
 output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
 output_param BENCHMARK "${BENCHMARK:?BENCHMARK must be set}"
-output_param TOOLCHAIN "${TOOLCHAIN:?TOOLCHAIN must be set}"
 
 #By the time these parameters reach LAVA, None means unset
 #Unset is not necessarily the same as empty string - for example,
 #COMPILER_FLAGS="" may result in overriding default flags in makefiles
+output_param TOOLCHAIN "${TOOLCHAIN:-None}"
+output_param TRIPLE "${TRIPLE:-None}"
 output_param SYSROOT "${SYSROOT:-None}"
 output_param RUN_FLAGS "${RUN_FLAGS:-None}"
 output_param COMPILER_FLAGS "${COMPILER_FLAGS:-None}"

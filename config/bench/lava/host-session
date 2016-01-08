@@ -67,10 +67,12 @@ if x"${benchmark}" = xNone; then
   exit 1
 fi
 shift
-toolchain="${1}"
-if x"${toolchain}" = xNone; then
-  echo "Must give toolchain" >&2
-  exit 1
+if test x"${1}" != xNone; then
+  toolchain="${1}"
+fi
+shift
+if test x"${1}" != xNone; then
+  triple="${1}"
 fi
 shift
 if test x"${1}" != xNone; then
@@ -221,20 +223,23 @@ if test x"${prebuilt:-}" = x; then
   else
     tarball="`get_thing ${toolchain}`"
     tar xf "${tarball}" -C bin
-    benchgccpath="`ls ${PWD}/bin/*/bin/*gcc`"
-    rm "${tarball}"
-  fi
-
-  if test "`echo ${benchgccpath} | wc -w`" -ne 1; then
-    echo "Should be exactly one GCC path" 1>&2
-    echo "Got: ${benchgccpath}" 1>&2
-    exit 1
-  fi
-  if test x"${benchgccpath}" != x; then
+    bindir="${PWD}/bin/`tar tf ${tarball} | sed -n 1p`/bin/" #head -n1 is faster, but breaks the pipe with error
+    if test -n "${triple:-}"; then
+      benchgccpath="${bindir}/${triple}-gcc"
+      if ! test -x "${benchgccpath}"; then
+        echo "${benchgccpath} does not exist or is not executable" 1>&2
+        echo "Will try ${bindir}/gcc" 1>&2
+        benchgccpath=
+      fi
+    fi
+    if test -z "${benchgccpath}"; then
+      benchgccpath="${bindir}/gcc"
+    fi
     if ! test -x "${benchgccpath}"; then
-      echo "GCC binary '${benchgccpath}' does not exist or is not executable" 1>&2
+      echo "${benchgccpath} does not exist or is not executable" 1>&2
       exit 1
     fi
+    rm "${tarball}"
   fi
 
   if test x"${sysroot:-}" != x; then
@@ -252,13 +257,13 @@ if test x"${prebuilt:-}" = x; then
     ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} \
     ${make_flags:+-m "${make_flags}"} \
     -i "${benchgccpath}" \
+    ${triple:+-x "${triple}"} \
     -b "${benchmark}" \
     "${target_names[@]}"
   resultsdir="${benchmark}.git"
 else
   benchtar="`get_thing ${prebuilt}`"
   resultsdir="`tar xf ${benchtar} | head -n1`"
-  benchgccpath="${toolchain}"
 fi
 
 #If we are relying on an external auth socket, we can delete it now
@@ -284,6 +289,7 @@ bash -x "${ABE_DIR}"/scripts/benchmark.sh \
   -e 'kill \$(cat \${HOME}/post-target)' \
   ${run_flags:+-a "${run_flags}"} \
   ${benchgccpath:+-i "${benchgccpath}"} \
+  ${triple:+-x "${triple}"} \
   -b "${benchmark}" \
   -r 'function f {
         echo \${PWD} > \${HOME}/resultsdir || return \$?;

@@ -82,6 +82,7 @@ compiler_flags=""
 run_benchargs=""
 phases="both"
 toolchain_path=
+triple=
 cautious='-c'
 keep= #'-p' (polite)  - clean up and release target even if there is an error
       #''   (default) - clean up and release target unless there is an error
@@ -89,7 +90,7 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
 target=
 post_run_cmd=
 post_target_cmd=
-while getopts a:b:ce:f:g:hi:km:pr:s: flag; do
+while getopts a:b:ce:f:g:hi:km:pr:s:x: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -143,6 +144,7 @@ while getopts a:b:ce:f:g:hi:km:pr:s: flag; do
          fi
        fi
     ;;
+    x) triple="${OPTARG}";;
     *)
        echo "Bad arg" 1>&2
        error=1
@@ -159,20 +161,16 @@ if test x"${benchmark:-}" = x; then
   error=1
   exit
 fi
-if test x"${toolchain_path:-}" = x; then
-  echo "No toolchain given (-i)" 1>&2
-  error=1
-  exit
-fi
-if test x"${phases}" != xrunonly; then
-  if ! test -x "${toolchain_path}"; then
-    echo "Toolchain '${toolchain_path}' does not exist or is not executable" 1>&2
-    error=1
-    exit
+if test x"${toolchain_path}" != x; then
+  if test x"${phases}" != xrunonly; then
+    if ! test -x "${toolchain_path}"; then
+      echo "Toolchain '${toolchain_path}' does not exist or is not executable" 1>&2
+      error=1
+      exit
+    fi
   fi
 fi
-if test x"`basename ${toolchain_path%-*}`" = x"`basename ${toolchain_path}`"; then #native build
-  triple=
+if test x"${triple}" = x; then
   if test ${#devices[@]} -eq 0; then
     devices=("localhost") #Note that we still need passwordless ssh to
                           #localhost. This could be fixed if anyone _really_
@@ -183,10 +181,9 @@ if test x"`basename ${toolchain_path%-*}`" = x"`basename ${toolchain_path}`"; th
   #       localhost and using it to dispatch benchmark jobs. Therefore TODO:
   #       check for a device list composed of localhost plus other targets
   fi
-else #cross-build, implies we need remote devices
-  triple="`basename ${toolchain_path%-*}`"
+else
   if test ${#devices[@]} -eq 0; then
-    echo "Cross-compiling toolchain '${toolchain_path} given, but no devices given for run" 1>&2
+    echo "Cross-compiling, but no devices given for run" 1>&2
     error=1
     exit
   fi

@@ -124,10 +124,11 @@ def main():
                       help="Target config with which to run benchmark.")
   parser.add_argument('--prebuilt',
                       help='Prebuilt tarball of benchmark.')
-  parser.add_argument('--toolchain', required=True,
-                      help='''Toolchain to build benchmark with.
-                              Required even with --prebuilt, to identify which
-                              build to use in the prebuilt tarball.''')
+  parser.add_argument('--toolchain',
+                      help='Toolchain to build benchmark with.')
+  parser.add_argument('--triple',
+                      help='''Triple identifying target to build for and run
+                              on. Omit for native build/run.''')
   parser.add_argument('--sysroot',
                       help='Sysroot to build benchmark with.')
   parser.add_argument('--compiler-flags',
@@ -164,6 +165,7 @@ def main():
     'target_config',
     'prebuilt',
     'toolchain',
+    'triple',
     'sysroot',
     'compiler_flags',
     'make_flags',
@@ -194,7 +196,7 @@ def main():
   #Validate inputs
   if substitutions['PREBUILT'] != 'None':
     bad_flags = filter(lambda x: substitutions[x] and substitutions[x] != 'None', \
-                       ('SYSROOT', 'COMPILER_FLAGS', 'MAKE_FLAGS'))
+                       ('TOOLCHAIN', 'SYSROOT', 'COMPILER_FLAGS', 'MAKE_FLAGS'))
     if bad_flags:
       for flag in bad_flags:
         print >> sys.stderr, 'Must not specify %s with --prebuilt' % flag
