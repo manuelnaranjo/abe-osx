@@ -41,7 +41,7 @@ trap exitfunc EXIT
 umask 077
 
 function get_thing {
-  local thing="$1"
+  local thing="${1}"
   pushd "${tmpdir}" > /dev/null
   if echo x"${thing}" | grep -q '^xhttp'; then
     wget -q "${thing}"
@@ -61,7 +61,7 @@ function get_thing {
 benchgccpath=
 tmpdir="`mktemp -dt downloads-XXXXXXX`"
 
-abe_branch="$1"
+abe_branch="${1}"
 if x"${abe_branch}" = xNone; then
   echo "Must give abe branch" >&2
   exit 1
@@ -76,24 +76,24 @@ if x"${toolchain}" = xNone; then
   echo "Must give toolchain" >&2
   exit 1
 fi
-if test x"$4" != xNone; then
+if test x"${4}" != xNone; then
   sysroot="${4}"
 fi
-if test x"$5" != xNone; then
-  run_flags="$5"
+if test x"${5}" != xNone; then
+  run_flags="${5}"
 fi
-if test x"$6" != xNone; then
-  compiler_flags="$6"
+if test x"${6}" != xNone; then
+  compiler_flags="${6}"
 fi
-if test x"$7" != xNone; then
-  make_flags="$7"
+if test x"${7}" != xNone; then
+  make_flags="${7}"
 fi
-if test x"$8" != xNone; then
-  prebuilt="$8"
+if test x"${8}" != xNone; then
+  prebuilt="${8}"
 fi
-if test x"$9" = xNone; then
+if test x"${9}" = xNone; then
   trusted=0
-elif test x"$9" = xTrusted; then
+elif test x"${9}" = xTrusted; then
   trusted=0
   for i in 1 2 3 4 5; do
     if ping -q -c 1 -t 1 lava.tcwglab; then
@@ -108,7 +108,7 @@ elif test x"$9" = xTrusted; then
     exit 1
   fi
 else
-  echo "Bad value '$9' for TRUST" >&2
+  echo "Bad value '${9}' for TRUST" >&2
   exit 1
 fi
 
