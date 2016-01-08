@@ -4,6 +4,9 @@
 #to truncate at the first space. And who knows what might be getting mixed up
 #elsewhere in the system if we put spaces in the ID.
 
+if test -z "${TESTING}"; then
+  set -x
+fi
 set -eu
 set -o pipefail
 

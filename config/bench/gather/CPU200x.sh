@@ -1,5 +1,8 @@
 #!/bin/bash
 
+if test -z "${TESTING}"; then
+  set -x
+fi
 set -eu
 set -o pipefail
 

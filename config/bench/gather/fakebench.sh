@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -eux
+${TESTING:+set -x}
+set -eu
 set -o pipefail
 
 error=1
