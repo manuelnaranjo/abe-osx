@@ -66,29 +66,36 @@ if x"${benchmark}" = xNone; then
   echo "Must give benchmark" >&2
   exit 1
 fi
-toolchain="${2}"
+shift
+toolchain="${1}"
 if x"${toolchain}" = xNone; then
   echo "Must give toolchain" >&2
   exit 1
 fi
-if test x"${3}" != xNone; then
-  sysroot="${3}"
+shift
+if test x"${1}" != xNone; then
+  sysroot="${1}"
 fi
-if test x"${4}" != xNone; then
-  run_flags="${4}"
+shift
+if test x"${1}" != xNone; then
+  run_flags="${1}"
 fi
-if test x"${5}" != xNone; then
-  compiler_flags="${5}"
+shift
+if test x"${1}" != xNone; then
+  compiler_flags="${1}"
 fi
-if test x"${6}" != xNone; then
-  make_flags="${6}"
+shift
+if test x"${1}" != xNone; then
+  make_flags="${1}"
 fi
-if test x"${7}" != xNone; then
-  prebuilt="${7}"
+shift
+if test x"${1}" != xNone; then
+  prebuilt="${1}"
 fi
-if test x"${8}" = xNone; then
+shift
+if test x"${1}" = xNone; then
   trusted=0
-elif test x"${8}" = xTrusted; then
+elif test x"${1}" = xTrusted; then
   trusted=0
   for i in 1 2 3 4 5; do
     if ping -q -c 1 -t 1 lava.tcwglab; then
@@ -103,7 +110,7 @@ elif test x"${8}" = xTrusted; then
     exit 1
   fi
 else
-  echo "Bad value '${8}' for TRUST" >&2
+  echo "Bad value '${1}' for TRUST" >&2
   exit 1
 fi
 
