@@ -271,7 +271,7 @@ fi
 #runbench.sh.
 #We do not run the gather script direct in the -r because it must be run in
 #the contet of the LAVA test on the target side.
-"${ABE_DIR}"/scripts/benchmark.sh \
+bash -x "${ABE_DIR}"/scripts/benchmark.sh \
   -s ${benchtar:-runonly} \
   ${politeness} \
   -e 'kill \$(cat \${HOME}/post-target)' \
