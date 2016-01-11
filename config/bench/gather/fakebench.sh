@@ -68,12 +68,12 @@ report "${resultsdir}/tallyman1" bananas
 report "${resultsdir}/tallyman2" tarantulas
 
 #Attach raw output
-'lava-test-run-attach' "RETCODE"
-'lava-test-run-attach' "stdout"
-'lava-test-run-attach' "stderr"
-'lava-test-run-attach' "${handle}/linarobenchlog"
+'lava-test-run-attach' "RETCODE" text/plain
+'lava-test-run-attach' "stdout" text/plain
+'lava-test-run-attach' "stderr" text/plain
+'lava-test-run-attach' "${handle}/linarobenchlog" text/plain
 for x in `find "${handle}/fake/fakeresults" -type f`; do
-  'lava-test-run-attach' "$x"
+  'lava-test-run-attach' "$x" text/plain
 done
 
 error=0

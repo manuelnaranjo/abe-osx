@@ -200,12 +200,12 @@ function test_benchmark {
     exec 1>&${STDOUT}
   done
 
-  echo 'lava-test-run-attach RETCODE' >> testing/golden
-  echo 'lava-test-run-attach stdout' >> testing/golden
-  echo 'lava-test-run-attach stderr' >> testing/golden
-  echo 'lava-test-run-attach linarobenchlog' >> testing/golden
+  echo 'lava-test-run-attach RETCODE text/plain' >> testing/golden
+  echo 'lava-test-run-attach stdout text/plain' >> testing/golden
+  echo 'lava-test-run-attach stderr text/plain' >> testing/golden
+  echo 'lava-test-run-attach linarobenchlog text/plain' >> testing/golden
   for bset in "$@"; do
-    echo "lava-test-run-attach C${bset^^}${year}.001.${rawext}" >> testing/golden
+    echo "lava-test-run-attach C${bset^^}${year}.001.${rawext} text/plain" >> testing/golden
   done
 
   TESTING=1 ./CPU200x.sh testing/input > testing/output

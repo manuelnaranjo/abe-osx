@@ -193,15 +193,15 @@ done
 
 #Attach raw output
 pushd "${run}/.." > /dev/null
-ltra "RETCODE"
-ltra "stdout"
-ltra "stderr"
+ltra "RETCODE" text/plain
+ltra "stdout" text/plain
+ltra "stderr" text/plain
 popd > /dev/null
 cd "${run}"
-ltra "linarobenchlog"
+ltra "linarobenchlog" text/plain
 cd result
 for x in `find -type f | sed s/^..// | sort`; do
-  ltra "$x"
+  ltra "$x" text/plain
 done
 
 error=0

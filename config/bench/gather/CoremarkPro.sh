@@ -164,20 +164,13 @@ done
 #later code that scrapes the raw output should fail.
 pushd . > /dev/null
 cd "${run}"/..
-ltra RETCODE
-ltra stdout
-ltra stderr
+ltra RETCODE text/plain
+ltra stdout text/plain
+ltra stderr text/plain
 cd - > /dev/null
 cd "${run}"
-ltra linarobenchlog
+ltra linarobenchlog text/plain
 cd builds
-if test -e "${target}/${toolchain}/cert"; then
-  for x in `find ${target}/${toolchain}/cert -type f | sort`; do
-    ltra "$x"
-  done
-fi
-for x in `find ${target}/${toolchain}/logs -type f | sort`; do
-  ltra "$x"
 if test -e "${target}/${toolchain}/cert"; then
   for x in `find ${target}/${toolchain}/cert -type f | sort`; do
     ltra "$x" text/plain

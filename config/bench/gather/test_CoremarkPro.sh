@@ -169,25 +169,25 @@ touch testing/input/builds/TARGET/TOOLCHAIN/cert/DATE/{best,single}/TARGET.TOOLC
 
 exec 1>testing/golden
 #Generate golden comparison file
-echo 'lava-test-run-attach RETCODE'
-echo 'lava-test-run-attach stdout'
-echo 'lava-test-run-attach stderr'
-echo 'lava-test-run-attach linarobenchlog'
+echo 'lava-test-run-attach RETCODE text/plain'
+echo 'lava-test-run-attach stdout text/plain'
+echo 'lava-test-run-attach stderr text/plain'
+echo 'lava-test-run-attach linarobenchlog text/plain'
 #We don't check for quite everything in perf, but we get enough coverage (both tail and non-tail files)
 for context in best single; do
   for name in `echo ${workloads} | tr ' ' '\n' | sort`; do
-    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/perf/logs/${name}.run.log"
-    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/perf/logs/${name}.size.log"
+    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/perf/logs/${name}.run.log text/plain"
+    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/perf/logs/${name}.size.log text/plain"
   done
-  echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/TARGET.TOOLCHAIN.log"
+  echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/TARGET.TOOLCHAIN.log text/plain"
   for name in `echo ${workloads} | tr ' ' '\n' | sort`; do
-    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/workloads/${name}/logs/${name}.run.log"
-    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/workloads/${name}/logs/${name}.size.log"
+    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/workloads/${name}/logs/${name}.run.log text/plain"
+    echo "lava-test-run-attach TARGET/TOOLCHAIN/cert/DATE/${context}/workloads/${name}/logs/${name}.size.log text/plain"
   done
 done
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/progress.log'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/progress.log text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark text/plain'
 for x in "${testcase[@]:1}"; do
   echo "$x"
 done
@@ -220,19 +220,19 @@ done
 
 exec 1>testing/golden
 #Generate golden comparison file
-echo 'lava-test-run-attach RETCODE'
-echo 'lava-test-run-attach stdout'
-echo 'lava-test-run-attach stderr'
-echo 'lava-test-run-attach linarobenchlog'
+echo 'lava-test-run-attach RETCODE text/plain'
+echo 'lava-test-run-attach stdout text/plain'
+echo 'lava-test-run-attach stderr text/plain'
+echo 'lava-test-run-attach linarobenchlog text/plain'
 for name in `echo ${workloads} | tr ' ' '\n' | sort | sed '$ d'`; do
-  echo "lava-test-run-attach TARGET/TOOLCHAIN/logs/${name}.run.log"
-  echo "lava-test-run-attach TARGET/TOOLCHAIN/logs/${name}.size.log"
+  echo "lava-test-run-attach TARGET/TOOLCHAIN/logs/${name}.run.log text/plain"
+  echo "lava-test-run-attach TARGET/TOOLCHAIN/logs/${name}.size.log text/plain"
 done
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.csv'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.run.log'
-echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.size.log'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.csv text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.run.log text/plain'
+echo 'lava-test-run-attach TARGET/TOOLCHAIN/logs/zip-test.size.log text/plain'
 for x in "${testcase[@]:1}"; do
   echo "$x"
 done
