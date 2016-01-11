@@ -262,7 +262,7 @@ if test x"${cmpbuild:-}" = x; then
 fi
 
 for device in "${devices[@]}"; do
-  "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${triple}" ${keep} ${cautious} < /dev/null &
+  bash `echo ${-/x/-x} | grep -o -- -x` "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${triple}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
