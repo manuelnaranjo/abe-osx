@@ -17,6 +17,27 @@ params:
     BENCH_DEBUG: None
     TRUST: None
 
+install:
+    deps:
+        - autogen
+        - binutils
+        - bison
+        - dejagnu
+        - dnsutils
+        - flex
+        - gawk
+        - gcc
+        - gfortran
+        - git
+        - inotify-tools
+        - libgfortran3
+        - libncurses5-dev
+        - make
+        - openssh-server
+        - rsync
+        - texinfo
+        - wget
+        - xz-utils
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"

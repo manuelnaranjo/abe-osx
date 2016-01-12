@@ -32,12 +32,10 @@ fi
 
 #TODO Benchmarking-specific builds will eliminate these special cases
 TARGET_SESSION=config/bench/lava/target-session
-if test x"${TARGET_CONFIG}" = xkvm; then
-  TARGET_SESSION="${TARGET_SESSION}-kvm.yaml"
-elif test x"${TARGET_CONFIG}" = xmustang; then
-  TARGET_SESSION="${TARGET_SESSION}-mustang.yaml"
-else
+if test x"${TARGET_CONFIG}" = xmustang; then
   TARGET_SESSION="${TARGET_SESSION}.yaml"
+else
+  TARGET_SESSION="${TARGET_SESSION}-tools.yaml"
 fi
 
 LAVA_USER="${LAVA_USER:-${USER}}"
@@ -65,7 +63,7 @@ output_param COMPILER_FLAGS "${COMPILER_FLAGS:-None}"
 output_param MAKE_FLAGS "${MAKE_FLAGS:-None}"
 output_param PREBUILT "${PREBUILT:-None}"
 
-output_param HOST_SESSION "config/bench/lava/host-session.yaml"
+output_param HOST_SESSION "config/bench/lava/host-session-multilib.yaml"
 output_param HOST_IMAGE "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
 output_param TARGET_SESSION "${TARGET_SESSION}"
 output_param TARGET_IMAGE_1 "${image_map_1[${TARGET_DEVICE_TYPE}]}"

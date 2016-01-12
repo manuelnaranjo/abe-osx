@@ -8,14 +8,6 @@ params:
     PUB_KEY: None
     CONFIG: None
 
-install:
-    deps:
-        - bc
-        - openssh-server
-        - make
-        - cpufrequtils
-        - xz-utils
-
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
