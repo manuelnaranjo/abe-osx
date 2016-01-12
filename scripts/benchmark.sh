@@ -155,6 +155,13 @@ done
 shift $((OPTIND - 1))
 devices=("$@")
 
+if test ${#devices[@]} -eq 0; then
+  if test x"${phases}" != xbuildonly; then
+    echo "No devices given for run" 1>&2
+    echo "To run locally, give 'localhost'" 1>&2
+    exit 1
+  fi
+fi
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
   echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
@@ -168,24 +175,6 @@ if test x"${toolchain_path}" != x; then
       error=1
       exit
     fi
-  fi
-fi
-if test x"${triple}" = x; then
-  if test ${#devices[@]} -eq 0; then
-    devices=("localhost") #Note that we still need passwordless ssh to
-                          #localhost. This could be fixed if anyone _really_
-                          #needs it, but DejaGNU will presumably fix for free.
-  #else - we're doing a native build and giving devices other than localhost
-  #       for measurement, that's fine. But giving both localhost and other
-  #       devices is unlikely to work, given that we'll be both shutting down
-  #       localhost and using it to dispatch benchmark jobs. Therefore TODO:
-  #       check for a device list composed of localhost plus other targets
-  fi
-else
-  if test ${#devices[@]} -eq 0; then
-    echo "Cross-compiling, but no devices given for run" 1>&2
-    error=1
-    exit
   fi
 fi
 
