@@ -212,7 +212,7 @@ fi
       rm ../`basename ${buildtar}` && \
       ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
       echo \\\$? > ${target_dir}/RETCODE && \
-      ${post_run_cmd:-echo > /dev/null}; \
+      ${post_run_cmd:-true}; \
       echo \\\$? > ${target_dir}/POST_RUN_RETCODE" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
