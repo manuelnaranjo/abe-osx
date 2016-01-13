@@ -10,9 +10,8 @@ echo $! > /root/post-target
 sleep infinity&
 echo $! > /root/post-run
 
-set +e
-wait `cat /root/post-run`
-set -e
+wait `cat /root/post-run` && false
+if test $? -eq 143; then true; else false; fi
 
 if test -e "${HOME}"/gather.sh; then
   if ! test -e "${HOME}"/resultsdir; then
@@ -22,8 +21,7 @@ if test -e "${HOME}"/gather.sh; then
   "${HOME}"/gather.sh `cat "${HOME}"/resultsdir`
 fi
 
-set +e
-wait `cat /root/post-target`
-set -e
+wait `cat /root/post-target` && false
+if test $? -eq 143; then true; else false; fi
 
 exit 0

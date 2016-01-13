@@ -271,15 +271,16 @@ else
   politeness=
 fi
 
-#Note - env vars in -r line are evaluated on target
+#Note - env vars (in fact, whole command) in -e and -r line are evaluated on
+#target.
 "${ABE_DIR}"/scripts/benchmark.sh \
   -s ${benchtar:-runonly} \
   ${politeness} \
-  -e 'cat /root/post-target | xargs kill' \
+  -e 'kill \$(cat \${HOME}/post-target)' \
   ${run_flags:+-a "${run_flags}"} \
   ${benchgccpath:+-i "${benchgccpath}"} \
   -b "${benchmark}" \
-  -r 'if echo \${PWD} > \${HOME}/resultsdir;then cat /root/post-run | xargs kill; else false; fi' \
+  -r 'if echo \${PWD} > \${HOME}/resultsdir;then kill \$(cat \${HOME}/post-run); else false; fi' \
   "${target_names[@]}"
 
 if test ${trusted} -eq 0; then
