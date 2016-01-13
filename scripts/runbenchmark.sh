@@ -212,7 +212,8 @@ fi
       rm ../`basename ${buildtar}` && \
       ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
       echo \\\$? > ${target_dir}/RETCODE && \
-      ${post_run_cmd:-echo > /dev/null}" \
+      ${post_run_cmd:-echo > /dev/null}; \
+      echo \\\$? > ${target_dir}/POST_RUN_RETCODE" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
      ${ssh_opts}
    if test $? -ne 0; then
@@ -240,16 +241,29 @@ fi
 while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_resolved_ip}"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
-  echo "Unable to determine exit code, assuming the worst." 1>&2
+  echo "Unable to determine benchmark exit code, assuming the worst." 1>&2
   error=1
 fi
 
 if test x"${error}" = x || test ${error} -ne 0; then
-  echo "Command failed: will try to get logs" 1>&2
+  echo "Benchmark command failed" 1>&2
   echo "Target: ${ip}:${target_dir}" 1>&2
   error=1
 fi
 
+post_run_error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/POST_RUN_RETCODE" ${ssh_opts})`"
+if test $? -ne 0; then
+  echo "Unable to determine post-run exit code, assuming the worst." 1>&2
+  post_run_error=1
+fi
+
+if test x"${post_run_error}" = x || test ${post_run_error} -ne 0; then
+  echo "Post-run command failed" 1>&2
+  echo "Target: ${ip}:${target_dir}" 1>&2
+  error=1
+fi
+
+echo "Retrieving logs"
 for log in ../RETCODE ../stdout ../stderr linarobenchlog ${benchlog}; do
   log="`echo ${log} | sed 's#/*$##'`"
   mkdir -p "${logdir}/${buildtartopdir}/`dirname ${log}`"
