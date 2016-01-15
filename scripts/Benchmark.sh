@@ -11,11 +11,15 @@ image_map_1=(
 [juno]='hwpack: "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz"'
 [arndale]='image: "http://people.linaro.org/~bernie.ogden/arndale/arndale.img"'
 [panda-es]='hwpack: "http://releases.linaro.org/14.05/ubuntu/panda/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz"'
-#[mustang]=#tricky, uses a completely different boot method
+[mustang]='dtb: "http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb"'
 )
 image_map_2=(
 [juno]='rootfs: "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz"'
 [panda-es]='rootfs: "http://releases.linaro.org/14.05/ubuntu/panda/linaro-trusty-developer-20140522-661.tar.gz"'
+[mustang]='kernel: "http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/uImage-mustang"'
+)
+image_map_3=(
+[mustang]='nfsrootfs: "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150319-701.tar.gz"'
 )
 
 echo ${TARGET_CONFIG:?TARGET_CONFIG must be set} > /dev/null
