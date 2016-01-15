@@ -345,7 +345,9 @@ bash -x "${ABE_DIR}"/scripts/benchmark.sh \
 if test ${trusted} -eq 0; then
   #We are in an untrusted environment, so we have not directed that the target will send to bundle stream
   echo "*** RESULTS READY: ${ip_addr}"
+  echo "To access data (which is in ~/bench/*-log):"
   ssh_rune
+  echo "When you have the data, signal me to delete it and end job like this:"
   ssh_rune -- "'touch ~/data/resultsgone'"
   while ! test -e ~/data/resultsgone; do
     inotifywait -e create ~/data
