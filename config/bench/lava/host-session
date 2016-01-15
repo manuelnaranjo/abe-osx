@@ -9,16 +9,55 @@ if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
   BENCH_DEBUG=
 fi
 
+function ssh_rune {
+  local preargs
+  for x in "$@"; do
+    shift
+    if test x"$x" = 'x--'; then
+      break
+    fi
+    if test x"${preargs:-}" = x; then
+      preargs=("$x")
+    else
+      preargs=("${preargs[@]}" "$x")
+    fi
+  done
+
+  #Output from this is unusable if interleaved with the -x output
+  set +x
+  echo -n "ssh -o ControlMaster=no -o ControlPath=/dev/null "
+  if test x"${preargs:-}" != x; then
+    echo -n "${preargs[@]} "
+  fi
+  echo '\'
+  if test ${trusted} -eq 0; then
+    echo "    -o UserKnownHostsFile=/dev/null ${ip_addr}.lab \\"
+  else
+    echo -n "    -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@${ip_addr}"
+    if test $# -ne 0; then
+      echo ' \'
+    else
+      echo
+    fi
+  fi
+
+  echo "    $@"
+  set -x
+}
+
 function exitfunc {
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
       echo "Trapped exit with error ${error}"
       echo "Sleeping for debug"
       if test x"${ip_addr:-}" = x; then
-        echo "ssh -o ControlMaster=no -o ControlPath=/dev/null `hostname -I | tr -d '[[:blank:]]'`.lab"
-      else
-        echo "ssh -o ControlMaster=no -o ControlPath=/dev/null ${ip_addr}.lab"
+        ip_addr="`hostname -I | tr -d '[[:blank:]]'`"
       fi
+      if test x"${trusted:-}" = x; then
+        trusted=1 #pretending that we are trusted causes ssh_rune to give the
+                  #most information to the user about flags they might need
+      fi
+      ssh_rune --
       sleep infinity
     fi
   fi
@@ -159,7 +198,7 @@ ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{pr
   #Request agent just before we need it
   #This would be two keys in one agent if we wanted one for source, one for job
   echo "*** WAITING FOR AGENT: ${ip_addr}"
-  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null -A root@${ip_addr}.lab 'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
+  ssh_rune -A -- "'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
   while ! test -e ~/data/socket; do
     inotifywait -e create ~/data
   done
@@ -306,8 +345,8 @@ bash -x "${ABE_DIR}"/scripts/benchmark.sh \
 if test ${trusted} -eq 0; then
   #We are in an untrusted environment, so we have not directed that the target will send to bundle stream
   echo "*** RESULTS READY: ${ip_addr}"
-  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab"
-  echo "ssh -o ControlMaster=no -o ControlPath=/dev/null root@${ip_addr}.lab 'touch ~/data/resultsgone'"
+  ssh_rune
+  ssh_rune -- "'touch ~/data/resultsgone'"
   while ! test -e ~/data/resultsgone; do
     inotifywait -e create ~/data
   done
