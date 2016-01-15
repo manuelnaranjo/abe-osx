@@ -3,9 +3,9 @@ set -eu
 set -o pipefail
 
 #Mapping from targets to images
-#TODO Two maps to handle some cases having 1 line and some cases having 2 lines
-#     Dreadful hack that will do for now.
-declare -A image_map_1 image_map_2
+#TODO 3 maps to handle some cases having 1 line, some cases having 2 lines and
+#     some cases having 3 lines. Dreadful hack that will do for now.
+declare -A image_map_1 image_map_2 image_map_3
 image_map_1=(
 [kvm]='image: "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"'
 [juno]='hwpack: "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz"'
@@ -35,10 +35,14 @@ if test x"${TARGET_SESSION:-}" = x; then
   TARGET_SESSION=config/bench/lava/target-session
   if test x"${TARGET_CONFIG}" = xmustang; then
     TARGET_SESSION="${TARGET_SESSION}.yaml"
+    TARGET_DEPLOY_ACTION="${TARGET_DEPLOY_ACTION:-deploy_linaro_kernel}"
   else
     TARGET_SESSION="${TARGET_SESSION}-tools.yaml"
+    TARGET_DEPLOY_ACTION="${TARGET_DEPLOY_ACTION:-deploy_linaro_image}"
   fi
 fi
+#guarantee that TARGET_DEPLOY_ACTION is set
+TARGET_DEPLOY_ACTION="${TARGET_DEPLOY_ACTION:-deploy_linaro_image}"
 
 LAVA_USER="${LAVA_USER:-${USER}}"
 
@@ -68,8 +72,10 @@ output_param PREBUILT "${PREBUILT:-None}"
 output_param HOST_SESSION "config/bench/lava/host-session-multilib.yaml"
 output_param HOST_IMAGE "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"
 output_param TARGET_SESSION "${TARGET_SESSION}"
+output_param TARGET_DEPLOY_ACTION "${TARGET_DEPLOY_ACTION}"
 output_param TARGET_IMAGE_1 "${image_map_1[${TARGET_DEVICE_TYPE}]}"
 output_param TARGET_IMAGE_2 "${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
+output_param TARGET_IMAGE_3 "${image_map_3[${TARGET_DEVICE_TYPE}]:-}"
 output_param TARGET_CONFIG "${TARGET_CONFIG}"
 output_param TARGET_DEVICE_TYPE "${TARGET_DEVICE_TYPE}"
 output_param BUNDLE_SERVER "https://${LAVA_SERVER}"

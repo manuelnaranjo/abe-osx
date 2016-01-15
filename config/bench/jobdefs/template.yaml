@@ -5,12 +5,13 @@ actions:
     parameters:
       role: host
       image: '${HOST_IMAGE}'
-  - command: deploy_linaro_image
+  - command: ${TARGET_DEPLOY_ACTION}
     parameters:
       role: target
       #TODO: This is horrid, but will have to do for now
       ${TARGET_IMAGE_1}
       ${TARGET_IMAGE_2}
+      ${TARGET_IMAGE_3}
     metadata:
       bogden-test: 'true'
   - command: lava_test_shell
