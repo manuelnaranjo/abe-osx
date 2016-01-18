@@ -31,11 +31,13 @@ if test x"${image_map_1[${TARGET_DEVICE_TYPE}]:-}" = x; then
 fi
 
 #TODO Benchmarking-specific builds will eliminate these special cases
-TARGET_SESSION=config/bench/lava/target-session
-if test x"${TARGET_CONFIG}" = xmustang; then
-  TARGET_SESSION="${TARGET_SESSION}.yaml"
-else
-  TARGET_SESSION="${TARGET_SESSION}-tools.yaml"
+if test x"${TARGET_SESSION:-}" = x; then
+  TARGET_SESSION=config/bench/lava/target-session
+  if test x"${TARGET_CONFIG}" = xmustang; then
+    TARGET_SESSION="${TARGET_SESSION}.yaml"
+  else
+    TARGET_SESSION="${TARGET_SESSION}-tools.yaml"
+  fi
 fi
 
 LAVA_USER="${LAVA_USER:-${USER}}"
