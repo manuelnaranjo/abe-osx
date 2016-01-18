@@ -193,12 +193,15 @@ fi
 #Note that return code from post_run_cmd does not get evaluated, because this
 #is an asynchronous ssh invocation, and we cache the return code of the
 #benchmark run only.
+#exec trick in phonehome stops us getting 'silly rename' when using nfsroot
+#see http://nfs.sourceforge.net/#faq_d2
 (
    . "${topdir}"/lib/common.sh
    remote_exec_async \
      "${ip}" \
      "function phonehome \
       { \
+        exec >/dev/null 2>&1; \
         while test -e ${target_dir}; do \
           ping -c 1 ${host_ip}; \
           sleep 11; \
