@@ -13,6 +13,8 @@ echo $! > /root/post-run
 wait `cat /root/post-run` && false
 if test $? -eq 143; then true; else false; fi
 
+#We must run the gather script here for lava commands (lava-test-run-attach,
+#lava-test-case) to work correctly.
 if test -e "${HOME}"/gather.sh; then
   if ! test -e "${HOME}"/resultsdir; then
     echo "No resultsdir given" >&2

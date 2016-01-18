@@ -272,7 +272,10 @@ else
 fi
 
 #Note - env vars (in fact, whole command) in -e and -r line are evaluated on
-#target.
+#target. -r line is evaluated in context of the remote_exec_async command in
+#runbench.sh.
+#We do not run the gather script direct in the -r because it must be run in
+#the contet of the LAVA test on the target side.
 "${ABE_DIR}"/scripts/benchmark.sh \
   -s ${benchtar:-runonly} \
   ${politeness} \
