@@ -21,6 +21,9 @@ if test -e "${HOME}"/gather.sh; then
     exit 1
   fi
   "${HOME}"/gather.sh `cat "${HOME}"/resultsdir`
+  echo $? > "${HOME}"/gatherresult
+else #Act as though we succeeded if there was nothing to do
+  echo 0 > "${HOME}"/gatherresult
 fi
 test x"`cat /root/post-run-finished`" != x
 kill `cat /root/post-run-finished`

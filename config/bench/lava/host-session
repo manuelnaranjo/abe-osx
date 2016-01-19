@@ -289,7 +289,9 @@ fi
         echo \$! > \${HOME}/post-run-finished || return \$?;
         kill \$(cat \${HOME}/post-run) || return \$?;
         wait \$!;
-        if test \$? -eq 143; then return 0; else return \$?; fi;
+        if test \$? -ne 143; then return \$?; fi;
+        test x\$(cat \${HOME}/gatherresult) != x || return \$?;
+        return \$(cat \${HOME}/gatherresult);
       }; f' \
   "${target_names[@]}"
 
