@@ -283,11 +283,10 @@ fi
   ${run_flags:+-a "${run_flags}"} \
   ${benchgccpath:+-i "${benchgccpath}"} \
   -b "${benchmark}" \
-  -r 'if echo \${PWD} > \${HOME}/resultsdir;then
+  -r 'function f {
+        echo \${PWD} > \${HOME}/resultsdir || return \$?;
         kill \$(cat \${HOME}/post-run);
-      else
-        false;
-      fi' \
+      }; f' \
   "${target_names[@]}"
 
 if test ${trusted} -eq 0; then
