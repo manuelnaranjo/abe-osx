@@ -285,7 +285,11 @@ fi
   -b "${benchmark}" \
   -r 'function f {
         echo \${PWD} > \${HOME}/resultsdir || return \$?;
-        kill \$(cat \${HOME}/post-run);
+        sleep infinity&
+        echo \$! > \${HOME}/post-run-finished || return \$?;
+        kill \$(cat \${HOME}/post-run) || return \$?;
+        wait \$!;
+        if test \$? -eq 143; then return 0; else return \$?; fi;
       }; f' \
   "${target_names[@]}"
 

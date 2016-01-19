@@ -22,6 +22,8 @@ if test -e "${HOME}"/gather.sh; then
   fi
   "${HOME}"/gather.sh `cat "${HOME}"/resultsdir`
 fi
+test x"`cat /root/post-run-finished`" != x
+kill `cat /root/post-run-finished`
 
 wait `cat /root/post-target` && false
 if test $? -eq 143; then true; else false; fi
