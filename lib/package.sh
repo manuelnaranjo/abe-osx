@@ -233,7 +233,7 @@ binary_toolchain()
     if test x"${build}" != x"${target}"; then
 	# FIXME: link the sysroot into the toolchain tarball
 	dryrun "mkdir -p  ${destdir}/${target}/libc/"
-	dryrun "rsync -avr ${sysroots} ${destdir}/${target}/libc/"
+	dryrun "rsync -avr ${sysroots}/* ${destdir}/${target}/libc/"
     fi
 
     # Some mingw packages have a runtime dependency on libwinpthread-1.dll, so a copy
