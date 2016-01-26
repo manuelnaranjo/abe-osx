@@ -13,7 +13,6 @@ trap 'exit ${error}' TERM INT HUP QUIT #Signal death can be part of normal contr
 ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
 host_ip="`hostname -I | cut -f 1 -d ' '`" #hostname -I includes a trailing space
 
-tag=
 benchmark=
 device=
 keep=
@@ -25,7 +24,7 @@ post_target_cmd=
 buildtar=
 buildtartopdir=
 triple=
-while getopts a:b:cd:e:f:g:kpr:t: flag; do
+while getopts a:b:cd:e:f:kpr:t: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
@@ -33,7 +32,6 @@ while getopts a:b:cd:e:f:g:kpr:t: flag; do
     d) device="${OPTARG}";;
     e) post_target_cmd="${OPTARG}";;
     f) triple="${OPTARG}";;
-    g) tag="${OPTARG}";;
     k) keep='-k';;
     p) keep='-p';;
     r) post_run_cmd="${OPTARG}";;

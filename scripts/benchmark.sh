@@ -77,7 +77,6 @@ if test "$((`umask` & 077))" -ne 63; then
 fi
 #End sanity checks
 
-tag=""
 compiler_flags=""
 run_benchargs=""
 phases="both"
@@ -90,14 +89,13 @@ keep= #'-p' (polite)  - clean up and release target even if there is an error
 target=
 post_run_cmd=
 post_target_cmd=
-while getopts a:b:ce:f:g:hi:km:pr:s:x: flag; do
+while getopts a:b:ce:f:hi:km:pr:s:x: flag; do
   case "${flag}" in
     a) run_benchargs="${OPTARG}";;
     b) benchmark="${OPTARG}";;
     c) cautious=;;
     e) post_target_cmd="${OPTARG}";;
     f) compiler_flags="${OPTARG}";;
-    g) tag="${OPTARG}";;
     h)
        usage
        error=0
@@ -248,7 +246,7 @@ if test x"${cmpbuild:-}" = x; then
 fi
 
 for device in "${devices[@]}"; do
-  bash `echo ${-/x/-x} | grep -o -- -x` "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -g "${tag:-${device}-${benchmark}}" -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${triple}" ${keep} ${cautious} < /dev/null &
+  bash `echo ${-/x/-x} | grep -o -- -x` "${topdir}"/scripts/runbenchmark.sh ${post_run_cmd:+-r "${post_run_cmd}"} ${post_target_cmd:+-e "${post_target_cmd}"} -b "${benchmark}" -d "${device}" -t "${cmpbuild}" -a "${run_benchargs}" -f "${triple}" ${keep} ${cautious} < /dev/null &
   runpids[$!]=''
 done
 
