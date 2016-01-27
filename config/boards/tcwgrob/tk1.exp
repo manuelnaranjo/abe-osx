@@ -1,0 +1,3 @@
+load_generic_config tcwgcommon
+
+set_board_info hostname tk1
