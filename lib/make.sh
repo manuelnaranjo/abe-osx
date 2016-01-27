@@ -146,7 +146,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" binutils
 	if test $? -eq 0; then
-	    make_check ${binutils_version} binutils
+	    make_check binutils
 	    if test $? -ne 0; then
 		check_ret=1
 		check_failed="${check_failed} binutils"
@@ -155,7 +155,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" gcc
 	if test $? -eq 0; then
-	    make_check ${gcc_version} stage2
+	    make_check gcc stage2
 	    if test $? -ne 0; then
 		check_ret=1
 		check_failed="${check_failed} gcc-stage2"
@@ -164,7 +164,7 @@ build_all()
 
 	is_package_in_runtests "${runtests}" gdb
 	if test $? -eq 0; then
-	    make_check ${gdb_version} gdb
+	    make_check gdb
 	    if test $? -ne 0; then
 		check_ret=1
 		check_failed="${check_failed} gdb"
@@ -660,7 +660,7 @@ make_check()
     trace "$*"
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
-    local builddir="`get_component_builddir ${component}`"
+    local builddir="`get_component_builddir ${component}`${2:+-$2}"
 
     # Some tests cause problems, so don't run them all unless
     # --enable alltests is specified at runtime.
@@ -683,6 +683,10 @@ make_check()
         local make_flags="${make_flags} LDFLAGS_FOR_BUILD=\"${override_ldflags}\""
     fi
 
+    local runtestflags="`get_component_runtestflags ${component}`"
+    if test x"${runtestflags}" != x; then
+        local make_flags="${make_flags} RUNTESTFLAGS=\"${runtestflags}\""
+    fi
     if test x"${override_runtestflags}" != x; then
         local make_flags="${make_flags} RUNTESTFLAGS=\"${override_runtestflags}\""
     fi
