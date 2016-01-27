@@ -606,7 +606,6 @@ LOCAL_SNAPSHOTS
 SYSROOTS
 ABE_PATH
 SOURCES_CONF
-FILESERVER
 ABE_TOP
 BUILDDATE
 ALIEN
@@ -3882,7 +3881,6 @@ fi
 
 
 
-
 # Check whether --with-sources-conf was given.
 if test "${with_sources_conf+set}" = set; then :
   withval=$with_sources_conf; SOURCES_CONF="${srcdir}/config/sources.conf"
@@ -5547,7 +5545,7 @@ fi
 
 
 if test x"${missing}" != x; then
-    as_fn_error $? "You need to install these packages: ${missing}" "$LINENO" 5
+    as_fn_warn $? "You need to install these packages: ${missing}" "$LINENO" 5
 fi
 
 rm -f Makefile
