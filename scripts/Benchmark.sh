@@ -77,6 +77,6 @@ output_param BUNDLE_STREAM "${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
 output_param TESTDEF_REPO "https://git.linaro.org/toolchain/abe"
 output_param TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
 #TODO Map this? Depend on benchmark and target.
-output_param TIMEOUT ${TIMEOUT:-1800}
+output_param TIMEOUT ${TIMEOUT:-5400}
 output_param PUBLIC_KEY "${PUBLIC_KEY:-}"
 #End of parameters to substitute into template
