@@ -37,21 +37,37 @@ clean_top()
 function usage
 {
   cat << EOF
-$0 [-tckh] -b <benchmark> <board...>
+$0 -b <benchmark> <target...>
 
-  -b   Identify the benchmark to build, e.g. fakebench, eembc. Compulsory.
-  -c   Cautious. If this is set, failure in any stage of target setup will
-       be treated as an error, even if recoverable. On by default.
+  -a   Flags to pass to the benchmark's execution harness.
+  -b   Identify the benchmark to build, e.g. fakebench, CPU2006. Compulsory.
+  -c   Careless. If this is not set, failure in any stage of target setup will
+       be treated as an error, even if recoverable.
+  -e   Command to run on target after benchmark results have been copied back
+       (in other words, when runbenchmark.sh exits).
+  -f   Compiler flags, to use when building the benchmark.
   -h   Show this help.
+  -i   GCC binary to build the benchmark with.
   -k   Keep. If this is set, benchmark sources and results will be left on
-       target.
+       target, even if the run succeeds.
+  -m   Make flags, to use when building the benchmark. (Note that these
+       do not relate to running the benchmark, even if the benchmark's
+       execution harness is based on make).
+  -p   Polite. If this is set, benchmarks sources and results will be removed
+       from the target, even if the run fails.
+  -r   Command to run on target immediately after benchmark runs, in same
+       ssh session (shell) as the benchmark run itself.
+  -s   Phases to execute. May be 'runonly', 'buildonly' or 'both'. Defaults
+       to 'both'. 'runonly' usually implies reusing a benchmark that this
+       script had used before. As a special case, if this option is given a
+       tarball of a prebuilt benchmark, -s is set to 'runonly' and the passed
+       tarball is the benchmark to run.
+  -x   Triple describing target(s). Would typically be set to aarch64-linux-gnu
+       or arm-linux-gnueabihf.
 
-  <board...> may be anything that has a file in config/bench/boards, e.g. the
-  existence of arndale.conf means that you can put arndale here. At least one
-  target may be specified. Each target must only be specified once.
-
-  If building natively, board is optional. If not given, the benchmark will
-  run on localhost.
+  <target...> may be anything that has a file in config/bench/boards, e.g. the
+  existence of arndale.conf means that you can put arndale here. Can run
+  locally by specifying localhost as the only target.
 EOF
 }
 
@@ -162,7 +178,7 @@ if test ${#devices[@]} -eq 0; then
 fi
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
-  echo "Sensible values might be eembc, spec2000, spec2006" 1>&2
+  echo "Sensible values might be CoremarkPro, CPU2000, CPU2006" 1>&2
   error=1
   exit
 fi
