@@ -1,5 +1,5 @@
 metadata:
-  name: bench-session-debian
+  name: host-session
   format: "Lava-Test-Shell Test Definition 1.0"
   description: "Benchmarking Session"
   version: 1.0
