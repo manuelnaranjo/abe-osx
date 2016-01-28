@@ -49,6 +49,20 @@ function err_handler {
 trap exit_handler EXIT
 trap err_handler ERR
 
+function check_dir {
+  if ! test -d "$1"; then
+    echo "'$1' does not exist, or is not a directory" >&2
+    exit 1
+  fi
+}
+
+function check_file {
+  if ! test -f "$1"; then
+    echo "'$1' does not exist, or is not a file" >&2
+    exit 1
+  fi
+}
+
 function header {
   test x"$1" = xUID
 }
@@ -124,6 +138,7 @@ function marks_units {
 
 function report_marks {
   local markslog="$1"
+  check_file "${markslog}"
   if test `wc -l ${markslog} | cut -d ' ' -f 1` -eq 2; then
     line="`sed -n 2p ${markslog} | tr , ' '`"
     ltc "`marks_name ${line}`" --result pass --units "`marks_units ${line}`" \
@@ -146,19 +161,29 @@ function report_marks {
 run="$1"
 target=
 toolchain=
-for x in `cd "${run}/builds"; ls`; do
-  for y in `cd "${run}/builds/${x}"; ls`; do
+check_dir "${run}"
+#check_dir "${run}/.." #would achieve nothing - /.. == /
+check_dir "${run}/builds"
+for x in `cd "${run}/builds" && ls`; do
+  for y in `cd "${run}/builds/${x}" && ls`; do
     if test -e "${run}/builds/${x}/${y}/logs/${x}.${y}.log"; then
       if test x"${target}" = x; then
         target="${x}"
         toolchain="${y}"
       else
-        echo "Must be exactly one log" >&2
+        echo "Found more than one log:" >&2
+        echo "${run}/builds/${target}/${toolchain}/logs/${target}.${toolchain}.log" >&2
+        echo "${run}/builds/${x}/${y}/logs/${x}.${y}.log" >&2
+        echo "There may be others, I stop looking as soon as I find too many." >&2
         exit 1
       fi
     fi
   done
 done
+if test x"${target}" = x; then
+  echo "Found no log" >&2
+  exit 1
+fi
 
 #Attach raw output - do this first so that we have something to debug if
 #later code that scrapes the raw output should fail.
@@ -200,8 +225,10 @@ while test $i -lt ${line_max}; do
 
     #Log sizes off the first verification run, as these should only be constant
     if test ${verificationCount["${name}"]} -eq 1; then
-      ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "`code_size ${line[$i]}`"
-      ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "`data_size ${line[$i]}`"
+      cs="`code_size ${line[$i]}`"
+      ds="`data_size ${line[$i]}`"
+      ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "${cs}"
+      ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "${ds}"
     fi
 
     if pass ${line[$i]}; then
