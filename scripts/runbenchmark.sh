@@ -56,8 +56,6 @@ if test x"${buildtar}" = x; then
 fi
 buildtartopdir="`tar tf ${buildtar} | head -n1`"
 
-tee_output=/dev/null
-
 # load the configure file produced by configure
 if test -e "${PWD}/host.conf"; then
     . "${PWD}/host.conf"
@@ -177,6 +175,9 @@ fi
 if test x"${freqctl:-}" = xyes; then
   flags+=" -f"
 fi
+if test x"${log_output:-}" != x; then
+  flags+=" -l ${log_output}"
+fi
 
 #This parameter read from the benchmark conf file earlier in this script
 if test x"${safe_output}" = xyes; then
@@ -208,7 +209,7 @@ fi
       tar xf `basename ${buildtar}` --exclude='*.git/.git/*' && \
       cd ${buildtartopdir} && \
       rm ../`basename ${buildtar}` && \
-      ../controlledrun.sh ${cautious} ${flags} -l ${tee_output} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
+      ../controlledrun.sh ${cautious} ${flags} -- ./linarobench.sh ${board_benchargs:-} -- ${run_benchargs:-}; \
       echo \\\$? > ${target_dir}/RETCODE && \
       ${post_run_cmd:-true}; \
       echo \\\$? > ${target_dir}/POST_RUN_RETCODE" \
