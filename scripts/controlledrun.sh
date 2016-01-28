@@ -643,7 +643,7 @@ if test ${do_env} -eq 1; then
 fi
 echo "Running ${cmd}"
 if test ${tee_cmd} -ne 0; then
-  ${cmd} | tee -a "${log}"
+  ${cmd} 2>&1 | tee -a "${log}"
 else
   ${cmd}
 fi
