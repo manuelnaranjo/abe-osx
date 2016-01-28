@@ -2,10 +2,18 @@
 set -eu
 set -o pipefail
 
-#Output parameter, escaping single quotes from YAML
-function output_param {
+#Output parameter, with no escaping.
+#Suitable for cases where $2 is itself a chunk of YAML.
+function output_slot {
+  echo $1="$2"
+}
+
+#Output parameter, escaping single quotes from YAML.
+#Suitable for cases where $2 is the RHS of a YAML expression in a template.
+function output_value {
   echo $1="${2//\'/\'\'}"
 }
+
 #Mapping from targets to images
 #TODO 3 maps to handle some cases having 1 line, some cases having 2 lines and
 #     some cases having 3 lines. Dreadful hack that will do for now.
@@ -79,38 +87,38 @@ LAVA_USER="${LAVA_USER:-${USER}}"
 #For example, setting compiler/make flags makes no sense if prebuilt is set
 
 #Parameters to be substituted into template
-output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
-output_param BENCHMARK "${BENCHMARK:?BENCHMARK must be set}"
+output_value JOB_NAME "${BENCHMARK}-${LAVA_USER}"
+output_value BENCHMARK "${BENCHMARK:?BENCHMARK must be set}"
 
 #By the time these parameters reach LAVA, None means unset
 #Unset is not necessarily the same as empty string - for example,
 #COMPILER_FLAGS="" may result in overriding default flags in makefiles
-output_param TOOLCHAIN "${TOOLCHAIN:-None}"
-output_param TRIPLE "${TRIPLE:-None}"
-output_param SYSROOT "${SYSROOT:-None}"
-output_param RUN_FLAGS "${RUN_FLAGS:-None}"
-output_param COMPILER_FLAGS "${COMPILER_FLAGS:-None}"
-output_param MAKE_FLAGS "${MAKE_FLAGS:-None}"
-output_param PREBUILT "${PREBUILT:-None}"
+output_value TOOLCHAIN "${TOOLCHAIN:-None}"
+output_value TRIPLE "${TRIPLE:-None}"
+output_value SYSROOT "${SYSROOT:-None}"
+output_value RUN_FLAGS "${RUN_FLAGS:-None}"
+output_value COMPILER_FLAGS "${COMPILER_FLAGS:-None}"
+output_value MAKE_FLAGS "${MAKE_FLAGS:-None}"
+output_value PREBUILT "${PREBUILT:-None}"
 
-output_param HOST_SESSION "${HOST_SESSION}"
-output_param HOST_DEPLOY_ACTION "${HOST_DEPLOY_ACTION}"
-output_param HOST_IMAGE_1 "${image_map_1[${HOST_DEVICE_TYPE}]}"
-output_param HOST_IMAGE_2 "${image_map_2[${HOST_DEVICE_TYPE}]:-}"
-output_param HOST_IMAGE_3 "${image_map_3[${HOST_DEVICE_TYPE}]:-}"
-output_param HOST_DEVICE_TYPE "${HOST_DEVICE_TYPE}"
-output_param TARGET_SESSION "${TARGET_SESSION}"
-output_param TARGET_DEPLOY_ACTION "${TARGET_DEPLOY_ACTION}"
-output_param TARGET_IMAGE_1 "${image_map_1[${TARGET_DEVICE_TYPE}]}"
-output_param TARGET_IMAGE_2 "${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
-output_param TARGET_IMAGE_3 "${image_map_3[${TARGET_DEVICE_TYPE}]:-}"
-output_param TARGET_CONFIG "${TARGET_CONFIG}"
-output_param TARGET_DEVICE_TYPE "${TARGET_DEVICE_TYPE}"
-output_param BUNDLE_SERVER "https://${LAVA_SERVER}"
-output_param BUNDLE_STREAM "${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
-output_param TESTDEF_REPO "https://git.linaro.org/toolchain/abe"
-output_param TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
+output_value HOST_SESSION "${HOST_SESSION}"
+output_slot HOST_DEPLOY_ACTION "${HOST_DEPLOY_ACTION}"
+output_slot HOST_IMAGE_1 "${image_map_1[${HOST_DEVICE_TYPE}]}"
+output_slot HOST_IMAGE_2 "${image_map_2[${HOST_DEVICE_TYPE}]:-}"
+output_slot HOST_IMAGE_3 "${image_map_3[${HOST_DEVICE_TYPE}]:-}"
+output_value HOST_DEVICE_TYPE "${HOST_DEVICE_TYPE}"
+output_value TARGET_SESSION "${TARGET_SESSION}"
+output_slot TARGET_DEPLOY_ACTION "${TARGET_DEPLOY_ACTION}"
+output_slot TARGET_IMAGE_1 "${image_map_1[${TARGET_DEVICE_TYPE}]}"
+output_slot TARGET_IMAGE_2 "${image_map_2[${TARGET_DEVICE_TYPE}]:-}"
+output_slot TARGET_IMAGE_3 "${image_map_3[${TARGET_DEVICE_TYPE}]:-}"
+output_value TARGET_CONFIG "${TARGET_CONFIG}"
+output_value TARGET_DEVICE_TYPE "${TARGET_DEVICE_TYPE}"
+output_value BUNDLE_SERVER "https://${LAVA_SERVER}"
+output_value BUNDLE_STREAM "${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
+output_value TESTDEF_REPO "https://git.linaro.org/toolchain/abe"
+output_value TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
 #TODO Map this? Depend on benchmark and target.
-output_param TIMEOUT ${TIMEOUT:-5400}
-output_param PUBLIC_KEY "${PUBLIC_KEY:-}"
+output_value TIMEOUT ${TIMEOUT:-5400}
+output_value PUBLIC_KEY "${PUBLIC_KEY:-}"
 #End of parameters to substitute into template

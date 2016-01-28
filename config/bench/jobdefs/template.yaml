@@ -1,13 +1,13 @@
 job_name: '${JOB_NAME}'
 timeout: ${TIMEOUT}
 actions:
-  - command: ${HOST_DEPLOY_ACTION}
+  - command: '${HOST_DEPLOY_ACTION}'
     parameters:
       role: host
       ${HOST_IMAGE_1}
       ${HOST_IMAGE_2}
       ${HOST_IMAGE_3}
-  - command: ${TARGET_DEPLOY_ACTION}
+  - command: '${TARGET_DEPLOY_ACTION}'
     parameters:
       role: target
       #TODO: This is horrid, but will have to do for now
