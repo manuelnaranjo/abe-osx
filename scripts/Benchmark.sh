@@ -2,6 +2,10 @@
 set -eu
 set -o pipefail
 
+#Output parameter, escaping single quotes from YAML
+function output_param {
+  echo $1="${2//\'/\'\'}"
+}
 #Mapping from targets to images
 #TODO 3 maps to handle some cases having 1 line, some cases having 2 lines and
 #     some cases having 3 lines. Dreadful hack that will do for now.
@@ -73,11 +77,6 @@ LAVA_USER="${LAVA_USER:-${USER}}"
 
 #TODO Add consistency tests
 #For example, setting compiler/make flags makes no sense if prebuilt is set
-
-#Output parameter, escaping single quotes from YAML
-function output_param {
-  echo $1="${2//\'/\'\'}"
-}
 
 #Parameters to be substituted into template
 output_param JOB_NAME "${BENCHMARK}-${LAVA_USER}"
