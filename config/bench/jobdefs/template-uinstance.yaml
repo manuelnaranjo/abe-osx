@@ -15,7 +15,56 @@ actions:
       ${TARGET_IMAGE_2}
       ${TARGET_IMAGE_3}
     metadata:
-      bogden-test: 'true'
+      ${METADATA_1}
+      ${METADATA_2}
+      ${METADATA_3}
+      ${METADATA_4}
+      ${METADATA_5}
+      ${METADATA_6}
+      ${METADATA_7}
+      ${METADATA_8}
+      ${METADATA_9}
+      ${METADATA_10}
+      ${METADATA_11}
+      ${METADATA_12}
+      ${METADATA_13}
+      ${METADATA_14}
+      ${METADATA_15}
+      ${METADATA_16}
+      ${METADATA_17}
+      ${METADATA_18}
+      ${METADATA_19}
+      ${METADATA_20}
+      ${METADATA_21}
+      ${METADATA_22}
+      ${METADATA_23}
+      ${METADATA_24}
+      ${METADATA_25}
+      ${METADATA_26}
+      ${METADATA_27}
+      ${METADATA_28}
+      ${METADATA_29}
+      ${METADATA_30}
+      ${METADATA_31}
+      ${METADATA_32}
+      ${METADATA_33}
+      ${METADATA_34}
+      ${METADATA_35}
+      ${METADATA_36}
+      ${METADATA_37}
+      ${METADATA_38}
+      ${METADATA_39}
+      ${METADATA_40}
+      ${METADATA_41}
+      ${METADATA_42}
+      ${METADATA_43}
+      ${METADATA_44}
+      ${METADATA_45}
+      ${METADATA_46}
+      ${METADATA_47}
+      ${METADATA_48}
+      ${METADATA_49}
+      ${METADATA_50}
   - command: lava_test_shell
     parameters:
       role: host

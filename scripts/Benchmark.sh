@@ -2,16 +2,68 @@
 set -eu
 set -o pipefail
 
+#Must match up with METADATA_* slots in config/bench/jobdefs files
+metadata_index=0 #1 less than lowest slot
+metadata_index_max=50 #highest slot
+
 #Output parameter, with no escaping.
-#Suitable for cases where $2 is itself a chunk of YAML.
+#Do not log as metadata.
+#Suitable for cases where $2 is itself a chunk of YAML, and there is no
+#need to log as metadata.
 function output_slot {
   echo $1="$2"
 }
 
+function output_metadata {
+  local slot
+  metadata_index=$((metadata_index + 1))
+  if test ${metadata_index} -gt ${metadata_index_max}; then
+    echo "Too much metadata." >&2
+    echo "Ran out of slots at METADATA_${metadata_index} \"$1: '$2'\"" >&2
+    exit 1
+  fi
+  slot="METADATA_${metadata_index}"
+  if test -n "${!slot:-}"; then #If user has defined metadata in this slot, enter the user's metadata
+    output_slot "${slot}" "${!slot}"
+    output_metadata "$1" "$2" #Try again, until we find a free slot, or run out of slots
+  else
+    if test -n "${1:-}"; then
+      output_slot "${slot}" "$1: '${2:-}'" #Enter this value in this slot
+    else
+      output_slot "${slot}" "" #Blank out this slot
+    fi
+  fi
+}
+
 #Output parameter, escaping single quotes from YAML.
+#Log the parameter as metadata.
 #Suitable for cases where $2 is the RHS of a YAML expression in a template.
 function output_value {
   echo $1="${2//\'/\'\'}"
+  output_metadata "$1" "$2"
+}
+
+#Convert board config file into job metadata, outputting any user-specified
+#metadata first.
+function external_metadata {
+  local line
+  local name
+  local value
+  local conf="`dirname $0`/../config/bench/boards/${1,,}.conf"
+  if ! test -f "${conf}"; then
+    echo "No conf file for '$1'" >&2
+    echo "Should have been at '${conf}'" >&2
+    exit 1
+  fi
+
+  #Output metadata from config file
+  while read line; do
+    echo "${line}" | grep -q '^[[:blank:]]*#' && continue
+    echo "${line}" | grep -q '.=' || continue
+    name="`echo ${line} | cut -d = -f 1`"
+    value="`echo ${line} | cut -d = -f 2-`"
+    output_metadata "${name}" "${value}"
+  done < "${conf}"
 }
 
 #Mapping from targets to images
@@ -57,6 +109,7 @@ fi
 #guarantee that HOST_DEPLOY_ACTION is set
 HOST_DEPLOY_ACTION="${HOST_DEPLOY_ACTION:-deploy_linaro_image}"
 
+external_metadata "${TARGET_CONFIG}"
 if test x"${TARGET_CONFIG%%-*}" = xjuno; then
   TARGET_DEVICE_TYPE=juno
 else
@@ -122,3 +175,8 @@ output_value TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
 output_value TIMEOUT ${TIMEOUT:-5400}
 output_value PUBLIC_KEY "${PUBLIC_KEY:-}"
 #End of parameters to substitute into template
+
+#Make sure we end up with valid file if there are empty slots
+while test ${metadata_index} -lt ${metadata_index_max}; do
+  output_metadata ""
+done
