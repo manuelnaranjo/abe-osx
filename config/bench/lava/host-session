@@ -318,6 +318,10 @@ else
   politeness=
 fi
 
+if test ${trusted} -eq 1; then
+  sed -i 's/^safe_output=.*/safe_output=yes/' "${ABE_DIR}/config/${benchmark}.conf"
+fi
+
 #Note - env vars (in fact, whole command) in -e and -r line are evaluated on
 #target. -r line is evaluated in context of the remote_exec_async command in
 #runbench.sh.
