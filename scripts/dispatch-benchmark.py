@@ -175,6 +175,18 @@ def main():
     'make_flags',
     'run_flags',
   ]}
+  for override in args['overrides']:
+    if os.path.isfile(override):
+      if '=' in override:
+        print 'Ambiguous argument: %s is a CLI substitution, but is also a file' % override
+        sys.exit(1)
+      else:
+        with open(override) as f:
+         for line in f:
+           add_sub(line, var_generator_inputs)
+    else:
+      add_sub(override, var_generator_inputs)
+
   var_generator = subprocess.Popen(os.path.join(os.path.dirname(sys.argv[0]),
                                    'Benchmark.sh'), stdout=subprocess.PIPE,
                                    env=var_generator_inputs)
@@ -184,18 +196,6 @@ def main():
   if var_generator.wait() != 0:
     print >> sys.stderr, 'Benchmark.sh failed'
     sys.exit(1)
-
-  for override in args['overrides']:
-    if os.path.isfile(override):
-      if '=' in override:
-        print 'Ambiguous argument: %s is a CLI substitution, but is also a file' % override
-        sys.exit(1)
-      else:
-        with open(override) as f:
-         for line in f:
-           add_sub(line, substitutions)
-    else:
-      add_sub(override, substitutions)
 
   #Validate inputs
   if substitutions['PREBUILT'] != 'None':
