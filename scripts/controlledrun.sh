@@ -643,11 +643,23 @@ if test ${do_env} -eq 1; then
 fi
 echo "Running ${cmd}" | tee -a "${log}"
 if test ${tee_cmd} -ne 0; then
-  ${cmd} 2>&1 | tee -a "${log}"
-else
-  ${cmd}
+  #See http://unix.stackexchange.com/questions/67652/copy-stdout-and-stderr-to-a-log-file-and-leave-them-on-the-console-within-the-sc
+  #This trick only works well when it wraps a single output-giving command.
+  #As soon as we introduce a second command, the order of output becomes
+  #random even within a stream.
+  exec {stdout}>&1
+  exec {stderr}>&2
+  exec 1> >(tee -a "${log}")
+  exec 2> >(tee -a "${log}" >&${stderr})
 fi
+${cmd}
 err=$?
+if test ${tee_cmd} -ne 0; then
+  exec 1>&${stdout}
+  exec 2>&${stderr}
+  exec {stdout}>&-
+  exec {stderr}>&-
+fi
 
 #Re-report IP, in case it changed
 echo "** Live Network Interfaces:" | tee -a "${log}"
