@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ue
 
-function doit {
+function generate_subbenchmark {
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
   max_mult=$((RANDOM % 5 + 1)) #1 - 5
 
@@ -57,7 +57,7 @@ for bset in fp int; do
   echo "spec.cpu2006.metric: C${bset^^}2006"
   echo "spec.cpu2006.units: SPEC${bset}"
   for name in ${names[${bset}]}; do
-    doit $name
+    generate_subbenchmark $name
   done
   score=`echo "scale=6; e(l(${selected_product_ratio})/${selected_count})" | bc -l`
   echo "spec.cpu2006.basemean: ${score}"
