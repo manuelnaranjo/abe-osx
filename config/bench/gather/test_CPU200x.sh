@@ -86,7 +86,7 @@ echo 'lava-test-run-attach linarobenchlog' >> testing/golden
 echo 'lava-test-run-attach CFP2006.1.ref.rsf' >> testing/golden
 echo 'lava-test-run-attach CINT2006.1.ref.rsf' >> testing/golden
 
-TESTING=1 ./CPU2006.sh testing/input > testing/output
+TESTING=1 ./CPU200x.sh testing/input > testing/output
 
 if diff testing/{golden,output}; then
   echo "CPU2006 gather script passed self-tests"
