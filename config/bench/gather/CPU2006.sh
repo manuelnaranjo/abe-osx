@@ -38,26 +38,39 @@ function err_handler {
 trap exit_handler EXIT
 trap err_handler ERR
 
-function base_status {
-  local field
-  field="`echo $1 | cut -d , -f 6`" || exit
-  if test x"${field}" = xS; then
-    return 0
+#Doesn't need to check that there are pattern inputs - the
+#pattern generated if there are no such inputs is guaranteed
+#to fail. (The pattern will be 'spec\.cpu2006: ' in this case.)
+function lookup {
+  local file
+  local re
+  file="$1"
+  shift
+  re='spec\.cpu2006'
+  while test $# -ne 0; do
+    re="${re}\.$1"
+    shift
+  done
+  #echo "grep \"${re}: \" \"${file}\" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'" >&2
+  grep "${re}: " "${file}" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
+}
+
+function valid {
+  local res
+  if test $# -eq 3; then
+    test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" valid`" = xS
+  elif test $# -eq 1; then
+    test x"`lookup \"$1\" valid`" = xS
   else
-    return 1
+    echo "Bad arg for valid()" >&2
+    exit 1
   fi
+  return $?
 }
 
-function name {
-  echo $1 | cut -d , -f 1 || exit
-}
-
-function base_runtime {
-  echo $1 | cut -d , -f 3 || exit
-}
-
-function base_ratio {
-  echo $1 | cut -d , -f 4 || exit
+function selected {
+  test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" selected`" = x1
+  return $?
 }
 
 #TODO if there is a base and peak run, we should report both sides FUTURE WORK
@@ -67,102 +80,92 @@ if ! test -d "${run}"; then
   echo "Directory of runs of benchmark script ($1) not found, or is not a directory" >&2
   exit 1
 fi
-if test "`ls ${run}/result/CINT2006.*.*.csv 2>/dev/null | wc -l`" -gt 1 ||
-   test "`ls ${run}/result/CFP2006.*.*.csv  2>/dev/null | wc -l`" -gt 1; then
+if test "`ls ${run}/result/CINT2006.*.*.rsf 2>/dev/null | wc -l`" -gt 1 ||
+   test "`ls ${run}/result/CFP2006.*.*.rsf  2>/dev/null | wc -l`" -gt 1; then
   echo "Multiple runs of SPEC unsupported" >&2
   exit 1
 fi
-if test "`ls ${run}/result/CINT2006.*.*.csv 2>/dev/null | wc -l`" -ne 1 &&
-   test "`ls ${run}/result/CFP2006.*.*.csv  2>/dev/null | wc -l`" -ne 1; then
+if test "`ls ${run}/result/CINT2006.*.*.rsf 2>/dev/null | wc -l`" -ne 1 &&
+   test "`ls ${run}/result/CFP2006.*.*.rsf  2>/dev/null | wc -l`" -ne 1; then
   echo "No runs of SPEC!" >&2
   exit 1
 fi
 
-for csv in `ls ${run}/result/C{INT,FP}2006.*.*.csv 2>/dev/null`; do
+for raw in `ls ${run}/result/C{INT,FP}2006.*.*.rsf 2>/dev/null`; do
   #data about the run
-  run_set="`basename ${csv} | cut -d . -f 1`" || exit #CINT2006 or CFP2006
-  run_index=$((`basename ${csv} | cut -d . -f 2` - 1)) || exit #Always 1 so long as we aren't supporting multiple runs of SPEC
-  run_workload="`basename ${csv} | cut -d . -f 3`" || exit #test, train, ref
+  run_index=$((`basename ${raw} | cut -d . -f 2` - 1)) || exit #Always 1 so long as we aren't supporting multiple runs of SPEC
 
-  #slurp results file
-  line=("")
-  while IFS='' read -r l; do line=("${line[@]}" "${l}"); done < "${csv}"
-  line_max=$((${#line[@]} - 1))
+  run_workload="`lookup "${raw}" size`"
 
-  #submit full results
-  for i in `seq 0 ${line_max}`; do
-    if test x"${line[$i]}"x = x'"Full Results Table"'x; then break; fi
-  done
-
-  iteration=0
-  oldname=""
-  for i in `seq $((i + 2)) ${line_max}`; do
-    if test x"${line[$i]}"x = xx; then break; fi
-    name="`name ${line[$i]}`"
-    runtime="`base_runtime ${line[$i]}`"
-    ratio="`base_ratio ${line[$i]}`"
-
-    if test x"${name}" = x"${oldname}"; then
-      iteration=$((iteration + 1))
-    else
-      iteration=1
-    fi
-
-    if base_status "${line[$i]}"; then
-      ltc "${name}[${iteration}]" \
-        --result pass --measurement "${runtime}" --units seconds
-      if test x"${ratio}" != x; then
+  names="`lookup "${raw}" results '.*' benchmark | sort | uniq`"
+  for name in ${names}; do
+    iterations="`lookup ${raw} results ${name} '.*' benchmark | wc -l`"
+    for iteration in `seq -w 001 ${iterations}`; do
+      runtime="`lookup "${raw}" results ${name} '.*' ${iteration} reported_time`"
+      ratio="`lookup   "${raw}" results ${name} '.*' ${iteration} ratio`"
+      if valid "${raw}" "${name}" "${iteration}"; then
         ltc "${name}[${iteration}]" \
-          --result pass --measurement "${ratio}" --units ratio
+          --result pass --measurement "${runtime}" --units seconds
+        if test x"${ratio}" != 'x--'; then
+          ltc "${name}[${iteration}]" \
+            --result pass --measurement "${ratio}" --units ratio
+        fi
+      else
+        ltc "${name}[${iteration}]" --result fail
       fi
-    else
-      ltc "${name}[${iteration}]" --result fail
-    fi
-
-    oldname="${name}"
+    done
   done
 
-  #submit selected results
-  for i in `seq $((i + 1)) ${line_max}`; do
-    if test x"${line[$i]}"x = x'"Selected Results Table"'x; then break; fi
-  done
-
+  #Output the selected ones at the end, always, so the results maintain the
+  #same order in the LAVA interface. Shouldn't matter when looking at reports,
+  #but kinda handy when looking at raw bundles.
   count=0
   base_runtime_product=1
-  for i in `seq $((i + 2)) ${line_max}`; do
-    if test x"${line[$i]}"x = xx; then break; fi
-    name="`name ${line[$i]}`"
-    runtime="`base_runtime ${line[$i]}`"
-    ratio="`base_ratio ${line[$i]}`"
-    if base_status "${line[$i]}"; then
-      count=$((count + 1))
-      base_runtime_product="`echo \"${base_runtime_product} * ${runtime}\" | bc`" || exit
-      ltc "${name}" --result pass \
-        --measurement "${runtime}" --units seconds
-      if test x"${ratio}" != x; then
-        ltc "${name}" --result pass \
-          --measurement "${ratio}" --units ratio
+  for name in ${names}; do
+    iterations="`lookup ${raw} results ${name} '.*' benchmark | wc -l`"
+    for iteration in `seq -w 001 ${iterations}`; do
+      if selected "${raw}" "${name}" "${iteration}"; then
+        if valid "${raw}" "${name}" "${iteration}"; then
+          runtime="`lookup "${raw}" results ${name} '.*' ${iteration} reported_time`"
+          ratio="`lookup   "${raw}" results ${name} '.*' ${iteration} ratio`"
+          count=$((count + 1))
+          base_runtime_product="`echo \"${base_runtime_product} * ${runtime}\" | bc`" || exit
+          ltc "${name}" \
+            --result pass --measurement "${runtime}" --units seconds
+          if test x"${ratio}" != 'x--'; then
+            ltc "${name}" \
+              --result pass --measurement "${ratio}" --units ratio
+          fi
+        else
+          ltc "${name}" --result fail
+        fi
+        break
       fi
-    else
-      ltc "${name}" --result fail
-    fi
+    done
   done
 
   #compute and report geomean of runtime
+  run_set="`lookup ${raw} metric`"
   if test ${count} -ne 0; then
     ltc "${run_set} base runtime geomean" --result pass \
       --measurement "`echo \"scale=6; e(l(${base_runtime_product})/${count})\" | bc -l`" \
       --units 'geomean of selected runtimes (seconds)' || exit
+
+    #report score if there is one
+    #tag it as invalid if the run is invalid
+    #also report whether it is valid or not
+    basemean="`lookup ${raw} basemean`"
+    if test x"${basemean}" != x0; then
+      units="`lookup ${raw} units`"
+      if ! valid "${raw}"; then
+	units="${units} (invalid)"
+      fi
+      ltc "${run_set} base score" --result pass \
+       --measurement "${basemean}" \
+       --units "${units}"
+    fi
   else
     ltc "${run_set}" --result fail
-  fi
-
-  #if we have ratios, we will have a score to report
-  if test x"`base_ratio ${line[$i-1]}`" != x; then
-    i=$((i + 1))
-    score="`echo ${line[$i]} | cut -d , -f 2`" || exit
-    ltc "${run_set} base score" --result pass \
-      --measurement "${score}" --units 'base score (geomean of selected ratios)'
   fi
 done
 

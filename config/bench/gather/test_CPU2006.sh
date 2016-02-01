@@ -16,33 +16,26 @@ function doit {
   count=1
   for i in `echo -e "0\\n1\\n2" | sort -R`; do
     ratio=`echo "${base}/${runtime[$i]}" | bc -l`
-    line="`printf '%s,%i,%f,%f,%i,S,,,,,,ref iteration #%i\n' \
-      $1 \
-      $base \
-      ${runtime[$i]} \
-      ${ratio} \
-      $((i % 2)) \
-      ${count}`"
     testcase=("${testcase[@]}" \
-      "`printf 'lava-test-case %s[%i] --result pass --measurement %f --units %s\n' \
-        $1 ${count} ${runtime[$i]} 'seconds'`" \
-      "`printf 'lava-test-case %s[%i] --result pass --measurement %f --units %s\n' \
-        $1 ${count} ${ratio} 'ratio'`"
+      "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds" \
+      "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio"
       )
     if test $((i%2)) -eq 1; then
-      selected=("${selected[@]}" "$line")
       testcase_selected=("${testcase_selected[@]}" \
-      "`printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
-        $1 ${runtime[$i]} 'seconds'`" \
-      "`printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
-        $1 ${ratio} 'ratio'`"
+      "lava-test-case $1 --result pass --measurement ${runtime[$i]} --units seconds" \
+      "lava-test-case $1 --result pass --measurement ${ratio} --units ratio" \
       )
       selected_count=$((selected_count + 1))
       selected_product_runtime=`echo "${selected_product_runtime} * ${runtime[$i]}" | bc -l`
       selected_product_ratio=`echo "${selected_product_ratio} * ${ratio}" | bc -l`
     fi
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.benchmark: $1"
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.reference: ${base}"
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.reported_time: ${runtime[$i]}"
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.ratio: ${ratio}"
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.selected: $((i % 2))"
+    echo "spec.cpu2006.results.${1%%.*}_${1#*.}.base.00${count}.valid: S"
     count=$((count + 1))
-    echo $line
   done
 }
 
@@ -53,25 +46,21 @@ rm -rf testing
 mkdir -p testing/input/result
 for bset in fp int; do
   exec {STDOUT}>&1
-  exec 1>testing/input/result/C${bset^^}2006.1.test.csv
-  echo '"Full Results Table"'
-  echo
-  selected=('"Selected Results Table"' '')
+  exec 1>testing/input/result/C${bset^^}2006.1.ref.rsf
   testcase=('')
   testcase_selected=('')
   selected_count=0
   selected_product_runtime=1
   selected_product_ratio=1
+  echo 'spec.cpu2006.size: ref' #TODO: Check when ref run completes
+  echo "spec.cpu2006.valid: S" #TODO: Check when ref run completes
+  echo "spec.cpu2006.metric: C${bset^^}2006"
+  echo "spec.cpu2006.units: SPEC${bset}"
   for name in ${names[${bset}]}; do
     doit $name
   done
-  echo
-  for x in "${selected[@]}"; do
-    echo "$x"
-  done
-  echo
   score=`echo "scale=6; e(l(${selected_product_ratio})/${selected_count})" | bc -l`
-  echo "SPEC${bset}_base2006,${score},,${score}"
+  echo "spec.cpu2006.basemean: ${score}"
 
   for x in "${testcase[@]:1}"; do
     echo "$x" >> testing/golden
@@ -86,7 +75,7 @@ for bset in fp int; do
   printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
     "C${bset^^}2006 base score" \
     ${score} \
-    'base score (geomean of selected ratios)' >> testing/golden
+    "SPEC${bset}" >> testing/golden
   exec 1>&${STDOUT}
 done
 
@@ -94,8 +83,8 @@ echo 'lava-test-run-attach RETCODE' >> testing/golden
 echo 'lava-test-run-attach stdout' >> testing/golden
 echo 'lava-test-run-attach stderr' >> testing/golden
 echo 'lava-test-run-attach linarobenchlog' >> testing/golden
-echo 'lava-test-run-attach CFP2006.1.test.csv' >> testing/golden
-echo 'lava-test-run-attach CINT2006.1.test.csv' >> testing/golden
+echo 'lava-test-run-attach CFP2006.1.ref.rsf' >> testing/golden
+echo 'lava-test-run-attach CINT2006.1.ref.rsf' >> testing/golden
 
 TESTING=1 ./CPU2006.sh testing/input > testing/output
 
