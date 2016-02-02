@@ -73,6 +73,9 @@ function generate_subbenchmark {
 }
 
 function test_benchmark {
+  local reference_bset
+  local unit
+
   #echo "test_benchmark $@" >&2
 
   rm -rf testing
@@ -86,8 +89,15 @@ function test_benchmark {
     selected_count=0
     selected_product_runtime=1
     selected_product_ratio=1
+    reference_bset="c${bset}${year}[*]"
     echo "spec.cpu${year}.size: ref"
-    echo "spec.cpu${year}.valid: ${validmarker}" #TODO: Check when ref run completes
+    if test x"${names[${bset}]}" = x"${!reference_bset}"; then
+      echo "spec.cpu${year}.valid: ${validmarker}" #TODO: Check when ref run completes
+      unit="SPEC${bset}"
+    else
+      echo "spec.cpu${year}.valid: ${invalidmarker}"
+      unit="SPEC${bset} (invalid)"
+    fi
     echo "spec.cpu${year}.metric: C${bset^^}${year}"
     echo "spec.cpu${year}.units: SPEC${bset}"
     for name in ${names[${bset}]}; do
@@ -109,7 +119,7 @@ function test_benchmark {
     printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
       "C${bset^^}${year} base score" \
       ${score} \
-      "SPEC${bset}" >> testing/golden
+      "${unit}" >> testing/golden
     exec 1>&${STDOUT}
   done
 
@@ -131,9 +141,20 @@ names['int']="${cint2000[*]}"
 year=2000
 rawext='raw'
 validmarker='1'
+invalidmarker='0'
 test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
 test_benchmark int
 test_benchmark fp
+
+#test smaller runs
+#1 int run
+names['int']=254.gap
+test_benchmark int
+names['fp']=172.mgrid
+#1 fp run
+test_benchmark fp
+#1 each in int and fp
+test_benchmark fp int
 
 #CPU2006
 names['fp']="${cfp2006[*]}"
@@ -141,7 +162,18 @@ names['int']="${cint2006[*]}"
 year=2006
 rawext='ref.rsf'
 validmarker='S'
+invalidmarker='X'
 test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
 test_benchmark int
 test_benchmark fp
+
+#test smaller runs
+#1 int run
+names['int']=254.gap
+test_benchmark int
+names['fp']=400.perlbench
+#1 fp run
+test_benchmark fp
+#1 each in int and fp
+test_benchmark fp int
 
