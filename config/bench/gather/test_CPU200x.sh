@@ -40,6 +40,8 @@ function generate_subbenchmark {
 }
 
 function test_benchmark {
+  #echo "test_benchmark $@" >&2
+
   rm -rf testing
   mkdir -p testing/input/result
 
