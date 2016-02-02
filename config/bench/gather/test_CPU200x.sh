@@ -2,6 +2,15 @@
 set -ue
 set -o pipefail
 
+cfp2000=(168.wupwise 171.swim 172.mgrid 173.applu 177.mesa 178.galgel 179.art 183.equake 187.facerec 188.ammp 189.lucas 191.fma3d 200.sixtrack 301.apsi)
+cint2000=(164.gzip 175.vpr 176.gcc 181.mcf 186.crafty 197.parser 252.eon 253.perlbmk 254.gap 255.vortex 256.bzip2 300.twolf)
+cfp2006=(410.bwaves 416.gamess 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm 481.wrf 482.sphinx3)
+cint2006=(400.perlbench 401.bzip2 403.gcc 429.mcf 445.gobmk 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar 483.xalancbmk)
+
+declare -A names
+names['fp']=
+names['int']=
+
 function exit_handler {
   if test $? -eq 0; then
     echo "CPU2006 gather script passed self-tests"
@@ -116,11 +125,9 @@ function test_benchmark {
   diff testing/golden testing/output
 }
 
-declare -A names
-
 #CPU2000
-names['fp']='168.wupwise 171.swim 172.mgrid 173.applu 177.mesa 178.galgel 179.art 183.equake 187.facerec 188.ammp 189.lucas 191.fma3d 200.sixtrack 301.apsi'
-names['int']='164.gzip 175.vpr 176.gcc 181.mcf 186.crafty 197.parser 252.eon 253.perlbmk 254.gap 255.vortex 256.bzip2 300.twolf'
+names['fp']="${cfp2000[*]}"
+names['int']="${cint2000[*]}"
 year=2000
 rawext='raw'
 validmarker='1'
@@ -129,8 +136,8 @@ test_benchmark int
 test_benchmark fp
 
 #CPU2006
-names['fp']='410.bwaves 416.gamess 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm 481.wrf 482.sphinx3'
-names['int']='400.perlbench 401.bzip2 403.gcc 429.mcf 445.gobmk 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar 483.xalancbmk'
+names['fp']="${cfp2006[*]}"
+names['int']="${cint2006[*]}"
 year=2006
 rawext='ref.rsf'
 validmarker='S'
