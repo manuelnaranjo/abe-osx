@@ -43,25 +43,22 @@ trap err_handler ERR
 #to fail. (The pattern will be 'spec\.cpu2000: ' or 'spec\.cpu2006: ' in this
 #case.)
 function lookup {
-  local file
   local re
-  file="$1"
-  shift
   re="^spec\.cpu${year}"
   while test $# -ne 0; do
     re="${re}\.$1"
     shift
   done
-  #echo "grep \"${re}: \" \"${file}\" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'" >&2
-  grep "${re}: " "${file}" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
+  #echo "grep \"${re}: \" \"${raw}\" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'" >&2
+  grep "${re}: " "${raw}" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
 }
 
 function valid {
   local res
-  if test $# -eq 3; then
-    test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" valid`" = x"${validmarker}"
-  elif test $# -eq 1; then
-    test x"`lookup \"$1\" valid`" = x"${validmarker}"
+  if test $# -eq 2; then
+    test x"`lookup results \"$1\" '.*' \"$2\" valid`" = x"${validmarker}"
+  elif test $# -eq 0; then
+    test x"`lookup valid`" = x"${validmarker}"
   else
     echo "Bad arg for valid()" >&2
     exit 1
@@ -70,7 +67,7 @@ function valid {
 }
 
 function selected {
-  test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" selected`" = x1
+  test x"`lookup results \"$1\" '.*' \"$2\" selected`" = x1
   return $?
 }
 
@@ -107,13 +104,13 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
     exit 1
   fi
 
-  names="`lookup "${raw}" results '.*' benchmark | sort | uniq`"
+  names="`lookup results '.*' benchmark | sort | uniq`"
   for name in ${names}; do
-    iterations="`lookup ${raw} results ${name} '.*' benchmark | wc -l`"
+    iterations="`lookup results ${name} '.*' benchmark | wc -l`"
     for iteration in `seq -w 001 ${iterations}`; do
-      runtime="`lookup "${raw}" results ${name} '.*' ${iteration} reported_time`"
-      ratio="`lookup   "${raw}" results ${name} '.*' ${iteration} ratio`"
-      if valid "${raw}" "${name}" "${iteration}"; then
+      runtime="`lookup results ${name} '.*' ${iteration} reported_time`"
+      ratio="`lookup   results ${name} '.*' ${iteration} ratio`"
+      if valid "${name}" "${iteration}"; then
         ltc "${name}[${iteration}]" \
           --result pass --measurement "${runtime}" --units seconds
         if test x"${ratio}" != 'x--'; then
@@ -132,12 +129,12 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   count=0
   base_runtime_product=1
   for name in ${names}; do
-    iterations="`lookup ${raw} results ${name} '.*' benchmark | wc -l`"
+    iterations="`lookup results ${name} '.*' benchmark | wc -l`"
     for iteration in `seq -w 001 ${iterations}`; do
-      if selected "${raw}" "${name}" "${iteration}"; then
-        if valid "${raw}" "${name}" "${iteration}"; then
-          runtime="`lookup "${raw}" results ${name} '.*' ${iteration} reported_time`"
-          ratio="`lookup   "${raw}" results ${name} '.*' ${iteration} ratio`"
+      if selected "${name}" "${iteration}"; then
+        if valid "${name}" "${iteration}"; then
+          runtime="`lookup results ${name} '.*' ${iteration} reported_time`"
+          ratio="`lookup   results ${name} '.*' ${iteration} ratio`"
           count=$((count + 1))
           base_runtime_product="`echo \"${base_runtime_product} * ${runtime}\" | bc`" || exit
           ltc "${name}" \
@@ -155,7 +152,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   done
 
   #compute and report geomean of runtime
-  run_set="`lookup ${raw} metric`"
+  run_set="`lookup metric`"
   if test ${count} -ne 0; then
     ltc "${run_set} base runtime geomean" --result pass \
       --measurement "`echo \"scale=6; e(l(${base_runtime_product})/${count})\" | bc -l`" \
@@ -164,10 +161,10 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
     #report score if there is one
     #tag it as invalid if the run is invalid
     #also report whether it is valid or not
-    basemean="`lookup ${raw} basemean`"
+    basemean="`lookup basemean`"
     if test x"${basemean}" != x0; then
-      units="`lookup ${raw} units`"
-      if ! valid "${raw}"; then
+      units="`lookup units`"
+      if ! valid; then
 	units="${units} (invalid)"
       fi
       ltc "${run_set} base score" --result pass \
