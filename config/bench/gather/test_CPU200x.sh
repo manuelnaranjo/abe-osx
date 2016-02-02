@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ue
+set -o pipefail
 
 function generate_subbenchmark {
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
