@@ -2,6 +2,29 @@
 set -ue
 set -o pipefail
 
+function exit_handler {
+  if test $? -eq 0; then
+    echo "CPU2006 gather script passed self-tests"
+  else
+    echo "CPU2006 gather script FAILED self-tests" >&2
+  fi
+}
+
+#This only works in some cases, keeping it as it is useful when it works,
+#not wasting any more time trying to understand it.
+function err_handler {
+  exec 1>&2
+  echo "ERROR"
+  echo "Stack trace, excluding subshells:"
+  local frame=0
+  while caller ${frame}; do
+    frame=$((frame + 1))
+  done
+}
+
+trap exit_handler EXIT
+trap err_handler ERR
+
 function generate_subbenchmark {
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
   max_mult=$((RANDOM % 5 + 1)) #1 - 5
@@ -115,4 +138,3 @@ test_benchmark fp int #order matters - CPU200x.sh always processes fp then int i
 test_benchmark int
 test_benchmark fp
 
-echo "CPU2006 gather script passed self-tests"
