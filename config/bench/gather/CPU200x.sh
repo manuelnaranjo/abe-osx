@@ -40,13 +40,14 @@ trap err_handler ERR
 
 #Doesn't need to check that there are pattern inputs - the
 #pattern generated if there are no such inputs is guaranteed
-#to fail. (The pattern will be 'spec\.cpu2006: ' in this case.)
+#to fail. (The pattern will be 'spec\.cpu2000: ' or 'spec\.cpu2006: ' in this
+#case.)
 function lookup {
   local file
   local re
   file="$1"
   shift
-  re='spec\.cpu2006'
+  re="spec\.cpu${year}"
   while test $# -ne 0; do
     re="${re}\.$1"
     shift
@@ -58,9 +59,9 @@ function lookup {
 function valid {
   local res
   if test $# -eq 3; then
-    test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" valid`" = xS
+    test x"`lookup \"$1\" results \"$2\" '.*' \"$3\" valid`" = x"${validmarker}"
   elif test $# -eq 1; then
-    test x"`lookup \"$1\" valid`" = xS
+    test x"`lookup \"$1\" valid`" = x"${validmarker}"
   else
     echo "Bad arg for valid()" >&2
     exit 1
@@ -80,18 +81,32 @@ if ! test -d "${run}"; then
   echo "Directory of runs of benchmark script ($1) not found, or is not a directory" >&2
   exit 1
 fi
-if test "`ls ${run}/result/CINT2006.*.*.rsf 2>/dev/null | wc -l`" -gt 1 ||
-   test "`ls ${run}/result/CFP2006.*.*.rsf  2>/dev/null | wc -l`" -gt 1; then
+if test "`ls ${run}/result/CINT*.*.{raw,rsf} 2>/dev/null | wc -l`" -gt 1 ||
+   test "`ls ${run}/result/CFP*.*.{raw,rsf}  2>/dev/null | wc -l`" -gt 1; then
   echo "Multiple runs of SPEC unsupported" >&2
   exit 1
 fi
-if test "`ls ${run}/result/CINT2006.*.*.rsf 2>/dev/null | wc -l`" -ne 1 &&
-   test "`ls ${run}/result/CFP2006.*.*.rsf  2>/dev/null | wc -l`" -ne 1; then
+if test "`ls ${run}/result/CINT*.*.{raw,rsf} 2>/dev/null | wc -l`" -ne 1 &&
+   test "`ls ${run}/result/CFP*.*.{raw,rsf}  2>/dev/null | wc -l`" -ne 1; then
   echo "No runs of SPEC!" >&2
   exit 1
 fi
 
-for raw in `ls ${run}/result/C{INT,FP}2006.*.*.rsf 2>/dev/null`; do
+for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
+  #Only need to do this once, but we don't know which file will be present
+  if grep -lq '^spec\.cpu2000\.' "${raw}"; then
+    year='2000'
+    rawext='raw'
+    validmarker='1'
+  elif grep -lq '^spec\.cpu2006\.' "${raw}"; then
+    year='2006'
+    rawext='*.rsf'
+    validmarker='S'
+  else
+    echo "Bad vintage" >&2
+    exit 1
+  fi
+
   #data about the run
   run_index=$((`basename ${raw} | cut -d . -f 2` - 1)) || exit #Always 1 so long as we aren't supporting multiple runs of SPEC
 
