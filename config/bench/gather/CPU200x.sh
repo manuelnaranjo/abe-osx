@@ -38,13 +38,10 @@ function err_handler {
 trap exit_handler EXIT
 trap err_handler ERR
 
-#Doesn't need to check that there are pattern inputs - the
-#pattern generated if there are no such inputs is guaranteed
-#to fail. (The pattern will be 'spec\.cpu2000: ' or 'spec\.cpu2006: ' in this
-#case.)
-function lookup {
+function _lookup {
   local re
-  re="^spec\.cpu${year}"
+  re="$1"
+  shift
   while test $# -ne 0; do
     re="${re}\.$1"
     shift
@@ -53,10 +50,25 @@ function lookup {
   grep "${re}: " "${raw}" | cut -f 2 -d : | sed 's/^[[:blank:]]*//' | sed 's/[[:blank:]]*$//'
 }
 
+#Doesn't need to check that there are pattern inputs - the
+#pattern generated if there are no such inputs is guaranteed
+#to fail. (The pattern will be 'spec\.cpu2000: ' or 'spec\.cpu2006: ' in this
+#case.)
+function lookup {
+  _lookup "^spec\.cpu${year}" "$@"
+}
+
+function lookup_subbenchmark {
+  local name
+  name="$1"
+  shift
+  _lookup "^spec\.cpu${year}\.results\.${name/./_}" "$@"
+}
+
 function valid {
   local res
   if test $# -eq 2; then
-    test x"`lookup results \"$1\" '.*' \"$2\" valid`" = x"${validmarker}"
+    test x"`lookup_subbenchmark \"$1\" '.*' \"$2\" valid`" = x"${validmarker}"
   elif test $# -eq 0; then
     test x"`lookup valid`" = x"${validmarker}"
   else
@@ -67,7 +79,7 @@ function valid {
 }
 
 function selected {
-  test x"`lookup results \"$1\" '.*' \"$2\" selected`" = x1
+  test x"`lookup_subbenchmark \"$1\" '.*' \"$2\" selected`" = x1
   return $?
 }
 
@@ -106,10 +118,10 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
 
   names="`lookup results '.*' benchmark | sort | uniq`"
   for name in ${names}; do
-    iterations="`lookup results ${name} '.*' benchmark | wc -l`"
+    iterations="`lookup_subbenchmark ${name} '.*' benchmark | wc -l`"
     for iteration in `seq -w 001 ${iterations}`; do
-      runtime="`lookup results ${name} '.*' ${iteration} reported_time`"
-      ratio="`lookup   results ${name} '.*' ${iteration} ratio`"
+      runtime="`lookup_subbenchmark ${name} '.*' ${iteration} reported_time`"
+      ratio="`lookup_subbenchmark   ${name} '.*' ${iteration} ratio`"
       if valid "${name}" "${iteration}"; then
         ltc "${name}[${iteration}]" \
           --result pass --measurement "${runtime}" --units seconds
@@ -129,12 +141,12 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   count=0
   base_runtime_product=1
   for name in ${names}; do
-    iterations="`lookup results ${name} '.*' benchmark | wc -l`"
+    iterations="`lookup_subbenchmark ${name} '.*' benchmark | wc -l`"
     for iteration in `seq -w 001 ${iterations}`; do
       if selected "${name}" "${iteration}"; then
         if valid "${name}" "${iteration}"; then
-          runtime="`lookup results ${name} '.*' ${iteration} reported_time`"
-          ratio="`lookup   results ${name} '.*' ${iteration} ratio`"
+          runtime="`lookup_subbenchmark ${name} '.*' ${iteration} reported_time`"
+          ratio="`lookup_subbenchmark   ${name} '.*' ${iteration} ratio`"
           count=$((count + 1))
           base_runtime_product="`echo \"${base_runtime_product} * ${runtime}\" | bc`" || exit
           ltc "${name}" \
