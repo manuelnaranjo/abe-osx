@@ -47,7 +47,7 @@ function lookup {
   local re
   file="$1"
   shift
-  re="spec\.cpu${year}"
+  re="^spec\.cpu${year}"
   while test $# -ne 0; do
     re="${re}\.$1"
     shift
