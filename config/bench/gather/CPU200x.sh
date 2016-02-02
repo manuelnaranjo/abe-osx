@@ -107,11 +107,6 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
     exit 1
   fi
 
-  #data about the run
-  run_index=$((`basename ${raw} | cut -d . -f 2` - 1)) || exit #Always 1 so long as we aren't supporting multiple runs of SPEC
-
-  run_workload="`lookup "${raw}" size`"
-
   names="`lookup "${raw}" results '.*' benchmark | sort | uniq`"
   for name in ${names}; do
     iterations="`lookup ${raw} results ${name} '.*' benchmark | wc -l`"
