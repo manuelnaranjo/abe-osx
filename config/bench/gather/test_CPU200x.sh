@@ -43,8 +43,7 @@ function test_benchmark {
   rm -rf testing
   mkdir -p testing/input/result
 
-  local bset
-  for bset in fp int; do
+  for bset in "$@"; do
     exec {STDOUT}>&1
     exec 1>testing/input/result/C${bset^^}${year}.1.${rawext}
     testcase=('')
@@ -83,8 +82,9 @@ function test_benchmark {
   echo 'lava-test-run-attach stdout' >> testing/golden
   echo 'lava-test-run-attach stderr' >> testing/golden
   echo 'lava-test-run-attach linarobenchlog' >> testing/golden
-  echo "lava-test-run-attach CFP${year}.1.${rawext}" >> testing/golden
-  echo "lava-test-run-attach CINT${year}.1.${rawext}" >> testing/golden
+  for bset in "$@"; do
+    echo "lava-test-run-attach C${bset^^}${year}.1.${rawext}" >> testing/golden
+  done
 
   TESTING=1 ./CPU200x.sh testing/input > testing/output
   diff testing/golden testing/output
@@ -98,7 +98,9 @@ names['int']='164.gzip 175.vpr 176.gcc 181.mcf 186.crafty 197.parser 252.eon 253
 year=2000
 rawext='raw'
 validmarker='1'
-test_benchmark
+test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
+test_benchmark int
+test_benchmark fp
 
 #CPU2006
 names['fp']='410.bwaves 416.gamess 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm 481.wrf 482.sphinx3'
@@ -106,6 +108,8 @@ names['int']='400.perlbench 401.bzip2 403.gcc 429.mcf 445.gobmk 456.hmmer 458.sj
 year=2006
 rawext='ref.rsf'
 validmarker='S'
-test_benchmark
+test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
+test_benchmark int
+test_benchmark fp
 
 echo "CPU2006 gather script passed self-tests"
