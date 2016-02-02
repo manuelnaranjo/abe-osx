@@ -34,6 +34,45 @@ function err_handler {
 trap exit_handler EXIT
 trap err_handler ERR
 
+function random_benchmarks {
+  local bset
+  local reference_bset
+  local i
+  local range
+  local candidate
+  local index
+  declare -A count #local (see 'help declare')
+
+  #These must be empty before we start, otherwise we can get dups
+  names['fp']=
+  names['int']=
+  count['fp']=$((RANDOM % 10))
+  count['int']=$((9 - ${count[fp]}))
+
+  for bset in fp int; do
+    declare -A indices #(Re)declare to use (after clearing)
+
+    reference_bset="c${bset}${year}[@]"
+    reference_bset=("${!reference_bset}")
+    range=${#reference_bset[@]}
+
+    for i in `seq 0 ${count[${bset}]}`; do
+      candidate=$((RANDOM % range))
+      while test -n "${indices["${candidate}"]:-}"; do
+        candidate=$((RANDOM % range))
+      done
+      indices["${candidate}"]=x
+    done
+
+    for index in `echo ${!indices[@]} | tr ' ' '\n' | sort -g`; do
+      names["${bset}"]="${names[${bset}]} ${reference_bset[${index}]}"
+    done
+    names["${bset}"]="${names[${bset}]:1}" #strip leading whitespace
+
+    unset indices #Clear
+  done
+}
+
 function generate_subbenchmark {
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
   max_mult=$((RANDOM % 5 + 1)) #1 - 5
@@ -156,6 +195,14 @@ test_benchmark fp
 #1 each in int and fp
 test_benchmark fp int
 
+#5 runs of 1-10 randomly selected benchmarks across both suites
+for i in `seq 0 4`; do
+  random_benchmarks
+  #echo "CFP2000@${names[fp]}@CFP2000" >&2
+  #echo "CINT2000@${names[int]}@CINT2000" >&2
+  test_benchmark ${names['fp']:+fp} ${names['int']:+int}
+done
+
 #CPU2006
 names['fp']="${cfp2006[*]}"
 names['int']="${cint2006[*]}"
@@ -177,3 +224,10 @@ test_benchmark fp
 #1 each in int and fp
 test_benchmark fp int
 
+#5 runs of 1-10 randomly selected benchmarks across both suites
+for i in `seq 0 4`; do
+  random_benchmarks
+  #echo "CFP2006@${names[fp]}@CFP2006" >&2
+  #echo "CINT2006@${names[int]}@CINT2006" >&2
+  test_benchmark ${names['fp']:+fp} ${names['int']:+int}
+done
