@@ -74,6 +74,22 @@ function random_benchmarks {
 }
 
 function generate_subbenchmark {
+  if test x"${size}" = xtest; then
+    median=0.${RANDOM} #Ensure that products have 0 integer part, so that we can test leading 0 output (except for the ratio case, will hope for the best there)
+    ratio='--'
+    base='--'
+  elif test x"${size}" = xtrain; then
+    median=${RANDOM}.${RANDOM}
+    ratio='--'
+    base='--'
+  elif test x"${size}" = xref; then
+    median=`echo "(${RANDOM}.${RANDOM} * 10)" | bc`
+    base_multiplier=$((RANDOM % 25 + 25)) #25 - 49
+    base=`echo "($median * $base_multiplier) / 1" | bc`
+  else
+    echo "Bad args" >&2
+    exit 1
+  fi
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
   max_mult=$((RANDOM % 5 + 1)) #1 - 5
 
@@ -82,12 +98,6 @@ function generate_subbenchmark {
   max=`echo "scale=6; ${median} * 1.0${max_mult}" | bc -l`
 
   runtime=(${min} ${median} ${max})
-  base_multiplier=$((RANDOM % 25 + 25)) #25 - 49
-  base=`echo "($median * $base_multiplier) / 1" | bc`
-
-  if test x${size} != xref; then
-    ratio='--'
-  fi
 
   count=0
   for i in `echo -e "0\\n1\\n2" | sort -R`; do

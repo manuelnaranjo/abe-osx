@@ -148,7 +148,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
           runtime="`lookup_subbenchmark ${name} '.*' ${iteration} reported_time`"
           ratio="`lookup_subbenchmark   ${name} '.*' ${iteration} ratio`"
           count=$((count + 1))
-          base_runtime_product="`echo \"${base_runtime_product} * ${runtime}\" | bc`" || exit
+          base_runtime_product="`echo \"scale=20; ${base_runtime_product} * ${runtime}\" | bc`" || exit
           ltc "${name}" \
             --result pass --measurement "${runtime}" --units seconds
           if test x"${ratio}" != 'x--'; then
