@@ -7,7 +7,7 @@ cint2000=(164.gzip 175.vpr 176.gcc 181.mcf 186.crafty 197.parser 252.eon 253.per
 cfp2006=(410.bwaves 416.gamess 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm 481.wrf 482.sphinx3)
 cint2006=(400.perlbench 401.bzip2 403.gcc 429.mcf 445.gobmk 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar 483.xalancbmk)
 
-declare -A names
+declare -A names invalid
 names['fp']=
 names['int']=
 
@@ -98,22 +98,32 @@ function generate_subbenchmark {
   runtime=(${min} ${median} ${max})
 
   count=0
+  invalidate="${invalid[$1]:-}"
   for i in `echo -e "0\\n1\\n2" | sort -R`; do
-    testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds")
-    if test x${size} = xref; then
-      ratio=`echo "${base}/${runtime[$i]}" | bc -l`
-      if test x"${year}" = x2000; then
-      	ratio=`echo "${ratio} * 100" | bc -l`
+    if test -n "${invalidate:-}" && test ${count} -eq ${invalidate}; then
+      testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result fail")
+      ratio='--'
+    else
+      testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds")
+      if test x${size} = xref; then
+        ratio=`echo "${base}/${runtime[$i]}" | bc -l`
+        if test x"${year}" = x2000; then
+          ratio=`echo "${ratio} * 100" | bc -l`
+        fi
+        testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio")
       fi
-      testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio")
     fi
     if test $((i%2)) -eq 1; then
-      testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${runtime[$i]} --units seconds")
-      selected_count=$((selected_count + 1))
-      selected_product_runtime=`echo "${selected_product_runtime} * ${runtime[$i]}" | bc -l`
-      if test x${size} = xref; then
-	testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${ratio} --units ratio")
-        selected_product_ratio=`echo "${selected_product_ratio} * ${ratio}" | bc -l`
+      if test -n "${invalidate:-}" && test ${count} -eq ${invalidate}; then
+        testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result fail")
+      else
+        testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${runtime[$i]} --units seconds")
+        selected_count=$((selected_count + 1))
+        selected_product_runtime=`echo "${selected_product_runtime} * ${runtime[$i]}" | bc -l`
+        if test x${size} = xref; then
+          testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${ratio} --units ratio")
+          selected_product_ratio=`echo "${selected_product_ratio} * ${ratio}" | bc -l`
+        fi
       fi
     fi
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.benchmark: $1"
@@ -121,7 +131,11 @@ function generate_subbenchmark {
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.reported_time: ${runtime[$i]}"
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.ratio: ${ratio}"
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.selected: $((i % 2))"
-    echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.valid: ${validmarker}"
+    if test -n "${invalidate:-}" && test ${count} -eq ${invalidate}; then
+      echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.valid: ${invalidmarker}"
+    else
+      echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.valid: ${validmarker}"
+    fi
     count=$((count + 1))
   done
 }
@@ -145,6 +159,11 @@ function test_benchmark {
     selected_product_ratio=1
     reference_bset="c${bset}${year}[*]"
     echo "spec.cpu${year}.size: ${size}"
+
+    #If we have set any subbenchmarks to fail in the current bset then,
+    #probably, we should set spec.cpu${year}.invalid to 1. However, this
+    #does not exercise anything we are not already testing and is a pain
+    #to do neatly. So we don't bother.
     if test x"${names[${bset}]}" = x"${!reference_bset}"; then
       echo "spec.cpu${year}.invalid: 0"
       unit="SPEC${bset}"
@@ -245,12 +264,20 @@ names['fp']="${cfp2000[*]}"
 names['int']="${cint2000[*]}"
 year=2000
 validmarker='1'
+invalidmarker='0'
 rawext='raw'
 for size in 'test' 'train' 'ref'; do
   test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
   test_benchmark int
   test_benchmark fp
 done
+
+#Test that we handle invalid individual tests
+unset invalid
+declare -A invalid=(['172.mgrid']=1 ['178.galgel']=0 ['175.vpr']=2)
+test_benchmark fp int
+unset invalid
+declare -A invalid
 
 #test smaller runs
 #1 int run
@@ -276,12 +303,20 @@ names['int']="${cint2006[*]}"
 year=2006
 size='ref'
 validmarker='S'
+invalidmarker='X'
 for size in 'test' 'train' 'ref'; do
   rawext="${size}.rsf"
   test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
   test_benchmark int
   test_benchmark fp
 done
+
+#Test that we handle invalid individual tests
+unset invalid
+declare -A invalid=(['410.bwaves']=0 ['483.xalancbmk']=2)
+test_benchmark fp int
+unset invalid
+declare -A invalid
 
 #test smaller runs
 #1 int run
