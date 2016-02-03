@@ -85,7 +85,7 @@ function generate_subbenchmark {
   base_multiplier=$((RANDOM % 25 + 25)) #25 - 49
   base=`echo "($median * $base_multiplier) / 1" | bc`
 
-  count=1
+  count=0
   for i in `echo -e "0\\n1\\n2" | sort -R`; do
     ratio=`echo "${base}/${runtime[$i]}" | bc -l`
     testcase=("${testcase[@]}" \

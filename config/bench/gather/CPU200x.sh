@@ -119,7 +119,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   names="`lookup results '.*' benchmark | sort | uniq`"
   for name in ${names}; do
     iterations="`lookup_subbenchmark ${name} '.*' benchmark | wc -l`"
-    for iteration in `seq -w 001 ${iterations}`; do
+    for iteration in `seq -w 000 $((iterations - 1))`; do
       runtime="`lookup_subbenchmark ${name} '.*' ${iteration} reported_time`"
       ratio="`lookup_subbenchmark   ${name} '.*' ${iteration} ratio`"
       if valid "${name}" "${iteration}"; then
@@ -142,7 +142,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   base_runtime_product=1
   for name in ${names}; do
     iterations="`lookup_subbenchmark ${name} '.*' benchmark | wc -l`"
-    for iteration in `seq -w 001 ${iterations}`; do
+    for iteration in `seq -w 000 $((iterations - 1))`; do
       if selected "${name}" "${iteration}"; then
         if valid "${name}" "${iteration}"; then
           runtime="`lookup_subbenchmark ${name} '.*' ${iteration} reported_time`"
