@@ -102,6 +102,9 @@ function generate_subbenchmark {
     testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds")
     if test x${size} = xref; then
       ratio=`echo "${base}/${runtime[$i]}" | bc -l`
+      if test x"${year}" = x2000; then
+      	ratio=`echo "${ratio} * 100" | bc -l`
+      fi
       testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio")
     fi
     if test $((i%2)) -eq 1; then
