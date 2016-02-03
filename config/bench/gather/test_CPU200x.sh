@@ -74,6 +74,7 @@ function random_benchmarks {
 }
 
 function generate_subbenchmark {
+  local median ratio base min max runtime count ratio base_multiplier min_mult max_mult
   if test x"${size}" = xtest; then
     median=0.${RANDOM} #Ensure that products have 0 integer part, so that we can test leading 0 output (except for the ratio case, will hope for the best there)
     ratio='--'
