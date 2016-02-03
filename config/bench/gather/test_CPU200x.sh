@@ -126,7 +126,7 @@ function test_benchmark {
 
   for bset in "$@"; do
     exec {STDOUT}>&1
-    exec 1>testing/input/result/C${bset^^}${year}.1.${rawext}
+    exec 1>testing/input/result/C${bset^^}${year}.001.${rawext}
     testcase=('')
     testcase_selected=('')
     selected_count=0
@@ -175,7 +175,7 @@ function test_benchmark {
   echo 'lava-test-run-attach stderr' >> testing/golden
   echo 'lava-test-run-attach linarobenchlog' >> testing/golden
   for bset in "$@"; do
-    echo "lava-test-run-attach C${bset^^}${year}.1.${rawext}" >> testing/golden
+    echo "lava-test-run-attach C${bset^^}${year}.001.${rawext}" >> testing/golden
   done
 
   TESTING=1 ./CPU200x.sh testing/input > testing/output
@@ -221,7 +221,7 @@ TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC
 rm -rf testing/input
 mkdir -p testing/input/result
 touch testing/input/result/CINT2006.test.001.rsf
-touch testing/input/result/CINT2006.ref.002.rsf #TODO: Check that 'ref' is correct
+touch testing/input/result/CINT2006.ref.002.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
