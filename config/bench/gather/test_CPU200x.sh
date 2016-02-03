@@ -146,10 +146,10 @@ function test_benchmark {
     reference_bset="c${bset}${year}[*]"
     echo "spec.cpu${year}.size: ${size}"
     if test x"${names[${bset}]}" = x"${!reference_bset}"; then
-      echo "spec.cpu${year}.valid: ${validmarker}" #TODO: Check when ref run completes
+      echo "spec.cpu${year}.invalid: 0"
       unit="SPEC${bset}"
     else
-      echo "spec.cpu${year}.valid: ${invalidmarker}"
+      echo "spec.cpu${year}.invalid: 1"
       unit="SPEC${bset} (invalid)"
     fi
     echo "spec.cpu${year}.metric: C${bset^^}${year}"
@@ -245,7 +245,6 @@ names['fp']="${cfp2000[*]}"
 names['int']="${cint2000[*]}"
 year=2000
 validmarker='1'
-invalidmarker='0'
 rawext='raw'
 for size in 'test' 'train' 'ref'; do
   test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
@@ -277,7 +276,6 @@ names['int']="${cint2006[*]}"
 year=2006
 size='ref'
 validmarker='S'
-invalidmarker='X'
 for size in 'test' 'train' 'ref'; do
   rawext="${size}.rsf"
   test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present

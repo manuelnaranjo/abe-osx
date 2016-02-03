@@ -70,7 +70,7 @@ function valid {
   if test $# -eq 2; then
     test x"`lookup_subbenchmark \"$1\" '.*' \"$2\" valid`" = x"${validmarker}"
   elif test $# -eq 0; then
-    test x"`lookup valid`" = x"${validmarker}"
+    test x"`lookup invalid`" = x0
   else
     echo "Bad arg for valid()" >&2
     exit 1
