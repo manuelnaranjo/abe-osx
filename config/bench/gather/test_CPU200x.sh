@@ -92,11 +92,8 @@ function generate_subbenchmark {
   fi
   min_mult=$((RANDOM % 5 + 95)) #95 - 99
   max_mult=$((RANDOM % 5 + 1)) #1 - 5
-
-  median=${RANDOM}.${RANDOM}
-  min=`echo "scale=6; ${median} * 0.${min_mult}" | bc -l`
-  max=`echo "scale=6; ${median} * 1.0${max_mult}" | bc -l`
-
+  min=`echo "scale=6; ${median} * 0.${min_mult}"  | bc -l | awk '{printf "%f", $0}'`
+  max=`echo "scale=6; ${median} * 1.0${max_mult}" | bc -l | awk '{printf "%f", $0}'`
   runtime=(${min} ${median} ${max})
 
   count=0
