@@ -85,21 +85,25 @@ function generate_subbenchmark {
   base_multiplier=$((RANDOM % 25 + 25)) #25 - 49
   base=`echo "($median * $base_multiplier) / 1" | bc`
 
+  if test x${size} != xref; then
+    ratio='--'
+  fi
+
   count=0
   for i in `echo -e "0\\n1\\n2" | sort -R`; do
-    ratio=`echo "${base}/${runtime[$i]}" | bc -l`
-    testcase=("${testcase[@]}" \
-      "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds" \
-      "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio"
-      )
+    testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${runtime[$i]} --units seconds")
+    if test x${size} = xref; then
+      ratio=`echo "${base}/${runtime[$i]}" | bc -l`
+      testcase=("${testcase[@]}" "lava-test-case $1[00${count}] --result pass --measurement ${ratio} --units ratio")
+    fi
     if test $((i%2)) -eq 1; then
-      testcase_selected=("${testcase_selected[@]}" \
-      "lava-test-case $1 --result pass --measurement ${runtime[$i]} --units seconds" \
-      "lava-test-case $1 --result pass --measurement ${ratio} --units ratio" \
-      )
+      testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${runtime[$i]} --units seconds")
       selected_count=$((selected_count + 1))
       selected_product_runtime=`echo "${selected_product_runtime} * ${runtime[$i]}" | bc -l`
-      selected_product_ratio=`echo "${selected_product_ratio} * ${ratio}" | bc -l`
+      if test x${size} = xref; then
+	testcase_selected=("${testcase_selected[@]}" "lava-test-case $1 --result pass --measurement ${ratio} --units ratio")
+        selected_product_ratio=`echo "${selected_product_ratio} * ${ratio}" | bc -l`
+      fi
     fi
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.benchmark: $1"
     echo "spec.cpu${year}.results.${1%%.*}_${1#*.}.base.00${count}.reference: ${base}"
@@ -129,7 +133,7 @@ function test_benchmark {
     selected_product_runtime=1
     selected_product_ratio=1
     reference_bset="c${bset}${year}[*]"
-    echo "spec.cpu${year}.size: ref"
+    echo "spec.cpu${year}.size: ${size}"
     if test x"${names[${bset}]}" = x"${!reference_bset}"; then
       echo "spec.cpu${year}.valid: ${validmarker}" #TODO: Check when ref run completes
       unit="SPEC${bset}"
@@ -142,8 +146,6 @@ function test_benchmark {
     for name in ${names[${bset}]}; do
       generate_subbenchmark $name
     done
-    score=`echo "scale=6; e(l(${selected_product_ratio})/${selected_count})" | bc -l`
-    echo "spec.cpu${year}.basemean: ${score}"
 
     for x in "${testcase[@]:1}"; do
       echo "$x" >> testing/golden
@@ -155,10 +157,16 @@ function test_benchmark {
       "C${bset^^}${year} base runtime geomean" \
       `echo "scale=6; e(l(${selected_product_runtime})/${selected_count})" | bc -l` \
       'geomean of selected runtimes (seconds)' >> testing/golden
-    printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
-      "C${bset^^}${year} base score" \
-      ${score} \
-      "${unit}" >> testing/golden
+    if test x"${size}" = xref; then
+      score=`echo "scale=6; e(l(${selected_product_ratio})/${selected_count})" | bc -l`
+      echo "spec.cpu${year}.basemean: ${score}"
+      printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
+        "C${bset^^}${year} base score" \
+        ${score} \
+        "${unit}" >> testing/golden
+    else
+      echo "spec.cpu${year}.basemean: 0"
+    fi
     exec 1>&${STDOUT}
   done
 
@@ -178,12 +186,14 @@ function test_benchmark {
 names['fp']="${cfp2000[*]}"
 names['int']="${cint2000[*]}"
 year=2000
-rawext='raw'
 validmarker='1'
 invalidmarker='0'
-test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
-test_benchmark int
-test_benchmark fp
+rawext='raw'
+for size in 'test' 'train' 'ref'; do
+  test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
+  test_benchmark int
+  test_benchmark fp
+done
 
 #test smaller runs
 #1 int run
@@ -207,12 +217,15 @@ done
 names['fp']="${cfp2006[*]}"
 names['int']="${cint2006[*]}"
 year=2006
-rawext='ref.rsf'
+size='ref'
 validmarker='S'
 invalidmarker='X'
-test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
-test_benchmark int
-test_benchmark fp
+for size in 'test' 'train' 'ref'; do
+  rawext="${size}.rsf"
+  test_benchmark fp int #order matters - CPU200x.sh always processes fp then int if both are present
+  test_benchmark int
+  test_benchmark fp
+done
 
 #test smaller runs
 #1 int run
