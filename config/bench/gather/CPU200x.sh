@@ -112,7 +112,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
     rawext='*.rsf'
     validmarker='S'
   else
-    echo "Bad vintage" >&2
+    echo "Bad vintage (empty file?)" >&2
     exit 1
   fi
 
