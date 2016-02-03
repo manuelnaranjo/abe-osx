@@ -182,6 +182,53 @@ function test_benchmark {
   diff testing/golden testing/output
 }
 
+#Test 'should fail' cases
+rm -rf testing
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Directory of runs of benchmark script (testing/input) not found, or is not a directory
+
+mkdir testing
+touch testing/input
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Directory of runs of benchmark script (testing/input) not found, or is not a directory
+
+rm testing/input
+mkdir testing/input
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #No runs of SPEC!
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CINT2000.001.raw
+touch testing/input/result/CINT2000.002.raw
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CFP2000.001.raw
+touch testing/input/result/CFP2000.002.raw
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CINT2006.test.001.rsf
+touch testing/input/result/CINT2006.test.002.rsf
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CFP2006.test.001.rsf
+touch testing/input/result/CFP2006.test.002.rsf
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CINT2006.test.001.rsf
+touch testing/input/result/CINT2006.ref.002.rsf #TODO: Check that 'ref' is correct
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
+
+rm -rf testing/input
+mkdir -p testing/input/result
+touch testing/input/result/CINT2006.test.001.rsf
+TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Bad vintage (empty file?)
+
 #CPU2000
 names['fp']="${cfp2000[*]}"
 names['int']="${cint2000[*]}"
