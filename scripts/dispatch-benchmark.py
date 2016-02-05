@@ -146,14 +146,15 @@ def main():
   args = vars(parser.parse_args())
 
   #Get token from keyring
-  args['lava_token'] = keyring.core.get_password("lava-tool-https://%s" %
-          args['lava_server'], args['lava_user'])
-  if not args['lava_token']:
-    print >> sys.stderr, 'No token in keyring for %s on %s' % \
-      (args['lava_user'], args['lava_server'])
-    print >> sys.stderr, 'Expected to find token for %s on lava-tool-https://%s' % \
-      (args['lava_user'], args['lava_server'])
-    sys.exit(1)
+  if not args['dry_run']:
+    args['lava_token'] = keyring.core.get_password("lava-tool-https://%s" %
+            args['lava_server'], args['lava_user'])
+    if not args['lava_token']:
+      print >> sys.stderr, 'No token in keyring for %s on %s' % \
+        (args['lava_user'], args['lava_server'])
+      print >> sys.stderr, 'Expected to find token for %s on lava-tool-https://%s' % \
+        (args['lava_user'], args['lava_server'])
+      sys.exit(1)
 
   #All of these values will be empty string if not explicitly set
   var_generator_inputs = {k.upper(): args[k] or '' for k in [
