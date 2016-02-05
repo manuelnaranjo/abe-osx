@@ -155,10 +155,6 @@ def main():
       (args['lava_user'], args['lava_server'])
     sys.exit(1)
 
-  #Set post-parse defaults
-  if not args['bundle_stream']:
-    args['bundle_stream'] = '/private/personal/%s/' % args['lava_user']
-
   #All of these values will be empty string if not explicitly set
   var_generator_inputs = {k.upper(): args[k] or '' for k in [
     'lava_server',
@@ -196,15 +192,6 @@ def main():
   if var_generator.wait() != 0:
     print >> sys.stderr, 'Benchmark.sh failed'
     sys.exit(1)
-
-  #Validate inputs
-  if substitutions['PREBUILT'] != 'None':
-    bad_flags = filter(lambda x: substitutions[x] and substitutions[x] != 'None', \
-                       ('TOOLCHAIN', 'SYSROOT', 'COMPILER_FLAGS', 'MAKE_FLAGS'))
-    if bad_flags:
-      for flag in bad_flags:
-        print >> sys.stderr, 'Must not specify %s with --prebuilt' % flag
-      sys.exit(1)
 
   config=yaml_to_json(args['template'], substitutions)
   if args['dry_run']:

@@ -66,6 +66,28 @@ function external_metadata {
   done < "${conf}"
 }
 
+function validate {
+  local x ret
+  ret=0
+  for x in TARGET_CONFIG BENCHMARK; do
+    if test -z "${!x:-}"; then
+      echo "${x} must be set" >&2
+      ret=1
+    fi
+  done
+  if test -n "${PREBUILT:-}"; then
+    for x in TOOLCHAIN SYSROOT COMPILER_FLAGS MAKE_FLAGS; do
+      if test -n "${!x:-}"; then
+        echo "Must not specify $x with PREBUILT" >&2
+        ret=1
+      fi
+    done
+  fi
+  return ${ret}
+}
+
+validate #Fails on error due to set -e
+
 #Mapping from targets to images
 #TODO 3 maps to handle some cases having 1 line, some cases having 2 lines and
 #     some cases having 3 lines. Dreadful hack that will do for now.
@@ -86,7 +108,6 @@ image_map_3=(
 [mustang]='nfsrootfs: "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150319-701.tar.gz"'
 )
 
-echo ${TARGET_CONFIG:?TARGET_CONFIG must be set} > /dev/null
 HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-kvm}"
 if test x"${HOST_SESSION:-}" = x; then
   HOST_SESSION=config/bench/lava/host-session
@@ -141,7 +162,7 @@ LAVA_USER="${LAVA_USER:-${USER}}"
 
 #Parameters to be substituted into template
 output_value JOB_NAME "${BENCHMARK}-${LAVA_USER}"
-output_value BENCHMARK "${BENCHMARK:?BENCHMARK must be set}"
+output_value BENCHMARK "${BENCHMARK}" #Known to be set, see validation above
 
 #By the time these parameters reach LAVA, None means unset
 #Unset is not necessarily the same as empty string - for example,
