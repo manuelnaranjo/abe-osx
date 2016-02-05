@@ -83,6 +83,11 @@ function validate {
       fi
     done
   fi
+  if test -z "${PREBUILT:-}" &&
+     test -z "${TOOLCHAIN:-}"; then
+    echo "Exactly one of TOOLCHAIN and PREBUILT must be set" >&2
+    ret=1
+  fi
   return ${ret}
 }
 
