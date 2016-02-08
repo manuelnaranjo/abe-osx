@@ -129,9 +129,12 @@ def main():
                       help='Prebuilt tarball of benchmark.')
   parser.add_argument('--toolchain',
                       help='Toolchain to build benchmark with.')
-  parser.add_argument('--triple',
+  #Strictly, TRIPLE does not have to be set, as unset means native. However, we
+  #force user to be explicit here, given the length of time it takes to fail on
+  #accidental unset of TRIPLE.
+  parser.add_argument('--triple', required=True,
                       help='''Triple identifying target to build for and run
-                              on. Omit for native build/run.''')
+                              on. Set to 'native' for native build/run.''')
   parser.add_argument('--sysroot',
                       help='Sysroot to build benchmark with.')
   parser.add_argument('--compiler-flags',
@@ -144,6 +147,10 @@ def main():
                       help="Show both stages of parsing, don't dispatch.")
   global args
   args = vars(parser.parse_args())
+
+  #Post-process triple argument (will be validated by Benchmark.sh)
+  if args['triple'] == 'native':
+    args['triple'] = None
 
   #Get token from keyring
   if not args['dry_run']:
