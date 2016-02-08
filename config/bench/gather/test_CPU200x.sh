@@ -258,6 +258,11 @@ rm -rf testing/input
 mkdir -p testing/input/result
 touch testing/input/result/CINT2006.test.001.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Bad vintage (empty file?)
+TESTING=1 ./CPU2000.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year (empty file is among the possible causes)
+TESTING=1 ./CPU2006.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year (empty file is among the possible causes)
+
+#Non-test: we don't test that we report the 'mixture of spec inputs' error,
+#          just because this is so unlikely to ever happen.
 
 #CPU2000
 names['fp']="${cfp2000[*]}"
@@ -271,6 +276,13 @@ for size in 'test' 'train' 'ref'; do
   test_benchmark int
   test_benchmark fp
 done
+
+#Test that we work if called through the right wrapper
+TESTING=1 ./CPU2000.sh testing/input > testing/output
+diff testing/golden testing/output
+
+#Test that we fail if called through the wrong wrapper
+TESTING=1 ./CPU2006.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year.
 
 #Test that we handle invalid individual tests
 unset invalid
@@ -310,6 +322,13 @@ for size in 'test' 'train' 'ref'; do
   test_benchmark int
   test_benchmark fp
 done
+
+#Test that we work if called through the right wrapper
+TESTING=1 ./CPU2006.sh testing/input > testing/output
+diff testing/golden testing/output
+
+#Test that we fail if called through the wrong wrapper
+TESTING=1 ./CPU2000.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year.
 
 #Test that we handle invalid individual tests
 unset invalid

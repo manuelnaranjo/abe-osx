@@ -104,21 +104,34 @@ if test "`ls ${run}/result/CINT*.*.{raw,rsf} 2>/dev/null | wc -l`" -ne 1 &&
   exit 1
 fi
 
-for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
-  #Only need to do this once, but we don't know which file will be present
-  if grep -lq '^spec\.cpu2000\.' "${raw}"; then
-    year='2000'
-    rawext='raw'
-    validmarker='1'
-  elif grep -lq '^spec\.cpu2006\.' "${raw}"; then
-    year='2006'
-    rawext='*.rsf'
-    validmarker='S'
+year="`basename $0 .sh`"
+year="${year#CPU}"
+if test x"${year}" = x200x; then
+  if   grep -lq '^spec\.cpu2000\.' ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null; then
+    year=2000
+  elif grep -lq '^spec\.cpu2006\.' ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null; then
+    year=2006
   else
     echo "Bad vintage (empty file?)" >&2
     exit 1
   fi
+fi
+if test x"${year}" = x2000; then
+  rawext='raw'
+  validmarker='1'
+else
+  rawext='*.rsf'
+  validmarker='S'
+fi
 
+for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
+  if ! grep -lq "^spec\.cpu${year}\." "${raw}"; then
+    echo "SPEC vintage of input file does not match set year." >&2
+    echo "Implies one of:" >&2
+    echo "  * We were invoked through the wrong symlink." >&2
+    echo "  * Input file ${raw} is empty." >&2
+    echo "  * Input contains a mixture of SPEC outputs." >&2
+  fi
   names="`lookup results '.*' benchmark | sort | uniq`"
   for name in ${names}; do
     iterations="`lookup_subbenchmark ${name} '.*' benchmark | wc -l`"
