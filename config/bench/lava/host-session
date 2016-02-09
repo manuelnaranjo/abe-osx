@@ -227,7 +227,8 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   if test ${trusted} -ne 0; then
        #MUST be uploaded conditionally on ${trusted} --
        #target side will run gather.sh if it exists and thus dump data in results bundle
-    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "${ABE_DIR}/config/bench/gather/${benchmark}.sh" 'gather.sh')
+       #the gather script is allowed to be a symlink, so that we can write scripts that work for multiple benchmarks in a suite
+    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "`readlink -e ${ABE_DIR}/config/bench/gather/${benchmark}.sh`" 'gather.sh')
     if test $? -ne 0; then
       echo "Upload of ${ABE_DIR}/config/bench/gather/${benchmark}.sh to ${target_ip}:gather.sh failed" >&2
       exit 1
