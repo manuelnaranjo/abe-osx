@@ -186,7 +186,7 @@ function test_benchmark {
     printf 'lava-test-case %s --result pass --measurement %f --units %s\n' \
       "C${bset^^}${year} base runtime geomean" \
       `echo "scale=6; e(l(${selected_product_runtime})/${selected_count})" | bc -l` \
-      'geomean of selected runtimes (seconds)' >> testing/golden
+      'seconds' >> testing/golden
     if test x"${size}" = xref; then
       score=`echo "scale=6; e(l(${selected_product_ratio})/${selected_count})" | bc -l`
       echo "spec.cpu${year}.basemean: ${score}"

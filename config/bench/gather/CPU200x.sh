@@ -184,7 +184,7 @@ for raw in `ls ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null`; do
   if test ${count} -ne 0; then
     ltc "${run_set} base runtime geomean" --result pass \
       --measurement "`echo \"scale=6; e(l(${base_runtime_product})/${count})\" | bc -l | awk '{printf \"%f\", $0}'`" \
-      --units 'geomean of selected runtimes (seconds)' || exit
+      --units 'seconds' || exit
 
     #report score if there is one
     #tag it as invalid if the run is invalid
