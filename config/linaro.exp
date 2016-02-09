@@ -111,7 +111,7 @@ case "$target_triplet" in {
     }
     { "aarch64*-*elf*" } {
 	set target_list { "v8model" } 
-	set env(FOUNDATION_MODEL) "/linaro/foundation-model/Foundation_v8pkg/Foundation_v8"
+	set env(FOUNDATION_MODEL) "/linaro/Foundation_Platformpkg/models/Linux64_GCC-4.7/Foundation_Platform"
     }
     { "aarch64-*linux*" } {
 	case "$native$myname" in {
