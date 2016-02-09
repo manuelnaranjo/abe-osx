@@ -69,6 +69,8 @@ function external_metadata {
 function validate {
   local x ret
   ret=0
+
+  #Cases that must be corrected by user (errors)
   for x in TARGET_CONFIG BENCHMARK; do
     if test -z "${!x:-}"; then
       echo "${x} must be set" >&2
@@ -108,6 +110,9 @@ function validate {
       fi
     fi
   fi
+
+
+  #Cases that can be fixed up automatically (warnings)
   for x in LAVA_SERVER BUNDLE_SERVER; do
     if test -n "${!x:-}"; then
       if echo "${!x}" | grep -q '://'; then
@@ -133,6 +138,7 @@ function validate {
       echo "Added '/' to end of BUNDLE_STREAM" >&2
     fi
   fi
+
   return ${ret}
 }
 
