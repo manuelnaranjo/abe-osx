@@ -106,6 +106,13 @@ function validate {
       fi
     fi
   done
+  if test -n "${BUNDLE_STREAM:-}"; then
+    if test "${BUNDLE_STREAM: -1}" != /; then
+      BUNDLE_STREAM="${BUNDLE_STREAM}/"
+      echo "BUNDLE_STREAM must end with '/'" >&2
+      echo "Added '/' to end of BUNDLE_STREAM" >&2
+    fi
+  fi
   return ${ret}
 }
 
