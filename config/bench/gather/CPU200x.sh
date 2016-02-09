@@ -106,7 +106,10 @@ fi
 
 year="`basename $0 .sh`"
 year="${year#CPU}"
-if test x"${year}" = x200x; then
+
+#Must be able to work with arbitrary name (for example, gather.sh)
+if test x"${year}" != x2000 &&
+   test x"${year}" != x2006; then
   if   grep -lq '^spec\.cpu2000\.' ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null; then
     year=2000
   elif grep -lq '^spec\.cpu2006\.' ${run}/result/C{INT,FP}*.*.{raw,rsf} 2>/dev/null; then
