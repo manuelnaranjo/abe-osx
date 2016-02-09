@@ -88,6 +88,24 @@ function validate {
     echo "Exactly one of TOOLCHAIN and PREBUILT must be set" >&2
     ret=1
   fi
+  for x in LAVA_SERVER BUNDLE_SERVER; do
+    if test -n "${!x:-}"; then
+      if echo "${!x}" | grep -q '://'; then
+        eval ${x}="${!x/#*:\/\/}"
+        echo "${x} must not specify protocol" >&2
+        echo "Stripped ${x} to ${!x}" >&2
+      fi
+      if echo "${!x}" | grep -q '/RPC2$'; then
+        eval ${x}="${!x}/"
+        echo "${x} must have '/' following /RPC2" >&2
+        echo "Added trailing '/' to ${x}" >&2
+      elif ! echo "${!x}" | grep -q '/RPC2/$'; then
+        eval ${x}="${!x}/RPC2/"
+        echo "${x} must end with /RPC2/" >&2
+        echo "Added /RPC2/ to ${x}" >&2
+      fi
+    fi
+  done
   return ${ret}
 }
 
