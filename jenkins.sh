@@ -52,8 +52,8 @@ shared="${HOME}/workspace/shared"
 # This is an optional directory for the reference copy of the git repositories.
 git_reference="${HOME}/snapshots-ref"
 
-# GCC branch to build
-gcc_branch="latest"
+# Override default versions of components
+change=""
 
 # set default values for options to make life easier
 user_snapshots="${user_workspace}/snapshots"
@@ -65,7 +65,7 @@ fileserver="ex40-01.tcwglab.linaro.org/snapshots-ref"
 logserver=""
 
 # Template of logs' directory name
-logname='${job}${BUILD_NUMBER}-${branch}/${arch}.${target}'
+logname=""
 
 # Compiler languages to build
 languages=default
@@ -92,10 +92,12 @@ excludecheck_opt=""
 # --logname gcc-<sha1>
 rebuild=true
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
+orig_parameters="$@"
+
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l override:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
 while test $# -gt 0; do
     case $1 in
-	--gcc-branch) gcc_branch=$2; shift ;;
+	--override) change="$change $2"; shift ;;
         -s|--snapshots) user_snapshots=$2; shift ;;
         -g|--gitrepo) git_reference=$2; shift ;;
         -c|--abe) abe_dir=$2; shift ;;
@@ -124,21 +126,12 @@ else
     job="`echo ${JOB_NAME}  | cut -d '/' -f 1`"
 fi
 
-# Get the version of GCC we're supposed to build
-change=""
-if test x"${gcc_branch}" = x""; then
-    echo "ERROR: Empty value passed to --gcc-branch."
-    echo "Maybe you meant to pass '--gcc-branch latest' ?"
-    exit 1
-else
-    if test x"${gcc_branch}" != x"latest"; then
-	change="${change} gcc=${gcc_branch}"
-    fi
-    branch="`echo ${gcc_branch} | cut -d '~' -f 2 | sed -e 's:\.tar\.xz::'`"
-fi
-
 arch="`uname -m`"
 
+if [ x"$logserver" = x"" -a x"$logname" != x"" ]; then
+    echo "ERROR: \$logname is not provided, but \$logserver is set to $logserver"
+    exit 1
+fi
 # Now that all variables from $logname template are known, calculate log dir.
 eval dir="$logname"
 
@@ -399,7 +392,7 @@ if test x"${BUILD_USER_LAST_NAME}" != x; then
     requestor="${requestor}.${BUILD_USER_LAST_NAME}"
 fi
 
-echo "Build by ${requestor} on ${NODE_NAME} for branch ${branch}"
+echo "Build by ${requestor} on ${NODE_NAME} with parameters: $orig_parameters"
 
 manifest="`find ${user_workspace}/_build/builds/ -name destdir -prune -o -name \*manifest.txt -print`"
 if test x"${manifest}" != x; then
