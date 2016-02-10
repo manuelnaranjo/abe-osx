@@ -101,7 +101,7 @@ benchgccpath=
 tmpdir="`mktemp -dt downloads-XXXXXXX`"
 
 benchmark="${1}"
-if x"${benchmark}" = xNone; then
+if test x"${benchmark}" = xNone; then
   echo "Must give benchmark" >&2
   exit 1
 fi
