@@ -4,9 +4,9 @@ error=1
 
 function exit_handler {
   if test ${error} -eq 0; then
-    echo "CoremarkPro gather script passed self-tests"
+    echo "Coremark-Pro gather script passed self-tests"
   else
-    echo "CoremarkPro gather script FAILED self-tests" >&2
+    echo "Coremark-Pro gather script FAILED self-tests" >&2
   fi
   exit ${error}
 }
@@ -194,7 +194,7 @@ done
 
 exec 1>&${STDOUT}
 
-TESTING=1 ./CoremarkPro.sh testing/input > testing/output
+TESTING=1 ./Coremark-Pro.sh testing/input > testing/output
 
 diff testing/{golden,output}
 
@@ -239,93 +239,93 @@ done
 
 exec 1>&${STDOUT}
 
-TESTING=1 ./CoremarkPro.sh testing/input > testing/output
+TESTING=1 ./Coremark-Pro.sh testing/input > testing/output
 
 diff testing/{golden,output}
 
 exec 1>/dev/null
-TESTING=1 ./CoremarkPro.sh 2>&1 && false #should fail with no args ($1: unbound variable)
+TESTING=1 ./Coremark-Pro.sh 2>&1 && false #should fail with no args ($1: unbound variable)
 
 #should fail if *mark has other than 2 lines
 rm -f testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.{,noncert_}mark
 for x in '' noncert_; do
   mkdir testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
-  TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #not a file
+  TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #not a file
   rmdir testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
   touch testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
-  TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #0 lines
+  TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #0 lines
   echo >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
-  TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #1 line
+  TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #1 line
   echo >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
   echo >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
-  TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #3 lines
+  TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #3 lines
   rm testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.${x}mark
 done
 
 #should fail with bad log file
 echo > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #header ${line[$i]} (will fail with $1: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #header ${line[$i]} (will fail with $1: unbound variable)
 echo '#Results foo verification' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with line[$i]: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with line[$i]: unbound variable)
 echo 'foo foo' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read code size (will fail with $9: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read code size (will fail with $9: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo '1 2 3 4 5 6 7 8 9 10' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read data size (will fail with $9: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read data size (will fail with $9: unbound variable)
 echo '#Results foo performance' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on absence of following line (line[$((i+1))]: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of following line (line[$((i+1))]: unbound variable)
 echo >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on looking for comment character in following line (1: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on looking for comment character in following line (1: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read performance data (will fail with $6: unbound variable, because first thing report_measured looks at is pass/fail)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read performance data (will fail with $6: unbound variable, because first thing report_measured looks at is pass/fail)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name 4 5 0' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read runtime (will fail with $7: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read runtime (will fail with $7: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name 4 5 0 7' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read it_per_sec (will fail with $9: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read it_per_sec (will fail with $9: unbound variable)
 echo '#Median' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with line[$i]: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with line[$i]: unbound variable)
 echo 'foo foo' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read performance data (will fail with $6: unbound variable, because first thing report_measured looks at is pass/fail)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read performance data (will fail with $6: unbound variable, because first thing report_measured looks at is pass/fail)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name 4 5 0' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read runtime (will fail with $7: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read runtime (will fail with $7: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'foo foo name 4 5 0 7' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input 2>&1 && false #fails on being unable to read it_per_sec (will fail with $9: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read it_per_sec (will fail with $9: unbound variable)
 
 #should fail with bad dir
-TESTING=1 ./CoremarkPro.sh testing/input/fail 2>&1 && false #check_dir "${run}"
+TESTING=1 ./Coremark-Pro.sh testing/input/fail 2>&1 && false #check_dir "${run}"
 mkdir testing/input/fail
-TESTING=1 ./CoremarkPro.sh testing/input/fail 2>&1 && false #check_dir "${run}/builds" (exists)
+TESTING=1 ./Coremark-Pro.sh testing/input/fail 2>&1 && false #check_dir "${run}/builds" (exists)
 touch testing/input/fail/builds
-TESTING=1 ./CoremarkPro.sh testing/input/fail 2>&1 && false #check_dir "${run}/builds" (is a dir)
+TESTING=1 ./Coremark-Pro.sh testing/input/fail 2>&1 && false #check_dir "${run}/builds" (is a dir)
 rm testing/input/fail/builds
 mkdir -p testing/input/fail/builds/TARGET/TOOLCHAIN/logs
 touch    testing/input/fail/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 touch    testing/input/fail/builds/TARGET/TOOLCHAIN/cert
-TESTING=1 ./CoremarkPro.sh testing/input/fail  #cert existing as a non-directory is harmless
+TESTING=1 ./Coremark-Pro.sh testing/input/fail  #cert existing as a non-directory is harmless
 
 #Check number of logs
 rm -rf testing/input/fail
 mkdir -p testing/input/fail/builds
-TESTING=1 ./CoremarkPro.sh testing/input/fail 2>&1 && false #echo "Found no log"
+TESTING=1 ./Coremark-Pro.sh testing/input/fail 2>&1 && false #echo "Found no log"
 mkdir -p testing/input/fail/builds/TARGET1/TOOLCHAIN/logs
 touch    testing/input/fail/builds/TARGET1/TOOLCHAIN/logs/TARGET1.TOOLCHAIN.log
 mkdir -p testing/input/fail/builds/TARGET2/TOOLCHAIN/logs
 touch    testing/input/fail/builds/TARGET2/TOOLCHAIN/logs/TARGET2.TOOLCHAIN.log
-TESTING=1 ./CoremarkPro.sh testing/input/fail 2>&1 && false #echo "Found more than one log"
+TESTING=1 ./Coremark-Pro.sh testing/input/fail 2>&1 && false #echo "Found more than one log"
 
 exec 1>&${STDOUT}
 error=0

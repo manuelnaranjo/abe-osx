@@ -178,7 +178,7 @@ if test ${#devices[@]} -eq 0; then
 fi
 if test x"${benchmark:-}" = x; then
   echo "No benchmark given (-b)" 1>&2
-  echo "Sensible values might be CoremarkPro, CPU2000, CPU2006" 1>&2
+  echo "Sensible values might be Coremark-Pro, CPU2000, CPU2006" 1>&2
   error=1
   exit
 fi
