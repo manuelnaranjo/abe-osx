@@ -138,6 +138,18 @@ function validate {
       echo "Added '/' to end of BUNDLE_STREAM" >&2
     fi
   fi
+  if test x"${BENCHMARK}" = x"CPU2000" ||
+     test x"${BENCHMARK}" = x"CPU2006"; then
+    TIMEOUT=604800
+  elif test x"${BENCHMARK}" = x"Coremark-Pro"; then
+    TIMEOUT=14400
+  elif test x"${BENCHMARK}" = x"fakebench"; then
+    TIMEOUT=3600
+  else
+    TIMEOUT=86400
+    echo "Unknown benchmark '${BENCHMARK}'" >&2
+    echo "Set TIMEOUT to 24 hours" >&2
+  fi
 
   return ${ret}
 }
@@ -248,8 +260,7 @@ output_value BUNDLE_SERVER "https://${BUNDLE_SERVER:-${LAVA_SERVER}}"
 output_value BUNDLE_STREAM "${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
 output_value TESTDEF_REPO "https://git.linaro.org/toolchain/abe"
 output_value TESTDEF_REVISION "${TESTDEF_REVISION:-benchmarking}"
-#TODO Map this? Depend on benchmark and target.
-output_value TIMEOUT ${TIMEOUT:-5400}
+output_value TIMEOUT ${TIMEOUT}
 output_value PUBLIC_KEY "${PUBLIC_KEY:-}"
 #End of parameters to substitute into template
 
