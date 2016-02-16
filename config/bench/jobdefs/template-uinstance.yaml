@@ -1,4 +1,4 @@
-job_name: '${JOB_NAME}'
+job_name: '${LAVA_JOB_NAME}'
 timeout: ${TIMEOUT}
 actions:
   - command: '${HOST_DEPLOY_ACTION}'

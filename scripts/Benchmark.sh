@@ -235,7 +235,7 @@ LAVA_USER="${LAVA_USER:-${USER}}"
 #For example, setting compiler/make flags makes no sense if prebuilt is set
 
 #Parameters to be substituted into template
-output_value JOB_NAME "${JOB_NAME:-${BENCHMARK}-${LAVA_USER}}"
+output_value LAVA_JOB_NAME "${LAVA_JOB_NAME:-${BENCHMARK}-${LAVA_USER}}"
 output_value BENCHMARK "${BENCHMARK}" #Known to be set, see validation above
 
 #By the time these parameters reach LAVA, None means unset
