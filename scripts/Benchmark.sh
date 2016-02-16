@@ -66,6 +66,10 @@ function external_metadata {
   done < "${conf}"
 }
 
+#This script has two 'entry points' - scripts/dispatch-benchmark.py and
+#Jenkins jobs. Both of these entry points restrict the options for BENCHMARK
+#and TARGET_CONFIG to only the valid set, so there is no need to validate these
+#here beyond confirming that they have been set at all.
 function validate {
   local x ret
   ret=0
