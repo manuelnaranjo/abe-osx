@@ -142,17 +142,19 @@ function validate {
       echo "Added '/' to end of BUNDLE_STREAM" >&2
     fi
   fi
-  if test x"${BENCHMARK}" = x"CPU2000" ||
-     test x"${BENCHMARK}" = x"CPU2006"; then
-    TIMEOUT=604800
-  elif test x"${BENCHMARK}" = x"Coremark-Pro"; then
-    TIMEOUT=14400
-  elif test x"${BENCHMARK}" = x"fakebench"; then
-    TIMEOUT=3600
-  else
-    TIMEOUT=86400
-    echo "Unknown benchmark '${BENCHMARK}'" >&2
-    echo "Set TIMEOUT to 24 hours" >&2
+  if test -z "${TIMEOUT:-}"; then
+    if test x"${BENCHMARK}" = x"CPU2000" ||
+       test x"${BENCHMARK}" = x"CPU2006"; then
+      TIMEOUT=604800
+    elif test x"${BENCHMARK}" = x"Coremark-Pro"; then
+      TIMEOUT=14400
+    elif test x"${BENCHMARK}" = x"fakebench"; then
+      TIMEOUT=3600
+    else
+      TIMEOUT=86400
+      echo "Unknown benchmark '${BENCHMARK}'" >&2
+      echo "Set TIMEOUT to 24 hours" >&2
+    fi
   fi
 
   return ${ret}
