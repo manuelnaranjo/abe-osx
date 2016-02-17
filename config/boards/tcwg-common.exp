@@ -4,6 +4,9 @@ load_generic_config schroot-ssh
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
 
+# force pseudo-tty allocation
+set_board_info rsh_opts "-tt"
+
 # Compilation timeout 3min
 set_board_info gcc,timeout 180
 # Execution timeout 3min
