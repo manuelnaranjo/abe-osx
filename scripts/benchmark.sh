@@ -204,6 +204,9 @@ if test x"${phases}" != xrunonly; then
   #echo PATH="`dirname ${toolchain_path}`":${PATH}
   #echo COMPILER_FLAGS=${compiler_flags}
   #echo "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${triple:+--target "${triple}"}
+
+  #TODO: If/when BZ2052 and 2053 are fixed, we can change this code such that COMPILER_FLAGS is passed through with the other makeflags.
+  #This will cause COMPILER_FLAGS to always be a CLI make variable, and allow us to drop the workaround in the abe commit with message 'Pass COMPILER_FLAGS through default_makeflags'
   (PATH="`dirname ${toolchain_path}`":${PATH} COMPILER_FLAGS=${compiler_flags} "${topdir}"/abe.sh --space 0 ${make_flags:+--set makeflags="${make_flags}"} --build "${benchmark}.git" ${triple:+--target "${triple}"})
   if test $? -ne 0; then
     echo "Error while building benchmark ${benchmark}" 1>&2
