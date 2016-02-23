@@ -126,7 +126,7 @@ def main():
       sys.exit(1)
 
   #All of these values will be empty string if not explicitly set
-  var_generator_inputs = {k.upper(): args[k] or '' for k in [
+  generator_inputs = {k.upper(): args[k] or '' for k in [
     'lava_server',
     'lava_user',
     'bundle_stream',
@@ -142,7 +142,7 @@ def main():
   ]}
 
   #Handle values that are not simple string/int types
-  var_generator_inputs['TARGET_CONFIG'] = ' '.join(args['target_config'])
+  generator_inputs['TARGET_CONFIG'] = ' '.join(args['target_config'])
 
   for override in args['overrides']:
     if os.path.isfile(override):
@@ -152,16 +152,16 @@ def main():
       else:
         with open(override) as f:
          for line in f:
-           add_sub(line, var_generator_inputs)
+           add_sub(line, generator_inputs)
     else:
-      add_sub(override, var_generator_inputs)
+      add_sub(override, generator_inputs)
 
   #Produce the YAML
-  var_generator = subprocess.Popen(os.path.join(os.path.dirname(sys.argv[0]),
+  generator = subprocess.Popen(os.path.join(os.path.dirname(sys.argv[0]),
                                    'Benchmark.sh'), stdout=subprocess.PIPE,
-                                   env=var_generator_inputs)
-  config = var_generator.stdout.read()
-  if var_generator.wait() != 0:
+                                   env=generator_inputs)
+  config = generator.stdout.read()
+  if generator.wait() != 0:
     print >> sys.stderr, 'Benchmark.sh failed'
     sys.exit(1)
 
