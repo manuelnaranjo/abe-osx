@@ -16,47 +16,6 @@ import keyring.core
 
 args = {}
 
-def yaml_to_json(yaml_file, substitutions):
-  with open(yaml_file) as f:
-    template = string.Template(f.read())
-
-  placeholders = map(lambda match: match.group('named', 'braced'),
-                     string.Template.pattern.finditer(template.template))
-  placeholders = set(filter(None, itertools.chain(*placeholders)))
-
-  try:
-    lava_template = template.substitute(substitutions)
-  except KeyError as e:
-    print >> sys.stderr, "No substitution available for %s" % e.args[0]
-    print >> sys.stderr, "Available substitutions:"
-    for x in sorted(substitutions):
-      print >> sys.stderr, "%s -> '%s'" % (x, substitutions[x])
-    sys.exit(1)
-
-  unused = set(substitutions).difference(placeholders)
-  if unused:
-    print >> sys.stderr, "Unusued substitutions:"
-    for x in sorted(unused):
-      print >> sys.stderr, "%s -> '%s'" % (x, substitutions[x])
-    sys.exit(1)
-
-  if args['dry_run']:
-    print lava_template
-
-  try:
-    config = json.dumps(yaml.safe_load(lava_template), indent=2, separators=(',',': '))
-  except:
-    print >> sys.stderr, "Failed to convert YAML to JSON"
-    print >> sys.stderr, "YAML input was:"
-    print >> sys.stderr, lava_template
-    print >> sys.stderr
-    print >> sys.stderr, "Original exception was:"
-    raise
-
-  if args['dry_run']:
-    print config
-  return config
-
 def dispatch(config):
   lava_server_root = args['lava_server'].rstrip('/')
   if lava_server_root.endswith('/RPC2'):
@@ -106,8 +65,6 @@ def main():
                               YAML. May be literal NAME=VALUE pairs and/or
                               names of files containing such pairs on
                               separate lines. Last value wins.''')
-  parser.add_argument('--template', required=True,
-                      help="YAML jobdef containing substitutions to be made")
   parser.add_argument('--lava-server', default='validation.linaro.org/RPC2/',
                       help='LAVA server to dispatch to. Defaults to main Linaro instance.')
   parser.add_argument('--lava-user', default=os.environ['USER'],
@@ -191,22 +148,29 @@ def main():
     else:
       add_sub(override, var_generator_inputs)
 
+  #Produce the YAML
   var_generator = subprocess.Popen(os.path.join(os.path.dirname(sys.argv[0]),
                                    'Benchmark.sh'), stdout=subprocess.PIPE,
                                    env=var_generator_inputs)
-  substitutions={}
-  for line in iter(var_generator.stdout.readline, ''):
-    add_sub(line, substitutions)
+  config = var_generator.stdout.read()
   if var_generator.wait() != 0:
     print >> sys.stderr, 'Benchmark.sh failed'
     sys.exit(1)
 
-  config=yaml_to_json(args['template'], substitutions)
   if args['dry_run']:
+    print config
+
+  #Produce the JSON
+  config = json.dumps(yaml.safe_load(config), indent=2, separators=(',',': '))
+
+  #Bail if that's the right thing to do
+  if args['dry_run']:
+    print config
     print
     print "--dry-run given, exiting without dispatch"
     sys.exit(0)
 
+  #Dispatch the JSON
   dispatch(config)
 
 if __name__ == '__main__':
