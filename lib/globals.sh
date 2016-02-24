@@ -177,7 +177,7 @@ import_manifest()
 		local dir=${version}
 	    else
 		local fixbranch="`echo ${branch} | tr '/@' '_'`"
-		local dir=${i}.git~${fixbranch}${revision:+@${revision}}
+		local dir=${i}.git~${fixbranch}${revision:+_rev_${revision}}
 	    fi
 	    local srcdir="${local_snapshots}/${dir}"
 	    local builddir="${local_builds}/${host}/${target}/${dir}"
