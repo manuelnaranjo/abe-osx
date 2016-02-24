@@ -119,17 +119,6 @@ def main():
   if args['triple'] == 'native':
     args['triple'] = None
 
-  #Get token from keyring
-  if not args['dry_run']:
-    args['lava_token'] = keyring.core.get_password("lava-tool-https://%s" %
-            args['lava_server'], args['lava_user'])
-    if not args['lava_token']:
-      print >> sys.stderr, 'No token in keyring for %s on %s' % \
-        (args['lava_user'], args['lava_server'])
-      print >> sys.stderr, 'Expected to find token for %s on lava-tool-https://%s' % \
-        (args['lava_user'], args['lava_server'])
-      sys.exit(1)
-
   #All of these values will be empty string if not explicitly set
   generator_inputs = {k.upper(): args[k] or '' for k in [
     'lava_server',
@@ -202,6 +191,18 @@ def main():
     print
     print "--dry-run given, exiting without dispatch"
     sys.exit(0)
+
+  #Get token from keyring
+  args['lava_token'] = keyring.core.get_password("lava-tool-https://%s" %
+          args['lava_server'], args['lava_user'])
+  if not args['lava_token']:
+    print >> sys.stderr, 'No token in keyring for %s on %s' % \
+      (args['lava_user'], args['lava_server'])
+    print >> sys.stderr, 'Expected to find token for %s on lava-tool-https://%s' % \
+      (args['lava_user'], args['lava_server'])
+    print >> sys.stderr, 'Check Benchmark.sh output, above, for warnings about LAVA_SERVER.'
+    print >> sys.stderr, "Benchmark.sh cannot modify dispatch-benchmark's copy of LAVA_SERVER."
+    sys.exit(1)
 
   #Dispatch the JSON
   dispatch(config)
