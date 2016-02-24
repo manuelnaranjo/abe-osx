@@ -143,11 +143,7 @@ function init_targets {
       target_config="${target_config#*:}"
       device_type="${target_config}"
     else
-      if test ${target_count} -eq 1; then
-        role='target'
-      else
-        role="target-${target_config}"
-      fi
+      role="target-${target_config}"
       #target_config is already correct
       device_type="${target_config}"
     fi
