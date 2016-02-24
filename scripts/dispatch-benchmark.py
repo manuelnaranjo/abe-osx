@@ -76,12 +76,17 @@ def main():
                           'fakebench'],
                       help="Benchmark to build/run")
   parser.add_argument('--target-config', required=True, nargs='+',
-                      choices=['arndale', 'mustang', 'panda-es', 'juno-a53',
-                               'juno-a57', 'kvm'],
-                      help="Target config(s) with which to run benchmark.")
+                      help='''Target config(s) with which to run benchmark. May
+                      be the name of the config (e.g. juno-a57), or a role:config
+                      pair (e.g. big:juno-a57 little:juno-a53). You may specify
+                      the same argument multiple times (e.g. big:juno-a57 big:juno-a57),
+                      getting one instance of that role for each specification.
+                      If no role is given, role=config. Script prefixes all
+                      target roles with target- (e.g. big:juno-a57 results in
+                      role target-big; juno-a57 results in role target-juno-a57).''')
   parser.add_argument('--host-device-type', default='kvm',
                       choices=['arndale', 'mustang', 'panda-es', 'juno', 'kvm'],
-                      help="Host to build/dispatch benchmark")
+                      help="Host to build/dispatch benchmark. Role is always 'host'.")
   parser.add_argument('--prebuilt',
                       help='Prebuilt tarball of benchmark.')
   parser.add_argument('--toolchain',
