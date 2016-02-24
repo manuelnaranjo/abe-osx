@@ -105,6 +105,11 @@ def main():
                       help='Flags to pass to make at build time.')
   parser.add_argument('--run-flags',
                       help="Flags for benchmark execution framework.")
+  parser.add_argument('--tags', nargs='*',
+                      help='''Tag(s) to use in device reservation. Give
+                              role:tag pairs to set a tag for a role. May give
+                              a default for all roles with no specific tag by
+                              passing a value with no colon.''')
   parser.add_argument('--dry-run', action='store_true', default=False,
                       help="Show both stages of parsing, don't dispatch.")
   global args
@@ -143,6 +148,26 @@ def main():
 
   #Handle values that are not simple string/int types
   generator_inputs['TARGET_CONFIG'] = ' '.join(args['target_config'])
+
+  tags = args['tags']
+  if tags:
+    #Confirm no duplicates - kinda harmless, but unlikely to be what user meant
+    tags_set = set()
+    for x in tags:
+      if x in tags_set:
+        print >> sys.stderr, '%s appears multiple times in --tags' % x
+        sys.exit(1)
+      tags_set.add(x)
+
+    raw_host_tags = filter(lambda x: x.startswith('host:'), tags)
+    if raw_host_tags:
+      host_tags = map(lambda x: x[5:], raw_host_tags)
+      target_tags = tags_set.difference(raw_host_tags)
+    else:
+      host_tags = filter(lambda x: not ':' in x, tags) #Assign any defaults to host_tags
+      target_tags = tags
+    generator_inputs['HOST_TAG'] = ' '.join(host_tags) #Note mismatched plurality - we let Benchmark.sh validate that there is actually only 1
+    generator_inputs['TARGET_TAGS'] = ' '.join(target_tags)
 
   for override in args['overrides']:
     if os.path.isfile(override):
