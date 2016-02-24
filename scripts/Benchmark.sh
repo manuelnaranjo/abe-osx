@@ -4,7 +4,7 @@ set -o pipefail
 
 declare -a ROLES
 #role-indexed associative arrays
-declare -A ROLE_METADATA ROLE_COUNT ROLE_TARGET_DEVICE_TYPE ROLE_TARGET_CONFIG
+declare -A ROLE_METADATA ROLE_COUNT ROLE_TARGET_DEVICE_TYPE ROLE_TARGET_CONFIG ROLE_TAG
 WORKING_FILE="`mktemp`"
 
 exec {STDOUT}>&1
@@ -89,6 +89,10 @@ function validate {
     fi
   fi
 
+  if test `echo ${HOST_TAG:-} | wc -w` -gt 1; then
+    echo "HOST_TAG contains multiple values: ${HOST_TAG}" >&2
+    ret=1
+  fi
 
   #Cases that can be fixed up automatically (warnings)
   for x in LAVA_SERVER BUNDLE_SERVER; do
@@ -135,7 +139,7 @@ function validate {
 }
 
 function init_targets {
-  local role device_type target_count
+  local role device_type target_count tag default_tag
   target_count=`echo ${TARGET_CONFIG} | wc -w`
   for target_config in ${TARGET_CONFIG}; do
     if echo "${target_config}" | grep -q ':'; then
@@ -170,6 +174,43 @@ function init_targets {
     target_metadata "${target_config}" "${role}"
   done
   ROLES=("${!ROLE_COUNT[@]}")
+
+  #Find default tag, if any
+  for tag in ${TARGET_TAGS:-}; do
+    if echo "${tag}" | grep -vq ':'; then
+      if test -z "${default_tag:-}"; then
+        default_tag="${tag}"
+      else
+        echo "Multiple default target tags: '${tag}' and ${default_tag}'" >&2
+        exit 1
+      fi
+    fi
+  done
+
+  #Assign specific tags
+  for tag in ${TARGET_TAGS:-}; do
+    echo "${tag}" | grep -vq ':' && continue
+    role="target-${tag%%:*}"
+    tag="${tag#*:}"
+    if test -z "${ROLE_COUNT[${role}]:-}"; then
+      echo "Tag '${tag}' provided for non-existent role '${role}'" >&2
+      exit 1
+    fi
+    if test -n "${ROLE_TAG[${role}]:-}"; then
+      echo "Tags '${tag}' and '${ROLE_TAG[${role}]}' provided for role '${role}'" >&2
+      exit 1
+    fi
+    ROLE_TAG["${role}"]="${tag}"
+  done
+
+  #Assign default tags
+  if test -n "${default_tag:-}"; then
+    for role in "${ROLES[@]}"; do
+      if test -z "${ROLE_TAG[${role}]:-}"; then
+        ROLE_TAG["${role}"]="${default_tag}"
+      fi
+    done
+  fi
 }
 
 function deploy_for_device_type {
@@ -346,12 +387,24 @@ device_group:
     device_type: '${HOST_DEVICE_TYPE}'
     role: host
 EOF
+if test -n "${HOST_TAG:-}"; then
+cat << EOF
+    tags:
+      - ${HOST_TAG}
+EOF
+fi
 for role in "${ROLES[@]}"; do
   cat << EOF
   - count: ${ROLE_COUNT["${role}"]}
     device_type: '${ROLE_TARGET_DEVICE_TYPE["${role}"]}'
     role: ${role}
 EOF
+  if test -n "${ROLE_TAG[${role}]:-}"; then
+  cat << EOF
+    tags:
+      - ${ROLE_TAG[${role}]}
+EOF
+  fi
 done
 
 #Fill in metadata
