@@ -75,10 +75,10 @@ def main():
                       choices=['CPU2000', 'CPU2006', 'EEMBC', 'Coremark-Pro',
                           'fakebench'],
                       help="Benchmark to build/run")
-  parser.add_argument('--target-config', required=True,
+  parser.add_argument('--target-config', required=True, nargs='+',
                       choices=['arndale', 'mustang', 'panda-es', 'juno-a53',
                                'juno-a57', 'kvm'],
-                      help="Target config with which to run benchmark.")
+                      help="Target config(s) with which to run benchmark.")
   parser.add_argument('--host-device-type', default='kvm',
                       choices=['arndale', 'mustang', 'panda-es', 'juno', 'kvm'],
                       help="Host to build/dispatch benchmark")
@@ -126,7 +126,6 @@ def main():
     'lava_user',
     'bundle_stream',
     'benchmark',
-    'target_config',
     'host_device_type',
     'prebuilt',
     'toolchain',
@@ -136,6 +135,10 @@ def main():
     'make_flags',
     'run_flags',
   ]}
+
+  #Handle values that are not simple string/int types
+  generator_inputs['TARGET_CONFIG'] = ' '.join(args['target_config'])
+
   for override in args['overrides']:
     if os.path.isfile(override):
       if '=' in override:
