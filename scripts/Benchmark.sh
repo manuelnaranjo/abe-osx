@@ -412,10 +412,7 @@ for role in "${ROLES[@]}"; do
   if test -n "${ROLE_METADATA[${role}]:-}${GENERAL_METADATA}"; then
     #The $ before the enquoted string is a little shell (bash only?) magic to
     #render \n into newline.
-
-    #TODO Swap these back when testing is complete
-    #sed -i $"s#metadata_${role}:#metadata:${GENERAL_METADATA//\"/\\\"}${ROLE_METADATA[${role}]//\"/\\\"}#" "${WORKING_FILE}"
-    sed -i $"s#metadata_${role}:#metadata:${ROLE_METADATA[${role}]//\"/\\\"}${GENERAL_METADATA//\"/\\\"}#" "${WORKING_FILE}"
+    sed -i $"s#metadata_${role}:#metadata:${GENERAL_METADATA//\"/\\\"}${ROLE_METADATA[${role}]//\"/\\\"}#" "${WORKING_FILE}"
   else
     sed -i "/metadata_${role}:/d" "${WORKING_FILE}"
   fi
