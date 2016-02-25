@@ -74,7 +74,7 @@ remote_download()
 
   local c
   for ((c = ${retries}; c >= 0; c--)); do
-    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $*\" -avzx '${target}:${sourcefile}' '${destfile}' > /dev/null"
+    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* ${ABE_REMOTE_SSH_OPTS}\" -avzx '${target}:${sourcefile}' '${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
     elif test $c -gt 0; then
@@ -120,7 +120,7 @@ remote_upload()
 
   local c
   for ((c = ${retries}; c >= 0; c--)); do
-    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $*\" -avzx '${sourcefile}' '${target}:${destfile}' > /dev/null"
+    dryrun "rsync -e \"ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* ${ABE_REMOTE_SSH_OPTS}\" -avzx '${sourcefile}' '${target}:${destfile}' > /dev/null"
     if test $? -eq 0; then
       return 0
     elif test $c -gt 0; then
@@ -141,7 +141,7 @@ remote_exec()
     return 1
   fi
   shift 2
-  dryrun "ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* \"${target}\" \"${cmd}\""
+  dryrun "ssh -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* ${ABE_REMOTE_SSH_OPTS} \"${target}\" \"${cmd}\""
   return $?
 }
 
@@ -157,7 +157,7 @@ remote_exec_async()
   fi
   shift 4
 
-  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
+  dryrun "ssh -n -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o LogLevel=ERROR $* ${ABE_REMOTE_SSH_OPTS} ${target} -- \"exec 1>${stdoutfile}; exec 2>${stderrfile}; ${cmd}; echo EXIT CODE: \\\$?\" &"
 
   #Backgrounded command won't give a meaningful error code
   return 0
