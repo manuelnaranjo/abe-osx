@@ -228,12 +228,14 @@ function deploy_for_device_type {
   declare -A cmd parts #also local
 
   cmd[arndale]='deploy_linaro_image'
+  cmd[dummy-ssh]='dummy_deploy'
   cmd[juno]='deploy_linaro_image'
   cmd[kvm]='deploy_linaro_image'
   cmd[mustang]='deploy_linaro_kernel'
   cmd[panda-es]='deploy_linaro_image'
 
   parts[arndale]="image: 'http://people.linaro.org/~bernie.ogden/arndale/arndale.img'"
+  parts[dummy-ssh]="target_type: 'ubuntu'"
   parts[juno]="image: 'http://people.linaro.org/~bernie.ogden/juno-precooked.img.gz'"
   parts[kvm]="image: 'http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz'"
   parts[mustang]="dtb: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb'
@@ -258,6 +260,7 @@ EOF
 function host_session_for_device_type {
   declare -A session #also local
   session[arndale]=host-session-no-multilib.yaml
+  session[dummy-ssh]=host-session-multilib.yaml
   session[juno]=host-session-no-multilib.yaml
   session[kvm]=host-session-multilib.yaml
   session[mustang]=host-session.yaml
@@ -274,6 +277,7 @@ function host_session_for_device_type {
 function target_session_for_device_type {
   declare -A session #also local
   session[arndale]=target-session-tools.yaml
+  #session[dummy-ssh]= #Deliberately omitted until we either have non-persistent dummy targets, or target jobs that do not mess with persistent state
   session[juno]=target-session-tools.yaml
   session[kvm]=target-session-tools.yaml
   session[mustang]=target-session.yaml
@@ -300,7 +304,7 @@ validate #Fails on error due to set -e (which is what we want)
 #Defaults
 LAVA_USER="${LAVA_USER:-${USER}}"
 LAVA_JOB_NAME="${LAVA_JOB_NAME:-${BENCHMARK}-${LAVA_USER}}"
-HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-kvm}"
+HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-dummy-ssh}"
 TESTDEF_REVISION="${TESTDEF_REVISION:-benchmarking}"
 TESTDEF_REPO="${TESTDEF_REPO:-https://git.linaro.org/toolchain/abe}"
 BUNDLE_SERVER="${BUNDLE_SERVER:-${LAVA_SERVER}}"

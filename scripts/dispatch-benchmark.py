@@ -84,8 +84,9 @@ def main():
                       If no role is given, role=config. Script prefixes all
                       target roles with target- (e.g. big:juno-a57 results in
                       role target-big; juno-a57 results in role target-juno-a57).''')
-  parser.add_argument('--host-device-type', default='kvm',
-                      choices=['arndale', 'mustang', 'panda-es', 'juno', 'kvm'],
+  parser.add_argument('--host-device-type', default='dummy-ssh',
+                      choices=['arndale', 'dummy-ssh', 'mustang', 'panda-es',
+                               'juno', 'kvm'],
                       help="Host to build/dispatch benchmark. Role is always 'host'.")
   parser.add_argument('--prebuilt',
                       help='Prebuilt tarball of benchmark.')
