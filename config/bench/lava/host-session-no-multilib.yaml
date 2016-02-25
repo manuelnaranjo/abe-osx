@@ -32,6 +32,7 @@ install:
         - gfortran
         - git
         - inotify-tools
+        - iputils-ping
         - libgfortran3
         - libncurses5-dev
         - make
