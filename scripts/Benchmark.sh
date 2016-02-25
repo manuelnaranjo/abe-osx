@@ -222,15 +222,15 @@ function deploy_for_device_type {
   cmd[mustang]='deploy_linaro_kernel'
   cmd[panda-es]='deploy_linaro_image'
 
-  parts[arndale]='image: "http://people.linaro.org/~bernie.ogden/arndale/arndale.img"'
-  parts[juno]='hwpack: "http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz"
-      rootfs: "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz"'
-  parts[kvm]='image: "http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz"'
-  parts[mustang]='dtb: "http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb"
-      kernel: "http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/uImage-mustang"
-      nfsrootfs: "http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150319-701.tar.gz"'
-  parts[panda-es]='hwpack: "http://releases.linaro.org/14.05/ubuntu/panda/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz"
-      rootfs: "http://releases.linaro.org/14.05/ubuntu/panda/linaro-trusty-developer-20140522-661.tar.gz"'
+  parts[arndale]="image: 'http://people.linaro.org/~bernie.ogden/arndale/arndale.img'"
+  parts[juno]="hwpack: 'http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz'
+      rootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz'"
+  parts[kvm]="image: 'http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz'"
+  parts[mustang]="dtb: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb'
+      kernel: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/uImage-mustang'
+      nfsrootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150319-701.tar.gz'"
+  parts[panda-es]="hwpack: 'http://releases.linaro.org/14.05/ubuntu/panda/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz'
+      rootfs: 'http://releases.linaro.org/14.05/ubuntu/panda/linaro-trusty-developer-20140522-661.tar.gz'"
 
   if test -z "${cmd[$1]:-}"; then
     echo "${FUNCNAME}: Unknown device type '$1'" >&2
@@ -240,7 +240,7 @@ function deploy_for_device_type {
   cat <<EOF
   - command: '${cmd[$1]}'
     parameters:
-      role: $2
+      role: '$2'
       ${parts[$1]}
 EOF
 }
@@ -333,9 +333,9 @@ deploy_targets
 
 #Host session stanza
 cat << EOF
-  - command: lava_test_shell
+  - command: 'lava_test_shell'
     parameters:
-      role: host
+      role: 'host'
       timeout: ${TIMEOUT}
       testdef_repos:
         - git-repo: '${TESTDEF_REPO}'
@@ -358,9 +358,9 @@ EOF
 #Target_session_stanza(s)
 for role in "${ROLES[@]}"; do
   cat << EOF
-  - command: lava_test_shell
+  - command: 'lava_test_shell'
     parameters:
-      role: ${role}
+      role: '${role}'
       timeout: ${TIMEOUT}
       testdef_repos:
         - git-repo: '${TESTDEF_REPO}'
@@ -374,7 +374,7 @@ done
 
 #Submission stanza
 cat << EOF
-  - command: submit_results
+  - command: 'submit_results'
     parameters:
       server: 'https://${BUNDLE_SERVER}'
       stream: '${BUNDLE_STREAM}'
@@ -385,7 +385,7 @@ cat << EOF
 device_group:
   - count: 1
     device_type: '${HOST_DEVICE_TYPE}'
-    role: host
+    role: 'host'
 EOF
 if test -n "${HOST_TAG:-}"; then
 cat << EOF
@@ -397,7 +397,7 @@ for role in "${ROLES[@]}"; do
   cat << EOF
   - count: ${ROLE_COUNT["${role}"]}
     device_type: '${ROLE_TARGET_DEVICE_TYPE["${role}"]}'
-    role: ${role}
+    role: '${role}'
 EOF
   if test -n "${ROLE_TAG[${role}]:-}"; then
   cat << EOF
