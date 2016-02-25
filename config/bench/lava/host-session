@@ -73,7 +73,7 @@ function exitfunc {
       rm -rf "${tmpdir}"
     fi
   fi
-  rm -rf ~/*
+  rm -rf "${maindir}"
   exit ${error}
 }
 
@@ -94,7 +94,7 @@ function get_thing {
   else
     local server="${thing%%:*}"
     thing="${thing#*:}"
-    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    (. "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
   fi
   if ! test -e "`basename ${thing}`"; then #TODO HACK set -e fails to apply to above incantations
     echo "Download of ${thing} failed" >&2
@@ -162,16 +162,23 @@ else
   exit 1
 fi
 
-maindir="/${HOME}/bench"
+maindir="`mktemp -dt bench-XXXXXX`"
+if test $? -ne 0; then
+  echo "Unable to create maindir on target" >&2
+  exit 1
+fi
 echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
-mkdir "${maindir}" || exit 1
 chmod 700 "${maindir}" || exit 1
 cd "${maindir}"
+mkdir bin bench data #Final mkdir
+cd bench #Final directory change
+
+export PATH="${maindir}"/bin:"${PATH}"
 
 #Initialize git-new-workdir - sadly not just an apt-get call
 #Needed before we run ${ABE_DIR}/configure
-ln /usr/share/doc/git/contrib/workdir/git-new-workdir /usr/local/bin
-chmod 755 /usr/local/bin/git-new-workdir
+ln -f /usr/share/doc/git/contrib/workdir/git-new-workdir "${maindir}"/bin
+chmod 755 "${maindir}"/bin/git-new-workdir
 
 #Configure
 #Must have run configure before first use of abe functions, may as well do it early
@@ -189,27 +196,33 @@ ip_addr="$(lava-network query `lava-group | grep '[[:blank:]]\+host$' | awk '{pr
   #3) Have no built-in knowledge of the systems they work with
 
   #Generate one-time key, so that external forwarding isn't need throughout run
-  if ! ssh-keygen -P '' -f ~/.ssh/id_rsa > /dev/null < /dev/null; then
+  if ! ssh-keygen -P '' -f ${maindir}/data/id_rsa > /dev/null < /dev/null; then
     exit 1
   fi
 
-  #Create directory for communication with other hosts
-  mkdir ~/data || exit 1
-
   #Set up known_hosts
   #Need to be able to ssh to dev-private
-  echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> ~/.ssh/known_hosts
+  echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOvq8E5HPzrBlxmckzsE3rz9LAx9c0faEfofALaO+UGC4HAst9fMaZcHaCqu+b8SVY/2VcBvMYMwO1ZPgOn0rXs=' >> "${maindir}/data/known_hosts"
   #Permit scping of toolchains/built benchmarks from this machine
-  echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> ~/.ssh/known_hosts
+  echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> "${maindir}/data/known_hosts"
+
+  #Export SSH config locations, for rest of this script and for subprocesses
+  export ABE_REMOTE_SSH_OPTS="-o IdentityFile=${maindir}/data/id_rsa -o UserKnownHostsFile=${maindir}/data/known_hosts"
+  cat > "${maindir}"/bin/git-ssh.sh <<EOF
+#!/bin/bash
+exec /usr/bin/ssh -o User=git ${ABE_REMOTE_SSH_OPTS} "\$@"
+EOF
+  chmod 700 "${maindir}"/bin/git-ssh.sh
+  export GIT_SSH="${maindir}"/bin/git-ssh.sh
 
   #Request agent just before we need it
   #This would be two keys in one agent if we wanted one for source, one for job
   echo "*** WAITING FOR AGENT: ${ip_addr}"
-  ssh_rune -A -- "'ln -sf \$SSH_AUTH_SOCK /root/data/socket && while test -e /root/data/socket; do inotifywait -e delete /root/data; done'"
-  while ! test -e ~/data/socket; do
-    inotifywait -e create ~/data
+  ssh_rune -A -- "'ln -sf \$SSH_AUTH_SOCK ${maindir}/data/socket && while test -e ${maindir}/data/socket; do inotifywait -e delete ${maindir}/data; done'"
+  while ! test -e "${maindir}"/data/socket; do
+    inotifywait -e create "${maindir}"/data
   done
-  export SSH_AUTH_SOCK=~/data/socket
+  export SSH_AUTH_SOCK="${maindir}"/data/socket
 #fi
 
 target_names=()
@@ -219,14 +232,14 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   if test -z "${target_ip}"; then echo "Failed to find IP for ${lava_name}"; exit 1; fi
 
   #Check that target is accessible, add it to our known_hosts
-  if ! ssh -o StrictHostKeyChecking=no "${target_ip}" true; then
+  if ! ssh ${ABE_REMOTE_SSH_OPTS} -o StrictHostKeyChecking=no "${target_ip}" true; then
      echo "Could not access target ${target_ip} (${lava_name})" >&2
      exit 1
   fi
 
   #if test ${trusted} -eq 0; then
     #add our one-time key to its authorized_keys
-    if ! cat ~/.ssh/id_rsa.pub | ssh "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
+    if ! cat "${maindir}"/data/id_rsa.pub | ssh ${ABE_REMOTE_SSH_OPTS} "${target_ip}" "cat - >> ~/.ssh/authorized_keys"; then
       echo "Could not install one-time (public) key on target" >&2
       exit 1
     fi
@@ -235,7 +248,7 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
        #MUST be uploaded conditionally on ${trusted} --
        #target side will run gather.sh if it exists and thus dump data in results bundle
        #the gather script is allowed to be a symlink, so that we can write scripts that work for multiple benchmarks in a suite
-    (. "${maindir}"/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "`readlink -e ${ABE_DIR}/config/bench/gather/${benchmark}.sh`" 'gather.sh')
+    (. "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "`readlink -e ${ABE_DIR}/config/bench/gather/${benchmark}.sh`" 'gather.sh')
     if test $? -ne 0; then
       echo "Upload of ${ABE_DIR}/config/bench/gather/${benchmark}.sh to ${target_ip}:gather.sh failed" >&2
       exit 1
@@ -264,14 +277,13 @@ done
 
 #Install toolchain and build benchmark, or download prebuilt tarball
 if test x"${prebuilt:-}" = x; then
-  mkdir bin
   if test x"${toolchain:0:1}" = x/; then
     echo "Toolchain assumed to be path on builder"
     benchgccpath="${toolchain}"
   else
     tarball="`get_thing ${toolchain}`"
-    tar xf "${tarball}" -C bin
-    bindir="${PWD}/bin/`tar tf ${tarball} | sed -n 1p`/bin/" #head -n1 is faster, but breaks the pipe with error
+    tar xf "${tarball}" -C "${maindir}"/bin
+    bindir="${maindir}/bin/`tar tf ${tarball} | sed -n 1p`/bin/" #head -n1 is faster, but breaks the pipe with error
     if test -n "${triple:-}"; then
       benchgccpath="${bindir}/${triple}-gcc"
       if ! test -x "${benchgccpath}"; then
@@ -292,8 +304,8 @@ if test x"${prebuilt:-}" = x; then
 
   if test x"${sysroot:-}" != x; then
     tarball="`get_thing ${sysroot}`"
-    tar xf "${tarball}" -C bin
-    sysroot="`ls -d ${PWD}/bin/`/`tar tf "${tarball}" | sed -n 1p`" #head -n1 is faster, but breaks the pipe with error
+    tar xf "${tarball}" -C "${maindir}"/bin
+    sysroot="`ls -d ${maindir}/bin/`/`tar tf "${tarball}" | sed -n 1p`" #head -n1 is faster, but breaks the pipe with error
     rm "${tarball}"
   fi
 
@@ -316,7 +328,7 @@ fi
 
 #If we are relying on an external auth socket, we can delete it now
 #if test ${trusted} -eq 0; then
-  rm "${HOME}/data/socket"
+  rm "${maindir}/data/socket"
 #fi
 
 #Run
@@ -358,12 +370,12 @@ bash -x "${ABE_DIR}"/scripts/benchmark.sh \
 if test ${trusted} -eq 0; then
   #We are in an untrusted environment, so we have not directed that the target will send to bundle stream
   echo "*** RESULTS READY: ${ip_addr}"
-  echo "To access data (which is in ~/bench/*-log):"
+  echo "To access data (which is in ${maindir}/bench/*-log):"
   ssh_rune
   echo "When you have the data, signal me to delete it and end job like this:"
-  ssh_rune -- "'touch ~/data/resultsgone'"
-  while ! test -e ~/data/resultsgone; do
-    inotifywait -e create ~/data
+  ssh_rune -- "'touch ${maindir}/data/resultsgone'"
+  while ! test -e ${maindir}/data/resultsgone; do
+    inotifywait -e create ${maindir}/data
   done
 fi
 
