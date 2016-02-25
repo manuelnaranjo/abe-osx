@@ -157,7 +157,12 @@ infrastructure()
     # We have to grep each dependency separately to preserve the order, as
     # some libraries depend on other libraries being bult first. Egrep
     # unfortunately sorts the files, which screws up the order.
-    local files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+    local files=
+    if test x"${dejagnu_version}" = x; then
+	    files="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
+    else
+	    files="${dejagnu_version}"
+    fi
 
     local version=
     for i in ${depends}; do

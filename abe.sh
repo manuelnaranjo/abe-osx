@@ -40,7 +40,7 @@ usage()
              [--snapshots <path>] [--tarball] [--tarbin] [--tarsrc] [--rpm]
              [--target {<target_triple>|''}] [--timeout <timeout_value>]
              [--usage]
-             [{binutils|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}
+             [{binutils|dejagnu|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}
                =<id|snapshot|url>]]
 
 EOF
@@ -335,7 +335,7 @@ OPTIONS
 
   --usage	Display synopsis information.
 
-   [{binutils|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
+   [{binutils|dejagnu|gcc|gmp|mpfr|mpc|eglibc|glibc|newlib}=<id|snapshot|url>]
 
 		This option specifies a particular version of a package
 		that might differ from the default version in the
@@ -1092,6 +1092,9 @@ while test $# -gt 0; do
 		case ${name} in
 		    b*|binutils)
 			binutils_version="`echo ${value}`"
+			;;
+		    dejagnu)
+			dejagnu_version="${value}"
 			;;
 		    gc*|gcc)
 			gcc_version="${value}"
