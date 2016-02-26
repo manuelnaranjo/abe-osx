@@ -312,7 +312,7 @@ BUNDLE_STREAM="${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
 BENCH_DEBUG="${BENCH_DEBUG:-1}"
 if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/; then
   TRUST='Trusted'
-  PUBLIC_KEY="${PUBLIC_KEY:-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVsYkArH+s18nFxzy6zVWMg45uN4oQm5WxjVkZ/PxjyzPbnfTjRgyaqKDUbxUagWX76DCSFHftlKDAllYpAuvGrCsJtVOkSqrkrB8PMZNIsy+4fiL/j+qjLX9bEq0TKpf9aVK6xx2enl9NX8CvOwvxSnqrkevyeuMrw1oULnwN9qiliHmV0MSzWE+U3Y8VOyFbhhgAiy9/ud5sklurJebs/B7Q1w0LrA+WiTwmVkrumauX+Om24IU1MOxOJHcIao+hDyb87Oo2Ca8uXBeWEVPHh8kwddm5FHOe3KbT3VhuFhN5U/7h4xAgdp8YFXRJL/xxbZ8+nggkLS6Zx0sDbuUb}"
+  PUBKEY_TARGET="${PUBKEY_TARGET:-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVsYkArH+s18nFxzy6zVWMg45uN4oQm5WxjVkZ/PxjyzPbnfTjRgyaqKDUbxUagWX76DCSFHftlKDAllYpAuvGrCsJtVOkSqrkrB8PMZNIsy+4fiL/j+qjLX9bEq0TKpf9aVK6xx2enl9NX8CvOwvxSnqrkevyeuMrw1oULnwN9qiliHmV0MSzWE+U3Y8VOyFbhhgAiy9/ud5sklurJebs/B7Q1w0LrA+WiTwmVkrumauX+Om24IU1MOxOJHcIao+hDyb87Oo2Ca8uXBeWEVPHh8kwddm5FHOe3KbT3VhuFhN5U/7h4xAgdp8YFXRJL/xxbZ8+nggkLS6Zx0sDbuUb}"
 else
   TRUST='None'
 fi
@@ -367,7 +367,7 @@ cat << EOF
             PREBUILT: '${PREBUILT:-None}'
             BENCH_DEBUG: ${BENCH_DEBUG}
             TRUST: '${TRUST}'
-            PUB_KEY: '${PUBLIC_KEY}'
+            PUB_KEY: '${PUBKEY_HOST}'
 EOF
 
 #Target_session_stanza(s)
@@ -383,7 +383,7 @@ for role in "${ROLES[@]}"; do
           testdef: '`target_session_for_device_type "${ROLE_TARGET_DEVICE_TYPE[${role}]}"`'
           parameters:
             CONFIG: '${ROLE_TARGET_CONFIG[${role}]}'
-            PUB_KEY: '${PUBLIC_KEY}'
+            PUB_KEY: '${PUBKEY_TARGET}'
 EOF
 done
 
