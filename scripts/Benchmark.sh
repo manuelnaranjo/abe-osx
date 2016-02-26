@@ -312,6 +312,7 @@ BUNDLE_STREAM="${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
 BENCH_DEBUG="${BENCH_DEBUG:-1}"
 if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/; then
   TRUST='Trusted'
+  PUBLIC_KEY="${PUBLIC_KEY:-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVsYkArH+s18nFxzy6zVWMg45uN4oQm5WxjVkZ/PxjyzPbnfTjRgyaqKDUbxUagWX76DCSFHftlKDAllYpAuvGrCsJtVOkSqrkrB8PMZNIsy+4fiL/j+qjLX9bEq0TKpf9aVK6xx2enl9NX8CvOwvxSnqrkevyeuMrw1oULnwN9qiliHmV0MSzWE+U3Y8VOyFbhhgAiy9/ud5sklurJebs/B7Q1w0LrA+WiTwmVkrumauX+Om24IU1MOxOJHcIao+hDyb87Oo2Ca8uXBeWEVPHh8kwddm5FHOe3KbT3VhuFhN5U/7h4xAgdp8YFXRJL/xxbZ8+nggkLS6Zx0sDbuUb}"
 else
   TRUST='None'
 fi

@@ -218,6 +218,8 @@ if test ${trusted} -eq 0; then
     inotifywait -e create "${maindir}"/data
   done
   export SSH_AUTH_SOCK="${maindir}"/data/socket
+else
+  export ABE_REMOTE_SSH_OPTS="${ABE_REMOTE_SSH_OPTS} -o IdentityFile=/home/lava-benchmark/.ssh/lava-benchmark"
 fi
 
   #Give git access to the necessary ssh configuration
