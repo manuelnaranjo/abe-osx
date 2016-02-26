@@ -1,0 +1,22 @@
+metadata:
+  name: host-session
+  format: "Lava-Test-Shell Test Definition 1.0"
+  description: "Benchmarking Session"
+  version: 1.0
+
+params:
+    PUB_KEY: None
+    BENCHMARK: fakebench
+    TOOLCHAIN: https://releases.linaro.org/14.11/components/toolchain/binaries/arm-linux-gnueabihf/gcc-linaro-4.9-2014.11-x86_64_arm-linux-gnueabihf.tar.xz
+    TRIPLE: arm-linux-gnueabihf
+    SYSROOT: None
+    RUN_FLAGS: None
+    COMPILER_FLAGS: None
+    MAKE_FLAGS: None
+    PREBUILT: None
+    BENCH_DEBUG: None
+    TRUST: None
+
+run:
+    steps:
+        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$BENCHMARK" "$TOOLCHAIN" "$TRIPLE" "$SYSROOT" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST"

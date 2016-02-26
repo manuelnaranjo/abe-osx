@@ -260,7 +260,7 @@ EOF
 function host_session_for_device_type {
   declare -A session #also local
   session[arndale]=host-session-no-multilib.yaml
-  session[dummy-ssh]=host-session-multilib.yaml
+  session[dummy-ssh]=host-session-persist-safe.yaml
   session[juno]=host-session-no-multilib.yaml
   session[kvm]=host-session-multilib.yaml
   session[mustang]=host-session.yaml
