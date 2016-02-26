@@ -49,7 +49,7 @@ function validate {
   ret=0
 
   #Cases that must be corrected by user (errors)
-  for x in TARGET_CONFIG BENCHMARK; do
+  for x in TARGET_CONFIG BENCHMARK LAVA_SERVER; do
     if test -z "${!x:-}"; then
       echo "${x} must be set" >&2
       ret=1
