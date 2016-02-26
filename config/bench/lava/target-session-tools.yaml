@@ -11,6 +11,7 @@ params:
 install:
     deps:
         - bc
+        - binutils
         - openssh-server
         - make
         - cpufrequtils
