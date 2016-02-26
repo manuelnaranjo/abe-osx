@@ -312,10 +312,20 @@ BUNDLE_STREAM="${BUNDLE_STREAM:-/private/personal/${LAVA_USER}/}"
 BENCH_DEBUG="${BENCH_DEBUG:-1}"
 if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/; then
   TRUST='Trusted'
+  if test -n "${PUBKEY_HOST:-}"; then
+    echo "PUBKEY_HOST is meaningless for trusted run: will ignore it" >&2
+  fi
   PUBKEY_TARGET="${PUBKEY_TARGET:-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVsYkArH+s18nFxzy6zVWMg45uN4oQm5WxjVkZ/PxjyzPbnfTjRgyaqKDUbxUagWX76DCSFHftlKDAllYpAuvGrCsJtVOkSqrkrB8PMZNIsy+4fiL/j+qjLX9bEq0TKpf9aVK6xx2enl9NX8CvOwvxSnqrkevyeuMrw1oULnwN9qiliHmV0MSzWE+U3Y8VOyFbhhgAiy9/ud5sklurJebs/B7Q1w0LrA+WiTwmVkrumauX+Om24IU1MOxOJHcIao+hDyb87Oo2Ca8uXBeWEVPHh8kwddm5FHOe3KbT3VhuFhN5U/7h4xAgdp8YFXRJL/xxbZ8+nggkLS6Zx0sDbuUb}"
 else
   TRUST='None'
+  for x in PUBKEY_HOST PUBKEY_TARGET; do
+    if test -x "${!x:-}"; then
+      echo "${x} must be set for untrusted sessions" >&2
+      ret=1
+    fi
+  done
 fi
+
 #By the time these parameters reach LAVA, None means unset
 #Unset is not necessarily the same as empty string - for example,
 #COMPILER_FLAGS="" may result in overriding default flags in makefiles
@@ -367,8 +377,12 @@ cat << EOF
             PREBUILT: '${PREBUILT:-None}'
             BENCH_DEBUG: ${BENCH_DEBUG}
             TRUST: '${TRUST}'
+EOF
+if test x"${TRUST}" = x'None'; then
+  cat <<EOF
             PUB_KEY: '${PUBKEY_HOST}'
 EOF
+fi
 
 #Target_session_stanza(s)
 for role in "${ROLES[@]}"; do
