@@ -110,10 +110,16 @@ def main():
                               role:tag pairs to set a tag for a role. May give
                               a default for all roles with no specific tag by
                               passing a value with no colon.''')
+  parser.add_argument('--dry-yaml', action='store_true', default=False,
+                      help='''Show first (YAML-output) stage of parsing, don't
+                            dispatch.''')
   parser.add_argument('--dry-run', action='store_true', default=False,
                       help="Show both stages of parsing, don't dispatch.")
   global args
   args = vars(parser.parse_args())
+
+  if args['dry_yaml']:
+    args['dry_run'] = True
 
   #Post-process triple argument (will be validated by Benchmark.sh)
   if args['triple'] == 'native':
@@ -181,6 +187,10 @@ def main():
 
   if args['dry_run']:
     print config
+  if args['dry_yaml']:
+    print
+    print "--dry-yaml given, exiting without producing JSON"
+    sys.exit(0)
 
   #Produce the JSON
   config = json.dumps(yaml.safe_load(config), indent=2, separators=(',',': '))
