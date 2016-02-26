@@ -1,3 +1,5 @@
+#For targets that need the abe/benchmark dependencies installed, and that do
+#not have the *multilib packages. Target should not have persistent state.
 metadata:
   name: host-session
   format: "Lava-Test-Shell Test Definition 1.0"

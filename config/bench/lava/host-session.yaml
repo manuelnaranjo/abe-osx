@@ -1,3 +1,6 @@
+#Suitable for targets with filesystems all set to use. Does not install
+#anything other than the public key. Suitable for targets with no persistent
+#state.
 metadata:
   name: host-session
   format: "Lava-Test-Shell Test Definition 1.0"
