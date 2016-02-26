@@ -114,6 +114,12 @@ def main():
   parser.add_argument('--dry-yaml', action='store_true', default=False,
                       help='''Show first (YAML-output) stage of parsing, don't
                             dispatch.''')
+  parser.add_argument('--pubkey',
+                      help='''Value may be a public key, or a file containing a
+                              public key. If targeting a known trusted instance,
+                              this option is illegal.  Otherwise, sets
+                              the key for both host and target, defaulting to
+                              ~/.ssh/id_rsa.pub.''')
   parser.add_argument('--dry-run', action='store_true', default=False,
                       help="Show both stages of parsing, don't dispatch.")
   global args
@@ -125,6 +131,25 @@ def main():
   #Post-process triple argument (will be validated by Benchmark.sh)
   if args['triple'] == 'native':
     args['triple'] = None
+
+  #Set up keys (see help for pubkey, above, for the expected behaviour)
+  pubkey = args['pubkey']
+  trusted = args['lava_server'].startswith('lava.tcwglab/') or \
+            args['lava_server'] == 'lava.tcwglab'
+  args['pubkey_host'] = args['pubkey_target'] = None
+  if pubkey:
+    if trusted:
+      print >> sys.stderr, "Cannot give a public key for trusted instance" #Not strictly true, but can only do it using the 'advanced' interface as it would usually be a mistake
+      sys.exit(1)
+  else:
+    if not trusted:
+      pubkey = os.path.expanduser('~') + '/.ssh/id_rsa.pub'
+  if pubkey:
+    if os.path.isfile(pubkey):
+      with open(pubkey, 'r') as keyfile:
+        pubkey = keyfile.read()
+    args['pubkey_host'] = pubkey
+    args['pubkey_target'] = pubkey
 
   #All of these values will be empty string if not explicitly set
   generator_inputs = {k.upper(): args[k] or '' for k in [
@@ -140,6 +165,8 @@ def main():
     'compiler_flags',
     'make_flags',
     'run_flags',
+    'pubkey_host',
+    'pubkey_target',
   ]}
 
   #Handle values that are not simple string/int types
