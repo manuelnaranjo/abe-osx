@@ -65,7 +65,7 @@ def main():
                               YAML. May be literal NAME=VALUE pairs and/or
                               names of files containing such pairs on
                               separate lines. Last value wins.''')
-  parser.add_argument('--lava-server', default='validation.linaro.org/RPC2/',
+  parser.add_argument('--lava-server', default='lava.tcwglab/RPC2/',
                       help='LAVA server to dispatch to. Defaults to main Linaro instance.')
   parser.add_argument('--lava-user', default=os.environ['USER'],
                       help='LAVA user to dispatch as. Defaults to $USER.')
