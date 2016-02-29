@@ -127,7 +127,7 @@ configure_build()
 	#     local opts="--prefix=${sysroots}/usr"
 	#     ;;
 	newlib*|libgloss*)
-	    local opts="${opts} --host=${host} --target=${target} --prefix=${sysroots}/usr CC=${target}-gcc"
+	    local opts="${opts} --host=${host} --target=${target} --prefix=${sysroots}/usr"
 	    ;;
 	*libc)
 	    # [e]glibc uses slibdir and rtlddir for some of the libraries and
