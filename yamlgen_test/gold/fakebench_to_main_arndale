@@ -1,0 +1,80 @@
+job_name: 'fakebench-fred.implausible'
+timeout: 3600
+actions:
+  - command: 'deploy_linaro_image'
+    parameters:
+      role: 'host'
+      image: 'http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz'
+  - command: 'deploy_linaro_image'
+    parameters:
+      role: 'target-arndale'
+      image: 'http://people.linaro.org/~bernie.ogden/arndale/arndale.img'
+    metadata:
+      LAVA_JOB_NAME: 'fakebench-fred.implausible'
+      LAVA_USER: 'fred.implausible'
+      BENCHMARK: 'fakebench'
+      TOOLCHAIN: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/arm-linux-gnueabihf/gcc-linaro-5.1-2015.08-x86_64_arm-linux-gnueabihf.tar.xz'
+      TRIPLE: 'arm-linux-gnueabihf'
+      SYSROOT: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/arm-linux-gnueabihf/sysroot-linaro-glibc-gcc5.1-2015.08-arm-linux-gnueabihf.tar.xz'
+      RUN_FLAGS: 'None'
+      COMPILER_FLAGS: 'None'
+      MAKE_FLAGS: 'None'
+      PREBUILT: 'None'
+      TARGET_CONFIG: 'arndale'
+      TESTDEF_REPO: 'https://git.linaro.org/toolchain/abe'
+      TESTDEF_REVISION: 'benchmarking'
+      TIMEOUT: '3600'
+      servicectl: 'no'
+      netctl: 'yes'
+      freq: '900MHz'
+      benchcore: '0'
+      othercore: '1'
+      ip: ''
+      board_benchargs: '"HW_MODEL=Arndale HW_CPU=Cortex-A15 HW_FPU=TODO"'
+  - command: 'lava_test_shell'
+    parameters:
+      role: 'host'
+      timeout: 3600
+      testdef_repos:
+        - git-repo: 'https://git.linaro.org/toolchain/abe'
+          revision: 'benchmarking'
+          testdef: 'config/bench/lava/host-session-multilib.yaml'
+          parameters:
+            BENCHMARK: 'fakebench'
+            TOOLCHAIN: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/arm-linux-gnueabihf/gcc-linaro-5.1-2015.08-x86_64_arm-linux-gnueabihf.tar.xz'
+            TRIPLE: 'arm-linux-gnueabihf'
+            SYSROOT: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/arm-linux-gnueabihf/sysroot-linaro-glibc-gcc5.1-2015.08-arm-linux-gnueabihf.tar.xz'
+            RUN_FLAGS: 'None'
+            COMPILER_FLAGS: 'None'
+            MAKE_FLAGS: 'None'
+            PREBUILT: 'None'
+            BENCH_DEBUG: 1
+            TRUST: 'None'
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD bogden'
+  - command: 'lava_test_shell'
+    parameters:
+      role: 'target-arndale'
+      timeout: 3600
+      testdef_repos:
+        - git-repo: 'https://git.linaro.org/toolchain/abe'
+          revision: 'benchmarking'
+          testdef: 'config/bench/lava/target-session-tools.yaml'
+          parameters:
+            CONFIG: 'arndale'
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD bogden'
+  - command: 'submit_results'
+    parameters:
+      server: 'https://validation.linaro.org/RPC2/'
+      stream: '/private/personal/fred.implausible/'
+device_group:
+  - count: 1
+    device_type: 'kvm'
+    role: 'host'
+    tags:
+      - bob
+  - count: 1
+    device_type: 'arndale'
+    role: 'target-arndale'
+    tags:
+      - bob
+--dry-yaml given, exiting without producing JSON

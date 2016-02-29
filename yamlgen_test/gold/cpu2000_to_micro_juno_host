@@ -1,0 +1,78 @@
+job_name: 'CPU2000-fred.implausible'
+timeout: 345600
+actions:
+  - command: 'deploy_linaro_image'
+    parameters:
+      role: 'host'
+      hwpack: 'http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz'
+      rootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz'
+  - command: 'deploy_linaro_image'
+    parameters:
+      role: 'target-juno-a57'
+      hwpack: 'http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz'
+      rootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz'
+    metadata:
+      LAVA_JOB_NAME: 'CPU2000-fred.implausible'
+      LAVA_USER: 'fred.implausible'
+      BENCHMARK: 'CPU2000'
+      TOOLCHAIN: '/usr/bin/gcc'
+      TRIPLE: 'aarch64-linux-gnu'
+      SYSROOT: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/aarch64-linux-gnu/sysroot-linaro-glibc-gcc5.1-2015.08-aarch64-linux-gnu.tar.xz'
+      RUN_FLAGS: '-n 1 --size test'
+      COMPILER_FLAGS: '-I/usr/include/aarch64-linux-gnu/c++/4.9/ -I/usr/include/c++/4.9/ -I/usr/include/c++/4.9/backward/'
+      MAKE_FLAGS: '-j5'
+      PREBUILT: 'None'
+      TARGET_CONFIG: 'juno-a57'
+      TESTDEF_REPO: 'https://git.linaro.org/toolchain/abe'
+      TESTDEF_REVISION: 'benchmarking'
+      TIMEOUT: '345600'
+      servicectl: 'no'
+      netctl: 'yes'
+      freq: ''
+      benchcore: '5'
+      othercore: '0'
+      ip: ''
+      board_benchargs: '"HW_MODEL=Juno_r0 HW_CPU=Cortex-A57r0p0 HW_FPU=fp_asimd_evtstrm_aes_pmull_sha1_sha2_crc32"'
+  - command: 'lava_test_shell'
+    parameters:
+      role: 'host'
+      timeout: 345600
+      testdef_repos:
+        - git-repo: 'https://git.linaro.org/toolchain/abe'
+          revision: 'benchmarking'
+          testdef: 'config/bench/lava/host-session-no-multilib.yaml'
+          parameters:
+            BENCHMARK: 'CPU2000'
+            TOOLCHAIN: '/usr/bin/gcc'
+            TRIPLE: 'aarch64-linux-gnu'
+            SYSROOT: 'https://releases.linaro.org/components/toolchain/binaries/latest-5.1/aarch64-linux-gnu/sysroot-linaro-glibc-gcc5.1-2015.08-aarch64-linux-gnu.tar.xz'
+            RUN_FLAGS: '-n 1 --size test'
+            COMPILER_FLAGS: '-I/usr/include/aarch64-linux-gnu/c++/4.9/ -I/usr/include/c++/4.9/ -I/usr/include/c++/4.9/backward/'
+            MAKE_FLAGS: '-j5'
+            PREBUILT: 'None'
+            BENCH_DEBUG: 1
+            TRUST: 'Trusted'
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD bogden'
+  - command: 'lava_test_shell'
+    parameters:
+      role: 'target-juno-a57'
+      timeout: 345600
+      testdef_repos:
+        - git-repo: 'https://git.linaro.org/toolchain/abe'
+          revision: 'benchmarking'
+          testdef: 'config/bench/lava/target-session-tools.yaml'
+          parameters:
+            CONFIG: 'juno-a57'
+            PUB_KEY: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzlCPpuwMRSXZNq4Mut/GuitOhEturcsl9X1iNjOMGZXbtfBC8TCSXqotkziuYXpej1FCdXn3FEQsVw6Mw3I9Wq1p9okkgzVdsNzHAIob8ras/e9kOeJZGY5gSGBYf3t1MubAyaa033MJ+e3NRC4sbUmeeN3d9PD+Wc9QC3en9qfSpm6hh9EFHOHOjFk5+W0YZ83AL1PgalqL/hCN2/p9a8S1fsfDkfTgEh1XFIOiLds0fNzzmyXepxuA1n696iuSFMCIwmNcCfwRwRgt012UPgZu3avegYbDyijk8EtgFBuEA5OvX91BTHmaSjicsD9nJN63ms88l9OZMeTlPVjkD bogden'
+  - command: 'submit_results'
+    parameters:
+      server: 'https://lava.tcwglab/RPC2/'
+      stream: '/anonymous/fred.implausible2/'
+device_group:
+  - count: 1
+    device_type: 'juno'
+    role: 'host'
+  - count: 1
+    device_type: 'juno'
+    role: 'target-juno-a57'
+--dry-yaml given, exiting without producing JSON
