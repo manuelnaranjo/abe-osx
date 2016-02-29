@@ -237,6 +237,14 @@ if test $? -ne 0; then
   echo "Failed to resolve target IP" >&2
   exit 1
 fi
+if test -z "${trgt_resolved_ip}"; then #No DNS entry for target IP. We assume
+                                       #that this is because it is an IP
+				       #address. We have been using it all
+				       #this time, and we're in control of all
+				       #the config, so I think it is the only
+				       #possible explanation.
+  trgt_resolved_ip="${ip#*@}"
+fi
 while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_ip}"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
