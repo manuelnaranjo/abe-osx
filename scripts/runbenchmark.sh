@@ -12,6 +12,8 @@ trap 'exit ${error}' TERM INT HUP QUIT #Signal death can be part of normal contr
 #Precondition: the target is in known_hosts
 ssh_opts="-F /dev/null -o StrictHostKeyChecking=yes -o CheckHostIP=yes"
 host_ip="`hostname -I | cut -f 1 -d ' '`" #hostname -I includes a trailing space
+                                          #Later code relies on hostname being an
+                                          #IP address, not a hostname
 
 benchmark=
 device=
@@ -230,17 +232,12 @@ fi
 #Today LAVA lab does not provide DNS, but IP seems stable in practice
 #Rather than work around lack of DNS, just make sure we notice if the IP changes
 #'sleep 1' just here because the while loop has to do _something_
-trgt_resolved_ip="`dig +short hosts ${ip#*@}      | head -n 1`"
+trgt_resolved_ip="`dig +short hosts ${ip#*@} | head -n 1`"
 if test $? -ne 0; then
   echo "Failed to resolve target IP" >&2
   exit 1
 fi
-host_resolved_ip="`dig +short hosts ${host_ip#*@} | head -n 1`"
-if test $? -ne 0; then
-  echo "Failed to resolve host IP" >&2
-  exit 1
-fi
-while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_resolved_ip}"; do sleep 1; done
+while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_ip}"; do sleep 1; done
 error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
 if test $? -ne 0; then
   echo "Unable to determine benchmark exit code, assuming the worst." 1>&2
