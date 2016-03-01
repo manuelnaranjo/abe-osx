@@ -565,7 +565,7 @@ collect_data ()
 	# This is unfortunately, as @ is used to deliminate the revision
 	# string.
 	local fixbranch="`echo ${branch} | tr '/' '~' | tr '@' '_'`"
-	local dir=${search}${branch:+~${fixbranch}}${revision:+@${revision}}
+	local dir=${search}${branch:+~${fixbranch}}${revision:+_rev_${revision}}
     fi
 
     # configured and built as a separate way.

@@ -414,7 +414,7 @@ build()
     if test x"${buildingall}" = xno -a x"${tarbin}" != xyes; then
 
 	# Skip make_check if it isn't designated to be executed in ${runtests}
-	is_package_in_runtests "${runtests}" ${tool}
+	is_package_in_runtests "${runtests}" ${component}
 	if test $? -eq 0 -a x"$2" != x"stage1" -a x"$2" != x"gdbserver"; then
 	    # We don't run make check on gcc stage1 or on gdbserver because
 	    # it's unnecessary.
@@ -584,7 +584,7 @@ make_install()
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x -a x"${tarbin}" = x"yes"; then
-	case ${tool} in
+	case ${component} in
 	    binutils|gdb|gcc)
 		export LSB_SHAREDLIBPATH=${builddir}
 		local make_flags="${make_flags} CC=${LSBCC} CXX=${LSBCXX}"
@@ -666,7 +666,7 @@ make_check()
     # --enable alltests is specified at runtime.
     local ignore="dejagnu gmp mpc mpfr make eglibc linux gdbserver"
     for i in ${ignore}; do
-        if test x"${tool}" = x$i -a x"${alltests}" != xyes; then
+        if test x"${component}" = x$i -a x"${alltests}" != xyes; then
             return 0
         fi
     done
@@ -709,7 +709,7 @@ make_check()
     if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
 	# Overwrite ${checklog} in order to provide a clean log file
 	# if make check has been run more than once on a build tree.
-	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${tool}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
+	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${component}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
 	if test $? -gt 0; then
 	    error "make check -C ${builddir} failed."
 	    return 1
@@ -717,7 +717,7 @@ make_check()
     else
 	local exec_tests
 	exec_tests=false
-	case "$tool" in
+	case "$component" in
 	    gcc) exec_tests=true ;;
 	    # Support testing remote gdb for the merged binutils-gdb.git
 	    # repository where the branch doesn't indicate the tool.
@@ -775,7 +775,7 @@ make_check()
 	if test -e ${checklog}; then
 	    # This might or might not be called, depending on whether make_clean
 	    # is called before make_check.  None-the-less it's better to be safe.
-	    notice "Removing existing check-${tool}.log: ${checklog}"
+	    notice "Removing existing check-${component}.log: ${checklog}"
 	    rm ${checklog}
 	fi
 
