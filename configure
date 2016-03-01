@@ -3102,7 +3102,7 @@ DBPASSWD=${dbpasswd}
 DBHOST=${dbhost}
 
 
-CPUS="`getconf _NPROCESSORS_ONLN`"
+CPUS="`grep -c proces /proc/cpuinfo`"
 
 CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
 
@@ -5545,7 +5545,7 @@ fi
 
 
 if test x"${missing}" != x; then
-    as_fn_warn $? "You need to install these packages: ${missing}" "$LINENO" 5
+    as_fn_error $? "You need to install these packages: ${missing}" "$LINENO" 5
 fi
 
 rm -f Makefile
