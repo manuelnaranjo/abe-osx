@@ -11,6 +11,9 @@ declare -A names invalid
 names['fp']=
 names['int']=
 
+test_missing_ignores_2000=1
+test_missing_ignores_2006=1
+
 function exit_handler {
   if test $? -eq 0; then
     echo "CPU2006 gather script passed self-tests"
@@ -149,9 +152,28 @@ function test_benchmark {
   rm -rf testing
   mkdir -p testing/input/result
 
+  #Generate files that should be ignored, except for the first time
+  #By not generating them one time, we confirm that absence of the files
+  #does not cause a problem.
+  if test x"${year}" = x2000; then
+    if test ${test_missing_ignores_2000} -eq 1; then
+      test_missing_ignores_2000=0
+    else
+      touch testing/input/result/{log.lock,log.001}
+      mkdir testing/input/result/images
+      touch testing/input/result/images/{basebar,invalid,peakbar}.gif
+    fi
+  elif test x"${year}" = x2006; then
+    if test ${test_missing_ignores_2006} -eq 1; then
+      test_missing_ignores_2006=0
+    else
+      touch testing/input/result/{lock.CPU2006,CPU2006.001.log}
+    fi
+  fi
+
   for bset in "$@"; do
     exec {STDOUT}>&1
-    exec 1>testing/input/result/C${bset^^}${year}.001.${rawext}
+    exec 1>testing/input/result/C${bset^^}${year}.002.${rawext}
     testcase=('')
     testcase_selected=('')
     selected_count=0
@@ -205,7 +227,7 @@ function test_benchmark {
   echo 'lava-test-run-attach stderr text/plain' >> testing/golden
   echo 'lava-test-run-attach linarobenchlog text/plain' >> testing/golden
   for bset in "$@"; do
-    echo "lava-test-run-attach C${bset^^}${year}.001.${rawext} text/plain" >> testing/golden
+    echo "lava-test-run-attach C${bset^^}${year}.002.${rawext} text/plain" >> testing/golden
   done
 
   TESTING=1 ./CPU200x.sh testing/input > testing/output
@@ -226,37 +248,37 @@ TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #No runs of SPEC!
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CINT2000.001.raw
 touch testing/input/result/CINT2000.002.raw
+touch testing/input/result/CINT2000.003.raw
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CFP2000.001.raw
 touch testing/input/result/CFP2000.002.raw
+touch testing/input/result/CFP2000.003.raw
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CINT2006.test.001.rsf
 touch testing/input/result/CINT2006.test.002.rsf
+touch testing/input/result/CINT2006.test.003.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CFP2006.test.001.rsf
 touch testing/input/result/CFP2006.test.002.rsf
+touch testing/input/result/CFP2006.test.003.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CINT2006.test.001.rsf
-touch testing/input/result/CINT2006.ref.002.rsf
+touch testing/input/result/CINT2006.test.002.rsf
+touch testing/input/result/CINT2006.ref.003.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Multiple runs of SPEC unsupported
 
 rm -rf testing/input
 mkdir -p testing/input/result
-touch testing/input/result/CINT2006.test.001.rsf
+touch testing/input/result/CINT2006.test.002.rsf
 TESTING=1 ./CPU200x.sh testing/input &>/dev/null && false #Bad vintage (empty file?)
 TESTING=1 ./CPU2000.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year (empty file is among the possible causes)
 TESTING=1 ./CPU2006.sh testing/input &>/dev/null && false #SPEC vintage of input file does not match set year (empty file is among the possible causes)

@@ -213,6 +213,12 @@ popd > /dev/null
 cd "${run}"
 ltra "linarobenchlog" text/plain
 cd result
+if test x"${year}" = x2000; then
+  rm -rf images/
+  rm -f log.lock log.001
+else
+  rm -f lock.CPU2006 CPU2006.001.log
+fi
 for x in `find -type f | sed s/^..// | sort`; do
   ltra "$x" text/plain
 done
