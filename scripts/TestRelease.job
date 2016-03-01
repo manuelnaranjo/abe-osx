@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Set defaults
+if test x"${debug}" = x"true"; then
+    export CONFIG_SHELL="/bin/bash -x"
+else
+    export CONFIG_SHELL="/bin/bash"
+fi
+
+tarball=""
+target=""
+check=""
+
+OPTS="`getopt -o w:t:h -l target:,workspace:,help`"
+while test $# -gt 0; do
+    echo 1 = "$1"
+    case $1 in
+	-w|--workspace) user_workspace=$2 ;;
+	-t|--target) target=$2 ;;
+        -h|--help) usage ;;
+	--) break ;;
+    esac
+    shift
+done
+
+if test x"${target}" != x"native" -a x"${target}" != x; then
+    platform="--target ${target}"
+fi
+
+if test -e ${user_workspace}; then
+    cat << EOF > ${user_workspace}/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
+fi
+
+# Create a test directory
+if test ! -d ${user_workspace}/_test; then
+    mkdir -p ${user_workspace}/_test
+else
+    rm -fr ${user_workspace}/_test
+fi
+
+# Use the newly created build directory
+cd ${user_workspace}/_build
+
+
+exit 0
