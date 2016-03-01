@@ -149,13 +149,19 @@ function validate {
   #Both fatal and warning cases that depend on the validation/processing above
   if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/ ||
      test x"${LAVA_SERVER}" = x192.168.16.2/RPC2/; then
-    TRUST='Trusted'
+    TRUST="${TRUST:-Trusted}"
+    if test x"${TRUST}" != xTrusted; then
+      echo "User has overriden TRUST to ${TRUST} for trustable instance" >&2
+    fi
     if test -n "${PUBKEY_HOST:-}"; then
       echo "PUBKEY_HOST is meaningless for trusted run: will ignore it" >&2
     fi
     PUBKEY_TARGET="${PUBKEY_TARGET:-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVsYkArH+s18nFxzy6zVWMg45uN4oQm5WxjVkZ/PxjyzPbnfTjRgyaqKDUbxUagWX76DCSFHftlKDAllYpAuvGrCsJtVOkSqrkrB8PMZNIsy+4fiL/j+qjLX9bEq0TKpf9aVK6xx2enl9NX8CvOwvxSnqrkevyeuMrw1oULnwN9qiliHmV0MSzWE+U3Y8VOyFbhhgAiy9/ud5sklurJebs/B7Q1w0LrA+WiTwmVkrumauX+Om24IU1MOxOJHcIao+hDyb87Oo2Ca8uXBeWEVPHh8kwddm5FHOe3KbT3VhuFhN5U/7h4xAgdp8YFXRJL/xxbZ8+nggkLS6Zx0sDbuUb}"
   else
-    TRUST='None'
+    TRUST="${TRUST:-None}"
+    if test x"${TRUST}" != xNone; then
+      echo "User has overriden TRUST to ${TRUST} for untrustable instance" >&2
+    fi
     for x in PUBKEY_HOST PUBKEY_TARGET; do
       if test -x "${!x:-}"; then
         echo "${x} must be set for untrusted sessions" >&2
