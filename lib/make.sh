@@ -765,7 +765,7 @@ make_check()
 		local check_targets="check"
 		;;
 	esac
-	if test x"${component}" = x"gcc"; then
+	if test x"${component}" = x"gcc" -a x"${clibrary}" != "newlib"; then
             touch ${sysroots}/etc/ld.so.cache
             chmod 700 ${sysroots}/etc/ld.so.cache
 	fi
