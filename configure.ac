@@ -49,7 +49,7 @@ AC_SUBST(DBPASSWD)
 DBHOST=${dbhost}
 AC_SUBST(DBHOST)
 
-CPUS="`getconf _NPROCESSORS_ONLN`"
+CPUS="`grep -c proces /proc/cpuinfo`"
 AC_SUBST(CPUS)
 CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
 AC_SUBST(CORES)
