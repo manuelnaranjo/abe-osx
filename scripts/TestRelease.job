@@ -10,13 +10,14 @@ fi
 tarball=""
 target=""
 check=""
+user_workspace="$PWD"
 
-OPTS="`getopt -o w:t:h -l target:,workspace:,help`"
+OPTS="`getopt -o w:t:h -l tarball:,workspace:,help`"
 while test $# -gt 0; do
     echo 1 = "$1"
     case $1 in
 	-w|--workspace) user_workspace=$2 ;;
-	-t|--target) target=$2 ;;
+	-t|--tarball) tarball=$2 ;;
         -h|--help) usage ;;
 	--) break ;;
     esac
@@ -36,15 +37,59 @@ License-Type: open
 EOF
 fi
 
+testdir=${user_workspace}/_test
+
 # Create a test directory
-if test ! -d ${user_workspace}/_test; then
-    mkdir -p ${user_workspace}/_test
-else
-    rm -fr ${user_workspace}/_test
+if test ! -d ${testdir}; then
+    mkdir -p ${testdir}
 fi
 
 # Use the newly created build directory
-cd ${user_workspace}/_build
+cd ${testdir}
 
+file=`basename ${tarball}`
 
-exit 0
+# Download the toolchain binary tarball
+if test ! -e ${testdir}/${file}; then
+    wget ${tarball} --directory=${testdir}
+    if test $? -gt 0; then
+	echo "ERROR: ${tarball} doesn't exist on remote machine!"
+	exit $?
+    fi
+fi
+
+# Extract the tarball
+dir="`echo ${file} | sed -e 's:.tar.xz::'`"
+if test ! -d ${dir}; then
+    tar Jxvf ${testdir}/${file} --directory=${testdir}
+    if test $? -gt 0; then
+	echo "ERROR: ${tarball} is corrupted!"
+	exit $?
+    fi
+fi
+
+# Create a simple test case
+if test ! -e ${testdir}/hello.cpp; then
+    # Create the usual Hello World! test case
+    cat <<EOF > ${testdir}/hello.cpp
+#include <iostream>
+int
+main(int argc, char *argv[])
+{
+    std::cout << "Hello World!" << std::endl; 
+}
+EOF
+fi
+
+target="`echo ${dir} | egrep -o "arm|aarch.*"`"
+
+# Compile the test case
+rm -f ${testdir}/hi
+${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp -static
+
+if test -e ${testdir}/hi; then
+    exit 0
+else
+    exit 1
+fi
+
