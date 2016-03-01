@@ -1,6 +1,5 @@
 #!/bin/bash
 
-${TESTING:+set -x}
 set -eu
 set -o pipefail
 

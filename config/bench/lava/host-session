@@ -46,8 +46,13 @@ function ssh_rune {
 }
 
 function exitfunc {
-  for x in "${maindir}"/bench/builds/*/*/*/build.log; do
-    'lava-test-run-attach' "${x}" text/plain
+  for x in "${maindir}"/bench/builds/*/*/*/build.log \
+           "${maindir}"/data/{build,run}.std{out,err}; do
+    if test -f "${x}"; then
+      'lava-test-run-attach' "${x}" text/plain
+    else
+      echo "Not attaching non-existent file ${x}" >&2
+    fi
   done
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
@@ -326,7 +331,7 @@ if test x"${prebuilt:-}" = x; then
     -i "${benchgccpath}" \
     ${triple:+-x "${triple}"} \
     -b "${benchmark}" \
-    "${target_names[@]}"
+    "${target_names[@]}" >"${maindir}"/data/build.stdout 2>"${maindir}"/data/build.stderr
   resultsdir="${benchmark}.git"
 else
   benchtar="`get_thing ${prebuilt}`"
@@ -372,7 +377,7 @@ bash -x "${ABE_DIR}"/scripts/benchmark.sh \
         test x\$(cat \${HOME}/gatherresult) != x || return \$?;
         return \$(cat \${HOME}/gatherresult);
       }; f' \
-  "${target_names[@]}"
+  "${target_names[@]}" >"${maindir}"/data/run.stdout 2>"${maindir}"/data/run.stderr
 
 if test ${trusted} -eq 0; then
   #We are in an untrusted environment, so we have not directed that the target will send to bundle stream
