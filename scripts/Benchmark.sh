@@ -147,7 +147,8 @@ function validate {
   fi
 
   #Both fatal and warning cases that depend on the validation/processing above
-  if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/; then
+  if test x"${LAVA_SERVER}" = xlava.tcwglab/RPC2/ ||
+     test x"${LAVA_SERVER}" = x192.168.16.2/RPC2/; then
     TRUST='Trusted'
     if test -n "${PUBKEY_HOST:-}"; then
       echo "PUBKEY_HOST is meaningless for trusted run: will ignore it" >&2
