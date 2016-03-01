@@ -223,8 +223,7 @@ function deploy_for_device_type {
   cmd[panda-es]='deploy_linaro_image'
 
   parts[arndale]="image: 'http://people.linaro.org/~bernie.ogden/arndale/arndale.img'"
-  parts[juno]="hwpack: 'http://people.linaro.org/~bernie.ogden/hwpack_linaro-lt-vexpress64-rtsm_20150114-706_arm64_supported.tar.gz'
-      rootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150114-87.tar.gz'"
+  parts[juno]="image: 'http://people.linaro.org/~bernie.ogden/juno-precooked.img.gz'"
   parts[kvm]="image: 'http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz'"
   parts[mustang]="dtb: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb'
       kernel: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/uImage-mustang'
