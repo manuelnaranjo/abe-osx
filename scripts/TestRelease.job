@@ -75,11 +75,26 @@ EOF
 fi
 
 target="`echo ${dir} | egrep -o "arm.*|aarch.*"`"
+win32="`echo {$file} | grep -c mingw`"
+
+# Bare metal builds use a specs file
+# Do work for ARM : rdpmon.spec dimon.spec linux.specs profile-ve.spec
+#                   aprofile-validation.specs
+# Don't work for ARM : iq80310.spec nano.specs pid.specs edboot.spec
+baremetal="`echo ${target} | egrep -c "-eabi|-elf"`"
+if test ${baremetal} -gt 0; then
+    specs="--specs=`find ${dir} -name rdimon.specs`" ;;
+fi
 
 # Compile the test case
 rm -f ${testdir}/hi
-${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp -static
+if test ${win32} -eq 0; then
+    ${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp  ${specs:-} -static
+else
+    wine ${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp ${specs:-} -static
+fi
 
+# See if the compilation worked
 if test -e ${testdir}/hi; then
     exit 0
 else
