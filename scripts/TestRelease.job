@@ -81,17 +81,18 @@ win32="`echo {$file} | grep -c mingw`"
 # Do work for ARM : rdpmon.spec dimon.spec linux.specs profile-ve.spec
 #                   aprofile-validation.specs
 # Don't work for ARM : iq80310.spec nano.specs pid.specs edboot.spec
-baremetal="`echo ${target} | egrep -c "-eabi|-elf"`"
+baremetal="`echo ${target} | egrep -c "\-eabi|\-elf"`"
 if test ${baremetal} -gt 0; then
     specs="--specs=`find ${dir} -name rdimon.specs`"
 fi
 
 # Compile the test case
 rm -f ${testdir}/hi
+params="-o ${testdir}/hi ${testdir}/hello.cpp ${specs:-} -static"
 if test ${win32} -eq 0; then
-    ${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp  ${specs:-} -static
+    ${testdir}/${dir}/bin/${target}-c++ ${params}
 else
-    wine ${dir}/bin/${target}-c++ -o ${testdir}/hi ${testdir}/hello.cpp ${specs:-} -static
+    wine ${testdir}/${dir}/bin/${target}-c++ ${params}
 fi
 
 # See if the compilation worked
