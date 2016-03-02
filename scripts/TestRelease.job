@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 EOF
 fi
 
-target="`echo ${dir} | egrep -o "arm|aarch.*"`"
+target="`echo ${dir} | egrep -o "arm.*|aarch.*"`"
 
 # Compile the test case
 rm -f ${testdir}/hi
