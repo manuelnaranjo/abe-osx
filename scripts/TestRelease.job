@@ -83,7 +83,7 @@ win32="`echo {$file} | grep -c mingw`"
 # Don't work for ARM : iq80310.spec nano.specs pid.specs edboot.spec
 baremetal="`echo ${target} | egrep -c "-eabi|-elf"`"
 if test ${baremetal} -gt 0; then
-    specs="--specs=`find ${dir} -name rdimon.specs`" ;;
+    specs="--specs=`find ${dir} -name rdimon.specs`"
 fi
 
 # Compile the test case
