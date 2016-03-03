@@ -71,12 +71,76 @@ function comment {
   test "${1:0:1}" = '#'
 }
 
+function _xcmd_verification {
+  #For non-cert runs, we rely on Coremark-Pro printing XCMD as the last argument
+  #on lines that begin #Results. Its parameters are space-separated with no escaping or
+  #quoting. So $7 will be XCMD=<thing> and any further parameters are also part
+  #of XCMD. One of them may be -v1.
+  #We make this code pretty twitchy -- better to fail to report than to report
+  #garbage.
+  #Caller must already have checked that line begins with #Results.
+  local x v first
+  v=''
+  shift 6
+  if test -z "${1:-}" || test x"${1:0:5}" != 'xXCMD='; then
+    echo "XCMD= not at expected location." >&2
+    exit 1
+  fi
+
+  first="${1:5}"
+  shift
+  for x in "${first}" "$@"; do
+    if test x"${x:0:2}" = 'x-v'; then
+      if test -z "${v}"; then
+        v="v${x:2}"
+      else
+        echo "Multiple -v in XCMD. Don't know what this means." >&2
+        exit 1
+      fi
+    fi
+  done
+  if test -z "${v:-}" || test x"${v}" = xv1; then
+    return 0
+  elif test x"${v}" = xv0; then
+    return 1
+  else
+    echo "Unknown -v argument '${v:1}'." >&2
+    exit 1
+  fi
+}
+
+function _results {
+  test x"$1" = x'#Results'
+}
+
 function verification {
-  test x"$1" = x'#Results' && test x"$3" = xverification
+  #Can't be a performance line if it is not a results line
+  _results "$@" || return 1
+
+  #Certification runs print convenient text
+  if test x"$3" = xverification; then
+    return 0
+  elif test x"$3" = xperformance; then
+    return 1
+  else #Starts with #Results but not a certification run, therefore this line
+       #should be in a format that _xcmd_verification can parse
+    _xcmd_verification "$@"
+  fi
 }
 
 function performance {
-  test x"$1" = x'#Results' && test x"$3" = xperformance
+  #Can't be a performance line if it is not a results line
+  _results "$@" || return 1
+
+  #Certification runs print convenient text
+  if test x"$3" = xperformance; then
+    return 0
+  elif test x"$3" = xverification; then
+    return 1
+  else #Starts with #Results but not a certification run, therefore this line
+       #should be in a format that _xcmd_verification can parse
+    ! _xcmd_verification "$@"
+  fi
 }
 
 function median {
@@ -219,25 +283,35 @@ while test $i -lt ${line_max}; do
   if header ${line[$i]}; then
     continue
   elif verification ${line[$i]}; then
-    i=$((i+1))
-    name="`name ${line[$i]}`"
-    verificationCount["${name}"]=$((${verificationCount["${name}"]:-0} + 1))
-
-    #Log sizes off the first verification run, as these should only be constant
-    if test ${verificationCount["${name}"]} -eq 1; then
-      cs="`code_size ${line[$i]}`"
-      ds="`data_size ${line[$i]}`"
-      ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "${cs}"
-      ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "${ds}"
+    if test $i -eq ${line_max}; then
+      echo "No verification lines after verification header" >&2
+      exit 1
     fi
+    while test $i -lt ${line_max} && ! comment ${line[$((i+1))]}; do
+      i=$((i+1))
+      name="`name ${line[$i]}`"
+      verificationCount["${name}"]=$((${verificationCount["${name}"]:-0} + 1))
 
-    if pass ${line[$i]}; then
-      ltc "${name}[verification[${verificationCount[${name}]}]]" --result pass
-    else
-      ltc "${name}[verification[${verificationCount[${name}]}]]" --result fail
-    fi
+      #Log sizes off the first verification run, as these should only be constant
+      if test ${verificationCount["${name}"]} -eq 1; then
+        cs="`code_size ${line[$i]}`"
+        ds="`data_size ${line[$i]}`"
+        ltc "${name}[code_size]" --result pass --units 'bytes' --measurement "${cs}"
+        ltc "${name}[data+bss_size]" --result pass --units 'bytes' --measurement "${ds}"
+      fi
+
+      if pass ${line[$i]}; then
+        ltc "${name}[verification[${verificationCount[${name}]}]]" --result pass
+      else
+        ltc "${name}[verification[${verificationCount[${name}]}]]" --result fail
+      fi
+    done
   elif performance ${line[$i]}; then
-    while ! comment ${line[$((i+1))]}; do
+    if test $i -eq ${line_max}; then
+      echo "No performance lines after performance header" >&2
+      exit 1
+    fi
+    while test $i -lt ${line_max} && ! comment ${line[$((i+1))]}; do
       i=$((i+1))
       name="`name ${line[$i]}`"
       performanceCount["${name}"]=$((${performanceCount["${name}"]:-0} + 1))

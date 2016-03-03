@@ -93,6 +93,7 @@ function do_performance {
   local name=$2
   local iterations=$3
   local runs=$4
+  local do_medians=$5
   local all_times=
   for run in `seq 1 "${runs}"`; do
     _do_run ${name} ${iterations}
@@ -107,41 +108,56 @@ function do_performance {
       $((run + runset * runs)) \
       ${last_ratio}`")
   done
-  local middle=`echo ${all_times} | wc -w`
-  middle=$((middle/2))
-  local median_time="`echo ${all_times} | tr ' ' '\n' | sort -n | sed -n ${middle}p`"
-  local median_ratio=`echo "${median_time} / ${iterations}" | bc -l`
-  echo "#Median for final result ${name}"
-  printf '123456789\tMLT\t%s\t1\t1\t0\t%f\t%i\t%f\t%i\t%i\n' \
-    ${name} \
-    ${median_time} \
-    ${iterations} \
-    ${median_ratio} \
-    ${codesize[${name}]} \
-    ${datasize[${name}]}
-  testcase=("${testcase[@]}" \
-    "`printf 'lava-test-case %s[median[%i]]:time --result pass --units seconds --measurement %f' \
-    ${name} \
-    $((runset + 1)) \
-    ${median_time}`" \
-    "`printf 'lava-test-case %s[median[%i]]:rate --result pass --units it/s --measurement %f' \
-    ${name} \
-    $((runset + 1)) \
-    ${median_ratio}`")
+
+  if test ${do_medians} -eq 1; then
+    local middle=`echo ${all_times} | wc -w`
+    middle=$((middle/2))
+    local median_time="`echo ${all_times} | tr ' ' '\n' | sort -n | sed -n ${middle}p`"
+    local median_ratio=`echo "${median_time} / ${iterations}" | bc -l`
+    echo "#Median for final result ${name}"
+    printf '123456789\tMLT\t%s\t1\t1\t0\t%f\t%i\t%f\t%i\t%i\n' \
+      ${name} \
+      ${median_time} \
+      ${iterations} \
+      ${median_ratio} \
+      ${codesize[${name}]} \
+      ${datasize[${name}]}
+    testcase=("${testcase[@]}" \
+      "`printf 'lava-test-case %s[median[%i]]:time --result pass --units seconds --measurement %f' \
+      ${name} \
+      $((runset + 1)) \
+      ${median_time}`" \
+      "`printf 'lava-test-case %s[median[%i]]:rate --result pass --units it/s --measurement %f' \
+      ${name} \
+      $((runset + 1)) \
+      ${median_ratio}`")
+  fi
 }
 
-function primary_runs {
-  for x in `seq 0 $(($1 - 1))`; do
+function certification_runs {
+  for x in 0 1; do
     for name in ${workloads}; do
       echo '#Results for verification run started at 15350:15:33:03 XCMD='
       do_verification $x "${name}"
       echo '#Results for performance runs started at 15350:15:33:03 XCMD='
       iterations=$((RANDOM % 100 + 1))
-      do_performance $x $name $((iterations * 10)) 9 #i.e. will report 10 - 1000 iterations, will be a multiple of 10
+      do_performance $x $name $((iterations * 10)) 9 1 #i.e. will report 10 - 1000 iterations, will be a multiple of 10
     done
   done
 }
 
+function quick_runs {
+  echo '#Results for run started at 16063:09:19:16 XCMD=-v1'
+  for name in ${workloads}; do
+    do_verification 0 "${name}"
+  done
+  for name in ${workloads}; do
+    for x in 0 1 2; do
+      echo '#Results for run started at 16063:09:19:41 XCMD=-v0'
+      do_performance $x "${name}" 10 1 0
+    done
+  done
+}
 
 rm -rf testing
 mkdir -p testing/input/builds/TARGET/TOOLCHAIN/logs
@@ -150,7 +166,7 @@ mkdir -p testing/input/builds/TARGET/TOOLCHAIN/cert/DATE/{best,single}/perf/logs
 #First test - certify-all run
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'UID     Suite   Name    Contexts        Workers Item Fails      Time(secs)      Iterations      It/s    Codesize        Datasize        Variance        Standard Deviation'
-primary_runs 2
+certification_runs
 
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.mark
 echo 'Mark,Performance,Scale,Comments'
@@ -205,7 +221,7 @@ testcase=('')
 
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo 'UID     Suite   Name    Contexts        Workers Item Fails      Time(secs)      Iterations      It/s    Codesize        Datasize        Variance        Standard Deviation'
-primary_runs 1
+quick_runs
 
 exec 1>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.noncert_mark
 echo 'Mark,Performance,Scale,Comments'
@@ -266,7 +282,7 @@ done
 echo > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #header ${line[$i]} (will fail with $1: unbound variable)
 echo '#Results foo verification' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with line[$i]: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of next line (will fail with No verification lines after verification header)
 echo 'foo foo' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on trying to read name from next line ($3: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
@@ -276,7 +292,116 @@ sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 echo '1 2 3 4 5 6 7 8 9 10' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being unable to read data size (will fail with $9: unbound variable)
 echo '#Results foo performance' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
-TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of following line (line[$((i+1))]: unbound variable)
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on absence of following line (No performance lines after performance header)
+
+#Effectively unit test _xcmd_verification. Here called via verification.
+echo '#Results foo bar' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being neither certify-all string, nor having XCMD= in the right place (XCMD= not at expected location)
+echo '#Results foo XCMD=' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being neither certify-all string, nor having XCMD= in the right place (XCMD= not at expected location)
+echo '#Results foo 3 4 5 6 XCMD=-v0 -v1' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on multiple -v in XCMD (Multiple -v in XCMD. Don't know what this means.)
+echo '#Results foo 3 4 5 6 XCMD=-v2' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument '2'.)
+echo '#Results foo 3 4 5 6 XCMD=-va' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument 'a'.)
+echo '#Results foo 3 4 5 6 XCMD=-v 1' > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument ''.)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES on implicitly a validation run
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-v1 -i1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (at beginning)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-i1 -v1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (at end)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-i1 -v1 -i1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (in middle)
+
+#Effectively unit test _xcmd_verification. Here called via performance.
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo bar' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being neither certify-all string, nor having XCMD= in the right place (XCMD= not at expected location)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo XCMD=' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on being neither certify-all string, nor having XCMD= in the right place (XCMD= not at expected location)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo 3 4 5 6 XCMD=-v0 -v1' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on multiple -v in XCMD (Multiple -v in XCMD. Don't know what this means.)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo 3 4 5 6 XCMD=-v2' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument '2'.)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo 3 4 5 6 XCMD=-va' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument 'a'.)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+echo '#Results foo 3 4 5 6 XCMD=-v 1' >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on invalid -v value (Unknown -v argument ''.)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+cat <<EOF >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES on implicitly a validation run
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+cat <<EOF >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-v1 -i1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (at beginning)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+cat <<EOF >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-i1 -v1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (at end)
+cat <<EOF > testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo verification
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+cat <<EOF >>testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
+#Results foo 3 4 5 6 XCMD=-i1 -v1 -i1
+1 2 3 4 5 6 7 8 9 10 11
+EOF
+TESTING=1 ./Coremark-Pro.sh testing/input #PASSES, valid v1 found (in middle)
+
 echo >> testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
 TESTING=1 ./Coremark-Pro.sh testing/input 2>&1 && false #fails on looking for comment character in following line (1: unbound variable)
 sed -i '$d' testing/input/builds/TARGET/TOOLCHAIN/logs/TARGET.TOOLCHAIN.log
