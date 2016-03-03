@@ -68,11 +68,6 @@ function exitfunc {
       wait $! || true #'|| true' -- don't terminate here if the sleeper is killed, want to do the cleanup
     fi
   fi
-  if test x"${tmpdir:-}" != x; then
-    if test -e "${tmpdir}"; then
-      rm -rf "${tmpdir}"
-    fi
-  fi
   rm -rf "${maindir}"
   exit ${error}
 }
@@ -88,7 +83,7 @@ umask 077
 
 function get_thing {
   local thing="${1}"
-  pushd "${tmpdir}" > /dev/null
+  pushd "${maindir}/downloads" > /dev/null
   if echo x"${thing}" | grep -q '^xhttp'; then
     wget -q "${thing}"
   else
@@ -101,11 +96,10 @@ function get_thing {
     exit 1
   fi
   popd > /dev/null
-  echo "${tmpdir}/`basename ${thing}`"
+  echo "${maindir}/downloads/`basename ${thing}`"
 }
 
 benchgccpath=
-tmpdir="`mktemp -dt downloads-XXXXXXX`"
 
 benchmark="${1}"
 if test x"${benchmark}" = xNone; then
@@ -170,7 +164,7 @@ fi
 echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}" || exit 1
 cd "${maindir}"
-mkdir bin bench data #Final mkdir
+mkdir bin bench data downloads #Final mkdir
 cd bench #Final directory change
 
 export PATH="${maindir}"/bin:"${PATH}"
