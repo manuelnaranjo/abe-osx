@@ -156,6 +156,10 @@ else
   exit 1
 fi
 
+#Ensure that we have no cruft left over from a previous run (we might be on a
+#device with persistent filesystem, and it might have failed cleanup, or been
+#cancelled)
+rm -rf /tmp/bench-*
 maindir="`mktemp -dt bench-XXXXXX`"
 if test $? -ne 0; then
   echo "Unable to create maindir on target" >&2
