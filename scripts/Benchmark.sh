@@ -328,7 +328,7 @@ validate #Fails on error due to set -e (which is what we want)
 #Defaults
 LAVA_USER="${LAVA_USER:-${USER}}"
 LAVA_JOB_NAME="${LAVA_JOB_NAME:-${BENCHMARK}-${LAVA_USER}}"
-HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-dummy-ssh}"
+HOST_DEVICE_TYPE="${HOST_DEVICE_TYPE:-kvm}"
 TESTDEF_REVISION="${TESTDEF_REVISION:-benchmarking}"
 TESTDEF_REPO="${TESTDEF_REPO:-https://git.linaro.org/toolchain/abe}"
 BUNDLE_SERVER="${BUNDLE_SERVER:-${LAVA_SERVER}}"
