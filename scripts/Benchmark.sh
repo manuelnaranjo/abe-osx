@@ -69,6 +69,17 @@ function validate {
     ret=1
   fi
 
+  #Far from foolproof, but can catch blatantly wrong URL early
+  for x in TOOLCHAIN SYSROOT PREBUILT; do
+    test -z "${!x:-}" && continue
+    curl --output /dev/null --silent --head --fail "${!x}" && continue
+    case $? in
+      6) continue;; #Could not resolve host - might be an scp pattern, or a host we cannot see from here
+      22) echo "Could not find ${x} (\"${!x}\" gives 404)" >&2; ret=1;;
+      *) echo "${x} URL \"${!x}\" gives curl error $?" >&2; ret=1;;
+    esac
+  done
+
   #Need to be careful with this one - a toolchain with no triple might still
   #generate code for the target named by the triple (e.g. /usr/bin/gnu on a
   #Juno board). Equally, no triple means 'native', and native code might be
