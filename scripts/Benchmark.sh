@@ -261,7 +261,7 @@ function deploy_for_device_type {
   parts[arndale]="image: 'http://people.linaro.org/~bernie.ogden/arndale/arndale.img'"
   parts[dummy-ssh]="target_type: 'ubuntu'"
   parts[juno]="image: 'http://people.linaro.org/~bernie.ogden/juno-precooked.img.gz'"
-  parts[kvm]="image: 'http://images.validation.linaro.org/ubuntu-14-04-server-base.img.gz'"
+  parts[kvm]="image: 'WHEREEVER THE MAGIC LAB IMAGE GOES'"
   parts[mustang]="dtb: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/dtbs/apm-mustang.dtb'
       kernel: 'http://kernel-build.s3-website-eu-west-1.amazonaws.com/next-20151022/arm64-defconfig/uImage-mustang'
       nfsrootfs: 'http://people.linaro.org/~bernie.ogden/linaro-utopic-developer-20150319-701.tar.gz'"
@@ -286,7 +286,7 @@ function host_session_for_device_type {
   session[arndale]=host-session-no-multilib.yaml
   session[dummy-ssh]=host-session-persist-safe.yaml
   session[juno]=host-session-no-multilib.yaml
-  session[kvm]=host-session-multilib.yaml
+  session[kvm]=host-session.yaml
   session[mustang]=host-session.yaml
   session[panda-es]=host-session-no-multilib.yaml
 
