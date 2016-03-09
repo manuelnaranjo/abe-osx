@@ -57,14 +57,20 @@ function ssh_rune {
 }
 
 function exitfunc {
-  for x in "${maindir}"/bench/builds/*/*/*/build.log \
-           "${maindir}"/data/{build,run}.std{out,err}; do
-    if test -f "${x}"; then
-      'lava-test-run-attach' "${x}" text/plain
-    else
-      echo "Not attaching non-existent file ${x}" >&2
-    fi
-  done
+  #Attach significant logs
+  #At least some of these logs are unlikely to be sensitive, but if any of them
+  #change to include, say, sizes then they become sensitive. So we are paranoid.
+  #trusted may not be initialized, but can only be 1 if we know we are trusted
+  if test x"${trusted:-}" = x1; then
+    for x in "${maindir}"/bench/builds/*/*/*/build.log \
+             "${maindir}"/data/{build,run}.std{out,err}; do
+      if test -f "${x}"; then
+        'lava-test-run-attach' "${x}" text/plain
+      else
+        echo "Not attaching non-existent file ${x}" >&2
+      fi
+    done
+  fi
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
       echo "Trapped exit with error ${error}"
