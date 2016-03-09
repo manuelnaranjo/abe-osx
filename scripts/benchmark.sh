@@ -182,13 +182,14 @@ if test x"${benchmark:-}" = x; then
   error=1
   exit
 fi
-if test x"${toolchain_path}" != x; then
-  if test x"${phases}" != xrunonly; then
-    if ! test -x "${toolchain_path}"; then
-      echo "Toolchain '${toolchain_path}' does not exist or is not executable" 1>&2
-      error=1
-      exit
-    fi
+if test x"${toolchain_path}" = x; then
+  toolchain_path="`which ${triple:+${triple}-}gcc`"
+fi
+if test x"${phases}" != xrunonly; then
+  if ! test -x "${toolchain_path}"; then
+    echo "Toolchain '${toolchain_path}' does not exist or is not executable" 1>&2
+    error=1
+    exit
   fi
 fi
 
