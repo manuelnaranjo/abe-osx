@@ -26,6 +26,7 @@ usage()
              [--disable {install|update|make_docs|building}] [--dryrun]
              [--dump] [--enable {bootstrap|gerrit}]
              [--excludecheck {all|glibc|gcc|gdb|binutils}]
+             [--extraconfig <tool>=<path>]
              [--fetch <url>] [--force] [--help] [--host <host_triple>]
              [--infrastructure] [--interactive]
              [--list] [--manifest <manifest_file>]
@@ -193,6 +194,9 @@ OPTIONS
                 --check packages, e.g., the following will NOT check gdb:
 
                 --check gdb --excludecheck gdb --check gdb
+
+  --extraconfig <tool>=<path>
+                Use an additional configuration file for tool.
 
   --fetch <url>
 
@@ -765,6 +769,8 @@ do_excludecheck=
 do_build=
 do_build_stage=stage2
 
+declare -A extraconfig
+
 # Process the multiple command line arguments
 while test $# -gt 0; do
     # Get a URL for the source code for this toolchain component. The
@@ -832,6 +838,13 @@ while test $# -gt 0; do
 
 	    shift
 	    ;;
+	--extraconfig|-extraconfig)
+	    check_directive $1 extraconfig extraconfig $2
+	    extraconfig_tool=`echo $2 | sed 's/\(.*\)=.*/\1/'`
+	    extraconfig_val=`echo $2 | sed 's/.*=\(.*\)/\1/'`
+	    extraconfig[${extraconfig_tool}]="${extraconfig_val}"
+	    shift
+            ;;
 	--host|-h*)
 	    host=$2
 	    shift

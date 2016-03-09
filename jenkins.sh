@@ -94,7 +94,11 @@ rebuild=true
 
 orig_parameters="$@"
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l override:,gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
+# List of extra configuration files, per tool
+# Syntax: --extracconfig <tool>=<path>
+extraconfig=""
+
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l override:,gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild,extraconfig: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) change="$change gcc=$2"; shift ;;
@@ -113,6 +117,7 @@ while test $# -gt 0; do
         -b|--bootstrap) try_bootstrap="true" ;;
 	--excludecheck) excludecheck_opt="$excludecheck_opt --excludecheck $2"; shift ;;
 	--norebuild) rebuild=false ;;
+	--extraconfig) extraconfig="${extraconfig} --extraconfig $2" ;;
 	-h|--help) usage ;;
     esac
     shift
@@ -349,7 +354,7 @@ fi
 # Now we build the cross compiler, for a native compiler this becomes
 # the stage2 bootstrap build.
 ret=0
-$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2) || ret=$?
+$CONFIG_SHELL ${abe_dir}/abe.sh --disable update ${check} ${tars} ${releasestr} ${platform} ${change} ${try_bootstrap} ${extraconfig} --timeout 100 --build all --disable make_docs > build.out 2> >(tee build.err >&2) || ret=$?
 
 # If abe returned an error, make jenkins see this as a build failure
 if test $ret -gt 0; then
@@ -450,9 +455,9 @@ if test x"${canadian}" = x"true"; then
     distro="`lsb_release -sc`"
     # Ubuntu Lucid uses an older version of Mingw32
     if test x"${distro}" = x"lucid"; then
-	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i586-mingw32msvc ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} ${extraconfig} --host=i586-mingw32msvc ${platform} --build all
     else
-	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} --host=i686-w64-mingw32 ${platform} --build all
+	$CONFIG_SHELL ${abe_dir}/abe.sh --disable update --nodepends ${change} ${tars} ${extraconfig} --host=i686-w64-mingw32 ${platform} --build all
     fi
 fi
 
