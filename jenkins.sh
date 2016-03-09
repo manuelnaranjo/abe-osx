@@ -94,11 +94,12 @@ rebuild=true
 
 orig_parameters="$@"
 
-OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l override:,gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild -- "$@"`"
+OPTS="`getopt -o s:g:c:w:o:f:l:rt:b:h -l override:,gcc-branch:,snapshots:,gitrepo:,abe:,workspace:,options:,fileserver:,logserver:,logname:,languages:,runtests,target:,bootstrap,help,excludecheck:,norebuild,extraconfig: -- "$@"`"
 while test $# -gt 0; do
     case $1 in
 	--gcc-branch) change="$change gcc=$2"; shift ;;
 	--override) change="$change $2"; shift ;;
+	--extraconfig) change="${change} --extraconfig $2" ;;
         -s|--snapshots) user_snapshots=$2; shift ;;
         -g|--gitrepo) git_reference=$2; shift ;;
         -c|--abe) abe_dir=$2; shift ;;

@@ -133,6 +133,16 @@ configure_build()
 	exit 1
     fi
   
+    local this_extraconfig="${extraconfig[${toolname}]}"
+    if test -n "${this_extraconfig}"; then
+	if test -e "${this_extraconfig}"; then
+	    notice "Sourcing extra config: ${this_extraconfig}"
+	    . "${this_extraconfig}"
+	else
+	    error "Warning: extraconfig file does not exist: ${this_extraconfig}"
+	    exit 1
+	fi
+    fi
 
     # See if this component depends on other components. They then need to be
     # built first.
