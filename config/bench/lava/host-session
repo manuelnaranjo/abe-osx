@@ -4,10 +4,21 @@
 set -xue
 set -o pipefail
 
+#Variables that must be initialized before exit handler can be called
 error=1
 if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
   BENCH_DEBUG=
 fi
+#Ensure that we have no cruft left over from a previous run (we might be on a
+#device with persistent filesystem, and it might have failed cleanup, or been
+#cancelled)
+rm -rf /tmp/bench-*
+maindir="`mktemp -dt bench-XXXXXX`"
+if test $? -ne 0; then
+  echo "Unable to create maindir on target" >&2
+  exit 1
+fi
+#End of variables that must be initialized before exit handler can be called
 
 function ssh_rune {
   local preargs
@@ -164,15 +175,6 @@ else
   exit 1
 fi
 
-#Ensure that we have no cruft left over from a previous run (we might be on a
-#device with persistent filesystem, and it might have failed cleanup, or been
-#cancelled)
-rm -rf /tmp/bench-*
-maindir="`mktemp -dt bench-XXXXXX`"
-if test $? -ne 0; then
-  echo "Unable to create maindir on target" >&2
-  exit 1
-fi
 echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}" || exit 1
 cd "${maindir}"
