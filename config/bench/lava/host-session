@@ -70,6 +70,15 @@ function exitfunc {
     fi
     if test -f build.log; then
       'lava-test-run-attach' build.log text/plain
+      sed '0,/^Sizes$/d' build.log | sed '1,2d' > "${maindir}"/data/sizes
+      while read line; do
+        name="`echo ${line} | awk '{print $6}'`"
+        name="${name##*/}"
+        'lava-test-case' "${name}[size][text]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $1}'`
+        'lava-test-case' "${name}[size][data]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $2}'`
+        'lava-test-case' "${name}[size][bss]"   --result pass --units bytes --measurement `echo "${line}" | awk '{print $3}'`
+        'lava-test-case' "${name}[size][total]" --result pass --units bytes --measurement `echo "${line}" | awk '{print $4}'`
+      done <"${maindir}/data/sizes"
     else
       echo "Not attaching non-existent file ${PWD}/build.log" >&2
     fi
