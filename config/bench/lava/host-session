@@ -46,6 +46,9 @@ function ssh_rune {
 }
 
 function exitfunc {
+  for x in "${maindir}"/bench/builds/*/*/*/build.log; do
+    'lava-test-run-attach' "${x}" text/plain
+  done
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
       echo "Trapped exit with error ${error}"
