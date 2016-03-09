@@ -314,7 +314,7 @@ if test x"${prebuilt:-}" = x; then
   fi
 
   if test x"${sysroot:-}" != x; then
-    compiler_flags="${sysroot:+--sysroot ${sysroot//\"/\\\"} }${compiler_flags:+${compiler_flags//\"/\\\"}}"
+    make_flags="SYSROOT=\"${sysroot//\"/\\\"}\"${make_flags:+ ${make_flags//\"/\\\"}}"
   fi
   "${ABE_DIR}"/scripts/benchmark.sh \
     -s buildonly \
