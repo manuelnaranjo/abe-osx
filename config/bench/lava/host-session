@@ -62,7 +62,7 @@ function exitfunc {
   #change to include, say, sizes then they become sensitive. So we are paranoid.
   #trusted may not be initialized, but can only be 1 if we know we are trusted
   if test x"${trusted:-}" = x1; then
-    for x in "${maindir}"/bench/builds/*/*/*/build.log \
+    for x in "${maindir}"/bench/builds/*/*/*/{make-*,build}.log \
              "${maindir}"/data/{build,run}.std{out,err}; do
       if test -f "${x}"; then
         'lava-test-run-attach' "${x}" text/plain
