@@ -62,14 +62,27 @@ function exitfunc {
   #change to include, say, sizes then they become sensitive. So we are paranoid.
   #trusted may not be initialized, but can only be 1 if we know we are trusted
   if test x"${trusted:-}" = x1; then
-    for x in "${maindir}"/bench/builds/*/*/*/{make-*,build}.log \
-             "${maindir}"/data/{build,run}.std{out,err}; do
+    pushd "${maindir}"/bench/builds/*/*/*.git/ #We expect this to evaluate to exactly one path, as we only build one thing
+    if test -f make-*.log; then
+      'lava-test-run-attach' make-*.log text/plain #And we expect a maximum of one make-*.log
+    else
+      echo "Not attaching non-existent file ${PWD}/make-*.log" >&2
+    fi
+    if test -f build.log; then
+      'lava-test-run-attach' build.log text/plain
+    else
+      echo "Not attaching non-existent file ${PWD}/build.log" >&2
+    fi
+    popd
+    pushd "${maindir}"/data
+    for x in {build,run}.std{out,err}; do
       if test -f "${x}"; then
         'lava-test-run-attach' "${x}" text/plain
       else
-        echo "Not attaching non-existent file ${x}" >&2
+        echo "Not attaching non-existent file ${maindir}/data/${x}" >&2
       fi
     done
+    popd
   fi
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
