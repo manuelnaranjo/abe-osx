@@ -221,6 +221,22 @@ if test x"${phases}" != xrunonly; then
   env >> "${builddir}/build.log"
   echo >> "${builddir}/build.log"
 
+  cat >> "${builddir}"/build.log << EOF
+Sources
+=======
+SHA1 of HEAD: `git -C snapshots/"${benchmark}".git rev-parse HEAD`
+Name ref for HEAD: `git -C snapshots/"${benchmark}".git name-rev HEAD`
+
+Status
+------
+`git -C snapshots/"${benchmark}".git status --ignored`
+
+Remote(s)
+---------
+`git -C snapshots/"${benchmark}".git remote -v`
+
+EOF
+
   echo "Toolchain" >> "${builddir}/build.log"
   echo "=========" >> "${builddir}/build.log"
   ${toolchain_path} -v >> "${builddir}/build.log" 2>&1
