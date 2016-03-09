@@ -216,12 +216,11 @@ if test x"${phases}" != xrunonly; then
   fi
 
   #Log information about build environment
-  echo "Build Environment" > "${builddir}/build.log"
-  echo "=================" >> "${builddir}/build.log"
-  env >> "${builddir}/build.log"
-  echo >> "${builddir}/build.log"
+  cat > "${builddir}"/build.log << EOF
+Build Environment
+=================
+`env`
 
-  cat >> "${builddir}"/build.log << EOF
 Sources
 =======
 SHA1 of HEAD: `git -C snapshots/"${benchmark}".git rev-parse HEAD`
@@ -235,23 +234,22 @@ Remote(s)
 ---------
 `git -C snapshots/"${benchmark}".git remote -v`
 
+Toolchain
+=========
+`${toolchain_path} -v 2>&1`
+`${toolchain_path} --version 2>&1`
+
+Sizes
+=====
 EOF
-
-  echo "Toolchain" >> "${builddir}/build.log"
-  echo "=========" >> "${builddir}/build.log"
-  ${toolchain_path} -v >> "${builddir}/build.log" 2>&1
-  ${toolchain_path} --version >> "${builddir}/build.log" 2>&1
-  echo >> "${builddir}/build.log"
-
-  echo "Sizes" >> "${builddir}/build.log"
-  echo "=====" >> "${builddir}/build.log"
   (cd "${builddir}" && eval "size  `. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${triple}\" != x; then target=\"${triple}\"; fi && read_config ${benchmark}.git binaries`") >> "${builddir}/build.log"
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
     exit
   fi
-fi
+fi #if we have done a build
+
 if test x"${phases}" = xbuildonly; then
   error=0
   exit
