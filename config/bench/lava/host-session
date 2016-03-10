@@ -62,36 +62,40 @@ function exitfunc {
   #change to include, say, sizes then they become sensitive. So we are paranoid.
   #trusted may not be initialized, but can only be 1 if we know we are trusted
   if test x"${trusted:-}" = x1; then
-    pushd "${maindir}"/bench/builds/*/*/*.git/ #We expect this to evaluate to exactly one path, as we only build one thing
-    if test -f make-*.log; then
-      'lava-test-run-attach' make-*.log text/plain #And we expect a maximum of one make-*.log
-    else
-      echo "Not attaching non-existent file ${PWD}/make-*.log" >&2
-    fi
-    if test -f build.log; then
-      'lava-test-run-attach' build.log text/plain
-      sed '0,/^Sizes$/d' build.log | sed '1,2d' > "${maindir}"/data/sizes
-      while read line; do
-        name="`echo ${line} | awk '{print $6}'`"
-        name="${name##*/}"
-        'lava-test-case' "${name}[size][text]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $1}'`
-        'lava-test-case' "${name}[size][data]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $2}'`
-        'lava-test-case' "${name}[size][bss]"   --result pass --units bytes --measurement `echo "${line}" | awk '{print $3}'`
-        'lava-test-case' "${name}[size][total]" --result pass --units bytes --measurement `echo "${line}" | awk '{print $4}'`
-      done <"${maindir}/data/sizes"
-    else
-      echo "Not attaching non-existent file ${PWD}/build.log" >&2
-    fi
-    popd
-    pushd "${maindir}"/data
-    for x in {build,run}.std{out,err}; do
-      if test -f "${x}"; then
-        'lava-test-run-attach' "${x}" text/plain
+    if test -d "${maindir}"/bench/builds/*/*/*.git/; then #We expect this to evaluate to exactly one path, as we only build one thing
+      pushd "${maindir}"/bench/builds/*/*/*.git/
+      if test -f make-*.log; then
+        'lava-test-run-attach' make-*.log text/plain #And we expect a maximum of one make-*.log
       else
-        echo "Not attaching non-existent file ${maindir}/data/${x}" >&2
+        echo "Not attaching non-existent file ${PWD}/make-*.log" >&2
       fi
-    done
-    popd
+      if test -f build.log; then
+        'lava-test-run-attach' build.log text/plain
+        sed '0,/^Sizes$/d' build.log | sed '1,2d' > "${maindir}"/data/sizes
+        while read line; do
+          name="`echo ${line} | awk '{print $6}'`"
+          name="${name##*/}"
+          'lava-test-case' "${name}[size][text]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $1}'`
+          'lava-test-case' "${name}[size][data]"  --result pass --units bytes --measurement `echo "${line}" | awk '{print $2}'`
+          'lava-test-case' "${name}[size][bss]"   --result pass --units bytes --measurement `echo "${line}" | awk '{print $3}'`
+          'lava-test-case' "${name}[size][total]" --result pass --units bytes --measurement `echo "${line}" | awk '{print $4}'`
+        done <"${maindir}/data/sizes"
+      else
+        echo "Not attaching non-existent file ${PWD}/build.log" >&2
+      fi
+      popd
+    fi
+    if test -d "${maindir}"/data; then
+      pushd "${maindir}"/data
+      for x in {build,run}.std{out,err}; do
+        if test -f "${x}"; then
+          'lava-test-run-attach' "${x}" text/plain
+        else
+          echo "Not attaching non-existent file ${maindir}/data/${x}" >&2
+        fi
+      done
+      popd
+    fi
   fi
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
