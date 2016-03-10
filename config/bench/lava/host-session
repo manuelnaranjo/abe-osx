@@ -360,7 +360,7 @@ if test x"${prebuilt:-}" = x; then
   fi
   "${ABE_DIR}"/scripts/benchmark.sh \
     -s buildonly \
-    ${compiler_flags:+-f "${compiler_flags//\"/\\\"}"} \
+    ${compiler_flags:+-f "${compiler_flags}"} \
     ${make_flags:+-m "${make_flags}"} \
     -i "${benchgccpath}" \
     ${triple:+-x "${triple}"} \
