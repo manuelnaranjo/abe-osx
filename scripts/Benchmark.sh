@@ -324,6 +324,59 @@ function deploy_targets {
   done
 }
 
+function host_session {
+  local host_session
+  #Determine host session here, so that -e can pick up failure
+  host_session="`host_session_for_device_type ${HOST_DEVICE_TYPE}`"
+  cat << EOF
+  - command: 'lava_test_shell'
+    parameters:
+      role: 'host'
+      timeout: ${TIMEOUT}
+      testdef_repos:
+        - git-repo: '${TESTDEF_REPO}'
+          revision: '${TESTDEF_REVISION}'
+          testdef: '${host_session}'
+          parameters:
+            BENCHMARK: '${BENCHMARK}'
+            TOOLCHAIN: '${TOOLCHAIN:-None}'
+            TRIPLE: '${TRIPLE:-None}'
+            SYSROOT: '${SYSROOT:-None}'
+            RUN_FLAGS: '${RUN_FLAGS:-None}'
+            COMPILER_FLAGS: '${COMPILER_FLAGS:-None}'
+            MAKE_FLAGS: '${MAKE_FLAGS:-None}'
+            PREBUILT: '${PREBUILT:-None}'
+            BENCH_DEBUG: ${BENCH_DEBUG}
+            TRUST: '${TRUST}'
+EOF
+  if test x"${TRUST}" = x'None'; then
+    cat <<EOF
+            PUB_KEY: '${PUBKEY_HOST}'
+EOF
+  fi
+}
+
+function target_session {
+  local target_session
+  for role in "${ROLES[@]}"; do
+    #Determine target session here, so that -e can pick up failure
+    target_session="`target_session_for_device_type ${ROLE_TARGET_DEVICE_TYPE[${role}]}`"
+    cat << EOF
+  - command: 'lava_test_shell'
+    parameters:
+      role: '${role}'
+      timeout: ${TIMEOUT}
+      testdef_repos:
+        - git-repo: '${TESTDEF_REPO}'
+          revision: '${TESTDEF_REVISION}'
+          testdef: '${target_session}'
+          parameters:
+            CONFIG: '${ROLE_TARGET_CONFIG[${role}]}'
+            PUB_KEY: '${PUBKEY_TARGET}'
+EOF
+  done
+}
+
 validate #Fails on error due to set -e (which is what we want)
 
 #Defaults
@@ -367,53 +420,10 @@ deploy_for_device_type "${HOST_DEVICE_TYPE}" host
 deploy_targets
 
 #Host session stanza
-#Determine host session here, so that -e can pick up failure
-host_session="`host_session_for_device_type ${HOST_DEVICE_TYPE}`"
-cat << EOF
-  - command: 'lava_test_shell'
-    parameters:
-      role: 'host'
-      timeout: ${TIMEOUT}
-      testdef_repos:
-        - git-repo: '${TESTDEF_REPO}'
-          revision: '${TESTDEF_REVISION}'
-          testdef: '${host_session}'
-          parameters:
-            BENCHMARK: '${BENCHMARK}'
-            TOOLCHAIN: '${TOOLCHAIN:-None}'
-            TRIPLE: '${TRIPLE:-None}'
-            SYSROOT: '${SYSROOT:-None}'
-            RUN_FLAGS: '${RUN_FLAGS:-None}'
-            COMPILER_FLAGS: '${COMPILER_FLAGS:-None}'
-            MAKE_FLAGS: '${MAKE_FLAGS:-None}'
-            PREBUILT: '${PREBUILT:-None}'
-            BENCH_DEBUG: ${BENCH_DEBUG}
-            TRUST: '${TRUST}'
-EOF
-if test x"${TRUST}" = x'None'; then
-  cat <<EOF
-            PUB_KEY: '${PUBKEY_HOST}'
-EOF
-fi
+host_session
 
 #Target_session_stanza(s)
-for role in "${ROLES[@]}"; do
-  #Determine target session here, so that -e can pick up failure
-  target_session="`target_session_for_device_type ${ROLE_TARGET_DEVICE_TYPE[${role}]}`"
-  cat << EOF
-  - command: 'lava_test_shell'
-    parameters:
-      role: '${role}'
-      timeout: ${TIMEOUT}
-      testdef_repos:
-        - git-repo: '${TESTDEF_REPO}'
-          revision: '${TESTDEF_REVISION}'
-          testdef: '${target_session}'
-          parameters:
-            CONFIG: '${ROLE_TARGET_CONFIG[${role}]}'
-            PUB_KEY: '${PUBKEY_TARGET}'
-EOF
-done
+target_session
 
 #Submission stanza
 cat << EOF
