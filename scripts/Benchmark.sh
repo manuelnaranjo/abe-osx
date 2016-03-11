@@ -459,6 +459,7 @@ EOF
 EOF
   fi
 done
+unset role
 
 #Fill in metadata
 for role in "${ROLES[@]}"; do
@@ -470,6 +471,7 @@ for role in "${ROLES[@]}"; do
     sed -i "/metadata_${role}:/d" "${WORKING_FILE}"
   fi
 done
+unset role
 
 exec 1>&${STDOUT}
 cat "${WORKING_FILE}"
