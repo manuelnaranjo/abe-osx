@@ -284,12 +284,12 @@ EOF
 
 function host_session_for_device_type {
   declare -A session #also local
-  session[arndale]=host-session-no-multilib.yaml
+  session[arndale]=host-session-multilib.yaml
   session[dummy-ssh]=host-session-persist-safe.yaml
   session[juno]=host-session-no-multilib.yaml
   session[kvm]=host-session-multilib.yaml
-  session[mustang]=host-session.yaml
-  session[panda-es]=host-session-no-multilib.yaml
+  #session[mustang]= #Deliberately omitted as we are running OE on the mustang and so can't install missing packages.
+  session[panda-es]=host-session-no-multilib.yaml #Bit of a guess - the pandas are unreliable and this isn't worth the effort to test.
 
   if test -z "${session[$1]:-}"; then
     echo "${FUNCNAME}: Unknown device type '$1'" >&2
