@@ -367,6 +367,8 @@ deploy_for_device_type "${HOST_DEVICE_TYPE}" host
 deploy_targets
 
 #Host session stanza
+#Determine host session here, so that -e can pick up failure
+host_session="`host_session_for_device_type ${HOST_DEVICE_TYPE}`"
 cat << EOF
   - command: 'lava_test_shell'
     parameters:
@@ -375,7 +377,7 @@ cat << EOF
       testdef_repos:
         - git-repo: '${TESTDEF_REPO}'
           revision: '${TESTDEF_REVISION}'
-          testdef: '`host_session_for_device_type "${HOST_DEVICE_TYPE}"`'
+          testdef: '${host_session}'
           parameters:
             BENCHMARK: '${BENCHMARK}'
             TOOLCHAIN: '${TOOLCHAIN:-None}'
@@ -396,6 +398,8 @@ fi
 
 #Target_session_stanza(s)
 for role in "${ROLES[@]}"; do
+  #Determine target session here, so that -e can pick up failure
+  target_session="`target_session_for_device_type ${ROLE_TARGET_DEVICE_TYPE[${role}]}`"
   cat << EOF
   - command: 'lava_test_shell'
     parameters:
@@ -404,7 +408,7 @@ for role in "${ROLES[@]}"; do
       testdef_repos:
         - git-repo: '${TESTDEF_REPO}'
           revision: '${TESTDEF_REVISION}'
-          testdef: '`target_session_for_device_type "${ROLE_TARGET_DEVICE_TYPE[${role}]}"`'
+          testdef: '${target_session}'
           parameters:
             CONFIG: '${ROLE_TARGET_CONFIG[${role}]}'
             PUB_KEY: '${PUBKEY_TARGET}'
