@@ -136,11 +136,13 @@ function get_thing {
   local thing="${1}"
   pushd "${maindir}/downloads" > /dev/null
   if echo x"${thing}" | grep -q '^xhttp'; then
-    wget -q "${thing}"
+    #Password on CLI usually a bad thing, but for this case (builder is a
+    #trusted machine restricted to trusted individuals) it is OK.
+    wget -q${download_password:+ --user ${download_password%%:*} --password "${download_password#*:}"} "${thing}"
   else
     local server="${thing%%:*}"
     thing="${thing#*:}"
-    (. "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    (export ABE_REMOTE_SSH_OPTS="-o UserKnownHostsFile='${maindir}'/data/known_hosts${download_key:+ -i '${maindir}'/data/download_key}" && . "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
   fi
   if ! test -e "`basename ${thing}`"; then #TODO HACK set -e fails to apply to above incantations
     echo "Download of ${thing} failed" >&2
@@ -209,6 +211,34 @@ elif test x"${1}" = xTrusted; then
 else
   echo "Bad value '${1}' for TRUST" >&2
   exit 1
+fi
+shift
+if test "x${1}" != xNone; then
+  download_password="${1}"
+fi
+shift
+if test "x${1}" != xNone; then
+  download_key="${1}"
+  #* Storing this in a file is OK so long as the builder is a trusted machine
+  #restricted to just trusted individuals.
+  #* We observe that the translation from CLI->yaml->JSON substitutes
+  #newlines for spaces in what we see here, so assume that spaces are not legal
+  #characters in a private key and take advantage of that.
+  #If this turns out not to be robust enough, alternative approaches include
+  #inserting explicit newlines and decoding them here or (arguably) inserting a
+  #newline every 64 characters and eliminating spaces.
+  #Once jobs are defined in YAML rather than JSON this will likely look like a
+  #multiline string here, making the 'sed' redundant.
+  #* DANGER: the 4g thing is non-standard, correct for GNU sed (substitute all
+  #matches from the 4th, see https://www.gnu.org/software/sed/manual/html_node/The-_0022s_0022-Command.html)
+  echo "${download_key}" |
+    sed 's/ -----END RSA PRIVATE KEY-----$//' |
+    sed 's/ /\n/4g' > "${maindir}"/data/download_key
+  echo '-----END RSA PRIVATE KEY-----' >> "${maindir}"/data/download_key
+fi
+shift
+if test "x${1}" != xNone; then #DOWNLOAD_HOST
+  echo "${1}" >> ${maindir}/data/known_hosts
 fi
 ip_addr=$(ifconfig `ip route get $gateway | cut -d ' ' -f3` | grep 'inet addr' |awk -F: '{split($2,a," "); print a[1] }')
 

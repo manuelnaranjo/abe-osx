@@ -352,6 +352,9 @@ function host_session {
             PREBUILT: '${PREBUILT:-None}'
             BENCH_DEBUG: ${BENCH_DEBUG}
             TRUST: '${TRUST}'
+            DOWNLOAD_PASSWORD: '${DOWNLOAD_PASSWORD:-None}'
+            DOWNLOAD_HOST: '${DOWNLOAD_HOST:-None}'
+            DOWNLOAD_KEY: '${DOWNLOAD_KEY:-None}'
 EOF
   if test x"${TRUST}" = x'None'; then
     cat <<EOF

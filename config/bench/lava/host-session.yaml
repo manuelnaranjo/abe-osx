@@ -19,8 +19,11 @@ params:
     PREBUILT: None
     BENCH_DEBUG: None
     TRUST: None
+    DOWNLOAD_PASSWORD: None
+    DOWNLOAD_KEY: None
+    DOWNLOAD_HOST: None
 
 run:
     steps:
         - ./config/bench/lava/setup "$PUB_KEY"
-        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$BENCHMARK" "$TOOLCHAIN" "$TRIPLE" "$SYSROOT" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST"
+        - env ABE_DIR=`pwd` BENCH_DEBUG="$BENCH_DEBUG" ./config/bench/lava/host-session "$BENCHMARK" "$TOOLCHAIN" "$TRIPLE" "$SYSROOT" "$RUN_FLAGS" "$COMPILER_FLAGS" "$MAKE_FLAGS" "$PREBUILT" "$TRUST" "$DOWNLOAD_PASSWORD" "$DOWNLOAD_KEY" "$DOWNLOAD_HOST"
