@@ -266,8 +266,11 @@ Toolchain
 `${toolchain_path} -v 2>&1`
 `${toolchain_path} --version 2>&1`
 
-Sizes
-=====
+Binaries
+========
+
+sizes
+-----
 EOF
   (cd "${builddir}" && size "${executables[@]}") >> "${builddir}/build.log" 2>&1
   if test $? -ne 0; then
@@ -275,6 +278,38 @@ EOF
     error=1
     exit
   fi
+  cat >> "${builddir}"/build.log << EOF
+
+file
+----
+EOF
+  (cd "${builddir}" && file "${executables[@]}") >> "${builddir}"/build.log 2>&1
+  if test $? -ne 0; then
+    echo "Failed to run file on benchmark binaries" 2>&1
+    error=1
+    exit
+  fi
+  cat >> "${builddir}"/build.log << EOF
+
+'Cross-ldd'
+-----------
+(Roughly, readelf -d | grep 'Shared')
+EOF
+  for binary in "${executables[@]}"; do
+    echo "${binary}:"
+    (
+      cd "${builddir}"
+      if ! readelf -d "${binary}" | grep 'Shared library: ' |
+	  sed 's/.*Shared library: \[\(.*\)\]$/\1/'; then
+        if ! readelf -d "${binary}" | sed '/^[[:blank:]]*$/d'; then #Should be 'There is no dynamic section...'
+          echo "Failed to run 'cross-ldd' on benchmark binaries" >&2
+          error=1
+          exit
+        fi
+      fi
+    )
+    echo
+  done >> "${builddir}"/build.log
 fi #if we have done a build
 
 if test x"${phases}" = xbuildonly; then

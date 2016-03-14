@@ -71,7 +71,7 @@ function exitfunc {
       fi
       if test -f build.log; then
         'lava-test-run-attach' build.log text/plain
-        sed '0,/^Sizes$/d' build.log | sed '1,2d' > "${maindir}"/data/sizes
+        sed '0,/^size$/d' build.log | sed '1,2d' > "${maindir}"/data/sizes
         while read line; do
           name="`echo ${line} | awk '{print $6}'`"
           name="${name##*/}"
