@@ -221,8 +221,21 @@ Build Environment
 =================
 `env 2>&1`
 
-Sources
-=======
+abe Source
+==========
+SHA1 of HEAD: `git -C "${topdir}" rev-parse HEAD 2>&1`
+Name ref for HEAD: `git -C "${topdir}" name-rev HEAD 2>&1`
+
+Status
+------
+`git -C "${topdir}" status --ignored 2>&1`
+
+Remote(s)
+---------
+`git -C "${topdir}" remote -v 2>&1`
+
+${benchmark} Source
+`echo "${benchmark}" | tr '[:print:]' '='`=======
 SHA1 of HEAD: `git -C snapshots/"${benchmark}".git rev-parse HEAD 2>&1`
 Name ref for HEAD: `git -C snapshots/"${benchmark}".git name-rev HEAD 2>&1`
 
