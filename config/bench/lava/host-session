@@ -142,7 +142,13 @@ function get_thing {
   else
     local server="${thing%%:*}"
     thing="${thing#*:}"
-    (export ABE_REMOTE_SSH_OPTS="-o UserKnownHostsFile='${maindir}'/data/known_hosts${download_key:+ -i '${maindir}'/data/download_key}" && . "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_download "${server}" "${thing}" .)
+    (
+      export ABE_REMOTE_SSH_OPTS="-o UserKnownHostsFile='${maindir}'/data/known_hosts${download_key:+ -i '${maindir}'/data/download_key}" &&
+      . "${maindir}"/bench/host.conf &&
+      topdir="${abe_path}" &&
+      . "${topdir}"/lib/common.sh &&
+      remote_download "${server}" "${thing}" .
+    )
   fi
   if ! test -e "`basename ${thing}`"; then #TODO HACK set -e fails to apply to above incantations
     echo "Download of ${thing} failed" >&2
@@ -396,7 +402,12 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
        #MUST be uploaded conditionally on ${trusted} --
        #target side will run gather.sh if it exists and thus dump data in results bundle
        #the gather script is allowed to be a symlink, so that we can write scripts that work for multiple benchmarks in a suite
-    (. "${maindir}"/bench/host.conf && topdir="${abe_path}" && . "${topdir}"/lib/common.sh && remote_upload "${target_ip}" "`readlink -e ${ABE_DIR}/config/bench/gather/${benchmark}.sh`" 'gather.sh')
+    (
+      . "${maindir}"/bench/host.conf &&
+      topdir="${abe_path}" &&
+      . "${topdir}"/lib/common.sh &&
+      remote_upload "${target_ip}" "`readlink -e ${ABE_DIR}/config/bench/gather/${benchmark}.sh`" 'gather.sh'
+    )
     if test $? -ne 0; then
       echo "Upload of ${ABE_DIR}/config/bench/gather/${benchmark}.sh to ${target_ip}:gather.sh failed" >&2
       exit 1
