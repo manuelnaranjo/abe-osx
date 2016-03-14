@@ -71,9 +71,17 @@ $0 -b <benchmark> <target...>
 EOF
 }
 
-function binaries
+function read_binaries
 {
-  (. ${abe_top}/host.conf && . ${topdir}/lib/common.sh && if test x\"${triple}\" != x; then target=\"${triple}\"; fi && read_config ${benchmark}.git binaries)
+  (
+    . ${abe_top}/host.conf &&
+    . ${topdir}/lib/common.sh &&
+    if test -n "${triple}"; then
+      target="${triple}"
+    fi &&
+    cd "${builddir}" &&
+    eval ls --color=none `read_config ${benchmark}.git binaries`
+  )
 }
 
 # load the configure file produced by configure
@@ -221,6 +229,7 @@ if test x"${phases}" != xrunonly; then
   fi
 
   #Log information about build environment
+  executables=(`read_binaries`)
   cat > "${builddir}"/build.log << EOF
 Build Environment
 =================
@@ -260,7 +269,7 @@ Toolchain
 Sizes
 =====
 EOF
-  (cd "${builddir}" && eval "size `binaries`") >> "${builddir}/build.log" 2>&1
+  (cd "${builddir}" && size "${executables[@]}") >> "${builddir}/build.log" 2>&1
   if test $? -ne 0; then
     echo "Failed to get sizes of benchmark binaries" 2>&1
     error=1
