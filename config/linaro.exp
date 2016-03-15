@@ -74,12 +74,8 @@ proc linaro_lab { kind } {
 case "$target_triplet" in { 
     { "arm-*linux-gnueabi*" "armv[78]l-*linux-gnueabi*" } {
 	case "$native$myname" in {
-	    { tcwgrob* ripple* darkstar* } {
-#		set target_list { tcwgchromebook }
-#		set target_list { tcwgd01 }
-#		set target_list { chrome1-01 }
-#		set target_list { "arm-qemu" } 
-		set target_list { dragon-01 }
+	    { *tcwgrob* ripple* darkstar* } {
+		set target_list { "tk1" }
 	    }
 	    { native* } {
 		set target_list { unix }
@@ -97,7 +93,7 @@ case "$target_triplet" in {
             }
 	}
     }
-    { "arm-*-eabi*" } {
+   { "arm-*-eabi*" } {
 	global SIM
 	# CPU and sysroot are set through the environment
 	set SIM "qemu-arm"
@@ -115,6 +111,9 @@ case "$target_triplet" in {
     }
     { "aarch64-*linux*" } {
 	case "$native$myname" in {
+	    { *tcwgrob* ripple* darkstar* } {
+		set target_list { "tx1" }
+	    }
 	    { native* } {
 		set target_list { unix }
 	    }
