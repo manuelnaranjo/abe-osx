@@ -36,6 +36,10 @@ function target_metadata {
 function general_metadata {
   local tag
   for tag in "$@"; do
+    if test -z "${!tag+x}"; then
+      echo "Cannot read metadata from unset variable '${tag}'" >&2
+      exit 1
+    fi
     GENERAL_METADATA="${GENERAL_METADATA:-}\n      ${tag}: '${!tag}'"
   done
 }
