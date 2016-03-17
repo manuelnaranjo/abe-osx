@@ -49,7 +49,7 @@ function general_metadata {
 #and TARGET_CONFIG to only the valid set, so there is no need to validate these
 #here beyond confirming that they have been set at all.
 function validate {
-  local x ret
+  local x ret response_code
   ret=0
 
 
@@ -121,12 +121,12 @@ function validate {
   #Far from foolproof, but can catch blatantly wrong URL early
   for x in TOOLCHAIN SYSROOT PREBUILT; do
     test -z "${!x:-}" && continue
-    curl --output /dev/null --silent --head --fail "${!x}" && continue
+    response_code=`curl -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
     case $? in
       3) continue;; #Malformed URL - could be a local path
       6) continue;; #Could not resolve host - might be an scp pattern, or a host we cannot see from here
-      22) echo "Could not find ${x} (\"${!x}\" gives 404)" >&2; ret=1;;
-      *) echo "${x} URL \"${!x}\" gives curl error $?" >&2; ret=1;;
+      22) echo "Could not find ${x} (\"${!x}\" gives response code ${response_code})" >&2; ret=1;;
+      *) echo "${x} URL \"${!x}\" gives curl error $? (response code ${response_code})" >&2; ret=1;;
     esac
   done
 
