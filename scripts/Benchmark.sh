@@ -126,6 +126,9 @@ function validate {
     elif test -z "${DOWNLOAD_HOST:-}"; then
       echo "DOWNLOAD_KEY is set, but DOWNLOAD_HOST is unset. Must set both or neither." >&2
       ret=1
+    elif test -n "${DOWNLOAD_PASSWORD:-}"; then
+      echo "Cannot set DOWNLOAD_PASSWORD alongside either of DOWNLOAD_HOST and DOWNLOAD_KEY." >&2
+      ret=1
     fi
   fi
 
