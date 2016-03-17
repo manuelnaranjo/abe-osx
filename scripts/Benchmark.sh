@@ -118,6 +118,17 @@ function validate {
     ret=1
   fi
 
+  if test -n "${DOWNLOAD_KEY:-}" ||
+     test -n "${DOWNLOAD_HOST:-}"; then
+    if test -z "${DOWNLOAD_KEY:-}"; then
+      echo "DOWNLOAD_HOST is set, but DOWNLOAD_KEY is unset. Must set both or neither." >&2
+      ret=1
+    elif test -z "${DOWNLOAD_HOST:-}"; then
+      echo "DOWNLOAD_KEY is set, but DOWNLOAD_HOST is unset. Must set both or neither." >&2
+      ret=1
+    fi
+  fi
+
   #Far from foolproof, but can catch blatantly wrong URL early
   for x in TOOLCHAIN SYSROOT PREBUILT; do
     test -z "${!x:-}" && continue
