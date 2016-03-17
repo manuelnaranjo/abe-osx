@@ -102,12 +102,12 @@ clean_benchmark()
       echo "Cowardly refusing to delete ${target_dir} from ${ip}. Not rooted at /tmp. You might want to go in and clean up." 1>&2
       error=1
     else
-      (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}" ${ssh_opts})
+      (. "${topdir}"/lib/common.sh; remote_exec "${ip}" "rm -rf ${target_dir}" ${ssh_opts} < /dev/null)
       if test $? -eq 0; then
         echo "Removed ${target_dir} from ${ip}"
         echo "Sending post-target command '${post_target_cmd}' - will not check error code"
         if test x"${post_target_cmd}" != x; then
-          (. ${topdir}/lib/common.sh; remote_exec "${ip}" "${post_target_cmd}" ${ssh_opts})
+          (. ${topdir}/lib/common.sh; remote_exec "${ip}" "${post_target_cmd}" ${ssh_opts} < /dev/null)
         fi
         #We don't check the error code because this might well include a shutdown
       else
@@ -122,7 +122,7 @@ clean_benchmark()
   exit ${error}
 }
 
-if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts}) > /dev/null 2>&1; then
+if ! (. "${topdir}"/lib/common.sh; remote_exec "${ip}" true ${ssh_opts} < /dev/null) > /dev/null 2>&1; then
   echo "Unable to connect to target ${ip:-(unknown)}" 1>&2
   error=1
   exit
@@ -141,7 +141,7 @@ if test $? -ne 0; then
 fi
 
 #Create and populate working dir on target
-target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts}`"
+target_dir="`. ${topdir}/lib/common.sh; remote_exec ${ip} 'mktemp -dt XXXXXXX' ${ssh_opts} < /dev/null`"
 if test $? -ne 0; then
   echo "Unable to get tmpdir on target" 1>&2
   error=1
@@ -219,7 +219,7 @@ fi
       ${post_run_cmd:-true}; \
       echo \\\$? > ${target_dir}/POST_RUN_RETCODE" \
      "${target_dir}/stdout" "${target_dir}/stderr" \
-     ${ssh_opts}
+     ${ssh_opts} < /dev/null
    if test $? -ne 0; then
      echo "Something went wrong when we tried to dispatch job" 1>&2
      exit 1
@@ -246,7 +246,7 @@ if test -z "${trgt_resolved_ip}"; then #No DNS entry for target IP. We assume
   trgt_resolved_ip="${ip#*@}"
 fi
 while ! tcpdump -n -c 1 -i eth0 'icmp and icmp[icmptype]=icmp-echo' | grep -q "${trgt_resolved_ip} > ${host_ip}"; do sleep 1; done
-error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts})`"
+error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/RETCODE" ${ssh_opts} < /dev/null)`"
 if test $? -ne 0; then
   echo "Unable to determine benchmark exit code, assuming the worst." 1>&2
   error=1
@@ -258,7 +258,7 @@ if test x"${error}" = x || test ${error} -ne 0; then
   error=1
 fi
 
-post_run_error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/POST_RUN_RETCODE" ${ssh_opts})`"
+post_run_error="`(. ${topdir}/lib/common.sh; remote_exec "${ip}" "cat ${target_dir}/POST_RUN_RETCODE" ${ssh_opts} < /dev/null)`"
 if test $? -ne 0; then
   echo "Unable to determine post-run exit code, assuming the worst." 1>&2
   post_run_error=1

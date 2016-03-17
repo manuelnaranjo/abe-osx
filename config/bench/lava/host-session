@@ -143,7 +143,7 @@ function get_thing {
     local server="${thing%%:*}"
     thing="${thing#*:}"
     (
-      export ABE_REMOTE_SSH_OPTS="-o UserKnownHostsFile='${maindir}'/data/known_hosts${download_key:+ -i '${maindir}'/data/download_key}" &&
+      export ABE_REMOTE_SSH_OPTS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile='${maindir}'/data/known_hosts${download_key:+ -i '${maindir}'/data/download_key}" &&
       . "${maindir}"/bench/host.conf &&
       topdir="${abe_path}" &&
       . "${topdir}"/lib/common.sh &&
@@ -279,7 +279,7 @@ echo 'dev-private.git.linaro.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHA
 echo '148.251.136.42 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKXzUdUnTOrX3sSzliFFAfQ+a5BxUUpvoWNHAVrLDW0Yodw2MWU/FdPZ6lvukOslYr3Jm+peit8kaXzlqX6mMxo=' >> "${maindir}/data/known_hosts"
 
 #Export SSH config locations, for rest of this script and for subprocesses
-export ABE_REMOTE_SSH_OPTS="-o UserKnownHostsFile=${maindir}/data/known_hosts"
+export ABE_REMOTE_SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${maindir}/data/known_hosts"
 
 if test ${trusted} -eq 0; then
   #Jobs runnning outside of the TCWG uinstance (or similar environment)
@@ -310,7 +310,7 @@ fi
   #Give git access to the necessary ssh configuration
   cat > "${maindir}"/bin/git-ssh.sh <<EOF
 #!/bin/bash
-exec /usr/bin/ssh -o User=git ${ABE_REMOTE_SSH_OPTS} "\$@"
+exec /usr/bin/ssh -o BatchMode=yes -o User=git ${ABE_REMOTE_SSH_OPTS} "\$@"
 EOF
   chmod 700 "${maindir}"/bin/git-ssh.sh
   export GIT_SSH="${maindir}"/bin/git-ssh.sh
@@ -387,7 +387,7 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   if test -z "${target_ip}"; then echo "Failed to find IP for ${lava_name}"; exit 1; fi
 
   #Check that target is accessible, add it to our known_hosts
-  if ! ssh ${ABE_REMOTE_SSH_OPTS} -o StrictHostKeyChecking=no "${target_ip}" true; then
+  if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no ${ABE_REMOTE_SSH_OPTS} "${target_ip}" true; then
      echo "Could not access target ${target_ip} (${lava_name})" >&2
      exit 1
   fi
