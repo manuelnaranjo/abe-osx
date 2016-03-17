@@ -125,7 +125,22 @@ function validate {
     case $? in
       3) continue;; #Malformed URL - could be a local path
       6) continue;; #Could not resolve host - might be an scp pattern, or a host we cannot see from here
-      22) echo "Could not find ${x} (\"${!x}\" gives response code ${response_code})" >&2; ret=1;;
+      22)
+        if test x"${response_code}" = x401; then
+          if test -z "${DOWNLOAD_PASSWORD:-}"; then
+            echo "Access to ${x} (\"${!x}\") requires password authentication (401), but DOWNLOAD_PASSWORD is not set" >&2
+            ret=1
+          else #We'll send these credentials to this server in config/lava/host_session, so no additional risk in doing it here
+            response_code=`curl -u "${DOWNLOAD_PASSWORD}" -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
+            echo "Access to ${x} (\"${!x}\") denied with supplied credentials (response code ${response_code})" >&2
+            echo "  - Credentials were transmitted to server in \"${!x}\", you should consider whether they may be compromised" >&2
+           ret=1
+          fi
+        else
+          echo "Could not find ${x} (\"${!x}\" gives response code ${response_code})" >&2
+          ret=1
+        fi
+     ;;
       *) echo "${x} URL \"${!x}\" gives curl error $? (response code ${response_code})" >&2; ret=1;;
     esac
   done
