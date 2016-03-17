@@ -135,10 +135,11 @@ function validate {
   #Far from foolproof, but can catch blatantly wrong URL early
   for x in TOOLCHAIN SYSROOT PREBUILT; do
     test -z "${!x:-}" && continue
+    echo "${!x}" | grep -qv '^https\?://' && continue #Assume that this is an rysnc path, we don't (yet) try to validate those in advance
     response_code=`curl -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
     case $? in
       3) continue;; #Malformed URL - could be a local path
-      6) continue;; #Could not resolve host - might be an scp pattern, or a host we cannot see from here
+      6) continue;; #Could not resolve host - might be a host we cannot see from here
       22)
         if test x"${response_code}" = x401; then
           if test -z "${DOWNLOAD_PASSWORD:-}"; then
