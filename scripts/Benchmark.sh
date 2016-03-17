@@ -53,6 +53,47 @@ function validate {
   ret=0
 
 
+  ######################################################################################
+  #Cases that must return early (bad input has consequences for the rest of validation)#
+  ######################################################################################
+
+  #paranoid htaccess case: we have to return early because later validate stages
+  #may insecurely transmit credentials if input is bad
+  if test -n "${DOWNLOAD_PASSWORD+x}"; then
+    if echo "${DOWNLOAD_PASSWORD}" | grep -vq ':'; then
+      echo "Bad format for DOWNLOAD_PASSWORD \"${DOWNLOAD_PASSWORD}\": must be user:password" >&2
+      ret=1
+    fi
+
+    #Check both that we are using https, and that we are using the same server for all cases
+    local remote_ip
+    for x in TOOLCHAIN SYSROOT PREBUILT; do
+      test -z "${!x:-}" && continue
+      if echo "${!x}" | grep -qv '^http://'; then #TODO add an s
+        echo "Must use https protocol with DOWNLOAD_PASSWORD" >&2
+        echo "  - ${x} has URL \"${!x}\"" >&2
+        ret=1
+      fi
+      if test -z "${remote_ip:-}"; then
+        remote_ip="`echo ${!x} | sed 's#^http://\([^/]\+\).*#\1#'`" #TODO add an s
+        if test -z "${remote_ip:-}" ||
+           test x"${remote_ip}" = x"${!x}"; then
+          echo "Unable to determine server for $x from URL \"${!x}\"" >&2
+          ret=1
+        fi
+      elif test  x"`echo ${!x} | sed 's#^http://\([^/]\+\).*#\1#'`" != x"${remote_ip}"; then #TODO add an s
+        echo "All downloadables (TOOLCHAIN, SYSROOT, PREBUILT) must come from same server if DOWNLOAD_PASSWORD is set." >&2
+        echo "  - Otherwise we would transmit the credentials to multiple servers, some of which may be untrusted." >&2
+        ret=1
+      fi
+    done
+    if test "${ret}" -ne 0; then
+      return ${ret} #Must do early return here, as later validation steps will transmit the credentials
+    fi
+  fi
+  #Paranoid ssh key case does not need validation, as there is no risk of transmitting secrets to untrusted places
+
+
   ###############################################
   #Cases that must be corrected by user (errors)#
   ###############################################
