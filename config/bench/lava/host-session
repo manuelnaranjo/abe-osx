@@ -1,6 +1,8 @@
 #!/bin/bash
 
-#Initialization - get us to defined exit func before we do anything else
+####################################################
+#Early (pre- exit trap installation) initialization#
+####################################################
 set -xue
 set -o pipefail
 
@@ -20,6 +22,7 @@ if test $? -ne 0; then
 fi
 #End of variables that must be initialized before exit handler can be called
 
+#Called from exit trap
 function ssh_rune {
   local preargs
   for x in "$@"; do
@@ -125,7 +128,10 @@ function exitfunc {
 
 trap exitfunc EXIT
 
-#Now we can exit cleanly, do remaining initialization
+
+####################################################
+#Late (after exit trap installation) initialization#
+####################################################
 
 #Belt-and-braces - we do most work in maindir,
 #which has 700 permissions, but this protects
@@ -150,8 +156,12 @@ function get_thing {
   echo "${maindir}/downloads/`basename ${thing}`"
 }
 
-benchgccpath=
 
+#####################################
+#Parse parameters/initialize globals#
+#####################################
+
+benchgccpath=
 benchmark="${1}"
 if test x"${benchmark}" = xNone; then
   echo "Must give benchmark" >&2
@@ -208,6 +218,11 @@ else
 fi
 ip_addr=$(ifconfig `ip route get $gateway | cut -d ' ' -f3` | grep 'inet addr' |awk -F: '{split($2,a," "); print a[1] }')
 
+
+#############################
+#Set up filesystem and tools#
+#############################
+
 echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
 chmod 700 "${maindir}" || exit 1
 cd "${maindir}"
@@ -225,6 +240,10 @@ chmod 755 "${maindir}"/bin/git-new-workdir
 #Must have run configure before first use of abe functions, may as well do it early
 "${ABE_DIR}"/configure --with-fileserver=148.251.136.42 --with-remote-snapshots=/snapshots-ref
 
+
+####################
+#Set up credentials#
+####################
 
 #Set up known_hosts
 #Need to be able to ssh to dev-private
@@ -268,6 +287,11 @@ exec /usr/bin/ssh -o User=git ${ABE_REMOTE_SSH_OPTS} "\$@"
 EOF
   chmod 700 "${maindir}"/bin/git-ssh.sh
   export GIT_SSH="${maindir}"/bin/git-ssh.sh
+
+
+#######
+#Build#
+#######
 
 #Install toolchain and build benchmark, or download prebuilt tarball
 if test x"${prebuilt:-}" = x; then
@@ -318,6 +342,12 @@ else
   benchtar="`get_thing ${prebuilt}`"
   resultsdir="`tar xf ${benchtar} | head -n1`"
 fi
+
+
+###################
+#Configure targets#
+###################
+#Arrange access for each target
 
 lava-network broadcast eth0 #Required with the lava-network, due to BZ1704
 lava-network collect eth0
@@ -377,7 +407,11 @@ if test ${trusted} -eq 0; then
   rm "${maindir}/data/socket"
 fi
 
-#Run
+
+#####
+#Run#
+#####
+
 if test x"${BENCH_DEBUG:-}" = x; then
   politeness='-p'
 else
