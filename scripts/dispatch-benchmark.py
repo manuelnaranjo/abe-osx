@@ -120,6 +120,8 @@ def main():
                               this option is illegal.  Otherwise, sets
                               the key for both host and target, defaulting to
                               ~/.ssh/id_rsa.pub.''')
+  parser.add_argument('--lava-job-name',
+                      help="Content for LAVA UI description field.")
   parser.add_argument('--dry-run', action='store_true', default=False,
                       help="Show both stages of parsing, don't dispatch.")
   global args
@@ -167,6 +169,7 @@ def main():
     'run_flags',
     'pubkey_host',
     'pubkey_target',
+    'lava_job_name'
   ]}
 
   #Handle values that are not simple string/int types
