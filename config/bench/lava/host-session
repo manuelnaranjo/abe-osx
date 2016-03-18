@@ -6,7 +6,7 @@
 set -xue
 set -o pipefail
 
-#Variables that must be initialized before exit handler can be called
+#State that must be initialized before exit handler can be called
 error=1
 if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
   BENCH_DEBUG=
@@ -15,12 +15,18 @@ fi
 #device with persistent filesystem, and it might have failed cleanup, or been
 #cancelled)
 rm -rf /tmp/bench-*
+
+umask 077
+#Exit handler expects maindir to be initialized
 maindir="`mktemp -dt bench-XXXXXX`"
 if test $? -ne 0; then
   echo "Unable to create maindir on target" >&2
   exit 1
 fi
-#End of variables that must be initialized before exit handler can be called
+
+#exit handler expects data to exist, may as well create the others with it
+mkdir "${maindir}"/{bin,bench,data,downloads} #Final mkdir
+#End of state that must be initialized before exit handler can be called
 
 #Called from exit trap
 function ssh_rune {
@@ -88,17 +94,15 @@ function exitfunc {
       fi
       popd
     fi
-    if test -d "${maindir}"/data; then
-      pushd "${maindir}"/data
-      for x in {build,run}.std{out,err}; do
-        if test -f "${x}"; then
-          'lava-test-run-attach' "${x}" text/plain
-        else
-          echo "Not attaching non-existent file ${maindir}/data/${x}" >&2
-        fi
-      done
-      popd
-    fi
+    pushd "${maindir}"/data
+    for x in {build,run}.std{out,err}; do
+      if test -f "${x}"; then
+        'lava-test-run-attach' "${x}" text/plain
+      else
+        echo "Not attaching non-existent file ${maindir}/data/${x}" >&2
+      fi
+    done
+    popd
   fi
   if test ${error} -ne 0; then
     if test x"${BENCH_DEBUG}" != x; then
@@ -113,12 +117,7 @@ function exitfunc {
       fi
       ssh_rune --
       sleep infinity&
-      if test -d "${maindir}/data"; then
-        echo $! > "${maindir}/data/sleeper"
-      else
-        echo "${maindir}/data not ready, cannot record PID of sleeper" >&2
-        echo "PID is $!" >&2
-      fi
+      echo $! > "${maindir}/data/sleeper"
       wait $! || true #'|| true' -- don't terminate here if the sleeper is killed, want to do the cleanup
     fi
   fi
@@ -132,11 +131,6 @@ trap exitfunc EXIT
 ####################################################
 #Late (after exit trap installation) initialization#
 ####################################################
-
-#Belt-and-braces - we do most work in maindir,
-#which has 700 permissions, but this protects
-#us against world-readable temporaries
-umask 077
 
 function get_thing {
   local thing="${1}"
@@ -224,10 +218,7 @@ ip_addr=$(ifconfig `ip route get $gateway | cut -d ' ' -f3` | grep 'inet addr' |
 #############################
 
 echo "Building (or getting) benchmark ${benchmark} in ${maindir}"
-chmod 700 "${maindir}" || exit 1
-cd "${maindir}"
-mkdir bin bench data downloads #Final mkdir
-cd bench #Final directory change
+cd "${maindir}"/bench #Final directory change
 
 export PATH="${maindir}"/bin:"${PATH}"
 
