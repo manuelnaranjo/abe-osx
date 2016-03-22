@@ -11,6 +11,7 @@ error=1
 if test x"${BENCH_DEBUG}" = x || test x"${BENCH_DEBUG}" = xNone; then
   BENCH_DEBUG=
 fi
+declare -A lava_target_pids
 #Ensure that we have no cruft left over from a previous run (we might be on a
 #device with persistent filesystem, and it might have failed cleanup, or been
 #cancelled)
@@ -121,6 +122,10 @@ function exitfunc {
       wait $! || true #'|| true' -- don't terminate here if the sleeper is killed, want to do the cleanup
     fi
   fi
+  #If any of these are set, so is ABE_REMOTE_SSH_OPTS
+  for target_ip in "${lava_target_pids[@]}"; do
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=yes ${ABE_REMOTE_SSH_OPTS} "${target_ip}" kill "${lava_target_pids[${target_ip}]}"
+  done
   rm -rf "${maindir}"
   exit ${error}
 }
@@ -432,6 +437,9 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   else
     target_names=("${target_names[@]}" "${lava_name}")
   fi
+
+  lava-wait "lava_target_pid_${lava_name}"
+  lava_target_pids["${target_ip}"]="`cut -d = -f 2 /tmp/lava_multi_node_cache.txt`"
 done
 
 #If we are relying on an external auth socket, we can delete it now

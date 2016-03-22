@@ -2,8 +2,21 @@
 set -uex
 set -o pipefail
 
+#Exit cleanly - gather up what we can and let LAVA take over
+function errorexit {
+  exit 1
+}
+
+function quit {
+  echo "Received SIGTERM, will exit with error" >&2
+  trap errorexit EXIT
+  cat /root/post-{target,run,run-finished} | xargs kill
+}
+trap quit TERM
+
 lava-network broadcast eth0
 lava-send "config_`lava-self`" "config=${1}"
+lava-send "lava_target_pid_`lava-self`" "lava_target_pid=${BASHPID}"
 
 sleep infinity&
 echo $! > /root/post-target
