@@ -174,7 +174,7 @@ build_all()
     # the user has requested that no tests run.  Binary tarballs have
     # testing executed on the installed libraries and executables, not on
     # the source tree.
-    if test x"${runtests}" != x -a x"${tarbin}" != x"yes"; then
+    if test x"${runtests}" != x; then
 	notice "Testing components ${runtests}..."
 	buildingall=no
 	local check_ret=0
