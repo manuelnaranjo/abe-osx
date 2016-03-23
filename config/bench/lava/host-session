@@ -142,9 +142,8 @@ function get_thing {
   if echo "${thing}" | grep -q 'ci\.linaro\.org'; then
     local i
     for i in `seq 40 -1 1`; do
-      curl -L -w '%{response_code}' --output /dev/null --silent --head --fail "${thing}" >&2 && break
-      echo >&2
-      echo "${thing} not available (see above for response code)" >&2
+      wget -q --spider "${thing}" > /dev/null && break
+      echo "${thing} not available" >&2
       echo "Will retry in 60 seconds" >&2
       echo "Will timeout in ${i} minutes" >&2
       test ${i} -gt 1 && sleep 60
