@@ -170,11 +170,8 @@ build_all()
     # If we're building a full toolchain the binutils tests need to be built
     # with the stage 2 compiler, and therefore we shouldn't run unit-test
     # until the full toolchain is built.  Therefore we test all toolchain
-    # packages after the full toolchain is built.  If ${runtests} is empty
-    # the user has requested that no tests run.  Binary tarballs have
-    # testing executed on the installed libraries and executables, not on
-    # the source tree.
-    if test x"${runtests}" != x -a x"${tarbin}" != x"yes"; then
+    # packages after the full toolchain is built. 
+    if test x"${runtests}" != x; then
 	notice "Testing components ${runtests}..."
 	buildingall=no
 	local check_ret=0
