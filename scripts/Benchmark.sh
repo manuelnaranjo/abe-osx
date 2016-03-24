@@ -69,19 +69,19 @@ function validate {
     local remote_ip
     for x in TOOLCHAIN SYSROOT PREBUILT; do
       test -z "${!x:-}" && continue
-      if echo "${!x}" | grep -qv '^http://'; then #TODO add an s
+      if echo "${!x}" | grep -qv '^https://'; then
         echo "Must use https protocol with DOWNLOAD_PASSWORD" >&2
         echo "  - ${x} has URL \"${!x}\"" >&2
         ret=1
       fi
       if test -z "${remote_ip:-}"; then
-        remote_ip="`echo ${!x} | sed 's#^http://\([^/]\+\).*#\1#'`" #TODO add an s
+        remote_ip="`echo ${!x} | sed 's#^https://\([^/]\+\).*#\1#'`"
         if test -z "${remote_ip:-}" ||
            test x"${remote_ip}" = x"${!x}"; then
           echo "Unable to determine server for $x from URL \"${!x}\"" >&2
           ret=1
         fi
-      elif test  x"`echo ${!x} | sed 's#^http://\([^/]\+\).*#\1#'`" != x"${remote_ip}"; then #TODO add an s
+      elif test  x"`echo ${!x} | sed 's#^https://\([^/]\+\).*#\1#'`" != x"${remote_ip}"; then
         echo "All downloadables (TOOLCHAIN, SYSROOT, PREBUILT) must come from same server if DOWNLOAD_PASSWORD is set." >&2
         echo "  - Otherwise we would transmit the credentials to multiple servers, some of which may be untrusted." >&2
         ret=1
@@ -136,7 +136,7 @@ function validate {
   for x in TOOLCHAIN SYSROOT PREBUILT; do
     test -z "${!x:-}" && continue
     echo "${!x}" | grep -qv '^https\?://' && continue #Assume that this is an rysnc path, we don't (yet) try to validate those in advance
-    response_code=`curl -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
+    response_code=`curl -k -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
     case $? in
       3) continue;; #Malformed URL - could be a local path
       6) continue;; #Could not resolve host - might be a host we cannot see from here
@@ -146,7 +146,7 @@ function validate {
             echo "Access to ${x} (\"${!x}\") requires password authentication (401), but DOWNLOAD_PASSWORD is not set" >&2
             ret=1
           else #We'll send these credentials to this server in config/lava/host_session, so no additional risk in doing it here
-            response_code=`curl -u "${DOWNLOAD_PASSWORD}" -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
+            response_code=`curl -u "${DOWNLOAD_PASSWORD}" -k -w %{response_code} --output /dev/null --silent --head --fail "${!x}"` && continue
             echo "Access to ${x} (\"${!x}\") denied with supplied credentials (response code ${response_code})" >&2
             echo "  - Credentials were transmitted to server in \"${!x}\", you should consider whether they may be compromised" >&2
            ret=1

@@ -151,9 +151,16 @@ function get_thing {
   fi
 
   if echo x"${thing}" | grep -q '^xhttp'; then
+    #if 'thing' is on a local server accessed over https, do not require
+    #a certificate check
+    local extra_args=''
+    if echo "${thing}" | grep -q '^https://[^/]\+\.tcwglab/' ||
+       echo "${thing}" | grep -q '^https://[^\./]\+/'; then
+      extra_args='--no-check-certificate'
+    fi
     #Password on CLI usually a bad thing, but for this case (builder is a
     #trusted machine restricted to trusted individuals) it is OK.
-    wget -q${download_password:+ --user ${download_password%%:*} --password "${download_password#*:}"} "${thing}"
+    wget ${extra_args:-} -q${download_password:+ --user ${download_password%%:*} --password "${download_password#*:}"} "${thing}"
   else
     local server="${thing%%:*}"
     thing="${thing#*:}"
