@@ -135,21 +135,6 @@ trap exitfunc EXIT
 function get_thing {
   local thing="${1}"
   pushd "${maindir}/downloads" > /dev/null
-
-  #TODO: FOUL HACK: If there is a ci.linaro.org in the URL, it might be a
-  #      Jenkins artifact that has not been published yet. Give it some time
-  #      to get published before giving up.
-  if echo "${thing}" | grep -q 'ci\.linaro\.org'; then
-    local i
-    for i in `seq 40 -1 1`; do
-      wget -q --spider "${thing}" > /dev/null && break
-      echo "${thing} not available" >&2
-      echo "Will retry in 60 seconds" >&2
-      echo "Will timeout in ${i} minutes" >&2
-      test ${i} -gt 1 && sleep 60
-    done
-  fi
-
   if echo x"${thing}" | grep -q '^xhttp'; then
     #if 'thing' is on a local server accessed over https, do not require
     #a certificate check
