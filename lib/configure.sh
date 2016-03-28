@@ -262,7 +262,7 @@ configure_build()
 	    local opts="${opts} --build=${build} --host=${host} --target=${target} --prefix=${prefix}"
 	    ;;
 	gdb*)
- 	    local opts="${opts} --with-bugurl=\"https://bugs.launchpad.net/gcc-linaro\" --with-pkgversion=\"Linaro GDB ${date}\""
+ 	    local opts="${opts} --with-pkgversion=\"Linaro GDB ${date}\""
 	    if test x"$2" = x"gdbserver"; then
 		local opts="${opts} --build=${build} --host=${target} --prefix=${prefix}"
 		local srcdir="${srcdir}/gdb/gdbserver"
