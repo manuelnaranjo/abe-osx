@@ -160,7 +160,7 @@ if $begin_session; then
     $schroot bash -c "\"echo \\\"MaxSessions 256\\\" >> /etc/ssh/sshd_config\""
     $schroot /etc/init.d/ssh start
     # Crouton needs firewall rule.
-    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >dev/null 2>&1 || true
+    $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >/dev/null 2>&1 || true
 
     $schroot mkdir -p /root/.ssh
     ssh $target_ssh_opts $target cat .ssh/authorized_keys | $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
