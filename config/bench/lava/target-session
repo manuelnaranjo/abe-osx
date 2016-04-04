@@ -2,15 +2,67 @@
 set -uex
 set -o pipefail
 
+#LAVA cannot exit until all the processes that this shell started are killed
+#This also kills sleeps on the target that were started by the host (which is
+#what we want).
+trap 'kill `pidof sleep`' EXIT
+
+#Pidfile creators are responsible for:
+#1: Creating a directory named <pidfile>-sync _after_ pidfile is written
+#2: Ensuring that pidfile and <pidfile>-sync are cleaned up on process exit
+#   Deleting <pidfile>-sync first.
+#This avoids the following races:
+#1: pidfile was incompletely written
+#2: pid exited and was replaced with another process
+#   EXCEPT when this happens between the test and the kill delivery
+#   Given that we have full control of host and target, that targets are
+#   rebooted between jobs and that virtually all of our pidfiles point at
+#   processes that will only exit in pathological conditions, we can live with
+#   it.
+#   TODO: Use files rather than infinite sleeps as our synchronization
+#   primitive. We can do this by busy-waiting on file creation/deletion, or
+#   by using inotify-tools to (presumably) work in some lower-impact fashion.
+#   Not busy-waiting would be preferable, to minimize target activity.
+#2 is hopefully not needed when the process being waited on is our own child -
+#these scripts in general are written on the understanding that child pids are
+#not released until waited on.
+function safe_kill {
+  test -n "${1:-}" || { echo "No pidfile" >&2; exit 1; }
+  test -d "${1}-sync"
+  cat "$1" | xargs kill ${2:-}
+}
+
+function init_sleeper {
+  test -n "${1:-}" || { echo "No pidfile" >&2; exit 1; }
+  local pidfile=$1
+  #The sleep below will continue to run after the subshell is killed, but will
+  #get caught in our exit trap. The command could be anything to stop the
+  #subshell from exiting, sleep is just convenient for this purpose.
+  (
+    function f {
+      rmdir "${pidfile}-sync"
+      rm "${pidfile}"
+    }
+    trap f EXIT
+    sleep "${2:-infinity}"
+  )&
+  echo $! > "${pidfile}"
+  mkdir "${pidfile}-sync"
+}
+
+function wait_sleeper {
+  test -n "${1:-}" || { echo "No pidfile" >&2; exit 1; }
+  test -d "${1}-sync"
+  wait "`cat $1`"
+}
+
 lava-network broadcast eth0
 lava-send "config_`lava-self`" "config=${1}"
 
-sleep infinity&
-echo $! > /root/post-target
-sleep infinity&
-echo $! > /root/post-run
+init_sleeper /root/post-target
+init_sleeper /root/post-run
 
-wait `cat /root/post-run` && false
+wait_sleeper /root/post-run && false
 if test $? -eq 143; then true; else false; fi
 
 #We must run the gather script here for lava commands (lava-test-run-attach,
@@ -25,10 +77,12 @@ if test -e "${HOME}"/gather.sh; then
 else #Act as though we succeeded if there was nothing to do
   echo 0 > "${HOME}"/gatherresult
 fi
-test x"`cat /root/post-run-finished`" != x
-kill `cat /root/post-run-finished`
+#post-run-finished must be completely written, as it is written before
+#post-run (waited on above) is killed. We use safe_kill to ensure that
+#it has not been replaced with another process with identical pid.
+safe_kill /root/post-run-finished
 
-wait `cat /root/post-target` && false
+wait_sleeper /root/post-target && false
 if test $? -eq 143; then true; else false; fi
 
 exit 0

@@ -469,15 +469,24 @@ fi
 bash -x "${ABE_DIR}"/scripts/benchmark.sh \
   -s ${benchtar:-runonly} \
   ${politeness} \
-  -e 'kill \$(cat \${HOME}/post-target)' \
+  -e 'test -d \${HOME}/post-target-sync && kill \$(cat \${HOME}/post-target)' \
   ${run_flags:+-a "${run_flags}"} \
   ${benchgccpath:+-i "${benchgccpath}"} \
   ${triple:+-x "${triple}"} \
   -b "${benchmark}" \
   -r 'function f {
         echo \${PWD} > \${HOME}/resultsdir || return \$?;
-        sleep infinity&
+        (
+          function f {
+            rmdir \${HOME}/post-run-finished-sync;
+            rm \${HOME}/post-run-finished;
+          };
+          trap f EXIT;
+          sleep infinity;
+        )&
         echo \$! > \${HOME}/post-run-finished || return \$?;
+        mkdir \${HOME}/post-run-finished-sync || return \$?;
+        test -d \${HOME}/post-run-sync || return \$?;
         kill \$(cat \${HOME}/post-run) || return \$?;
         wait \$!;
         if test \$? -ne 143; then return \$?; fi;
