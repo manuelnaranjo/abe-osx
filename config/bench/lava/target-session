@@ -56,6 +56,26 @@ function wait_sleeper {
   wait "`cat $1`"
 }
 
+#Exit as cleanly as possible, but with an error
+function quit {
+  echo "Received SIGTERM, will exit with error" >&2
+  trap 'exit 143' EXIT
+  for x in /root/{sync-host,post-target,post-run}; do
+    safe_kill "${x}"
+  done
+  for x in /root/{benchproc,post-run-finished}; do
+    safe_kill "${x}"
+  done
+}
+trap quit TERM
+
+#Make sure that host is always signalled when target gives up
+function err {
+  quit
+  trap 'exit 1' EXIT
+}
+trap err ERR
+
 lava-network broadcast eth0
 lava-send "config_`lava-self`" "config=${1}"
 

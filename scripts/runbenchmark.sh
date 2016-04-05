@@ -203,6 +203,8 @@ fi
      "${ip}" \
      "function phonehome \
       { \
+        rmdir ${target_dir}/benchproc-sync; \
+        rm ${target_dir}/benchproc; \
         exec >/dev/null 2>&1; \
         while test -e ${target_dir}; do \
           ping -c 1 ${host_ip}; \
@@ -210,6 +212,8 @@ fi
         done; \
       }; \
       trap phonehome EXIT; \
+      echo \\\${BASHPID} > ${target_dir}/benchproc && \
+      mkdir ${target_dir}/benchproc-sync && \
       cd ${target_dir} && \
       tar xf `basename ${buildtar}` --exclude='*.git/.git/*' && \
       cd ${buildtartopdir} && \
