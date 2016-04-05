@@ -121,6 +121,11 @@ function exitfunc {
       wait $! || true #'|| true' -- don't terminate here if the sleeper is killed, want to do the cleanup
     fi
   fi
+  for lava_name in "${target_names[@]:-}"; do
+    ssh ${ABE_REMOTE_SSH_OPTS} \
+      "`grep ^ip= ${ABE_DIR}/config/bench/boards/${lava_name}.conf | cut -d = -f 2`" \
+      "cat /root/post-{target,run,run-finished} | xargs kill" || true
+  done
   rm -rf "${maindir}"
   exit ${error}
 }
