@@ -76,11 +76,25 @@ function err {
 }
 trap err ERR
 
+#All sleepers must be initialized before the below timeout on hostside bringup
+#This way, we know that the 'kill target on exit' code on the host side will
+#actually kill the target.
+init_sleeper /root/post-run
+init_sleeper /root/post-target
+
+#Wait 1 hour for all targets to be ready. Even our slowest targets boot in less
+#than 1 hour.
+init_sleeper /root/sync-host 3600
+
+#Time bomb - terminate target when sync-host expires
+wait_sleeper /root/sync-host &
+
 lava-network broadcast eth0
 lava-send "config_`lava-self`" "config=${1}"
+lava-wait-all "`lava-self`"_init host
 
-init_sleeper /root/post-target
-init_sleeper /root/post-run
+#Host now capable of killing this target on exit, we can kill the time bomb
+safe_kill /root/sync-host
 
 wait_sleeper /root/post-run && false
 if test $? -eq 143; then true; else false; fi

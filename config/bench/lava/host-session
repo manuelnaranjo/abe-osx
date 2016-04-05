@@ -444,6 +444,7 @@ for lava_name in `lava-group | grep -v '[[:blank:]]*host$' | awk '{print $1}'`; 
   else
     target_names=("${target_names[@]}" "${lava_name}")
   fi
+  lava-send "${lava_name}_init"
 done
 
 #If we are relying on an external auth socket, we can delete it now
