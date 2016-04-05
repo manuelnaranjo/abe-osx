@@ -342,15 +342,15 @@ function deploy_for_device_type {
   cmd[mustang]='deploy_linaro_kernel'
   cmd[panda-es]='deploy_linaro_image'
 
-  parts[arndale]="image: 'https://dev-01.tcwglab/~bernie.ogden/images/arndale.img'"
+  parts[arndale]="image: 'http://dev-01.tcwglab/~bernie.ogden/images/arndale.img'"
   parts[dummy-ssh]="target_type: 'ubuntu'"
-  parts[juno]="image: 'https://dev-01.tcwglab/~bernie.ogden/images/juno-precooked.img.gz'"
-  parts[kvm]="image: 'https://dev-01.tcwglab/~bernie.ogden/images/ubuntu-14-04-server-base.img.gz'"
-  parts[mustang]="dtb: 'https://dev-01.tcwglab/~bernie.ogden/images/apm-mustang.dtb'
-      kernel: 'https://dev-01.tcwglab/~bernie.ogden/images/uImage-mustang'
-      nfsrootfs: 'https://dev-01.tcwglab/~bernie.ogden/images/linaro-utopic-developer-20150319-701.tar.gz'"
-  parts[panda-es]="hwpack: 'https://dev-01.tcwglab/~bernie.ogden/images/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz'
-      rootfs: 'https://dev-01.tcwglab/~bernie.ogden/images/linaro-trusty-developer-20140522-661.tar.gz'"
+  parts[juno]="image: 'http://dev-01.tcwglab/~bernie.ogden/images/juno-precooked.img.gz'"
+  parts[kvm]="image: 'http://dev-01.tcwglab/~bernie.ogden/images/ubuntu-14-04-server-base.img.gz'"
+  parts[mustang]="dtb: 'http://dev-01.tcwglab/~bernie.ogden/images/apm-mustang.dtb'
+      kernel: 'http://dev-01.tcwglab/~bernie.ogden/images/uImage-mustang'
+      nfsrootfs: 'http://dev-01.tcwglab/~bernie.ogden/images/linaro-utopic-developer-20150319-701.tar.gz'"
+  parts[panda-es]="hwpack: 'http://dev-01.tcwglab/~bernie.ogden/images/hwpack_linaro-panda_20140525-654_armhf_supported.tar.gz'
+      rootfs: 'http://dev-01.tcwglab/~bernie.ogden/images/linaro-trusty-developer-20140522-661.tar.gz'"
 
   if test -z "${cmd[$1]:-}"; then
     echo "${FUNCNAME}: Unknown device type '$1'" >&2
