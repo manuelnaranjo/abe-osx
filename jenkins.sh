@@ -305,10 +305,11 @@ fi
 
 $CONFIG_SHELL ${abe_dir}/configure --with-local-snapshots=${user_snapshots} --with-git-reference-dir=${git_reference} --with-languages=${languages} --enable-schroot-test --with-fileserver=${fileserver}
 
-# Double parallelism for tcwg-ex40-* machines to compensate for really-remote
-# target execution.  GCC testsuites will run with -j 32.
+# Reduce parallelism of individual builds in Cambridge lab to try reduce
+# variability in sanitizer testsuite.
+# Note that GCC testsuites will run with double parallelism setting.
 case "$(hostname)" in
-    "tcwg-ex40-"*) sed -i -e "s/cpus=8/cpus=16/" host.conf ;;
+    "build-"*) sed -i -e "s/cpus=32/cpus=8/" host.conf ;;
 esac
 
 # load commonly used varibles set by configure
