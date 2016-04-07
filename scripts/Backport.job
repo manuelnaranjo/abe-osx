@@ -24,7 +24,7 @@ usage()
 {
     # Format this section with 75 columns.
     cat << EOF
-  Backport.job [--help] [f|--fileserver 'remote file server'] --target triplet branch
+  Backport.job [--help] --target triplet branch
 EOF
     return 0
 }
@@ -55,7 +55,7 @@ esac
 if test x"${GERRIT_TOPIC}" != x; then
     gcc_branch="gcc.git~${GERRIT_TOPIC}"
 fi
-$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}${excludecheck:+ --excludecheck ${excludecheck}} --fileserver 148.251.136.42
+$CONFIG_SHELL -x ${abe_dir}/test-backport.sh --target ${target} ${gcc_branch}${excludecheck:+ --excludecheck ${excludecheck}}
 
 # force a failure of abe has build problems.
 if test $? -gt 0; then

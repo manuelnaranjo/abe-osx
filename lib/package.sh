@@ -31,7 +31,9 @@ build_rpm()
 
     local infile="${abe_path}/packaging/redhat/tcwg.spec.in"
     local arch="`echo ${target} | tr '-' '_'`"
-    local version="`echo ${gcc_version} | cut -d '~' -f 2 | grep -o "[4-6][\._][0-9\.]*" | tr '_' '.'`"
+
+    local srcdir="`get_component_srcdir gcc`"
+    local version="`cat ${srcdir}/gcc/BASE-VER`"
 
     rm -f /tmp/tcwg$$.spec
     sed -e "s:%global triplet.*:%global triplet ${arch}:" \
@@ -76,38 +78,8 @@ binary_runtime()
 {
     trace "$*"
 
-#    local version="`${target}-gcc --version | head -1 | cut -d ' ' -f 3`"
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	if test x"${gcc_version}" = x; then
-	    local gcc_version="~`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	fi
-	
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local branch="`basename ${gcc_version}`"
-	else
-	    if test `echo ${gcc_version} | grep -c "\.git"`; then
-		local branch=
-	    fi
-	fi
-	
-	local builddir="`get_builddir ${gcc_version} stage2`"
-	local srcdir="`get_srcdir ${gcc_version}`"
-
-	local date="`date +%Y%m%d`"
-	if test -d ${srcdir}/.gito -o -e ${srcdir}/.gitignore; then
-	    local revision="@`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local version="`echo ${gcc_version} | cut -d '/' -f 1 | sed -e 's:\.git:-linaro:'`-${version}"
-	fi
-	local tag="`echo runtime-${version}~${revision}-${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-    else
-	# use an explicit tag for the release name
-	local tag="`echo runtime-linaro-gcc${version}-${release}-${target}`"
-    fi
+    local rtag="`create_release_tag gcc`"
+    local tag="runtime-${rtag}-${target}"
 
     local destdir="${local_builds}/tmp.$$/${tag}"
 
@@ -140,14 +112,9 @@ binary_gdb()
 
     local version="`${target}-gdb --version | head -1 | grep -o " [0-9\.][0-9].*\." | tr -d ')'`"
     local tag="`create_release_tag ${gdb_version} | sed -e 's:binutils-::'`"
-    local builddir="`get_builddir ${gdb_version} gdb`"
+    local builddir="`get_component_builddir gdb`-gdb"
     local destdir="${local_builds}/tmp.$$/${tag}-tmp"
     local prefix="${local_builds}/destdir/${host}"
-
-    local gdb_static="`grep ^static_link= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-
-#    if test x"${gdb_static}" = x"yes"; then
-#    fi
 
     # Use LSB to produce more portable binary releases.
     if test x"${LSBCC}" != x -a x"${LSBCXX}" != x; then
@@ -183,40 +150,12 @@ binary_toolchain()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
+    local rtag="`create_release_tag gcc`"
 
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	if test x"${gcc_version}" = x; then
-	    local gcc_version="`grep ^latest= ${topdir}/config/gcc.conf | cut -d '\"' -f 2`"
-	fi
-	if test `echo ${gcc_version} | grep -c "\.git/"`; then
-	    local branch="`basename ${gcc_version}`"
-	else
-	    if test `echo ${gcc_version} | grep -c "\.git"`; then
-		local branch=
-	    fi
-	fi
-	
-	local date="`date +%Y%m%d`"
-	local srcdir="`get_srcdir ${gcc_version}`"
-
-	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-	    local revision="git`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	fi
-	if test x"${host}" != x"${build}"; then
-	    local tag="`echo gcc-linaro-${version}~${revision}-i686-mingw32_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-	else
-	    local tag="`echo gcc-linaro-${version}~${revision}-${build_arch}_${target}-${date} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-	fi
+    if test x"${host}" != x"${build}"; then
+	local tag="${rtag}-i686-mingw32_${target}"
     else
-	# use an explicit tag for the release name
-	if test x"${host}" != x"${build}"; then
-	    local tag="`echo gcc-linaro-${version}-${release}-i686-mingw32_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
-	else
-	    local tag="`echo gcc-linaro-${version}-${release}-${build_arch}_${target} | sed -e 's:-none-:-:' -e 's:-unknown-:-:'`"	
-	fi
-
+	local tag="${rtag}-${build_arch}_${target}"
     fi
 
     local destdir="${local_builds}/tmp.$$/${tag}"
@@ -225,9 +164,6 @@ binary_toolchain()
     # The manifest file records the versions of all of the components used to
     # build toolchain.
     dryrun "cp ${manifest} ${local_builds}/destdir/${host}/"
-
-#    local installdir="`find ${destdir} -name ${target}-nm`"
-#    local installdir="`dirname ${installdir} | sed -e 's:/bin::'`"
     dryrun "rsync -avr ${local_builds}/destdir/${host}/* ${destdir}/"
 
     if test x"${build}" != x"${target}"; then
@@ -247,7 +183,7 @@ binary_toolchain()
 	build_rpm ${destdir}
     fi
     if test x"${tarbin}" = x"yes"; then
-#	if test `echo ${host} | grep -c mingw` -eq 0; then
+	if test `echo ${host} | grep -c mingw` -eq 0; then
 	    # make the tarball from the tree we just created.
 	    notice "Making binary tarball for toolchain, please wait..."
 	    dryrun "tar Jcf ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${exclude} ${tag}"
@@ -256,8 +192,8 @@ binary_toolchain()
 	    dryrun "md5sum ${local_snapshots}/${tag}.tar.xz | sed -e 's:${local_snapshots}/::' > ${local_snapshots}/${tag}.tar.xz.asc"
 #	else
 #	    notice "Making binary toolchain package for Windows, please wait..."
-#	    ${local_snapshots}/infrastructure/installjammer-1.2.15/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
-#	fi
+#	    ${local_snapshots}/infrastructure/installjammer/installjammer --output-dir ${local_snapshots}/ --build ${abe_path}/config/LinaroGCC.mpi
+	fi
     fi
     
     rm -fr ${local_builds}/tmp.$$
@@ -269,59 +205,9 @@ binary_sysroot()
 {
     trace "$*"
 
-    local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
+    local rtag="`create_release_tag glibc`"
+    local tag="sysroot-${rtag}-${target}"
 
-    # no expicit release tag supplied, so create one.
-    if test x"${release}" = x; then
-	if test x"${clibrary}" = x"newlib"; then
-	    if test x"${newlb_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '=' -f 2 | cut -d '/' -f 1 | tr -d '\"'`"
-	    else
-		local libc_version="`echo ${newlib_version} | cut -d '/' -f 1`"
-	    fi
-	    local srcdir="`get_srcdir ${libc_version}`"
-	elif test x"${clibrary}" = x"glibc"; then
-	    if test x"${glibc_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    else
-		local libc_version="`echo ${glibc_version} | cut -d '/' -f 1`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="glibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    fi
-	else
-	    if test x"${eglibc_version}" = x; then
-		local libc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '/' -f 2 | tr -d '\"'`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    else
-		local libc_version="`echo ${eglibc_version} | cut -d '/' -f 1`"
-		local srcdir="`get_srcdir ${libc_version}`"
-		local libc_version="eglibc-linaro-`grep VERSION ${local_snapshots}/${libc_version}/libc/version.h | tr -d '\"' | cut -d ' ' -f 3`"
-	    fi
-	fi
-
-	local builddir="`get_builddir ${libc_version}`"
-	
-        # if test "`echo $1 | grep -c '@'`" -gt 0; then
-        # 	local commit="@`echo $1 | cut -d '@' -f 2`"
-        # else
-        # 	local commit=""
-        # fi
-	local version="`${target}-gcc --version | grep -o " [0-9]\.[0-9]" | tr -d ' ' | head -n 1`"
-	date="`date +%Y%m%d`"
-	if test -d ${srcdir}/.git -o -e ${srcdir}/.gitignore; then
-	    local revision="`cd ${srcdir} && git log --oneline | head -1 | cut -d ' ' -f 1`"
-	else
-	    revision="${BUILD_NUMBER}"
-	fi
-	local tag="`echo sysroot-${libc_version}-${revision}-${target}-${date}-gcc_${version} | sed -e 's:\.git:-linaro:' -e 's:-none-:-:' -e 's:-unknown-:-:'`"
-    else
-	local tag="sysroot-linaro-${clibrary}-gcc${version}-${release}-${target}"
-    fi
-
-#    dryrun "cp -fr ${abe_top}/sysroots/${target} ${destdir}"
     local destdir="${local_builds}/tmp.$$/${tag}"
     dryrun "mkdir -p ${local_builds}/tmp.$$"
     if test x"${build}" != x"${target}"; then
@@ -329,9 +215,6 @@ binary_sysroot()
     else
 	dryrun "ln -sfnT ${abe_top}/sysroots ${destdir}"
     fi
-
-    # Generate the install script
-#    sysroot_install_script ${destdir}
 
     notice "Making binary tarball for sysroot, please wait..."
     dryrun "tar Jcfh ${local_snapshots}/${tag}.tar.xz --directory=${local_builds}/tmp.$$ ${tag}"
@@ -348,194 +231,161 @@ manifest()
 {
     trace "$*"
 
-
     # This function relies too heavily on the built toolchain to do anything
     # in dryrun mode.
     if test x"${dryrun}" = xyes; then
 	return 0;
     fi
 
-    if test x"${gmp_version}" = x; then
-	local gmp_version="`grep ^latest= ${topdir}/config/gmp.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${mpc_version}" = x; then
-	local mpc_version="`grep ^latest= ${topdir}/config/mpc.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${mpfr_version}" = x; then
-	local mpfr_version="`grep ^latest= ${topdir}/config/mpfr.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${gdb_version}" = x; then
-	local gdb_version="`grep ^latest= ${topdir}/config/gdb.conf | cut -d '\"' -f 2`"
-    fi
-    local gcc_branch="`echo ${gcc_version} | cut -d '~' -f 2`"
-
-    local srcdir="`get_srcdir ${gcc_version}`"
-    local gcc_revision="`srcdir_revision ${srcdir}`"
-
-    local srcdir="`get_srcdir ${gdb_version}`"
-    local gdb_revision="`srcdir_revision ${srcdir}`"
-    
-    if test x"${dejagnu_version}" = x; then
-	local dejagnu_version="`grep ^latest= ${topdir}/config/dejagnu.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${dejagnu_version}`"
-    local dejagnu_revision="`srcdir_revision ${srcdir}`"
-    
-    if test x"${linux_version}" = x; then
-	local linux_version="`grep ^latest= ${topdir}/config/linux.conf | cut -d '\"' -f 2`"
-    fi
-    
-    if test x"${binutils_version}" = x; then
-	local binutils_version="`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
-    fi
-    local srcdir="`get_srcdir ${binutils_version}`"
-    local binutils_revision="`srcdir_revision ${srcdir}`"
-
-    local abe_revision="`srcdir_revision ${abe_path}`"
-
-    if test x"${clibrary}" = x"eglibc"; then
-	local srcdir="`get_srcdir ${eglibc_version}`"
-    elif  test x"${clibrary}" = x"glibc"; then
-	local srcdir="`get_srcdir ${glibc_version}`"
-    elif test x"${clibrary}" = x"newlib"; then
-	local srcdir="`get_srcdir ${newlib_version}`"
-    fi
-    local libc_version="`srcdir_revision ${abe_path}`"
-    
-    local mtag=
     if test x"$1" = x; then
-	mtag="`create_release_tag ${gcc_version}`"
+	mtag="`create_release_tag gcc`"
+	mkdir -p ${local_builds}/${host}/${target}
 	local outfile=${local_builds}/${host}/${target}/${mtag}-manifest.txt
     else
 	local outfile=$1
     fi
 
-    rm -f ${outfile}
-    cat >> ${outfile} <<EOF
-# Build machine data
-build=${build}
-host=${host}
-target=${target}
-kernel=${kernel}
-hostname=${hostname}
-distribution=${distribution}
-host_gcc=${host_gcc_version}
-
-Component versions
-gmp_versionnum=${gmp_version}
-mpc_versionnum=${mpc_version}
-mpfr_versionnum=${mpfr_version}
-
-# Binutils
-binutils_branch=${binutils_version}
-EOF
-
-    if test "`echo ${binutils_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-binutils_revision=${binutils_revision}
-binutils_version=binutils-gdb.git@${binutils_revision}
-EOF
+    if test -e ${outfile}; then
+	mv -f ${outfile} ${outfile}.bak
     fi
+    echo "manifest_format=${manifest_version:-1.0}" > ${outfile}
+    echo "" >> ${outfile}
+    echo "# Note that for ABE, these parameters are not used" >> ${outfile}
 
-    cat >> ${outfile} <<EOF
+    local seen=0
+    local tmpfile="/tmp/mani$$.txt"
+    for i in ${toolchain[*]}; do
+	local component="$i"
+	# ABE build data goes in the documentation sxection
+	if test x"${component}" = x"abe"; then
+	    echo "${component}_url=`get_component_url ${component}`" > ${tmpfile}
+	    echo "${component}_branch=branch=`get_component_branch ${component}`" >> ${tmpfile}
+	    echo "${component}_revision=`get_component_revision ${component}`" >> ${tmpfile}
+	    echo "${component}_filespec=`get_component_filespec ${component}`" >> ${tmpfile}
+	    local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "${component}_configure=\"${configure}\"" >> ${tmpfile}
+	    echo "" >> ${tmpfile}
+	    continue
+	fi
+	if test ${seen} -eq 1 -a x"${component}" = x"gcc"; then
+	    notice "Not writing GCC a second time, already done."
+	    continue
+	else
+	    if test x"${component}" = x"gcc"; then
+		local seen=1
+	    fi
+	fi
 
-# DejaGnu
-dejagnu_version=${dejagnu_version}
+	echo "# Component data for ${component}" >> ${outfile}
 
-# GDB
-gdb_branch=${gdb_version}
+	local url="`get_component_url ${component}`"
+	echo "${component}_url=${url}" >> ${outfile}
 
-EOF
+	local branch="`get_component_branch ${component}`"
+	if test x"${branch}" != x; then
+	    echo "${component}_branch=${branch}" >> ${outfile}
+	fi
 
-    if test "`echo ${gdb_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-gdb_revision=${gdb_revision}
-gdb_version=binutils-gdb.git@${gdb_revision}
-EOF
-    fi
+	local revision="`get_component_revision ${component}`"
+	if test x"${revision}" != x; then
+	    echo "${component}_revision=${revision}" >> ${outfile}
+	fi
 
-    cat >> ${outfile} <<EOF
+	local filespec="`get_component_filespec ${component}`"
+	if test x"${filespec}" != x; then
+	    echo "${component}_filespec=${filespec}" >> ${outfile}
+	fi
 
-# GCC
-gcc_branch=${gcc_branch}
-EOF
+	local makeflags="`get_component_makeflags ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	if test x"${makeflags}" != x; then
+	    echo "${component}_makeflags=\"${makeflags}\"" >> ${outfile}
+	fi
 
-    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
-	cat >> ${outfile} <<EOF
-gcc_revision=${gcc_revision}
-gcc_version=gcc.git@${gcc_revision}
-EOF
-    fi
+	# Drop any local build paths and replaced with variables to be more portable.
+	if test x"${component}" = x"gcc"; then
+	    echo "${component}_configure=" >> ${outfile}
+	else
+	    local configure="`get_component_configure ${component} | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    if test x"${configure}" != x; then
+		echo "${component}_configure=\"${configure}\"" >> ${outfile}
+	    fi
+	fi
 
-    cat >> ${outfile} <<EOF
+	local static="`get_component_staticlink ${component}`"
+	if test "`echo ${component} | grep -c glibc`" -eq 0; then
+	    echo "${component}_staticlink=\"${static}\"" >> ${outfile}
+	fi
 
-# C Library
-clibrary=${clibrary}
-libc_version=${libc_version}
+	if test x"${component}" = x"gcc"; then
+	    local stage1="`get_component_configure gcc stage1 | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "gcc_stage1_flags=\"${stage1}\"" >> ${outfile}
+	    local stage2="`get_component_configure gcc stage2 | sed -e "s:${local_builds}:\$\{local_builds\}:g" -e "s:${sysroots}:\$\{sysroots\}:g"`"
+	    echo "gcc_stage2_flags=\"${stage2}\"" >> ${outfile}
+	fi
 
-# Kernel
-linux_version=${linux_version}
-
-# Abe revision used
-abe_revision=${abe_revision}
-abe_version="abe.git@${abe_revision}"
-
-EOF
+	echo "" >> ${outfile}
+    done
 
     # Gerrit info, if triggered
     if test x"${gerrit_trigger}" = xyes; then
 	cat >> ${outfile} <<EOF
 gerrit_branch=${gerrit_branch}
 gerrit_revision=${gerrit_revision}
-
 EOF
     fi
 
-    case ${clibrary} in
-	glibc)
-	    local srcdir="`get_srcdir ${glibc_version}`"
-	    if test x"${glibc_version}" = x; then
-	        glibc_version="`grep ^latest= ${topdir}/config/glibc.conf | cut -d '\"' -f 2`"
-	    fi
-	    local glibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+    cat >> ${outfile} <<EOF
 
-	    echo "glibc_version=${glibc_version}" >> ${outfile}
-	    echo "glibc_revision=${glibc_revision}" >> ${outfile}
-	    ;;
-	newlib)
-	    local srcdir="`get_srcdir ${newlib_version}`"
-	    if test x"${newlib_version}" = x; then
-	        newlib_version="`grep ^latest= ${topdir}/config/newlib.conf | cut -d '\"' -f 2`"
-	    fi
-	    local newlib_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+clibrary=${clibrary}
+target=${target}
 
-	    echo "newlib_version=${newlib_version}" >> ${outfile}
-	    echo "newlib_revision=${newlib_revision}" >> ${outfile}
-	    ;;
-	eglibc|*)
-	    local srcdir="`get_srcdir ${eglibc_version}`"
-	    if test x"${eglibc_version}" = x; then
-	        eglibc_version="`grep ^latest= ${topdir}/config/eglibc.conf | cut -d '\"' -f 2`"
-	    fi
-	    local eglibc_revision="`cd ${srcdir} && git log | head -1 | cut -d ' ' -f 2`"
+ ##############################################################################
+ # Everything below this line is only for informational purposes for developers
+ ##############################################################################
 
-	    echo "eglibc_version=${eglibc_version}" >> ${outfile}
-	    echo "eglibc_revision=${eglibc_revision}" >> ${outfile}
-	    ;;
-    esac
+# Build machine data
+build: ${build}
+host: ${host}
+kernel: ${kernel}
+hostname: ${hostname}
+distribution: ${distribution}
+host_gcc: ${host_gcc_version}
 
-    echo "---------------------------------------------" >> ${outfile}
-    if test "`echo ${gcc_branch} | grep -c \.tar\.`" -eq 0; then
-	local srcdir="`get_srcdir ${gcc_version}`"
-	# Invoke in a subshell in order to prevent state-change of the current
-	# working directory after manifest is called.
-	$(cd ${srcdir} && git log -n 1 >> ${outfile})
+# These aren't used in the repeat build. just a sanity check for developers
+build directory: ${local_builds}
+sysroot directory: ${sysroots}
+snapshots directory: ${local_snapshots}
+git reference directory: ${git_reference_dir}
+
+EOF
+
+    # Add the section for ABE.
+    if test -e ${tmpfile}; then
+	cat "${tmpfile}" >> ${outfile}
+	rm "${tmpfile}"
+    fi
+
+    for i in gcc binutils ${clibrary} abe; do
+	if test "`component_is_tar ${i}`" = no; then
+	    echo "--------------------- $i ----------------------" >> ${outfile}
+	    local srcdir="`get_component_srcdir $i`"
+	    # Invoke in a subshell in order to prevent state-change of the current
+	    # working directory after manifest is called.
+	    $(cd ${srcdir} && git log -n 1 >> ${outfile})
+	    echo "" >> ${outfile}
+	fi
+    done
+ 
+    if test x"${manifest}" != x; then
+	if ! diff --brief ${manifest} ${outfile} > /dev/null; then
+	    warning "Manifest files are different!"
+	else
+	    notice "Manifest files match"
+	fi
     fi
 
     echo ${outfile}
+
     return 0
 }
 
@@ -552,9 +402,8 @@ binutils_src_tarball()
 	local binutils_version="binutils-`grep ^latest= ${topdir}/config/binutils.conf | cut -d '\"' -f 2`"
     fi
 
-    local dir="`normalize_path ${binutils_version}`"
-    local srcdir="`get_srcdir ${binutils_version}`"
-    local builddir="`get_builddir ${binutils_version} binutils`"
+    local srcdir="`get_component_srcdir ${binutils_version}`"
+    local builddir="`get_component_builddir ${binutils_version} binutils`"
     local branch="`echo ${binutils_version} | cut -d '/' -f 2`"
 
     # clean up files that don't go into a release, often left over from development

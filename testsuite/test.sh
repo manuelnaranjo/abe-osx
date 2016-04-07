@@ -133,7 +133,6 @@ totals()
 . "${topdir}/testsuite/git-parser-tests.sh"
 . "${topdir}/testsuite/stamp-tests.sh"
 . "${topdir}/testsuite/normalize-tests.sh"
-. "${topdir}/testsuite/builddir-tests.sh"
 . "${topdir}/testsuite/dryrun-tests.sh"
 #. "${topdir}/testsuite/gerrit-tests.sh"
 #. "${topdir}/testsuite/report-tests.sh"
@@ -221,300 +220,32 @@ else
     fixme "is_package_in_runtests ${in_runtests} ${in_package} resulted in '${ret}'"
 fi
 
-
-
-echo "============= get_toolname() tests ================"
-
-testing="get_toolname: uncompressed tarball"
-in="http://abe.validation.linaro.org/snapshots/gdb-7.6~20121001+git3e2e76a.tar"
-out="`get_toolname ${in}`"
-if test ${out} = "gdb"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-testing="get_toolname: compressed tarball"
-in="http://abe.validation.linaro.org/snapshots/gcc-linaro-4.8-2013.06-1.tar.xz"
-out="`get_toolname ${in}`"
-if test ${out} = "gcc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-testing="get_toolname: git://<repo>[no .git suffix]"
-in="git://git.linaro.org/toolchain/binutils"
-out="`get_toolname ${in}`"
-if test ${out} = "binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>[no .git suffix]/<branch> isn't supported."
-in="git://git.linaro.org/toolchain/binutils/branch"
-out="`get_toolname ${in}`"
-if test ${out} != "binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>[no .git suffix]/<branch>@<revision> isn't supported."
-in="git://git.linaro.org/toolchain/binutils/branch@12345"
-out="`get_toolname ${in}`"
-if test ${out} != "binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>[no .git suffix]@<revision>."
-# This works, but please don't do this.
-in="git://git.linaro.org/toolchain/binutils@12345"
-out="`get_toolname ${in}`"
-match="binutils"
-if test x"${out}" = x"${match}"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out} but expected ${match}"
-fi
-
-# ----------------------------------------------------------------------------------
-# Test git:// git combinations
-testing="get_toolname: git://<repo>.git"
-in="git://git.linaro.org/toolchain/binutils.git"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>.git/<branch>"
-in="git://git.linaro.org/toolchain/binutils.git/2.4-branch"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>.git/<branch>@<revision>"
-in="git://git.linaro.org/toolchain/binutils.git/2.4-branch@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: git://<repo>.git@<revision>"
-in="git://git.linaro.org/toolchain/binutils.git@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-# ----------------------------------------------------------------------------------
-# Test http:// git combinations
-testing="get_toolname: http://<repo>.git"
-in="http://git.linaro.org/git/toolchain/binutils.git"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<repo>.git/<branch>"
-in="http://git.linaro.org/git/toolchain/binutils.git/2.4-branch"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<repo>.git/<branch>@<revision>"
-in="http://git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<repo>.git@<revision>"
-in="http://git.linaro.org/git/toolchain/binutils.git@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-# Test http://<user>@ git combinations
-testing="get_toolname: http://<user>@<repo>.git"
-in="http://git@git.linaro.org/git/toolchain/binutils.git"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<user>@<repo>.git/<branch>"
-in="http://git@git.linaro.org/git/toolchain/binutils.git/2.4-branch"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<user>@<repo>.git/<branch>@<revision>"
-in="http://git@git.linaro.org/git/toolchain/binutils.git/2.4-branch@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: http://<user>@<repo>.git@<revision>"
-in="http://git@git.linaro.org/git/toolchain/binutils.git@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"binutils"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-testing="get_toolname: sources.conf identifier <repo>.git"
-in="eglibc.git"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: sources.conf identifier <repo>.git/<branch>"
-in="eglibc.git/linaro_eglibc-2_18"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: sources.conf identifier <repo>.git/<branch>@<revision>"
-in="eglibc.git/linaro_eglibc-2_18@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: sources.conf identifier <repo>.git@<revision>"
-in="eglibc.git@12345"
-out="`get_toolname ${in}`"
-if test x"${out}" = x"eglibc"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out}"
-fi
-
-testing="get_toolname: combined binutils-gdb repository with gdb branch"
-in="binutils-gdb.git/gdb_7_6-branch"
-out="`get_toolname ${in}`"
-match="gdb"
-if test x"${out}" = x"${match}"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out} expected ${match}"
-fi
-
-testing="get_toolname: combined binutils-gdb repository with binutils branch"
-in="binutils-gdb.git/binutils-2_24"
-out="`get_toolname ${in}`"
-match="binutils"
-if test x"${out}" = x"${match}"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out} but expected ${match}"
-fi
-
-# The special casing for binutils-gdb.git was failing in this one.
-testing="get_toolname: combined binutils-gdb repository with linaro binutils branch"
-in="binutils-gdb.git/linaro_binutils-2_24_branch"
-out="`get_toolname ${in}`"
-match="binutils"
-if test x"${out}" = x"${match}"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "${in} returned ${out} but expected ${match}"
-fi
-
 # ----------------------------------------------------------------------------------
 echo "============= fetch_http() tests ================"
 
 # Download the first time without force.
-out="`fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz; then
-    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz"
+out="`fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz; then
+    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz"
 else
-    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz"
+    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz"
 fi
 
 # Get the timestamp of the file.
-gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+gmp_stamp1=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
 
 # Download it again
-out="`fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+out="`fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 ret=$?
 
 # Get the timestamp of the file after another fetch.
-gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+gmp_stamp2=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
 
 # They should be the same timestamp.
 if test $ret -eq 0 -a ${gmp_stamp1} -eq ${gmp_stamp2}; then
-    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz didn't update as expected (force=no)"
+    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz didn't update as expected (force=no)"
 else
-    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz updated unexpectedly (force=no)"
+    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz updated unexpectedly (force=no)"
 fi
 
 # If the two operations happen within the same second then their timestamps will
@@ -522,48 +253,41 @@ fi
 sleep 2s
 
 # Now try it with force on
-out="`force=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+out="`force=yes fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
-    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes when source exists"
+    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes when source exists"
 else
-    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes when source exists"
+    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes when source exists"
 fi
 
 # Get the timestamp of the file after another fetch.
-gmp_stamp3=`stat -c %X ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz`
+gmp_stamp3=`stat -c %X ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz`
 
 if test ${gmp_stamp1} -eq ${gmp_stamp3}; then
-    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes has unexpected matching timestamps"
+    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes has unexpected matching timestamps"
 else
-    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes has unmatching timestamps as expected."
+    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes has unmatching timestamps as expected."
 fi
 
 # Make sure force doesn't get in the way of a clean download.
-rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
 
 # force should override supdate and this should download for the first time.
-out="`force=yes fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+out="`force=yes fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
-    fail "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes and sources don't exist"
+    fail "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes and sources don't exist"
 else
-    pass "fetch_http infrastructure/gmp-5.1.3.tar.xz with \${force}=yes and sources don't exist"
-fi
-
-out="`fetch_http md5sums 2>/dev/null`"
-if test $? -eq 0; then
-    pass "fetch_http md5sums"
-else
-    fail "fetch_http md5sums"
+    pass "fetch_http infrastructure/gmp-6.0.0a.tar.xz with \${force}=yes and sources don't exist"
 fi
 
 # Test the case where wget_bin isn't set.
-rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
 
-out="`unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+out="`unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
-    pass "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz should fail."
+    pass "unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz should fail."
 else
-    fail "unset wget_bin; fetch_http infrastructure/gmp-5.1.3.tar.xz should fail."
+    fail "unset wget_bin; fetch_http infrastructure/gmp-6.0.0a.tar.xz should fail."
 fi
 
 # Verify that '1' is returned when a non-existent file is requested.
@@ -576,27 +300,6 @@ fi
 
 echo "============= fetch() tests ================"
 
-# remove md5sums so we can test that fetch() fails.
-if test -e "${local_snapshots}/md5sums"; then
-    rm ${local_snapshots}/md5sums
-fi
-
-fetch_http md5sums 2>/dev/null
-if test ! -e "${local_snapshots}/md5sums"; then
-    fail "Did not find ${local_snapshots}/md5sums"
-    echo "md5sums needed for snapshots, get_URL, and get_sources tests.  Check your network connectivity." 1>&2
-    exit 1;
-else
-    pass "Found ${local_snapshots}/md5sums"
-fi
-
-out="`fetch md5sums 2>/dev/null`"
-if test $? -gt 0; then
-    pass "fetch md5sums should fail because md5sums isn't in ${snapshots}/md5sums."
-else
-    fail "fetch md5sums should fail because md5sums isn't in ${snapshots}/md5sums."
-fi
-
 # Fetch with no file name should error.
 out="`fetch 2>/dev/null`"
 if test $? -gt 0; then
@@ -608,7 +311,7 @@ fi
 # Test fetch from server with a partial name.
 rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
 out="`fetch "infrastructure/gmp-5.1" 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
+if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
     fail "fetch infrastructure/gmp-5.1 (with partial name) from server failed unexpectedly."
 else
     pass "fetch infrastructure/gmp-5.1 (with partial name) from server passed as expected."
@@ -618,12 +321,12 @@ fi
 local_refdir="${local_snapshots}/../refdir"
 mkdir -p ${local_refdir}/infrastructure
 # We need a way to differentiate the refdir version.
-cp ${local_snapshots}/infrastructure/gmp-5.1* ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
+cp ${local_snapshots}/infrastructure/gmp-5.1* ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
 rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
 
 # Use fetch that goes to a reference dir using a shortname
 out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
+if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
     fail "fetch infrastructure/gmp-5.1 (with partial name) from reference dir failed unexpectedly."
 else
     pass "fetch infrastructure/gmp-5.1 (with partial name) from reference dir passed as expected."
@@ -631,8 +334,8 @@ fi
 
 rm ${local_snapshots}/infrastructure/gmp-5.1* &>/dev/null
 # Use fetch that goes to a reference dir using a longname
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
+out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -gt 0 -o ! -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
     fail "fetch infrastructure/gmp-5.1 (with full name) from reference dir failed unexpectedly."
 else
     pass "fetch infrastructure/gmp-5.1 (with full name) from reference dir passed as expected."
@@ -642,87 +345,87 @@ rm ${local_snapshots}/infrastructure/gmp-5.1*
 
 # Replace with a marked version so we can tell if it's copied the reference
 # versions erroneously.
-rm ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
-echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
+rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
+echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
 
 # Use fetch that finds a git reference dir but is forced to use the server.
-out="`force=yes git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+out="`force=yes git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
     fail "fetch infrastructure/gmp-5.1 (with full name) from reference dir failed unexpectedly."
-elif test x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz)" != x""; then
+elif test x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz)" != x""; then
     fail "fetch infrastructure/gmp-5.1 pulled from reference dir instead of server."
 else
     pass "fetch infrastructure/gmp-5.1 (with full name) from reference dir passed as expected."
 fi
 
 # The next test makes sure that the failure is due to a file md5sum mismatch.
-rm ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
-echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -gt 0 -a x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz)" != x""; then
+rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
+echo "DEADBEEF" > ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
+out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -gt 0 -a x"$(grep DEADBEEF ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz)" != x""; then
     pass "fetch infrastructure/gmp-5.1 --force=yes git_reference_dir=foo failed because md5sum doesn't match."
 else
     fail "fetch infrastructure/gmp-5.1 --force=yes git_reference_dir=foo unexpectedly passed."
 fi
 
 # Make sure supdate=no where source doesn't exist fails
-rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
-rm ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz
-out="`supdate=no fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
+rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
+rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz
+out="`supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
 if test $? -gt 0; then
-    pass "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no failed as expected when there's no source downloaded."
+    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no failed as expected when there's no source downloaded."
 else
-    fail "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no passed unexpectedly when there's no source downloaded."
+    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no passed unexpectedly when there's no source downloaded."
 fi
 
 # Make sure supdate=no --force=yes where source doesn't exist passes by forcing
 # a download
-rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz &>/dev/null
-rm ${local_refdir}/infrastructure/gmp-5.1.3.tar.xz &>/dev/null
-out="`force=yes supdate=no fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
-    pass "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no --force=yes passed as expected when there's no source downloaded."
+rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz &>/dev/null
+rm ${local_refdir}/infrastructure/gmp-6.0.0a.tar.xz &>/dev/null
+out="`force=yes supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
+    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes passed as expected when there's no source downloaded."
 else
-    fail "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no --force=yes failed unexpectedly when there's no source downloaded."
+    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes failed unexpectedly when there's no source downloaded."
 fi
 
 # Make sure supdate=no where source does exist passes
-out="`supdate=no fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
-    pass "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no --force=yes passed as expected because the source already exists."
+out="`supdate=no fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
+    pass "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes passed as expected because the source already exists."
 else
-    fail "fetch infrastructure/gmp-5.1.3.tar.xz --supdate=no --force=yes failed unexpectedly when the source exists."
+    fail "fetch infrastructure/gmp-6.0.0a.tar.xz --supdate=no --force=yes failed unexpectedly when the source exists."
 fi
 
-cp ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz ${local_refdir}/infrastructure/ &>/dev/null
+cp ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz ${local_refdir}/infrastructure/ &>/dev/null
 
 # Test to make sure the fetch_reference creates the infrastructure directory.
 rm -rf ${local_snapshots}/infrastructure &>/dev/null
-out="`git_reference_dir=${local_refdir} fetch_reference infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
-    pass "fetch_reference infrastructure/gmp-5.1.3.tar.xz  passed as expected because the infrastructure/ directory was created."
+out="`git_reference_dir=${local_refdir} fetch_reference infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
+    pass "fetch_reference infrastructure/gmp-6.0.0a.tar.xz  passed as expected because the infrastructure/ directory was created."
 else
-    fail "fetch_reference infrastructure/gmp-5.1.3.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+    fail "fetch_reference infrastructure/gmp-6.0.0a.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
 fi
 
 # Test the same, but through the fetch() function.
 rm -rf ${local_snapshots}/infrastructure &>/dev/null
-out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz 2>/dev/null`"
-if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz"; then
-    pass "git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz passed as expected because the infrastructure/ directory was created."
+out="`git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null`"
+if test $? -eq 0 -a -e "${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz"; then
+    pass "git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz passed as expected because the infrastructure/ directory was created."
 else
-    fail "git_reference_dir=${local_refdir} fetch infrastructure/gmp-5.1.3.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
+    fail "git_reference_dir=${local_refdir} fetch infrastructure/gmp-6.0.0a.tar.xz fail unexpectedly because the infrastructure/ directory was not created."
 fi
 
 # Download a clean/new copy for the check_md5sum tests
-rm ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz* &>/dev/null
-fetch_http infrastructure/gmp-5.1.3.tar.xz 2>/dev/null
+rm ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz* &>/dev/null
+fetch_http infrastructure/gmp-6.0.0a.tar.xz 2>/dev/null
 
-out="`check_md5sum 'infrastructure/gmp-5.1.3.tar.xz' 2>/dev/null`"
+out="`check_md5sum 'infrastructure/gmp-6.0.0a.tar.xz' 2>/dev/null`"
 if test $? -gt 0; then
-    fail "check_md5sum failed for 'infrastructure/gmp-5.1.3.tar.xz"
+    fail "check_md5sum failed for 'infrastructure/gmp-6.0.0a.tar.xz"
 else
-    pass "check_md5sum passed for 'infrastructure/gmp-5.1.3.tar.xz"
+    pass "check_md5sum passed for 'infrastructure/gmp-6.0.0a.tar.xz"
 fi
 
 # Test with a non-infrastructure file
@@ -733,335 +436,18 @@ else
     fail "check_md5sum passed as expected for 'infrastructure/foo.tar.xz"
 fi
 
-mv ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz.back
-echo "empty file" > ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
+mv ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz.back
+echo "empty file" > ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
 
 # Test an expected failure case.
-out="`check_md5sum 'infrastructure/gmp-5.1.3.tar.xz' 2>/dev/null`"
+out="`check_md5sum 'infrastructure/gmp-6.0.0a.tar.xz' 2>/dev/null`"
 if test $? -gt 0; then
-    pass "check_md5sum failed as expected for nonmatching 'infrastructure/gmp-5.1.3.tar.xz file"
+    pass "check_md5sum failed as expected for nonmatching 'infrastructure/gmp-6.0.0a.tar.xz file"
 else
-    fail "check_md5sum passed unexpectedly for nonmatching 'infrastructure/gmp-5.1.3.tar.xz file"
+    fail "check_md5sum passed unexpectedly for nonmatching 'infrastructure/gmp-6.0.0a.tar.xz file"
 fi
 
-mv ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz.back ${local_snapshots}/infrastructure/gmp-5.1.3.tar.xz
-
-cp ${local_snapshots}/md5sums ${local_refdir}/
-rm ${local_snapshots}/md5sums
-out="`git_reference_dir=${local_refdir} fetch_md5sums 2>/dev/null`"
-if test $? -gt 0 -o ! -e ${local_snapshots}/md5sums; then
-    fail "fetch_md5sum failed to copy file from git_reference_dir: ${local_refdir}"
-else
-    pass "fetch_md5sum successfully copied file from git_reference_dir: ${local_refdir}"
-fi
-
-# Empty refdir (no md5sums file) should pull a copy from the server.
-rm ${local_snapshots}/md5sums
-rm ${local_refdir}/md5sums
-out="`git_reference_dir=${local_refdir} fetch_md5sums 2>/dev/null`"
-if test $? -gt 0 -o ! -e ${local_snapshots}/md5sums; then
-    fail "fetch_md5sum failed to copy file from the server"
-else
-    pass "fetch_md5sum successfully copied file from the server"
-fi
-# ----------------------------------------------------------------------------------
-echo "============= find_snapshot() tests ================"
-
-testing="find_snapshot: not unique tarball name"
-out="`find_snapshot gcc 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "find_snapshot returned ${out}"
-fi
-
-testing="find_snapshot: unknown tarball name"
-out="`find_snapshot gcc-linaro-4.8-2013.06XXX 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "find_snapshot returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-echo "============= get_URL() tests ================"
-
-# This will dump an error to stderr, so squelch it.
-testing="get_URL: non unique identifier shouldn't match in sources.conf."
-out="`get_URL gcc 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: unmatching snapshot not found in sources.conf file"
-out="`get_URL gcc-linaro-4.8-2013.06-1 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: git URL where sources.conf has a tab"
-out="`sources_conf=${test_sources_conf} get_URL gcc_tab.git`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/gcc.git"; then
-   pass "${testing}"
-else
-   fail "${testing}"
-   fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: nomatch.git@<revision> shouldn't have a corresponding sources.conf url."
-out="`sources_conf=${test_sources_conf} get_URL nomatch.git@12345 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-echo "============= get_URL() tests with erroneous service:// inputs ================"
-
-testing="get_URL: Input contains an lp: service."
-out="`get_URL lp:cortex-strings 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: Input contains a git:// service."
-out="`get_URL git://git.linaro.org/toolchain/eglibc.git 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: Input contains an http:// service."
-out="`get_URL http://git.linaro.org/git/toolchain/eglibc.git 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-echo "============= get_URL() [git|http]:// tests ================"
-testing="get_URL: sources.conf <repo>.git identifier should match git://<url>/<repo>.git"
-out="`get_URL glibc.git`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git.linaro.org/git/toolchain/glibc.git"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
-out="`get_URL glibc.git/branch`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch"; then
-    pass "${testing} http://<url>/<repo>.git"
-else
-    fail "${testing} http://<url>/<repo>.git"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git/<multi/part/branch> identifier should match"
-out="`get_URL glibc.git/multi/part/branch`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch"; then
-    pass "${testing} http://<url>/<repo>.git/multi/part/branch"
-else
-    fail "${testing} http://<url>/<repo>.git/multi/part/branch"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git~<branch> identifier should match"
-out="`get_URL glibc.git~branch`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch"; then
-    pass "${testing} http://<url>/<repo>.git~branch"
-else
-    fail "${testing} http://<url>/<repo>.git~branch"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git~<multi/part/branch> identifier should match"
-out="`get_URL glibc.git~multi/part/branch`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch"; then
-    pass "${testing} http://<url>/<repo>.git~multi/part/branch"
-else
-    fail "${testing} http://<url>/<repo>.git~multi/part/branch"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
-out="`get_URL glibc.git/branch@12345`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch@12345"; then
-    pass "${testing} http://<url>/<repo>.git/<branch>@<revision>"
-else
-    fail "${testing} http://<url>/<repo>.git/<branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git/<mulit/part/branch>@<revision> identifier should match"
-out="`get_URL glibc.git/multi/part/branch@12345`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch@12345"; then
-    pass "${testing} http://<url>/<repo>.git/<multi/part/branch>@<revision>"
-else
-    fail "${testing} http://<url>/<repo>.git/<multi/part/branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git~<branch>@<revision> identifier should match"
-out="`get_URL glibc.git~branch@12345`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~branch@12345"; then
-    pass "${testing} http://<url>/<repo>.git~<branch>@<revision>"
-else
-    fail "${testing} http://<url>/<repo>.git~<branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git~<mulit/part/branch>@<revision> identifier should match"
-out="`get_URL glibc.git~multi/part/branch@12345`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git~multi/part/branch@12345"; then
-    pass "${testing} http://<url>/<repo>.git~<multi/part/branch>@<revision>"
-else
-    fail "${testing} http://<url>/<repo>.git~<multi/part/branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
-out="`get_URL glibc.git@12345`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/glibc.git@12345"; then
-    pass "${testing} http://<url>/<repo>.git@<revision>"
-else
-    fail "${testing} http://<url>/<repo>.git@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: sources.conf <repo>.git identifier should match http://<url>/<repo>.git"
-out="`get_URL gcc.git`"
-if test x"`echo ${out}`" = x"http://git.linaro.org/git/toolchain/gcc.git"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: Don't match partial match of <repo>[spaces] to sources.conf identifier."
-out="`get_URL "eglibc" 2>/dev/null`"
-if test x"`echo ${out}`" = x; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-testing="get_URL: Don't match partial match of <repo>[\t] to sources.conf identifier."
-out="`get_URL "gcc_tab" 2>/dev/null`"
-if test x"`echo ${out}`" = x; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-echo "============= get_URL() http://git@ tests ================"
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git identifier should match http://git@<url>/<repo>.git"
-out="`sources_conf=${test_sources_conf} get_URL git_gcc.git`"
-if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch`"
-if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git~branch"; then
-    pass "${testing} http://git@<url>/<repo>.git~<branch>"
-else
-    fail "${testing} http://git@<url>/<repo>.git~<branch>"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL git_gcc.git/branch@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://git@git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
-    pass "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
-else
-    fail "${testing} http://git@<url>/<repo>.git~<branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL git_gcc.git@12345`"
-if test x"`echo ${out}`" = x"http://git@git.linaro.org/git/toolchain/gcc.git@12345"; then
-    pass "${testing} http://git@<url>/<repo>.git@<revision>"
-else
-    fail "${testing} http://git@<url>/<repo>.git@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-# ----------------------------------------------------------------------------------
-echo "============= get_URL() http://user.name@ tests ================"
-# We do these these tests to make sure that 'http://git@'
-# isn't hardcoded in the scripts.
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git identifier should match http://user.name@<url>/<repo>.git"
-out="`sources_conf=${test_sources_conf} get_URL user_gcc.git`"
-if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git"; then
-    pass "${testing} http://<user.name>@<url>/<repo>.git"
-else
-    fail "${testing} http://<user.name>@<url>/<repo>.git"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git/<branch> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch`"
-if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git~branch"; then
-    pass "${testing} http://user.name@<url>/<repo>.git~<branch>"
-else
-    fail "${testing} http://user.name@<url>/<repo>.git~<branch>"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git/<branch>@<revision> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL user_gcc.git/branch@12345`"
-if test x"`echo ${out} | cut -d ' ' -f 1`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git~branch@12345"; then
-    pass "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
-else
-    fail "${testing} http://user.name@<url>/<repo>.git~<branch>@<revision>"
-    fixme "get_URL returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_URL: sources.conf <repo>.git@<revision> identifier should match"
-out="`sources_conf=${test_sources_conf} get_URL user_gcc.git@12345`"
-if test x"`echo ${out}`" = x"http://user.name@git.linaro.org/git/toolchain/gcc.git@12345"; then
-    pass "${testing} http://user.name@<url>/<repo>.git@<revision>"
-else
-    fail "${testing} http://user.name@<url>/<repo>.git@<revision>"
-    fixme "get_URL returned ${out}"
-fi
+mv ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz.back ${local_snapshots}/infrastructure/gmp-6.0.0a.tar.xz
 
 # ----------------------------------------------------------------------------------
 #
@@ -1073,378 +459,56 @@ fi
 
 # out="`binary_toolchain 2>&1 | tee xx |grep "DRYRUN:.*Jcvf"`"
 
-# date="`date +%Y%m%d`"
-# tarname="`echo $out | cut -d ' ' -f 9`"
-# destdir="`echo $out | cut -d ' ' -f 10`"
-# match="${local_snapshots}/gcc.git-${target}-${host}-${date}"
-
-# if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
-#     pass "binary_toolchain: git repository"
-# else
-#     fail "binary_toolchain: git repository"
-#     fixme "get_URL returned ${out}"
-# fi
-
-# #binutils_version=linaro-4.8-2013.09
-# binutils_version=git://git.linaro.org/toolchain/binutils.git
-# out="`binary_sysroot 2>&1 | tee xx |grep "DRYRUN:.*Jcvf"`"
-# tarname="`echo $out | cut -d ' ' -f 9`"
-# destdir="`echo $out | cut -d ' ' -f 10`"
-# match="${local_snapshots}/sysroot-eglibc-linaro-2.18-2013.09-${target}-${date}"
-# echo "${tarname}"
-# echo "${match}"
-# if test "`echo ${tarname} | grep -c ${match}`" -eq 1; then
-#     pass "binary_toolchain: git repository"
-# else
-#     fail "binary_toolchain: git repository"
-#     fixme "get_URL returned ${out}"
-# fi
-# dryrun=no
-
-echo "============= get_source() tests ================"
-# TODO Test ${sources_conf} for ${in} for relevant tests.
-
-# get_sources might, at times peak at latest for a hint if it can't find
-# things.  Keep it unset unless you want to test a specific code leg.
-saved_latest=${latest}
-latest=''
-
-# Test get_source with a variety of inputs
-testing="get_source: unknown repository"
-in="somethingbogus"
-out="`get_source ${in} 2>&1`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned \"${out}\""
-fi
-
-testing="get_source: empty url"
-in=''
-out="`get_source ${in} 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned \"${out}\""
-fi
-
-testing="get_source: git repository"
-in="eglibc.git"
-out="`get_source ${in}`"
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc.git"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: git repository with / branch"
-in="eglibc.git/linaro_eglibc-2_17"
-out="`get_source ${in}`"
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/eglibc.git~linaro_eglibc-2_17"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: git repository with / branch and commit"
-in="newlib.git/binutils-2_23-branch@e9a210b"
-out="`get_source ${in}`"
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: git repository with ~ branch and commit"
-in="newlib.git~binutils-2_23-branch@e9a210b"
-out="`get_source ${in}`"
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git~binutils-2_23-branch@e9a210b"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: <repo>.git@commit"
-in="newlib.git@e9a210b"
-out="`get_source ${in}`"
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/newlib.git@e9a210b"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: Too many snapshot matches."
-in="gcc-linaro"
-out="`get_source ${in} 2>/dev/null`"
-if test $? -eq 1; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-for transport in ssh git http; do
-  testing="get_source: git direct url not ending in .git (${transport})"
-  in="${transport}://git.linar9o.org/toolchain/eglibc"
-  out="`get_source ${in}`"
-  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc"; then
-      xpass "${testing}"
-  else
-      xfail "${testing}"
-      fixme "get_source returned ${out}"
-  fi
-
-  testing="get_source: git direct url not ending in .git with revision returns bogus url. (${transport})"
-  in="${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"
-  if test x"${debug}" = x"yes"; then
-      out="`get_source ${in}`"
-  else
-      out="`get_source ${in} 2>/dev/null`"
-  fi
-  if test x"${out}" = x"${transport}://git.linaro.org/git/toolchain/eglibc/branch@1234567"; then
-      xpass "${testing}"
-  else
-      xfail "${testing}"
-      fixme "get_source returned ${out}"
-  fi
-done
-
-# The regular sources.conf won't have this entry
-testing="get_source: full url with <repo>.git with matching source.conf entry should succeed."
-in="http://git.linaro.org/git/toolchain/foo.git"
-if test x"${debug}" = x"yes"; then
-    out="`sources_conf=${test_sources_conf} get_source ${in}`"
-else
-    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x"http://git.linaro.org/git/toolchain/foo.git"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-# No sources.conf should have this entry, but use the one under test control
-testing="get_source: <repo>.git identifier with no matching source.conf entry should fail."
-in="nomatch.git"
-if test x"${debug}" = x"yes"; then
-    out="`sources_conf=${test_sources_conf} get_source ${in}`"
-else
-    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x""; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-# No sources.conf should have this entry, but use the one under test control
-testing="get_source: <repo>.git@<revision> identifier with no matching source.conf entry should fail."
-in="nomatch.git@12345"
-if test x"${debug}" = x"yes"; then
-    out="`sources_conf=${test_sources_conf} get_source ${in}`"
-else
-    out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-fi
-if test x"${out}" = x""; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_source: <repo>.git matches non .git suffixed url."
-in="foo.git"
-out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_source: <repo>.git/<branch> matches non .git suffixed url."
-in="foo.git/bar"
-out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo~bar"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-# The regular sources.conf won't have this entry.
-testing="get_source: <repo>.git/<branch>@<revision> matches non .git suffixed url."
-in="foo.git/bar@12345"
-out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo~bar@12345"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-in="foo.git@12345"
-testing="get_source: ${sources_conf}:${in} matching no .git in <repo>@<revision>."
-out="`sources_conf=${test_sources_conf} get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"git://testingrepository/foo@12345"; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: partial match in snapshots, latest not set."
-latest=''
-in="gcc-linaro-4.8"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x""; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-testing="get_source: too many matches in snapshots, latest set."
-latest="gcc-linaro-4.8-2013.09.tar.xz"
-in="gcc-linaro-4.8"
-out="`get_source ${in} 2>/dev/null`"
-if test x"${out}" = x"gcc-linaro-4.8-2013.09.tar.xz"; then
-    xpass "${testing}"
-else
-    xfail "${testing}"
-    fixme "get_source returned ${out}"
-fi
-
-latest=${saved_latest}
-
-for transport in ssh git http; do
-  testing="get_source: git direct url with a ~ branch designation. (${transport})"
-  in="${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"
-  if test x"${debug}" = x"yes"; then
-      out="`get_source ${in}`"
-  else
-      out="`get_source ${in} 2>/dev/null`"
-  fi
-  if test x"${out}" = x"${transport}://git.linaro.org/toolchain/eglibc.git~branch@1234567"; then
-      pass "${testing}"
-  else
-      fail "${testing}"
-      fixme "get_source returned ${out}"
-  fi
-
-  testing="get_source: git direct url with a ~ branch designation. (${transport})"
-  in="$transport://git.savannah.gnu.org/dejagnu.git~linaro"
-  if test x"${debug}" = x"yes"; then
-      out="`get_source ${in}`"
-  else
-      out="`get_source ${in} 2>/dev/null`"
-  fi
-  if test x"${out}" = x"${transport}://git.savannah.gnu.org/dejagnu.git~linaro"; then
-      pass "${testing}"
-  else
-      fail "${testing}"
-      fixme "get_source returned ${out}"
-  fi
-done
-
-
-
-
 # ----------------------------------------------------------------------------------
 
 echo "========= create_release_tag() tests ============"
 
-testing="create_release_tag: repository with branch and revision"
+mkdir -p ${local_abe_tmp}/builds/gcc
+echo "5.1.1" > ${local_abe_tmp}/builds/gcc/BASE-VER
+component_init gcc BRANCH="aa" REVISION="a1b2c3d4e5f6" SRCDIR="${local_abe_tmp}/builds"
+
+testing="create_release_tag: GCC repository without release string set"
 date="`date +%Y%m%d`"
-in="gcc.git/gcc-4.8-branch@12345abcde"
-out="`create_release_tag ${in} | grep -v TRACE`"
-toolname="`echo ${out} | cut -d ' ' -f 1`"
-branch="`echo ${out} | cut -d ' ' -f 2`"
-revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc.git~gcc-4.8-branch@12345abcde-${date}"; then
+out="`create_release_tag gcc | grep -v TRACE`"
+toolname="`echo ${out} | cut -d '~' -f 1`"
+branch="`echo ${out} | cut -d '~' -f 2 | cut -d '@' -f 1`"
+revision="`echo ${out} | cut -d '@' -f 2`"
+if test x"${out}" = x"gcc-linaro-5.1.1~aa@a1b2c3d4-${date}"; then
     pass "${testing}"
 else
     fail "${testing}"
     fixme "create_release_tag returned ${out}"
 fi
 
-testing="create_release_tag: snapshot tarball"
-in="gcc-linaro-snapshot-5.1-2015.06-1.tar.xz"
-out="`create_release_tag ${in} | grep -v TRACE`"
-toolname="`echo ${out} | cut -d ' ' -f 1`"
-branch="`echo ${out} | cut -d ' ' -f 2`"
-revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc-linaro-snapshot-${date}"; then
+mkdir -p ${local_abe_tmp}/builds
+echo "#define RELEASE \"development\""  > ${local_abe_tmp}/builds/version.h
+echo "#define VERSION \"2.22.90\"" >> ${local_abe_tmp}/builds/version.h
+component_init glibc BRANCH="aa/bb/cc" REVISION="1a2b3c4d5e6f" SRCDIR="${local_abe_tmp}/builds"
+
+testing="create_release_tag: GLIBC repository without release string set"
+date="`date +%Y%m%d`"
+out="`create_release_tag glibc | grep -v TRACE`"
+toolname="`echo ${out} | cut -d '~' -f 1`"
+branch="`echo ${out} | cut -d '~' -f 2 | cut -d '@' -f 1`"
+revision="`echo ${out} | cut -d '@' -f 2`"
+if test x"${out}" = x"glibc-linaro-2.22.90~aa-bb-cc@1a2b3c4d-${date}"; then
     pass "${testing}"
 else
     fail "${testing}"
     fixme "create_release_tag returned ${out}"
 fi
 
-export release="2015.06-1"
-testing="create_release_tag: snapshot tarball with release"
-in="gcc-linaro-snapshot-5.1-2015.06-1.tar.xz"
-out="`create_release_tag ${in} | grep -v TRACE`"
-toolname="`echo ${out} | cut -d ' ' -f 1`"
-branch="`echo ${out} | cut -d ' ' -f 2`"
-revision="`echo ${out} | cut -d ' ' -f 3`"
-if test x"${out}" = x"gcc-linaro-snapshot-5.1-2015.06-1"; then
+release=foobar
+testing="create_release_tag: GCC repository with release string set"
+out="`create_release_tag gcc | grep -v TRACE`"
+if test x"${out}" = x"gcc-linaro-5.1.1-${release}"; then
     pass "${testing}"
 else
     fail "${testing}"
     fixme "create_release_tag returned ${out}"
 fi
 
-branch=
-revision=
-testing="create_release_tag: repository branch empty with release"
-in="gcc.git"
-out="`create_release_tag ${in} | grep -v TRACE`"
-if test "`echo ${out} | grep -c "gcc-linaro-5-2015.06-1"`" -gt 0; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "create_release_tag returned ${out}"
-fi
-
-release=
-branch=
-revision=
-testing="create_release_tag: repository branch empty"
-in="gcc.git"
-out="`create_release_tag ${in} | grep -v TRACE`"
-if test "`echo ${out} | grep -c "gcc.git-${date}"`" -gt 0; then
-    pass "${testing}"
-else
-    fail "${testing}"
-    fixme "create_release_tag returned ${out}"
-fi
-
-release=
-testing="create_release_tag: tarball"
-in="gcc-linaro-4.8-2013.09.tar.xz"
-out="`create_release_tag ${in} | grep -v TRACE`"
-if test x"${out}" = x"gcc-linaro-4.8-${date}"; then
-    xpass "${testing}"
-else
-    # This fails because the tarball name fails to extract the version. This
-    # behavious isn't used by Abe, it was an early feature to have some
-    # compatability with abev1, which used tarballs. Abe produces the
-    # tarballs, it doesn't need to import them anymore.
-    xfail "${testing}"
-    fixme "create_release_tag returned ${out}"
-fi
+# rm ${local_abe_tmp}/builds/BASE-VER
 
 export release="2015.08-rc1"
 testing="create_release_tag: release candidate tarball with release"
@@ -1512,7 +576,7 @@ for service in "foomatic://" "http:" "http:/fake.git" "http/" "http//" ""; do
   if test $? -eq 0; then
     fail "${testing}"
   else
-    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_URL\\.)$"; then
+    if echo "${out}" | tail -n1 | grep -q "^ERROR.*: checkout (Unable to parse service from '${in}'\\. You have either a bad URL, or an identifier that should be passed to get_component_url\\.)$"; then
       pass "${testing}"
     else
       fail "${testing}"
@@ -1539,33 +603,6 @@ else
   fi
 fi
 
-rm -rf "${local_snapshots}"/*
-in="`get_URL abe.git`"
-testing="checkout: abe.git should produce ${local_snapshots}/abe.git"
-if (cd "${local_snapshots}" && \
-    if test x"${debug}" = xyes; then checkout "${in}" > /dev/null; else checkout "${in}" > /dev/null 2>&1; fi && \
-    test `ls | wc -l` -eq 1 && \
-    ls abe.git > /dev/null); then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-
-rm -rf "${local_snapshots}"/*
-in="`get_URL abe.git`"
-in="`get_git_url ${in}`"
-testing="checkout: abe.git~staging should produce ${local_snapshots}/abe.git and ${local_snapshots}/abe.git~staging"
-if (cd "${local_snapshots}" && \
-    if test x"${debug}" = xyes; then checkout "${in}~staging" > /dev/null; else
-      checkout "${in}~staging" >/dev/null 2>&1; fi && \
-    test `ls | wc -l` -eq 2 && \
-    ls abe.git > /dev/null && \
-    ls abe.git~staging > /dev/null); then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-
 test_checkout ()
 {
     local should="$1"
@@ -1579,7 +616,7 @@ test_checkout ()
     in="${package}${branch:+~${branch}}${revision:+@${revision}}"
 
     local gitinfo=
-    gitinfo="`sources_conf=${test_sources_conf} get_URL ${in}`"
+    gitinfo="`sources_conf=${test_sources_conf} get_component_url ${in}`"
 
     local tag=
     tag="`sources_conf=${test_sources_conf} get_git_url ${gitinfo}`"
@@ -1605,20 +642,6 @@ test_checkout ()
         else
 	    out="`(cd ${local_snapshots} && sources_conf=${test_sources_conf} checkout ${tag} 2>&1)`"
         fi
-    fi
-
-    local srcdir=
-    srcdir="`sources_conf=${test_sources_conf} get_srcdir "${tag}"`"
-
-    local branch_test=
-    if test ! -d ${srcdir}; then
-	branch_test=0
-    elif test x"${branch}" = x -a x"${revision}" = x; then
-	branch_test=`(cd ${srcdir} && git branch | egrep -c "^\* (local_HEAD|master)$")`
-    elif test x"${revision}" = x; then
-        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* ${branch}$")`
-    else
-        branch_test=`(cd ${srcdir} && git branch | grep -c "^\* local_${revision}$")`
     fi
 
     #Make sure we leave no hanging state
@@ -1752,48 +775,6 @@ depends=
 default_configure_flags=
 static_link=
 
-testing="read_config one arg"
-if test x"`read_config isl static_link`" = xyes; then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-
-testing="read_config multiarg"
-if test x"`read_config glib default_configure_flags`" = x"--disable-modular-tests --disable-dependency-tracking --cache-file=/tmp/glib.cache"; then
-  pass "${testing}"
-else
-  fail "${testing}"
-fi
-
-testing="read_config set then unset"
-out="`default_makeflags=\`read_config binutils default_makeflags\` && default_makeflags=\`read_config newlib default_makeflags\` && echo ${default_makeflags}`"
-if test $? -gt 0; then
-  fail "${testing}"
-elif test x"${out}" != x; then
-  fail "${testing}"
-else
-  pass "${testing}"
-fi
-
-dryrun="yes"
-tool="binutils" #this is a nice tool to use as it checks the substitution in make install, too
-cmp_makeflags="`read_config ${tool} default_makeflags`"
-testing="postfix make args (make_all)"
-if test x"${cmp_makeflags}" = x; then
-  untested "${testing}" #implies that the config for this tool no longer contains default_makeflags
-else
-  out="`. ${topdir}/config/${tool}.conf && make_all ${tool}.git 2>&1`"
-  if test x"${debug}" = x"yes"; then
-    echo "${out}"
-  fi
-  echo "${out}" | grep -- "${cmp_makeflags}" > /dev/null 2>&1
-  if test $? -eq 0; then
-    pass "${testing}"
-  else
-    fail "${testing}"
-  fi
-fi
 testing="postfix make args (make_install)"
 cmp_makeflags="`echo ${cmp_makeflags} | sed -e 's:\ball-:install-:g'`"
 if test x"${cmp_makeflags}" = x; then
@@ -1811,6 +792,8 @@ else
   fi
 fi
 cmp_makeflags=
+
+set +x
 
 testing="configure"
 tool="dejagnu"
@@ -1855,8 +838,6 @@ fi
 #revision=""
 #should="pass"
 #test_checkout "${should}" "${testing}" "${package}" "${branch}" "${revision}"
-
-. "${topdir}/testsuite/srcdir-tests.sh"
 
 # ----------------------------------------------------------------------------------
 # print the total of test results

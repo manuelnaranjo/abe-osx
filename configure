@@ -606,7 +606,6 @@ LOCAL_SNAPSHOTS
 SYSROOTS
 ABE_PATH
 SOURCES_CONF
-FILESERVER
 ABE_TOP
 BUILDDATE
 ALIEN
@@ -3103,7 +3102,7 @@ DBPASSWD=${dbpasswd}
 DBHOST=${dbhost}
 
 
-CPUS="`getconf _NPROCESSORS_ONLN`"
+CPUS="`grep -c proces /proc/cpuinfo`"
 
 CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
 
@@ -3879,7 +3878,6 @@ if test "${with_fileserver+set}" = set; then :
 else
   FILESERVER='148.251.136.42/snapshots-ref'
 fi
-
 
 
 

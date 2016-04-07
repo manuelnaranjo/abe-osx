@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-#   Copyright (C) 2013, 2014 Linaro, Inc
+#   Copyright (C) 2013, 2014, 2015 Linaro, Inc
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,10 @@
 
 # Start by assuming it's a native build
 build="${build}"
-host="${build}"
+host="${host:-${build}}"
 target="${host}"
 
+date="`date "+%Y.%m.%d"`"
 gcc="`which gcc`"
 host_gcc_version="`${gcc} -v 2>&1 | tail -1`"
 binutils="default"
@@ -39,7 +40,7 @@ override_arch=
 override_cpu=
 override_tune=
 
-manifest=
+manifest_version=1.0
 
 # The prefix for installing the toolchain
 prefix=
@@ -54,6 +55,10 @@ wget_progress_style=
 
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no
+
+#
+launchpad_id=
+svn_id=
 
 # config values for the build machine
 libc_version=
@@ -121,7 +126,6 @@ gerrit_change_number=""
 gerrit_event_type=""
 jenkins_job_name=""
 jenkins_job_url=""
-fileserver="${fileserver:-148.251.136.42}"
 sources_conf="${sources_conf:-${abe_path}/config/sources.conf}"
 
 # source a user specific config file for commonly used configure options.
@@ -130,3 +134,97 @@ if test -e ~/.aberc; then
     . ~/.aberc
 fi
 
+#
+#
+#
+import_manifest()
+{
+    trace "$*"
+
+    manifest=$1
+    if test -f ${manifest} ; then
+	local components="`grep "Component data for " ${manifest} | cut -d ' ' -f 5`"
+
+	clibrary="`grep "clibrary=" ${manifest} | cut -d '=' -f 2`"
+	local ltarget="`grep target= ${manifest}  | cut -d '=' -f 2`"
+	if test x"${ltarget}" != x; then
+	    target=${ltarget}
+	fi
+	if test "`echo ${sysroots} | grep -c ${target}`" -eq 0; then
+	    sysroots=${sysroots}/${target}
+	fi
+
+	local manifest_format="`grep "manifest_format" ${manifest} | cut -d '=' -f 2`"
+	if test ${manifest_version} != ${manifest_format}; then
+	    error "Imported manifest isn't the current supported format!"
+        return 1
+	fi
+	local variables=
+	local i=0
+	for i in ${components}; do
+	    local url="`grep "${i}_url" ${manifest} | cut -d '=' -f 2`"
+	    local branch="`grep "${i}_branch" ${manifest} | cut -d '=' -f 2`"
+	    local filespec="`grep "${i}_filespec" ${manifest} | cut -d '=' -f 2`"
+	    local static="`grep "${i}_staticlink" ${manifest} | cut -d '=' -f 2`"
+	    # Any embedded spaces in the value have to be converted to a '%'
+	    # character. for component_init().
+	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    eval "makeflags=${makeflags}"
+	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"'`"
+	    eval "configure=${configure}"
+	    local revision="`grep "${i}_revision" ${manifest} | cut -d '=' -f 2`"
+	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
+		local version="`echo ${filespec} | sed -e 's:\.tar\..*$::'`"
+		local dir=${version}
+	    else
+		local fixbranch="`echo ${branch} | tr '/@' '_'`"
+		local dir=${i}.git~${fixbranch}${revision:+_rev_${revision}}
+	    fi
+	    local srcdir="${local_snapshots}/${dir}"
+	    local builddir="${local_builds}/${host}/${target}/${dir}"
+	    case "${i}" in
+		gdb|binutils)
+		    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
+		    local srcdir=${local_snapshots}/${dir}
+		    local builddir="${local_builds}/${host}/${target}/${dir}"
+		    ;;
+		gdbserver)
+		    local dir="`echo ${dir} | sed -e 's:^.*\.git:binutils-gdb.git:'`"
+		    local srcdir=${local_snapshots}/${dir}/gdb/gdbserver
+ 		    local builddir="${local_builds}/${host}/${target}/${dir}-gdbserver"
+		    ;;
+		*glibc)
+		    # Glibc builds will fail if there is an @ in the path. This is
+		    # unfortunately, as @ is used to deliminate the revision string.
+		    local srcdir="${local_snapshots}/${dir}"
+		    local builddir="`echo ${local_builds}/${host}/${target}/${dir} | tr '@' '_'`"
+		    ;;
+		gcc)
+		    local configure=
+		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    eval "stage1_flags=${stage1_flags}"
+		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    eval "stage2_flags=${stage2_flags}"
+		    ;;
+		*)
+		    ;;
+	    esac
+
+	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"} ${static:+STATICLINK=${static}}
+	    unset stage1_flags
+	    unset stage2_flags
+	    unset url
+	    unset branch
+	    unset filespec
+	    unset static
+	    unset makeflags
+	    unset configure
+	done
+    else
+	error "Manifest file '${file}' not found"
+	build_failure
+	return 1
+    fi
+
+    return 0
+}
