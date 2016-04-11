@@ -481,7 +481,7 @@ if test x"${logserver}" != x"" && test x"${sums}" != x -o x"${runtests}" != x"tr
     # Copy over the runtest debug logs
     dbglogs="`find ${user_workspace}  -name dbg.log`"
 
-    cat ${dbglogs} ${logs_dir}/ || status=1
+    cat ${dbglogs} > ${logs_dir}/dbg.log || status=1
 
     # Copy stdout and stderr output from abe.
     cp build.out build.err ${logs_dir}/ || status=1
