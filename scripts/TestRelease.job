@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# Set defaults
+if test x"${debug}" = x"true"; then
+    export CONFIG_SHELL="/bin/bash -x"
+else
+    export CONFIG_SHELL="/bin/bash"
+fi
+
+user_workspace="$PWD"
+
+OPTS="`getopt -o w:t:h -l tarball:,workspace:,help`"
+while test $# -gt 0; do
+    echo 1 = "$1"
+    case $1 in
+	-w|--workspace) user_workspace=$2 ;;
+	-t|--tarball) tarball=$2 ;;
+        -h|--help) usage ;;
+	--) break ;;
+    esac
+    shift
+done
+
+if test -e ${user_workspace}; then
+    cat << EOF > ${user_workspace}/BUILD-INFO.txt
+Format-Version: 0.5
+
+Files-Pattern: *
+License-Type: open
+EOF
+fi
+
+testdir=${user_workspace}/_test
+
+# Create a test directory
+if test ! -d ${testdir}; then
+    mkdir -p ${testdir}
+fi
+
+# Use the newly created build directory
+cd ${testdir}
+
+file=`basename ${tarball}`
+tarball_name="${testdir}/${file}"
+protocol="`echo ${tarball} | cut -d ':' -f 1`"
+if test x${protocol} = x"file"; then
+    tarball_name="`echo ${tarball} | sed -e 's:file./::'`"
+else
+    # Download the toolchain binary tarball
+    if test ! -e ${testdir}/${file}; then
+	wget ${tarball} --directory=${testdir}
+	if test $? -gt 0; then
+	    echo "ERROR: ${tarball} doesn't exist on remote machine!"
+	    exit 1
+	fi
+    fi
+fi
+
+# Extract the tarball
+dir="`echo ${file} | sed -e 's:.tar.xz::'`"
+tar Jxvf ${tarball_name} --directory=${testdir}
+if test $? -gt 0; then
+    echo "ERROR: ${tarball} is corrupted!"
+    exit 1
+fi
+
+# Create a simple test case
+if test ! -e ${testdir}/hello.cpp; then
+    # Create the usual Hello World! test case
+    cat <<EOF > ${testdir}/hello.cpp
+#include <iostream>
+int
+main(int argc, char *argv[])
+{
+    std::cout << "Hello World!" << std::endl; 
+}
+EOF
+fi
+
+target="`echo ${dir} | egrep -o '(arm|aarch64)[a-z-]*' | sed -e 's:-\$::'`"
+win32="`echo {$file} | grep -c mingw`"
+
+# Bare metal builds use a specs file
+# Do work for ARM : rdpmon.spec dimon.spec linux.specs profile-ve.spec
+#                   aprofile-validation.specs
+# Don't work for ARM : iq80310.spec nano.specs pid.specs edboot.spec
+baremetal="`echo ${target} | egrep -c "\-eabi|\-elf"`"
+if test ${baremetal} -gt 0; then
+    rdimon="`find ${testdir} -name rdimon.specs | head -1`"
+    specs="${rdimon:+--specs=${rdimon}}"
+fi
+
+# Compile the test case
+rm -f ${testdir}/hi
+params="-o ${testdir}/hi ${testdir}/hello.cpp ${specs:-} -static"
+if test ${win32} -eq 0; then
+    ${testdir}/${dir}/bin/${target}-c++ ${params}
+else
+    wine ${testdir}/${dir}/bin/${target}-c++ ${params}
+fi
+
+# See if the compilation worked
+if test -e ${testdir}/hi; then
+    exit 0
+else
+    exit 1
+fi
+
