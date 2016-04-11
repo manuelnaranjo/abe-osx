@@ -479,9 +479,9 @@ if test x"${logserver}" != x"" && test x"${sums}" != x -o x"${runtests}" != x"tr
     cp ${logs} ${logs_dir}/ || status=1
 
     # Copy over the runtest debug logs
-    logs="`find ${user_workspace}/_build/builds/*/*/gcc.git*-stage2  -name dbg.log`"
+    dbglogs="`find ${user_workspace}  -name dbg.log`"
 
-    cp ${logs} ${logs_dir}/ || status=1
+    cat ${dbglogs} ${logs_dir}/ || status=1
 
     # Copy stdout and stderr output from abe.
     cp build.out build.err ${logs_dir}/ || status=1
