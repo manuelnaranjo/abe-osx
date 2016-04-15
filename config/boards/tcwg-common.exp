@@ -5,7 +5,7 @@ set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
 
 # force pseudo-tty allocation
-set_board_info rsh_opts "-tt"
+set_board_info rsh_opts "-tt -e none"
 
 # Compilation timeout 10min
 set_board_info gcc,timeout 600
