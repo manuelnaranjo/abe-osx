@@ -506,7 +506,7 @@ match=''
 test_pass "${cb_commands}" "${match}"
 
 cb_commands="--dryrun --build asdflkajsdflkajsfdlasfdlaksfdlkaj.git"
-match="Couldn't find the source for"
+match="Malformed input. No url found"
 test_failure "${cb_commands}" "${match}"
 
 # This tests that --build can go before --target and --target is still processed correctly.

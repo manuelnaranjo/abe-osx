@@ -49,7 +49,7 @@ AC_SUBST(DBPASSWD)
 DBHOST=${dbhost}
 AC_SUBST(DBHOST)
 
-CPUS="`getconf _NPROCESSORS_ONLN`"
+CPUS="`grep -c proces /proc/cpuinfo`"
 AC_SUBST(CPUS)
 CORES="`grep cores /proc/cpuinfo | tail -1 | cut -d ' ' -f 3`"
 AC_SUBST(CORES)
@@ -277,7 +277,7 @@ AC_ARG_WITH(fileserver,
   AC_HELP_STRING([--with-fileserver], [the remote file server hostname]),
     FILESERVER=${withval},
     FILESERVER='148.251.136.42/snapshots-ref')
-AC_SUBST(FILESERVER)
+dnl AC_SUBST(FILESERVER)
 
 AC_ARG_WITH(sources-conf,
   AC_HELP_STRING([--with-sources-conf], []),
