@@ -5544,6 +5544,22 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
+# Print some information about the build machine
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Running on: $HOSTNAME" >&5
+$as_echo "$as_me: Running on: $HOSTNAME" >&6;}
+UNAME="`uname -a`"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: $UNAME" >&5
+$as_echo "$as_me: $UNAME" >&6;}
+LSBINFO="`lsb_release -a`"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: $LSBINFO" >&5
+$as_echo "$as_me: $LSBINFO" >&6;}
+CPUINFO="`cat /proc/cpuinfo`"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: $CPUINFO" >&5
+$as_echo "$as_me: $CPUINFO" >&6;}
+MEMINFO="`cat /proc/meminfo`"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: $MEMINFO" >&5
+$as_echo "$as_me: $MEMINFO" >&6;}
+
 if test x"${missing}" != x; then
     as_fn_error $? "You need to install these packages: ${missing}" "$LINENO" 5
 fi
