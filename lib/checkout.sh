@@ -149,16 +149,17 @@ checkout()
     local repo=
     repo="`get_component_filespec ${component}`" || return 1
     local protocol="`echo ${url} | cut -d ':' -f 1`"    
+    local repodir="${url}/${repo}"
+
+    git ls-remote ${repodir} > /dev/null 2>&1
+    if test $? -ne 0; then
+	error "proper URL required"
+	return 1
+    fi
 
     case ${protocol} in
 	git*|http*|ssh*)
-            local repodir="${url}/${repo}"
 #	    local revision= `echo ${gcc_version} | grep -o "[~@][0-9a-z]*\$" | tr -d '~@'`"
-	    if test x"${revision}" != x"" -a x"${branch}" != x""; then
-		warning "You've specified both a branch \"${branch}\" and a commit \"${revision}\"."
-		warning "Git considers a commit as implicitly on a branch.\nOnly the commit will be used."
-	    fi
-
 	    # If the master branch doesn't exist, clone it. If it exists,
 	    # update the sources.
 	    if test ! -d ${local_snapshots}/${repo}; then
@@ -194,6 +195,10 @@ checkout()
 		    # give the current checkout a name.  Use -B so that it's only created if
 		    # it doesn't exist already.
 		    dryrun "(cd ${srcdir} && git checkout -B local_${revision})"
+		    if test $? -gt 0; then
+			error "Can't checkout ${revision}"
+			return 1
+		    fi
 	        else
 		    notice "Checking out branch ${branch} for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
@@ -237,23 +242,29 @@ checkout()
 		    # No need to pull.  A commit is a single moment in time
 		    # and doesn't change.
 		    dryrun "(cd ${srcdir} && git_robust checkout -B local_${revision})"
+		    if test $? -gt 0; then
+			error "Can't checkout ${revision}"
+			return 1
+		    fi
 		else
 		    # Make sure we are on the correct branch.
 		    # This is a no-op if $branch is empty and it
 		    # just gets master.
 		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
+		    if test $? -gt 0; then
+			error "Can't checkout ${revision}"
+			return 1
+		    fi
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
 	    fi
 
-	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
-	    if test x"${revision}" != x"${newrev}" -a x"${revision}" != x; then
-		error "SHA1s don't match for ${component}!, now is ${newrev}, was ${revision}"
-		return 1
-	    fi
-	    set_component_revision ${component} ${newrev}
+#	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
+#	    set_component_revision ${component} ${newrev}
 	    ;;
 	*)
+	    error "proper URL required"
+	    return 1
 	    ;;
     esac
 

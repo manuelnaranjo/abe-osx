@@ -266,7 +266,7 @@ create_release_tag()
     if test x"${release}" = x; then
 	local date="`date +%Y%m%d`"
 	if test x"${component}" = x"glibc"; then
-	    local branch="~`basename ${branch}`"
+        local branch="`echo ${branch} | tr '/' '-'`"
 	fi
 	local rtag="${rtag}${branch}${revision}-${date}"
     else
