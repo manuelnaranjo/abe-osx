@@ -143,10 +143,10 @@ import_manifest()
 
     manifest=$1
     if test -f ${manifest} ; then
-	local components="`grep "Component data for " ${manifest} | cut -d ' ' -f 5`"
+	local components="`grep "^# Component data for " ${manifest} | cut -d ' ' -f 5`"
 
-	clibrary="`grep "clibrary=" ${manifest} | cut -d '=' -f 2`"
-	local ltarget="`grep target= ${manifest}  | cut -d '=' -f 2`"
+	clibrary="`grep "^clibrary=" ${manifest} | cut -d '=' -f 2`"
+	local ltarget="`grep ^target= ${manifest}  | cut -d '=' -f 2`"
 	if test x"${ltarget}" != x; then
 	    target=${ltarget}
 	fi
@@ -154,25 +154,25 @@ import_manifest()
 	    sysroots=${sysroots}/${target}
 	fi
 
-	local manifest_format="`grep "manifest_format" ${manifest} | cut -d '=' -f 2`"
+	local manifest_format="`grep "^manifest_format" ${manifest} | cut -d '=' -f 2`"
 	if test ${manifest_version} != ${manifest_format}; then
 	    error "Imported manifest isn't the current supported format!"
-        return 1
+            return 1
 	fi
 	local variables=
 	local i=0
 	for i in ${components}; do
-	    local url="`grep "${i}_url" ${manifest} | cut -d '=' -f 2`"
-	    local branch="`grep "${i}_branch" ${manifest} | cut -d '=' -f 2`"
-	    local filespec="`grep "${i}_filespec" ${manifest} | cut -d '=' -f 2`"
-	    local static="`grep "${i}_staticlink" ${manifest} | cut -d '=' -f 2`"
+	    local url="`grep "^${i}_url" ${manifest} | cut -d '=' -f 2`"
+	    local branch="`grep "^${i}_branch" ${manifest} | cut -d '=' -f 2`"
+	    local filespec="`grep "^${i}_filespec" ${manifest} | cut -d '=' -f 2`"
+	    local static="`grep "^${i}_staticlink" ${manifest} | cut -d '=' -f 2`"
 	    # Any embedded spaces in the value have to be converted to a '%'
 	    # character. for component_init().
-	    local makeflags="`grep "${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    local makeflags="`grep "^${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
 	    eval "makeflags=${makeflags}"
-	    local configure="`grep "${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"'`"
+	    local configure="`grep "^${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"'`"
 	    eval "configure=${configure}"
-	    local revision="`grep "${i}_revision" ${manifest} | cut -d '=' -f 2`"
+	    local revision="`grep "^${i}_revision" ${manifest} | cut -d '=' -f 2`"
 	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
 		local version="`echo ${filespec} | sed -e 's:\.tar\..*$::'`"
 		local dir=${version}
@@ -201,9 +201,9 @@ import_manifest()
 		    ;;
 		gcc)
 		    local configure=
-		    local stage1_flags="`grep gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    local stage1_flags="`grep ^gcc_stage1_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
 		    eval "stage1_flags=${stage1_flags}"
-		    local stage2_flags="`grep gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
+		    local stage2_flags="`grep ^gcc_stage2_flags= ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%' | tr -d '\"'`"
 		    eval "stage2_flags=${stage2_flags}"
 		    ;;
 		*)
@@ -221,7 +221,7 @@ import_manifest()
 	    unset configure
 	done
     else
-	error "Manifest file '${file}' not found"
+	error "Manifest file '${manifest}' not found"
 	build_failure
 	return 1
     fi
