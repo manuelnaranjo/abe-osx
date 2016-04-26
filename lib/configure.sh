@@ -25,12 +25,6 @@ configure_build()
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
-    flock --wait 100 ${local_builds}/git$$.lock --command echo
-    if test $? -gt 0; then
-	error "Timed out waiting for a git checkout to complete."
-	return 1
-    fi
-
     # Linux isn't a build project, we only need the headers via the existing
     # Makefile, so there is nothing to configure.
     if test x"${component}" = x"linux"; then
