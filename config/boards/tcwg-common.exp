@@ -4,8 +4,10 @@ load_generic_config schroot-ssh
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
 
-# force pseudo-tty allocation
-set_board_info rsh_opts "-tt"
+# force pseudo-tty allocation.
+# See bug #2041. Note that "-tt" caused random results for some of the
+# tests.
+set_board_info rsh_opts "-t"
 
 # Compilation timeout 3min
 set_board_info gcc,timeout 180
