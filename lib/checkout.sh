@@ -260,6 +260,10 @@ checkout()
 		    # Make sure we are on the correct branch.
 		    # This is a no-op if $branch is empty and it
 		    # just gets master.
+		    if test x"${branch}" = x; then
+			error "No branch name specified!"
+			return 1
+		    fi
 		    dryrun "(cd ${srcdir} && git_robust checkout -B ${branch} origin/${branch})"
 		    if test $? -gt 0; then
 			error "Can't checkout ${revision}"
