@@ -553,6 +553,9 @@ collect_data ()
 	local filespec="`get_component_filespec ${component}`"
 	local gitinfo="${!version}"
 	local branch="`get_git_branch ${gitinfo}`"
+	if test x"${branch}" = x; then
+	    branch="master"
+	fi
 	local revision="`get_git_revision ${gitinfo}`"
 	local search=
 	case ${component} in
