@@ -24,7 +24,6 @@ set -o pipefail
 . "${topdir}/lib/configure.sh" || exit 1
 . "${topdir}/lib/release.sh" || exit 1
 . "${topdir}/lib/checkout.sh" || exit 1
-. "${topdir}/lib/depend.sh" || exit 1
 . "${topdir}/lib/make.sh" || exit 1
 . "${topdir}/lib/merge.sh" || exit 1
 . "${topdir}/lib/package.sh" || exit 1
