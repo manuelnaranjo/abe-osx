@@ -401,10 +401,6 @@ manifest="`find ${user_workspace}/_build/builds/ -name destdir -prune -o -name \
 if test x"${manifest}" != x; then
     echo "node=${node}" >> ${manifest}
     echo "requestor=${requestor}" >> ${manifest}
-    revision="`grep 'gcc_revision=' ${manifest} | cut -d '=' -f 2 | tr -s ' '`"
-    if test x"${revision}" != x; then
-	revision="-${revision}"
-    fi
     if test x"${BUILD_USER_ID}" != x; then
 	echo "email=${BUILD_USER_ID}" >> ${manifest}
     fi
