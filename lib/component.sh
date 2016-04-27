@@ -580,6 +580,9 @@ collect_data ()
 	    local srcdir=${srcdir}/gdb/gdbserver
 	    local builddir="${builddir}-gdbserver"
 	    ;;
+	eglibc)
+            local srcdir=${srcdir}/libc
+            ;;
 	*)
 	    ;;
     esac
