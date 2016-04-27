@@ -117,7 +117,7 @@ git_robust()
 
     while [ "$try" -lt "10" ]; do
 	try="$(($try+1))"
-	flock ${local_builds}/git$$.lock --command "${cmd}" && break
+	${cmd} && break
     done
 }
 
@@ -182,8 +182,7 @@ checkout()
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
-			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
-			flock ${local_builds}/git$$.lock --command "${cmd}"
+			${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}
 			if test $? -gt 0; then
 			    error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
 			     rm -f ${local_builds}/git$$.lock
@@ -197,8 +196,7 @@ checkout()
 	        else
 		    notice "Checking out branch ${branch} for ${component} in ${srcdir}"
 		    if test x${dryrun} != xyes; then
-			local cmd="${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
-			flock ${local_builds}/git$$.lock --command "${cmd}"
+			${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}
 			if test $? -gt 0; then
 			    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
 			    rm -f ${local_builds}/git$$.lock
@@ -387,7 +385,7 @@ change_branch()
 
     if test ! -d ${srcdir}/${branch}; then
 	local cmd="${NEWWORKDIR} ${local_snapshots}/${version} ${local_snapshots}/${version}-${branch} ${branch}"
-	dryrun "flock ${local_builds}/git$$.lock --command ${cmd}"
+	dryrun "${cmd}"
     else
 	if test x"${supdate}" = xyes; then
 	    if test x"${branch}" = x; then
