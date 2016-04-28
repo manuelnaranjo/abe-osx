@@ -41,6 +41,10 @@ checkout_all()
 	    package="gcc"
 	fi
 	collect_data ${package}
+	if [ $? -ne 0 ]; then
+	    error "collect_data failed"
+	    return 1
+	fi
 
 	local filespec="`get_component_filespec ${package}`"
 	if test "`component_is_tar ${package}`" = no; then
@@ -70,6 +74,10 @@ checkout_all()
 	# GDB now needs expat for XML support.
 	mkdir -p ${local_builds}/destdir/${host}/bin/
 	collect_data expat
+	if [ $? -ne 0 ]; then
+	    error "collect_data failed"
+	    return 1
+	fi
 	fetch expat
 	extract expat
 	rsync -ar ${local_snapshots}/expat-2.1.0-1/include ${local_builds}/destdir/${host}/usr/
@@ -77,6 +85,10 @@ checkout_all()
 	# GDB now has python support, for mingw we have to download a
 	# pre-built win2 binary that works with mingw32.
 	collect_data python
+	if [ $? -ne 0 ]; then
+	    error "collect_data failed"
+	    return 1
+	fi
 	fetch python
 	extract python
 	# The mingw package of python contains a script used by GDB to

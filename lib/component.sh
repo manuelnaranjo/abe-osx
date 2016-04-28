@@ -53,7 +53,9 @@ component_init ()
 	    value="`echo ${index} | cut -d '=' -f2-20 | sed -e 's:^[a-zA-Z]*=::' | tr '%' ' '`"
 	    eval "local ifset=\${${component}[${name}]:-notset}"
 	    if test x"${ifset}" = x"notset"; then
-		eval "${component}[${name}]="${value}""
+		# $value is supposed to be safe for bare shell expansion
+		# typically it is surrounded by double quotes
+		eval "${component}[${name}]="${value}
 		if test $? -gt 0; then
 		    return 1
 		fi
@@ -500,10 +502,14 @@ collect_data ()
 	local date="`git log -n 1 --format=%aD | tr ' ' '%'`"
 	local filespec="abe.git"
 	local srcdir="${abe_path}"
-	local configure="`grep ${srcdir}/configure ${abe_top}/config.log | tr -s ' ' | cut -d ' ' -f 4-10| tr ' ' '%'`"
+	local configure=\""`grep ${srcdir}/configure ${abe_top}/config.log | tr -s ' ' | cut -d ' ' -f 4-10| tr ' ' '%'`"\"
 	popd
 	component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${data:+DATE=${date}} ${srcdir:+SRCDIR=${srcdir}} ${configure:+CONFIGURE=${configure}}
- 	return 0
+	if [ $? -ne 0 ]; then
+            error "component_init failed"
+	    return 1
+	fi
+	return 0
     fi
 
     if test -d ${local_builds}/${host}/${target}; then
@@ -598,6 +604,10 @@ collect_data ()
     fi
     confvars="${confvars} ${runtest_flags:+RUNTESTFLAGS=\"`echo ${runtest_flags} | tr ' ' '%'`\"}"
     component_init ${component} TOOL=${component} ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${filespec:+FILESPEC=${filespec}} ${url:+URL=${url}} ${confvars}
+    if [ $? -ne 0 ]; then
+        error "component_init failed"
+        return 1
+    fi
 
     default_makeflags=
     default_configure_flags=
