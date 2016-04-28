@@ -50,8 +50,13 @@ prefix=
 # line.
 wget_timeout=10
 wget_quiet=
-# Try something like "dot:mega"
-wget_progress_style=
+# if output is on a terminal we use the default style (bar), otherwise
+# we use the briefest available dot style to reduce the size of the logs
+if [ -t 1 ]; then
+    wget_progress_style=
+else
+    wget_progress_style=dot:giga
+fi
 
 # This doesn't do any real work, just prints the configure options and make commands
 dryrun=no
