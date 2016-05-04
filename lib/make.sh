@@ -254,16 +254,6 @@ build_all()
 #            binary_gdb
 #        fi
         notice "Packaging took ${SECONDS} seconds"
-	# If there aren't any tests specified to run then don't bother calling
-	# test_binary_toolchain.
-        if test x"${runtests}" != x; then
-	    test_binary_toolchain
-	    if test $? -gt 0; then
-		error "test_binary_toolchain failed with return code $?"
-		return 1
-            fi
-            notice "Testing packaging took ${SECONDS} seconds"
-	fi
     fi
     
     return 0
