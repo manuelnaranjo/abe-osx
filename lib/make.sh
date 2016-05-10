@@ -553,6 +553,8 @@ make_install()
             dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=x86_64 INSTALL_HDR_PATH=${sysroots}/usr"
         elif test `echo ${target} | grep -c arm` -gt 0; then
             dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=arm INSTALL_HDR_PATH=${sysroots}/usr"
+        elif test `echo ${target} | egrep -c 'powerpc|ppc'` -gt 0; then
+            dryrun "make ${make_opts} -C ${srcdir} headers_install ARCH=powerpc INSTALL_HDR_PATH=${sysroots}/usr"
         else
             warning "Unknown arch for make headers_install!"
             return 1
