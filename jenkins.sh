@@ -439,7 +439,7 @@ if test x"${logserver}" != x""; then
 fi
 
 # Find all the test result files.
-sums="`find ${user_workspace} -name \*.sum`"
+sums="`find ${user_workspace} -name \*.sum -not -path "*/gdb/testsuite/outputs/*"`"
 
 # Canadian Crosses are a win32 hosted cross toolchain built on a Linux
 # machine.
