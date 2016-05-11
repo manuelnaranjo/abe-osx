@@ -797,6 +797,7 @@ while test $# -gt 0; do
 	    shift
 	    ;;
 	--manifest*|-m*)
+            manifest_set=1
 	    check_directive $1 manifest "m" $2
 	    import_manifest $2
 	    if test $? -gt 0; then
@@ -920,6 +921,7 @@ while test $# -gt 0; do
 	    rpmbin=yes
 	    ;;
 	--targ*|-targ*)			# target
+            target_set=1
 	    check_directive $1 target targ $2
 
 	    target=$2
@@ -1119,6 +1121,13 @@ while test $# -gt 0; do
 	shift
     fi
 done
+
+if [ "x${target_set}${manifest_set}" = x11 ]; then
+  # see https://bugs.linaro.org/show_bug.cgi?id=2059
+  error "setting --target with --manifest is not supported"
+  build_failure
+fi
+
 
 # Check disk space. Each builds needs about 3.8G free
 if test x"${space_needed}" = x; then
