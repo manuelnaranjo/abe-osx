@@ -254,16 +254,6 @@ build_all()
 #            binary_gdb
 #        fi
         notice "Packaging took ${SECONDS} seconds"
-	# If there aren't any tests specified to run then don't bother calling
-	# test_binary_toolchain.
-        if test x"${runtests}" != x; then
-	    test_binary_toolchain
-	    if test $? -gt 0; then
-		error "test_binary_toolchain failed with return code $?"
-		return 1
-            fi
-            notice "Testing packaging took ${SECONDS} seconds"
-	fi
     fi
     
     return 0
@@ -403,12 +393,10 @@ build()
     # Only execute make_check in build() if build_all() isn't being invoked for
     # this run of abe.sh.  This is because build_all() will invoke make_check()
     # in sequence after all builds are executed if it's been directed to run
-    # unit-tests. If --tarbin was specified we're never going to run make check
-    # because it takes too long and testing should have been run with an
-    # earlier invocation of abe.
+    # unit-tests.
     # TODO: eliminate buildingall as a global and make it a local check passed
     # via a parameter to build().
-    if test x"${buildingall}" = xno -a x"${tarbin}" != xyes; then
+    if test x"${buildingall}" = xno; then
 
 	# Skip make_check if it isn't designated to be executed in ${runtests}
 	is_package_in_runtests "${runtests}" ${component}
@@ -701,7 +689,7 @@ make_check()
 
     # Run tests
     local checklog="${builddir}/check-${component}.log"
-    if test x"${build}" = x"${target}" -a x"${tarbin}" != x"yes"; then
+    if test x"${build}" = x"${target}"; then
 	# Overwrite ${checklog} in order to provide a clean log file
 	# if make check has been run more than once on a build tree.
 	dryrun "make check RUNTESTFLAGS=\"${runtest_flags} --xml=${component}.xml \" ${make_flags} -w -i -k -C ${builddir} 2>&1 | tee ${checklog}"
