@@ -341,7 +341,9 @@ OPTIONS
 
 		This option specifies a particular version of a package
 		that might differ from the default version in the
-		package config files.
+		package config files. This is taken into account if the
+		package is required during the build, otherwise this
+		option has not effect.
 
 		For a specific package use a version tag that matches a
 		setting in a sources.conf file, a snapshots identifier,
@@ -445,6 +447,7 @@ crosscheck_clibrary_target()
 {
     local test_clibrary="$1"
     local test_target="$2"
+
     case ${test_target} in
 	arm*-eabi|aarch64*-*elf|*-mingw32)
 	    # Bare metal targets only support newlib.
@@ -1079,22 +1082,16 @@ while test $# -gt 0; do
 			fi
 
 			# Only allow valid combinations of target and clibrary.
-			crosscheck_clibrary_target ${name} ${target}
-			if test $? -gt 0; then
-			    build_failure
-			fi
+
 			# Continue to process individually.
 			case ${name} in
 			    eglibc)
-				clibrary="eglibc"
 				eglibc_version="${value}"
 				;;
 			    glibc)
-				clibrary="glibc"
 				glibc_version="${value}"
 				;;
 			    n*|newlib)
-				clibrary="newlib"
 				newlib_version="${value}"
 				;;
 			    *)
