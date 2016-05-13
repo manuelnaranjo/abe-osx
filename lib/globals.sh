@@ -174,17 +174,21 @@ import_manifest()
 	    local static="`grep "^${i}_staticlink" ${manifest} | cut -d '=' -f 2`"
 	    # Any embedded spaces in the value have to be converted to a '%'
 	    # character. for component_init().
-	    local makeflags="`grep "^${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'`"
+	    local makeflags="`grep "^${i}_makeflags" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '^'`"
 	    eval "makeflags=${makeflags}"
-	    local configure="`grep "^${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '%'| tr -d '\"'`"
+	    local configure="`grep "^${i}_configure" ${manifest} | cut -d '=' -f 2-20 | tr ' ' '^'| tr -d '\"'`"
 	    eval "configure=${configure}"
 	    local revision="`grep "^${i}_revision" ${manifest} | cut -d '=' -f 2`"
 	    if test "`echo ${filespec} | grep -c \.tar\.`" -gt 0; then
 		local version="`echo ${filespec} | sed -e 's:\.tar\..*$::'`"
 		local dir=${version}
 	    else
-		local fixbranch="`echo ${branch} | tr '/@' '_'`"
-		local dir=${i}.git~${fixbranch}${revision:+_rev_${revision}}
+		if test x"${gittag}" != x; then
+		    local dir=${i}.git%${gittag}${revision:+_rev_${revision}}
+		else
+		    local fixbranch="`echo ${branch} | tr '/@' '_'`"
+		    local dir=${i}.git~${fixbranch}${revision:+_rev_${revision}}
+		fi
 	    fi
 	    local srcdir="${local_snapshots}/${dir}"
 	    local builddir="${local_builds}/${host}/${target}/${dir}"
