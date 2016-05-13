@@ -40,7 +40,7 @@ override_arch=
 override_cpu=
 override_tune=
 
-manifest_version=1.0
+manifest_version=1.1
 
 # The prefix for installing the toolchain
 prefix=
@@ -167,6 +167,7 @@ import_manifest()
 	local variables=
 	local i=0
 	for i in ${components}; do
+	    local gittag="`grep "^${i}_gittag" ${manifest} | cut -d '=' -f 2`"
 	    local url="`grep "^${i}_url" ${manifest} | cut -d '=' -f 2`"
 	    local branch="`grep "^${i}_branch" ${manifest} | cut -d '=' -f 2`"
 	    local filespec="`grep "^${i}_filespec" ${manifest} | cut -d '=' -f 2`"
@@ -215,7 +216,7 @@ import_manifest()
 		    ;;
 	    esac
 
-	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"} ${static:+STATICLINK=${static}}
+	    component_init $i ${branch:+BRANCH=${branch}} ${revision:+REVISION=${revision}} ${url:+URL=${url}} ${filespec:+FILESPEC=${filespec}} ${srcdir:+SRCDIR=${srcdir}} ${builddir:+BUILDDIR=${builddir}} ${stage1_flags:+STAGE1=\"${stage1_flags}\"} ${stage2_flags:+STAGE2=\"${stage2_flags}\"} ${configure:+CONFIGURE=\"${configure}\"} ${makeflags:+MAKEFLAGS=\"${makeflags}\"} ${static:+STATICLINK=${static}} ${gittag:+GITTAG=${gittag}}
 	    unset stage1_flags
 	    unset stage2_flags
 	    unset url

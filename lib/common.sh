@@ -29,7 +29,6 @@ set -o pipefail
 . "${topdir}/lib/merge.sh" || exit 1
 . "${topdir}/lib/package.sh" || exit 1
 . "${topdir}/lib/testcode.sh" || exit 1
-. "${topdir}/lib/git-parser.sh" || exit 1
 . "${topdir}/lib/stamp.sh" || exit 1
 . "${topdir}/lib/schroot.sh" || exit 1
 . "${topdir}/lib/gerrit.sh" || exit 1
@@ -164,33 +163,6 @@ source_config()
     else
         return 1
     fi
-}
-
-# Extract the name of the toolchain component being built
-# $1 - The full URL to the source tree as returned by get_URL(), or the
-#      tarball name.
-get_toolname()
-{
-#    trace "$*"
-
-    if test x"$1" = x; then
-	error "No toolchain component name argument!"
-	return 1
-    fi
-
-    local tool=
-    tool="`get_git_tool $1`" || return 1
-
-    # binutils and gdb are special.  They share a repository and the tool is
-    # designated by the branch.
-    if test x"${tool}" = x"binutils-gdb"; then
-	local branch=
-	branch="`get_git_branch $1`" || return 1
-	tool="`echo ${branch} | sed -e 's:.*binutils.*:binutils:' -e 's:.*gdb.*:gdb:'`"
-    fi
-
-    echo ${tool}
-    return 0
 }
 
 # Parse a version string and produce a release version string suitable

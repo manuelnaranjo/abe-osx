@@ -130,7 +130,6 @@ totals()
 # common.sh tests
 #
 # Pretty much everything uses the git parser so test it first.
-. "${topdir}/testsuite/git-parser-tests.sh"
 . "${topdir}/testsuite/stamp-tests.sh"
 #. "${topdir}/testsuite/normalize-tests.sh"
 . "${topdir}/testsuite/dryrun-tests.sh"

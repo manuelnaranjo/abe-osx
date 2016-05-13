@@ -243,7 +243,7 @@ manifest()
     if test -e ${outfile}; then
 	mv -f ${outfile} ${outfile}.bak
     fi
-    echo "manifest_format=${manifest_version:-1.0}" > ${outfile}
+    echo "manifest_format=${manifest_version:-${manifest_version}}" > ${outfile}
     echo "" >> ${outfile}
     echo "# Note that for ABE, these parameters are not used" >> ${outfile}
 
@@ -284,6 +284,12 @@ manifest()
 	local revision="`get_component_revision ${component}`"
 	if test x"${revision}" != x; then
 	    echo "${component}_revision=${revision}" >> ${outfile}
+	fi
+
+	echo "FOO"
+	local gittag="`get_component_gittag ${component}`"
+	if test x"${gittag}" != x; then
+	    echo "${component}_gittag=${gittag}" >> ${outfile}
 	fi
 
 	local filespec="`get_component_filespec ${component}`"
