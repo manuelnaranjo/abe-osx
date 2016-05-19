@@ -634,7 +634,7 @@ make_install()
     fi
 
     local default_makeflags= #"`get_component_makeflags ${component}`"
-    local install_log="`dirname ${builddir}`/install.log"
+    local install_log="`dirname ${builddir}`/install-${component}${2:+-$2}.log"
     if test x"${component}" = x"gdb" ; then
 	if test x"$2" != x"gdbserver" ; then
             dryrun "make install-gdb ${make_flags} ${default_makeflags} -w -C ${builddir} 2>&1 | tee ${install_log}"
