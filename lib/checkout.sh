@@ -284,12 +284,6 @@ checkout()
 	return 1
     fi
 
-    if test -e ${srcdir}/contrib/gcc_update -a x"${supdate}" = xyes; then
-        # Touch GCC's auto-generated files to avoid non-deterministic
-        # build behavior.
-        dryrun "(cd ${srcdir} && ./contrib/gcc_update --touch)"
-    fi
-
     rm -f ${local_builds}/git$$.lock
     return 0
 }
