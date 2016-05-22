@@ -329,6 +329,12 @@ build()
    fi
 
     if test x"${building}" != xno; then
+	if test  x"${component}" = x"gcc" -a -e ${srcdir}/contrib/gcc_update; then
+            # Touch GCC's auto-generated files to avoid non-deterministic
+            # build behavior.
+            dryrun "(cd ${srcdir} && ./contrib/gcc_update --touch)"
+	fi
+
 	notice "Configuring ${component} ${2:+$2}"
 	configure_build ${component} ${2:+$2}
 	if test $? -gt 0; then
