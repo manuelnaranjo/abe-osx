@@ -162,6 +162,7 @@ checkout()
     repo="`get_component_filespec ${component}`" || return 1
     local protocol="`echo ${url} | cut -d ':' -f 1`"    
     local repodir="${url}/${repo}"
+    local new_srcdir=false
 
     git ls-remote ${repodir} > /dev/null 2>&1
     if test $? -ne 0; then
@@ -221,8 +222,7 @@ checkout()
 			fi
 		    fi
 		fi
-		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
-		# dryrun "(cd ${srcdir} && git checkout -B ${branch})"
+		new_srcdir=true
 	    elif test x"${supdate}" = xyes; then
 		# Some packages allow the build to modify the source directory and
 		# that might screw up abe's state so we restore a pristine branch.
@@ -271,6 +271,7 @@ checkout()
 		    fi
 		    dryrun "(cd ${srcdir} && git_robust pull)"
 		fi
+		new_srcdir=true
 	    fi
 
 #	    local newrev="`pushd ${srcdir} 2>&1 > /dev/null && git log --format=format:%H -n 1 ; popd 2>&1 > /dev/null`"
@@ -288,7 +289,7 @@ checkout()
 	return 1
     fi
 
-    if test -e ${srcdir}/contrib/gcc_update -a x"${supdate}" = xyes; then
+    if $new_srcdir && test -e ${srcdir}/contrib/gcc_update; then
         # Touch GCC's auto-generated files to avoid non-deterministic
         # build behavior.
         dryrun "(cd ${srcdir} && ./contrib/gcc_update --touch)"
