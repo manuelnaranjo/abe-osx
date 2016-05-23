@@ -539,8 +539,12 @@ make_install()
 
     local component="`echo $1 | sed -e 's:\.git.*::' -e 's:-[0-9a-z\.\-]*::'`"
 
-    if test x"${parallel}" = x"yes" -a "`echo ${component} | grep -c glibc`" -eq 0; then
-        local make_flags="${make_flags} -j $((2*${cpus}))"
+    # Do not use -j for 'make install' because several build systems
+    # suffer from race conditions. For instance in GCC, several
+    # multilibs can install header files in the same destination at
+    # the same time, leading to conflicts at file creation time.
+    if echo "$makeflags" | grep -q -e "-j"; then
+	warning "Make install flags contain -j: this may fail because of a race condition!"
     fi
 
     if test x"${component}" = x"linux"; then
@@ -583,16 +587,15 @@ make_install()
     notice "Making install in ${builddir}"
 
     if test "`echo ${component} | grep -c glibc`" -gt 0; then
-        local make_flags=" install_root=${sysroots} ${make_flags} LDFLAGS=-static-libgcc PARALLELMFLAGS=\"-j ${cpus}\""
+        local make_flags=" install_root=${sysroots} ${make_flags} LDFLAGS=-static-libgcc"
     fi
 
     if test x"${override_ldflags}" != x; then
         local make_flags="${make_flags} LDFLAGS=\"${override_ldflags}\""
     fi
 
-    # NOTE: $make_flags is dropped, as newlib's 'make install' doesn't
-    # like parallel jobs. We also change tooldir, so the headers and libraries
-    # get install in the right place in our non-multilib'd sysroot.
+    # NOTE: $make_flags is dropped, so the headers and libraries get
+    # installed in the right place in our non-multilib'd sysroot.
     if test x"${component}" = x"newlib"; then
         # as newlib supports multilibs, we force the install directory to build
         # a single sysroot for now. FIXME: we should not disable multilibs!
