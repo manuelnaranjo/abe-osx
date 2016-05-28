@@ -194,13 +194,11 @@ checkout()
 		# reason we only consider the commit if both are present.
 		if test x"${revision}" != x""; then
 		    notice "Checking out revision for ${component} in ${srcdir}"
-		    if test x${dryrun} != xyes; then
-			${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}
-			if test $? -gt 0; then
-			    error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
-			     rm -f ${local_builds}/git$$.lock
-			     return 1
-			fi
+		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${revision}"
+		    if test $? -gt 0; then
+			error "Revision ${revision} likely doesn't exist in git repo ${repo}!"
+			rm -f ${local_builds}/git$$.lock
+			return 1
 		    fi
 		    # git checkout of a commit leaves the head in detached state so we need to
 		    # give the current checkout a name.  Use -B so that it's only created if
@@ -212,13 +210,11 @@ checkout()
 		    fi
 	        else
 		    notice "Checking out branch ${branch} for ${component} in ${srcdir}"
-		    if test x${dryrun} != xyes; then
-			${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}
-			if test $? -gt 0; then
-			    error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
-			    rm -f ${local_builds}/git$$.lock
-			    return 1
-			fi
+		    dryrun "${NEWWORKDIR} ${local_snapshots}/${repo} ${srcdir} ${branch}"
+		    if test $? -gt 0; then
+			error "Branch ${branch} likely doesn't exist in git repo ${repo}!"
+			rm -f ${local_builds}/git$$.lock
+			return 1
 		    fi
 		fi
 		# dryrun "git_robust clone --local ${local_snapshots}/${repo} ${srcdir}"
