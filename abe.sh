@@ -26,7 +26,7 @@ usage()
              [--disable {install|update|make_docs|building}] [--dryrun]
              [--dump] [--enable {bootstrap|gerrit}]
              [--excludecheck {all|glibc|gcc|gdb|binutils}]
-             [--extraconfig <tool>=<path>]
+             [--extraconfig <tool>=<path>] [--extraconfigdir <dir>]
              [--fetch <url>] [--force] [--help] [--host <host_triple>]
              [--infrastructure] [--interactive]
              [--manifest <manifest_file>]
@@ -197,6 +197,9 @@ OPTIONS
 
   --extraconfig <tool>=<path>
                 Use an additional configuration file for tool.
+
+  --extraconfigdir <dir>
+                Use a directory of additional configuration files.
 
   --fetch <url>
 
@@ -795,6 +798,19 @@ while test $# -gt 0; do
 	    extraconfig[${extraconfig_tool}]="${extraconfig_val}"
 	    shift
             ;;
+	--extraconfigdir)
+	    check_directive $1 extraconfigdir extraconfigdir $2
+	    if ! [ -d $2 ]; then
+		error "Parameter for --extraconfigdir $2 is not a directory."
+		build_failure
+	    fi
+	    for i in `ls $2 | grep "\.conf\$"`; do
+		extraconfig_tool="$(basename $i .conf)"
+		extraconfig_val="$2/$i"
+		extraconfig[${extraconfig_tool}]="${extraconfig_val}"
+	    done
+	    shift
+	    ;;
 	--host|-h*)
 	    host=$2
 	    shift
