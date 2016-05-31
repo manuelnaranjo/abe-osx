@@ -205,17 +205,6 @@ configure_build()
 	    ;;
     esac
 
-    local this_extraconfig="${extraconfig[${component}]}"
-    if test -n "${this_extraconfig}"; then
-	if test -e "${this_extraconfig}"; then
-	    notice "Sourcing extra config: ${this_extraconfig}"
-	    . "${this_extraconfig}"
-	else
-	    error "Warning: extraconfig file does not exist: ${this_extraconfig}"
-	    exit 1
-	fi
-    fi
-
     if test -e ${builddir}/config.status -a x"${component}" != x"gcc" -a x"${force}" = xno; then
 	warning "${buildir} already configured!"
     else
