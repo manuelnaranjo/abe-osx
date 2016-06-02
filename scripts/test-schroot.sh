@@ -46,8 +46,8 @@ triplet_to_deb_arch()
 {
     set -e
     case "$1" in
-	aarch64-*linux-gnu) echo arm64 ;;
-	arm*-*linux-gnueabi*) echo armhf ;;
+	aarch64-*linux-gnu) echo armhf ;;
+	arm*-*linux-gnueabi*) echo arm64 ;;
 	i686-*linux-gnu) echo i386 ;;
 	x86_64-*linux-gnu) echo amd64 ;;
 	*) return 1 ;;
