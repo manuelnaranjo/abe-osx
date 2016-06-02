@@ -1,3 +1,3 @@
 load_generic_config tcwg-common
 
-set_board_info hostname armv8-unknown.tcwglab
+set_board_info hostname test-armv8-02.tcwglab

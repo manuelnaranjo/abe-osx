@@ -154,6 +154,8 @@ if $begin_session; then
     $schroot sed -i -e "\"s/^Port 22/Port $port/\"" /etc/ssh/sshd_config
     # Run as root
     $schroot sed -i -e "\"s/^UsePrivilegeSeparation yes/UsePrivilegeSeparation no/\"" /etc/ssh/sshd_config
+    # Adjust unsupported option
+    $schroot sed -i -e "\"s/PermitRootLogin prohibit-password/PermitRootLogin without-password/\"" /etc/ssh/sshd_config
     # Increase number of incoming connections from 10 to 256
     $schroot sed -i -e "\"/.*MaxStartups.*/d\"" -e "\"/.*MaxSesssions.*/d\"" /etc/ssh/sshd_config
     $schroot bash -c "\"echo \\\"MaxStartups 256\\\" >> /etc/ssh/sshd_config\""
@@ -163,8 +165,22 @@ if $begin_session; then
     $schroot iptables -I INPUT -p tcp --dport $port -j ACCEPT >/dev/null 2>&1 || true
 
     $schroot mkdir -p /root/.ssh
-    ssh $target_ssh_opts $target cat .ssh/authorized_keys | $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
+    if ssh $target_ssh_opts $target test -f .ssh/authorized_keys; then
+	ssh $target_ssh_opts $target cat .ssh/authorized_keys
+    else
+	ssh $target_ssh_opts $target sss_ssh_authorizedkeys \$USER
+    fi \
+	| $schroot bash -c "'cat > /root/.ssh/authorized_keys'"
     $schroot chmod 0600 /root/.ssh/authorized_keys
+
+    $rsh root@$target echo "Can login as root!"
+
+    $rsh root@$target getent passwd $user | true
+    if [ x"${PIPESTATUS[0]}" != x"0" ]; then
+	user_data="$(ssh $target_ssh_opts $target getent passwd $user)"
+	target_uid="$(echo "$user_data" | cut -d: -f 3)"
+	$rsh root@$target useradd -m -u $target_uid $user
+    fi
 
     $rsh root@$target rsync -a /root/ $home/
     $rsh root@$target chown -R $user $home/
@@ -219,6 +235,7 @@ fi
 
 if ! [ -z "$sysroot" ]; then
     rsync -az -e "$rsh" $sysroot/ root@$target:/sysroot/
+    $rsh root@$target chown -R root:root /sysroot/
 
     if [ -e $sysroot/lib64/ld-linux-aarch64.so.1 ]; then
 	# Our aarch64 sysroot has everything in /lib64, but executables
