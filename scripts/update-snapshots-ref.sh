@@ -83,7 +83,7 @@ if $generate; then
     rm -rf ${snapshots_dir}-new/*~*
 
     # Remove md5sums to force ABE to fetch canonical version via http://.
-    rm ${snapshots_dir}-new/md5sums
+    rm -f ${snapshots_dir}-new/md5sums
 fi
 
 update_git_repos
