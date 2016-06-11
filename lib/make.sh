@@ -36,9 +36,6 @@ build_all()
 	else
             local builds="${infrastructure} binutils stage1 libc stage2 gdb"
 	fi
-	if test "`echo ${target} | grep -c -- -linux-`" -eq 1; then
-	    local builds="${builds} gdbserver"
-	fi
         notice "Buildall: Building \"${builds}\" for cross target ${target}."
     else
         local builds="${infrastructure} binutils stage2 libc gdb" # native build
