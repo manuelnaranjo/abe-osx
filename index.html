@@ -28,7 +28,7 @@
         </ul>
       </header>
       <section>
-        <p>Based on several instructions on the web, and ABE tools from Linaro I've been able to rebuild gcc-linaro-5.2-2015.11-2 for OSX on ElCapitan. Shortly a tar.xz binary package will be available for download. </p>
+        <p>Based on several instructions on the web, and ABE tools from Linaro I've been able to rebuild gcc-linaro-5.2-2015.11-2 for OSX on ElCapitan. If you don't want to go through the pain of rebuilding a package is available <a href="https://www.dropbox.com/s/ux16fn7z6abddwz/gcc-linaro-5.2-2015.11-2-osx_arm-linux-gnueabihf.tar.xz?dl=0">here</a></p>
 
 <p>First of all in order to build you need to make sure to create a partition with enough space (I started with 20GB) that is <strong>case sensitive</strong>, this is not the default on OSX, so you will need to repartion your disk, if you have enough space this can be do on the flight with the <strong>disk utility</strong>, you will need to run all this instructions on that partition. (You may need to consider running in iTerm to make your system efficient enough, the default terminal doesn't get along with the building tools for linaro)</p>
 
@@ -51,8 +51,17 @@ git clone https://github.com/manuelnaranjo/abe-osx.git abe
 # edit hosts.conf to reduce the number of cpus otherwise you may kill your system
 
 # build and package
-/usr/local/bin/bash ../abe/abe.sh --target arm-linux-gnueabihf --build all \
-   --set libc=glibc --tarbin --parallel --set package=toolchain
+/usr/local/bin/bash ../abe/abe.sh \
+     --target arm-linux-gnueabihf \
+     --build all \
+     --set libc=glibc \
+     gcc=gcc-linaro-5.2-2015.11-2.tar.xz \ 
+     binutils=binutils-gdb.git~linaro_binutils-2_25-branch@ef90a4718f535cbe6345b4e7168baea7b1972abf \
+     gdb=binutils-gdb.git~gdb-7.10-branch@cec9b4821711367dbefd51386eb663ba30905aa6 \
+     glibc=glibc.git~release/2.21/master@5abec8598b3a12686fbddff5887d41c415046d3c \
+     --tarbin --parallel --set package=toolchain
+
+# snapshots/gcc-linaro-5.2.1-&lt;date&gt;-x86_64-arm-linux-gnueabihf.tar.xz should be created
 
 # revert my system
 /usr/local/bin/bash ../abe/osx-cleanup.sh
